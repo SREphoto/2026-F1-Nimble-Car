@@ -624,21 +624,22 @@ export function createActiveWingsBodywork(options = {}) {
   rwMainShape.quadraticCurveTo(0.0, 0.04, -1.2, -0.04);
   rwMainShape.closePath();
 
-  const rwMainGeo = new THREE.ExtrudeGeometry(rwMainShape, { steps: 20, depth: rwSpan, bevelEnabled: false });
+  const rwMainGeo = new THREE.ExtrudeGeometry(rwMainShape, { steps: 24, depth: rwSpan, bevelEnabled: false });
   rwMainGeo.center();
+  rwMainGeo.rotateX(Math.PI / 2); // Rotate on geometry: chord on X, span on Y, thickness on Z
 
-  // Apply spoon center droop (curving down 35 mm at Y = 0)
+  // Apply subtle symmetrical spoon center droop (curving down 25 mm at Y = 0)
   const rwMainPos = rwMainGeo.attributes.position;
   for (let p = 0; p < rwMainPos.count; p++) {
-    const ySpan = rwMainPos.getY(p);
+    const ySpan = rwMainPos.getY(p); // Span along Y
     const norm = Math.abs(ySpan) / (rwSpan / 2);
-    // Center dips down by 0.35 dm (spoon droop)
-    rwMainPos.setZ(p, rwMainPos.getZ(p) + (Math.pow(norm, 2.0) - 0.5) * 0.35);
+    // Center dips down subtly by 0.25 dm (symmetrical spoon)
+    rwMainPos.setZ(p, rwMainPos.getZ(p) + (Math.pow(norm, 2.0) - 1.0) * 0.25);
   }
   rwMainGeo.computeVertexNormals();
 
   const rwMainMesh = new THREE.Mesh(rwMainGeo, carbonMat);
-  rwMainMesh.rotation.x = Math.PI / 2; // Span along Y, chord along X, thickness along Z
+  rwMainMesh.rotation.set(0, 0, 0); // 100% horizontal, zero diagonal tilt
   rwMainMesh.castShadow = true;
   rwMainMesh.name = 'RearWing_Spoon_Mainplane';
   rearWingGroup.add(rwMainMesh);
@@ -647,8 +648,9 @@ export function createActiveWingsBodywork(options = {}) {
   // 4B. ACTIVE MOVABLE UPPER FLAP & BACKWARD-FACING ORACLE DECAL
   // -------------------------------------------------------------------------
   const rwFlapPivot = new THREE.Group();
+  rwFlapPivot.name = 'RearWing_Active_UpperFlap';
   rwFlapPivot.position.set(0.65, 0, 0.32);
-  rwFlapPivot.rotation.y = rwFlapAngle; // DRS / X-Mode articulation
+  rwFlapPivot.rotation.y = rwFlapAngle; // DRS / X-Mode pitch articulation around lateral Y axis
 
   const rwFlapShape = new THREE.Shape();
   rwFlapShape.moveTo(-0.6, 0.0);
@@ -657,11 +659,14 @@ export function createActiveWingsBodywork(options = {}) {
   rwFlapShape.quadraticCurveTo(0.1, 0.06, -0.6, -0.02);
   rwFlapShape.closePath();
 
-  const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 4, depth: 14.4, bevelEnabled: false });
+  const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 8, depth: 14.4, bevelEnabled: false });
   rwFlapGeo.center();
+  rwFlapGeo.rotateX(Math.PI / 2); // Rotate on geometry: chord on X, span on Y, thickness on Z
+  rwFlapGeo.computeVertexNormals();
+
   const rwFlapMesh = new THREE.Mesh(rwFlapGeo, carbonMat);
-  rwFlapMesh.rotation.x = Math.PI / 2; // Span along Y
-  rwFlapMesh.name = 'RearWing_Active_UpperFlap';
+  rwFlapMesh.rotation.set(0, 0, 0); // 100% horizontal, zero diagonal tilt
+  rwFlapMesh.name = 'RearWing_Active_UpperFlap_Mesh';
   rwFlapPivot.add(rwFlapMesh);
 
   // Backward-Facing 100% Upright Bold ORACLE Wordmark
@@ -935,8 +940,10 @@ export function createActiveWingsBodywork(options = {}) {
 
   const bwGeo = new THREE.ExtrudeGeometry(bwShape, { steps: 16, depth: bwSpan, bevelEnabled: false });
   bwGeo.center();
+  bwGeo.rotateX(Math.PI / 2);
+  bwGeo.computeVertexNormals();
   const bwMesh = new THREE.Mesh(bwGeo, carbonMat);
-  bwMesh.rotation.x = Math.PI / 2;
+  bwMesh.rotation.set(0, 0, 0);
   bwMesh.castShadow = true;
   beamWingGroup.add(bwMesh);
   rearWingGroup.add(beamWingGroup);

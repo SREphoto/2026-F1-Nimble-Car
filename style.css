@@ -62,15 +62,24 @@ body {
 /* Workspace layout */
 .workspace {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 340px 300px 300px;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   overflow: hidden;
   background: var(--bg);
+}
+
+.workspace.panels-hidden .panel-collapsible {
+  display: none !important;
 }
 
 /* 3D Stage */
 .stage {
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at 50% 40%, #151d2a 0%, #0a0e14 100%);
@@ -163,13 +172,53 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.2s ease;
+  flex: 0 0 320px;
+  width: 320px;
+  max-width: 320px;
+  min-width: 0;
+  transition: flex-basis 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.panel-collapsible[data-panel="instrument"] {
+  flex: 0 0 340px;
+  width: 340px;
+  max-width: 340px;
+}
+.panel-collapsible[data-panel="parts"] {
+  flex: 0 0 300px;
+  width: 300px;
+  max-width: 300px;
+}
+.panel-collapsible[data-panel="lab"] {
+  flex: 0 0 280px;
+  width: 280px;
+  max-width: 280px;
+}
+
 .panel-collapsible.collapsed {
-  width: 44px !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  max-width: 42px !important;
+  min-width: 42px !important;
 }
 .panel-collapsible.collapsed .panel-body {
-  display: none;
+  display: none !important;
+}
+.panel-collapsible.collapsed .panel-head {
+  padding: 0.75rem 0.35rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--panel-2);
+}
+.panel-collapsible.collapsed .panel-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  white-space: nowrap;
 }
 .panel-head {
   display: flex;
@@ -186,13 +235,26 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .panel-collapse-btn {
   background: transparent;
-  border: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   color: var(--muted);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.panel-collapse-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
 }
 .panel-body {
   flex: 1;

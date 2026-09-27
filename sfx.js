@@ -221,4 +221,5 @@ class SoundEngine {
   }
 }
 
-export const sfx = new SoundEngine();
+export const soundEngine = new SoundEngine();
+export const sfx = soundEngine;

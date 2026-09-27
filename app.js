@@ -207,16 +207,38 @@ function updateLcdDisplay() {
 // 6. UI INTERACTION & CONTROLS BINDING
 // =========================================================================
 
-// Collapsible Panels
+// Window Resize Helper
+function handleResize() {
+  if (!container || !camera || !renderer) return;
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+// Collapsible Panels (Individual)
 document.querySelectorAll('.panel-collapse-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const targetId = `panel-${btn.dataset.collapse}`;
     const panel = document.getElementById(targetId);
     if (panel) {
       panel.classList.toggle('collapsed');
-      btn.textContent = panel.classList.contains('collapsed') ? '◂' : '▾';
+      btn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
+      setTimeout(handleResize, 260);
     }
   });
+});
+
+// Master Toggle All Panels Button (Full-Screen View)
+const btnTogglePanels = document.getElementById('btn-toggle-panels');
+btnTogglePanels?.addEventListener('click', () => {
+  const workspace = document.querySelector('.workspace');
+  if (workspace) {
+    const isHidden = workspace.classList.toggle('panels-hidden');
+    btnTogglePanels.classList.toggle('active', isHidden);
+    btnTogglePanels.textContent = isHidden ? 'Show Panels' : 'Hide Panels';
+    setTimeout(handleResize, 60);
+    setTimeout(handleResize, 260);
+  }
 });
 
 // Viewport Toolbar Buttons
@@ -605,11 +627,7 @@ function animate() {
 animate();
 
 // Window Resize Handling
-window.addEventListener('resize', () => {
-  camera.aspect = container.clientWidth / container.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
-});
+window.addEventListener('resize', handleResize);
 
 // Ready status
 window.__CAR_READY__ = true;

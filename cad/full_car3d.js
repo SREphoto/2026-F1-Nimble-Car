@@ -241,8 +241,8 @@ export function createFullCarAssembly(options = {}) {
       }
       // Rear wing lifts and moves rearward
       if (kinematics.rearWing) {
-        kinematics.rearWing.position.x = THREE.MathUtils.lerp(0, 8.0, explodedProgress);
-        kinematics.rearWing.position.z = THREE.MathUtils.lerp(0, 4.0, explodedProgress);
+        kinematics.rearWing.position.x = THREE.MathUtils.lerp(36.8, 44.8, explodedProgress);
+        kinematics.rearWing.position.z = THREE.MathUtils.lerp(7.4, 11.4, explodedProgress);
       }
       // Cockpit accessories & Helmet elevate
       if (subassemblies.cockpitAccessories) {
@@ -291,7 +291,7 @@ export function createFullCarAssembly(options = {}) {
       // Reset to precise assembled datum coordinates
       if (subassemblies.bodywork) subassemblies.bodywork.position.set(0, 0, 0);
       if (kinematics.frontAero) kinematics.frontAero.position.set(0, 0, 0);
-      if (kinematics.rearWing) kinematics.rearWing.position.set(0, 0, 0);
+      if (kinematics.rearWing) kinematics.rearWing.position.set(36.8, 0, 7.4);
       if (subassemblies.cockpitAccessories) subassemblies.cockpitAccessories.position.set(0, 0, 0);
       if (subassemblies.powertrain) subassemblies.powertrain.position.set(0, 0, 0);
       if (subassemblies.transmission) subassemblies.transmission.position.set(0, 0, 0);
