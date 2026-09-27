@@ -1,6 +1,6 @@
 /**
- * materials.js — Master High-Fidelity PBR Materials Factory
- * 2026 Formula 1 Digital Twin Architecture
+ * materials.js — Master PBR Materials Factory
+ * 2026 Formula 1 "Nimble Car" · SREdesigns - Samuel R Erwin III
  */
 
 import * as THREE from "three";

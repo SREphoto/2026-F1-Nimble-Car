@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/cockpit_accessories_driver.js
+ * 2026 Formula 1 "Nimble Car" Cockpit Accessories & Driver
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for Driver, Helmet, Mirrors, T-Cam, and Cockpit Accessories:
+ * 3D CAD for Driver, Helmet, Mirrors, T-Cam, and Cockpit Accessories:
  * - Driver Helmet (FIA 8860-2018-ABP ballistic standard):
  *   * Contoured shell, chin spoiler, top cooling vents
  *   * Narrow 10mm visor aperture, dark polycarbonate visor, ballistic forehead strip

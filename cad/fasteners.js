@@ -1,6 +1,6 @@
 /**
- * fasteners.js — Universal High-Precision Procedural Fastener Library
- * 2026 Formula 1 Digital Twin Engineering Standard
+ * fasteners.js — Precision Fastener Library
+ * 2026 Formula 1 "Nimble Car" · SREdesigns - Samuel R Erwin III
  *
  * Supports both named options object and positional arguments.
  * All fasteners are modeled as genuine 3D physical geometry:

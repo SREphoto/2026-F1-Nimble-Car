@@ -1,12 +1,13 @@
 /**
- * f1_2026_full_car_twin/software/viewer/app.js
+ * 2026 Formula 1 "Nimble Car" Application
+ * SREdesigns - Samuel R Erwin III
  * 
- * Main Three.js Runtime & Application Controller for F1 2026 Nimble Car Digital Twin:
+ * Three.js 3D Viewer & Real-Time Controls:
  * - 3D Scene, Orbit Controls, Studio Lighting, Datum Floor
- * - 1:1 Procedural Full Car Assembly with Kinematics
- * - Dynamic PCU-8D Canvas Dashboard Display
- * - Full interactive UI binding (sliders, gears, aero modes, exploded view, part explorer)
- * - Standardized Viewpoint hooks for automated CDP visual QA
+ * - 1:1 Full Car Assembly with Kinematics
+ * - Dynamic PCU-8D Canvas Steering Wheel Display
+ * - Interactive UI binding (sliders, gears, aero modes, exploded view, part explorer)
+ * - Multi-angle camera presets (ISO, Front, Side, Top, Exploded, Active)
  */
 
 import * as THREE from 'three';
@@ -109,7 +110,7 @@ try {
   carModel.rotation.x = -Math.PI / 2; // Map automotive CAD Z-up to Three.js Y-up
   scene.add(carModel);
   const statusEl = document.getElementById('viewport-status');
-  if (statusEl) statusEl.textContent = 'Digital twin assembled (100% Procedural CAD)';
+  if (statusEl) statusEl.textContent = '2026 F1 Nimble Car assembled · SREdesigns - Samuel R Erwin III';
 } catch (err) {
   console.error('Error assembling car model:', err);
   const statusEl = document.getElementById('viewport-status');
@@ -511,5 +512,5 @@ window.addEventListener('resize', () => {
   renderer.setSize(container.clientWidth, container.clientHeight);
 });
 
-// Expose verification flag for preflight audits
-window.__CAR_TWIN_READY__ = true;
+// Ready status
+window.__CAR_READY__ = true;

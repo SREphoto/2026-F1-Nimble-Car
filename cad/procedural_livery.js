@@ -1,6 +1,6 @@
 /**
- * procedural_livery.js — Procedural Livery & Typography Factory
- * Oracle Red Bull Racing 2026 Concept Digital Twin
+ * procedural_livery.js — Procedural Livery & Typography Engine
+ * 2026 Formula 1 "Nimble Car" · SREdesigns - Samuel R Erwin III
  * 
  * Generates dynamic high-DPI CanvasTextures with zero external asset dependencies:
  * - Pirelli P Zero 18-Inch Sidewall Decals with Yellow Striping

@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/transmission_moving_gears.js
+ * 2026 Formula 1 "Nimble Car" Transmission & Drivetrain
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for the 8-Speed Longitudinal Gearbox, Differential, & Drivetrain:
+ * 3D CAD for 8-Speed Seamless Gearbox, Differential, & Drivetrain:
  * - Structural Hybrid Titanium/Carbon Gearbox Casing:
  *   * Main casing housing the 8-speed cassette, selector barrel, and differential
  *   * Rear suspension pickup ears and bellhousing mating flange

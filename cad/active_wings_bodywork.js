@@ -1,13 +1,13 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/active_wings_bodywork.js
+ * 2026 Formula 1 "Nimble Car" Bodywork
+ * SREdesigns - Samuel R Erwin III
  * 
- * Exhaustive 3D Procedural CAD for the 2026 Formula 1 "Nimble Car" Digital Twin:
- * Fully matching user reference blueprints (Oracle Red Bull Racing 2026 concept):
+ * 3D CAD for the 2026 Formula 1 "Nimble Car":
  * 1. 3D Sculpted Parabolic FIS Nosecone (Drooping from Bulkhead A to front wing, Yellow tip, Navy body)
  * 2. Active Front Wing & FWEP (Swept spoon mainplane, active 2-stage flaps, diveplanes, footplates, slot gap separators)
  * 3. 3D Sculpted Sidepods & Radiator Intakes (Overbite letterbox scoops, deep undercuts, waterslide gulley, cooling gills)
  * 4. Engine Cover, Airbox & Dorsal Shark Fin (Yellow roll hoop airbox intake, Coke-bottle taper, shark fin, Inconel exhaust)
- * 5. Active Rear Wing Assembly (Matching Reference Render 3: Spoon mainplane, swan-neck pylons, dual vertical rain LEDs)
+ * 5. Active Rear Wing Assembly (Spoon mainplane, swan-neck pylons, dual vertical rain LEDs)
  * 
  * Coordinate System (Universal Automotive Datum):
  * - X: Longitudinal axis (Front Wing X = -10.5 to -8.5 dm, Nosecone X = -9.5 to 0 dm, Cockpit X = 0 to 22 dm, Rear Axle X = 34 dm, Rear Wing X = 36.5 to 38.5 dm)

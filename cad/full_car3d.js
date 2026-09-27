@@ -1,18 +1,19 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/full_car3d.js
+ * 2026 Formula 1 "Nimble Car" Assembly
+ * SREdesigns - Samuel R Erwin III
  * 
- * Master Procedural CAD Assembly for the 2026 Formula 1 Digital Twin.
- * Integrates all 10 specialized piecewise CAD modules:
+ * 3D CAD Assembly for the 2026 Formula 1 "Nimble Car".
+ * Integrates 10 specialized vehicle subsystems:
  * 1. Monocoque & Cockpit (Chassis, SIPS, Ti Halo, Roll Hoop, Steering Column, Wheel, Pedals, Extinguisher)
  * 2. Cockpit Accessories & Driver (FIA ABP Helmet, Visor, Mirrors with 14-LED array, T-Cam, Pitot, Antennas)
  * 3. Detailed Carbon Brakes (Al-Li monobloc calipers, 1400+ hole carbon discs, floating bobbins, lines, tone rings)
  * 4. Electrical Wiring Harness (800V orange HV cables, Raychem LV loom, grounding braids, Energy Store battery internals)
- * 5. Powertrain Moving Internals (1.6L V6 block, knife-edge crank, conrods, pistons with 3 rings, DOHC valvetrain, roller timing chain, turbocharger, 350kW MGU-K)
- * 6. Transmission & Moving Gears (Titanium/carbon casing, 8-speed gears with dog teeth, selector barrel, shift forks, carbon clutch, active LSD, tripod CV driveshafts, RIS rain light)
- * 7. Suspension & Steering (Aerodynamic wishbones, pull/push-rods, bellcranks, dampers, HPAS rack & pinion, Zylon tethers, 18" BBS forged magnesium wheels with concave covers, Pirelli tyres)
+ * 5. Powertrain Moving Internals (1.6L V6 block, crank, conrods, pistons with 3 rings, DOHC valvetrain, timing chain, turbocharger, 350kW MGU-K)
+ * 6. Transmission & Moving Gears (Gearbox casing, 8-speed gears with dog teeth, selector barrel, shift forks, carbon clutch, active LSD, tripod CV driveshafts, RIS rain light)
+ * 7. Suspension & Steering (Aerodynamic wishbones, pull/push-rods, bellcranks, dampers, HPAS rack & pinion, Zylon tethers, 18" forged magnesium wheels with concave covers, Pirelli tires)
  * 8. Floor & Aero Surfaces (Carbon floor, leading edge strakes, stepped edge wings, Jabroc plank with titanium skid pucks, rear 10.5° diffuser with keel and fences)
  * 9. Active Wings & Bodywork (2-stage active front wing, FIS nosecone, sidepods with internal radiators, dorsal shark fin, Inconel exhaust, active rear wing with vertical rain LED strips)
- * 10. Fasteners & Physical Hardware (Genuine 3D hex sockets, Torx lobes, 12-point jet nuts, banjo bolts with lock-wire)
+ * 10. Fasteners & Physical Hardware (Hex sockets, Torx lobes, 12-point jet nuts, banjo bolts with lock-wire)
  * 
  * Provides kinematic state updates:
  * - updateKinematics({ rpm, speedKmH, steerRad, aeroMode, gear, brakePedal, explodedProgress })
@@ -32,7 +33,7 @@ import { createActiveWingsBodywork } from './active_wings_bodywork.js';
 
 export function createFullCarAssembly(options = {}) {
   const masterCar = new THREE.Group();
-  masterCar.name = 'F1_2026_Full_Car_Digital_Twin';
+  masterCar.name = 'F1_2026_Nimble_Car_SREdesigns';
 
   // Subassembly Containers
   const subassemblies = {};

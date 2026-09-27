@@ -1,7 +1,8 @@
 """
-f1_2026_full_car_twin/software/controller/full_car_controller.py
+2026 Formula 1 "Nimble Car" Controller
+SREdesigns - Samuel R Erwin III
 
-Pure Python Vehicle Dynamics & Powertrain Controller for 2026 Formula 1 Technical Regulations:
+Vehicle Dynamics & Powertrain Controller for 2026 Formula 1 Technical Regulations:
 1. 1.6L 90° V6 ICE & Fuel Energy Flow:
    - Fuel energy flow limit EF = 0.27 * N + 165 MJ/h (N <= 10,500 rpm), capped at 3000 MJ/h (Article C5.4.1)
    - Max ICE mechanical power: 400 kW (~535 hp)

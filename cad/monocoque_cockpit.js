@@ -1,6 +1,7 @@
 /**
- * monocoque_cockpit.js — Exhaustive Piecewise Procedural Monocoque & Cockpit CAD
- * 2026 Formula 1 Survival Cell, Halo, Roll Hoop, PCU-8D Wheel & Pedal Box
+ * monocoque_cockpit.js — 2026 Formula 1 "Nimble Car" Monocoque & Cockpit
+ * SREdesigns - Samuel R Erwin III
+ * 2026 Formula 1 Survival Cell, Halo, Roll Hoop, Steering Wheel & Pedal Box
  *
  * Full Procedural Fidelity (Zero Primitives, Zero Normal Maps):
  * - Carbon-Zylon Honeycomb Monocoque Tub: Bulkheads A-A, B-B, C-C, D-D, SIPS side crush tubes

@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/suspension_steering_assembly.js
+ * 2026 Formula 1 "Nimble Car" Suspension & Steering
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for the Suspension, Steering, Wheels & Tyres:
+ * 3D CAD for Suspension, Steering, Wheels & Tires:
  * - Front & Rear Aerodynamic Wishbones (FIA 3.5:1 chord-to-thickness ratio):
  *   * Upper and Lower A-arms with streamlined carbon fiber aerodynamic fairings
  *   * Genuine spherical uniball bearings with titanium retainers and safety circlips

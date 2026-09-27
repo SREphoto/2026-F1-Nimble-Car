@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/powertrain_moving_internals.js
+ * 2026 Formula 1 "Nimble Car" Powertrain
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for the Internal Combustion Engine & 350 kW MGU-K:
+ * 3D CAD for the 1.6L Turbo V6 Engine & 350 kW MGU-K:
  * - 1.6L 90° V6 Engine Block:
  *   * Cast aluminum block with structural web stiffeners and cylinder bore liners
  *   * 4x cross-bolted main bearing caps with genuine 12-point jet nuts
@@ -23,7 +24,7 @@
  *   * Inconel common shaft with dual ceramic ball bearing cartridges
  *   * Exhaust turbine wheel with 11 curved radial Inconel blades
  *   * Compressor impeller wheel with 12 milled billet aluminum inducer/exducer blades
- *   * Twin electronic wastegate flapper valves with vacuum/pneumatic actuator linkage arms
+ *   * Dual electronic wastegate flapper valves with vacuum/pneumatic actuator linkage arms
  * - 350 kW MGU-K Motor (Article C5):
  *   * Cylindrical stator core with laminated electrical steel and copper hairpin windings
  *   * Internal permanent magnet rotor with balance rings and driveshaft coupling
@@ -567,7 +568,7 @@ export function createPowertrainInternals(options = {}) {
   }
   turboGroup.add(compWheelGroup);
 
-  // Twin Electronic Wastegate Flapper Valves with Linkage Arms
+  // Dual Electronic Wastegate Flapper Valves with Linkage Arms
   [-0.45, 0.45].forEach((wY, wIdx) => {
     const wgGroup = new THREE.Group();
     wgGroup.position.set(0.65, wY, 0.35);

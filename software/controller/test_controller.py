@@ -1,7 +1,8 @@
 """
-f1_2026_full_car_twin/software/controller/test_controller.py
+2026 Formula 1 "Nimble Car" Controller Tests
+SREdesigns - Samuel R Erwin III
 
-Comprehensive unit test suite for F12026CarController:
+Unit test suite for F12026CarController:
 - Engine start/stop & HV circuit interlocks
 - Pyrofuse disconnect safety cutoff
 - Fuel energy flow rate capping at 3000 MJ/h (Article C5.4.1)

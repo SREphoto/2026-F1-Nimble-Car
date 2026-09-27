@@ -1,7 +1,7 @@
 /**
- * brakes_detailed.js — Exhaustive Piecewise Procedural F1 Brake Corner CAD
- * 2026 Formula 1 Front Brake Corner (LH & RH)
- *
+ * brakes_detailed.js — 2026 Formula 1 "Nimble Car" Brakes
+ * SREdesigns - Samuel R Erwin III
+ * 2026 Formula 1 Brake Assembly
  * Full Procedural Fidelity (Zero Primitives, Zero Normal Maps):
  * - Al-Li 2099 Monobloc Caliper: Scalloped 3-bore halves, cooling fins, mounting lugs
  * - 4x M10 Titanium Bridge Tie-Bolts, 12-point jet nuts & spherical washers
@@ -338,7 +338,7 @@ export function buildDetailedBrakeCorner(scene, mats, side = "LH") {
   outbMain.castShadow = true;
   outboardGroup.add(outbMain);
 
-  // Twin Bridge Stiffness Arches spanning over the disc throat
+  // Dual Bridge Stiffness Arches spanning over the disc throat
   for (const archX of [-0.58, 0.58]) {
     const archGeo = new THREE.BoxGeometry(0.32, 0.38, 1.10);
     const arch = new THREE.Mesh(archGeo, mats.caliperAlLiHardAnodized);

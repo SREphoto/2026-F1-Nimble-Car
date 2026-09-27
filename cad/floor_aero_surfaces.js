@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/floor_aero_surfaces.js
+ * 2026 Formula 1 "Nimble Car" Floor & Underbody
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for the 2026 Underbody Floor, Plank & Diffuser:
+ * 3D CAD for the 2026 Underbody Floor, Plank & Diffuser:
  * - 2026 Underbody Carbon Floor:
  *   * Transitioned from deep Venturi tunnels to shallow ground effect channels
  *   * 4x curved aerodynamic leading edge underfloor strakes / fences per side
@@ -207,7 +208,7 @@ export function createFloorAeroSurfaces(options = {}) {
   // Matching Reference Images 3 & 4:
   // - 10.5-degree upward expansion ramp from X = 28.5 dm to X = 36.5 dm
   // - Central aerodynamic keel divider
-  // - High expansion side channels with twin vertical strakes
+  // - High expansion side channels with dual vertical strakes
   // - Mousehole cutout for starter shaft / rear crash structure
   // =========================================================================
   const diffuserGroup = new THREE.Group();
@@ -249,7 +250,7 @@ export function createFloorAeroSurfaces(options = {}) {
   keelMesh.position.set(diffLength / 2, 0, diffLift / 2);
   diffuserGroup.add(keelMesh);
 
-  // Twin Vertical Strakes per side inside diffuser channels
+  // Dual Vertical Strakes per side inside diffuser channels
   [-1, 1].forEach((side, dSide) => {
     [1.8, 3.6].forEach((yOffset, sIdx) => {
       const strakeShape = new THREE.Shape();

@@ -1,7 +1,8 @@
 /**
- * f1_2026_full_car_twin/software/viewer/cad/electrical_wiring_harness.js
+ * 2026 Formula 1 "Nimble Car" Electrical Harness
+ * SREdesigns - Samuel R Erwin III
  * 
- * Meticulous 3D Procedural CAD for the Complete Electrical Harness & Power Distribution:
+ * 3D CAD for Electrical Harness & Power Distribution:
  * - 800V DC High-Voltage Shielded Cabling:
  *   * Heavy-gauge orange silicone insulated cables with inner tinned-copper braided EMI shielding
  *   * Energy Store (ES) -> Dual Silicon Carbide Inverters (PEU) -> 350 kW MGU-K motor
@@ -147,7 +148,7 @@ export function createElectricalHarness(options = {}) {
 
   // =========================================================================
   // 2. LOW-VOLTAGE (12V / 48V) CHASSIS & SENSOR HARNESS (Raychem DR-25 Sleeved)
-  // Complex multi-branch loom tying the whole digital twin together
+  // Complex multi-branch loom connecting the vehicle electrical systems
   // =========================================================================
   const lvGroup = new THREE.Group();
   lvGroup.name = 'Low_Voltage_Control_Harness';
@@ -285,7 +286,7 @@ export function createElectricalHarness(options = {}) {
   // Rain Light Connector at X = 36.2, Y = 0.0, Z = 3.6
   lvGroup.add(createLVConnector(new THREE.Vector3(36.2, 0.0, 3.6), new THREE.Vector3(1, 0, 0)));
 
-  // Rear Active Wing Vertical Pylon Wiring (Running up the twin rear wing pylons to active flap & LED strips)
+  // Rear Active Wing Vertical Pylon Wiring (Running up the dual rear wing pylons to active flap & LED strips)
   [-1, 1].forEach(side => {
     const rwPylonSpline = new THREE.CatmullRomCurve3([
       new THREE.Vector3(34.0, side * 1.5, 3.5),
