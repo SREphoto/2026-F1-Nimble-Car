@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026 Formula 1 · Front Brake Corner Digital Twin</title>
+  <link rel="stylesheet" href="style.css?v=20260926-f1-brake" />
+</head>
+<body>
+  <div id="app">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">F1 2026</span>
+        <span class="brand-model">FRONT BRAKE CORNER</span>
+        <span class="brand-tag">Piecewise Procedural Digital Twin · 345 mm Carbon-Carbon Spec</span>
+      </div>
+      <div class="topbar-status">
+        <span id="status-pill" class="pill">READY</span>
+        <span id="status-detail" class="muted">0 bar · 25°C · 0 km/h</span>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <!-- 3D Stage -->
+      <section class="stage">
+        <div class="view-toolbar">
+          <button type="button" class="view-btn" id="btn-explode" title="Separate assemblies along spindle axis">Exploded view</button>
+          <button type="button" class="view-btn" id="btn-wireframe" title="Toggle wireframe mode">Wireframe</button>
+          <button type="button" class="view-btn" id="btn-wheel" title="Toggle BBS 18-inch magnesium wheel rim">Show Wheel</button>
+          <button type="button" class="view-btn" id="btn-auto-rotate" title="Toggle automatic camera orbit">Auto-rotate</button>
+          
+          <label class="orbit-speed-ctrl" title="Auto-orbit speed">
+            <span>Orbit</span>
+            <input type="range" id="orbit-speed" min="0.2" max="4" step="0.1" value="1.0" />
+            <span id="orbit-speed-val">1.0×</span>
+          </label>
+
+          <label class="orbit-speed-ctrl" title="Camera zoom">
+            <span>Zoom</span>
+            <input type="range" id="camera-zoom" min="0" max="100" step="1" value="50" />
+            <span id="camera-zoom-val">50%</span>
+          </label>
+
+          <label class="orbit-speed-ctrl" title="Lighting brightness">
+            <span>Light</span>
+            <input type="range" id="lab-light" min="0.2" max="2.5" step="0.05" value="1.1" />
+            <span id="lab-light-val">1.1×</span>
+          </label>
+
+          <label class="orbit-speed-ctrl" title="Lighting mood">
+            <span>Mood</span>
+            <select id="lab-light-mood" aria-label="Lighting mood">
+              <option value="neutral" selected>Neutral</option>
+              <option value="bright">Paddock High-Bay</option>
+              <option value="dim">Night Test</option>
+              <option value="cool">Cool Tech</option>
+              <option value="warm">Studio Warm</option>
+            </select>
+          </label>
+
+          <button type="button" class="view-btn" id="btn-view-reset" title="Reset camera to isometric preset">Reset view</button>
+          <button type="button" class="view-btn" id="btn-sfx-mute" title="Mute synthesized audio">Mute SFX</button>
+        </div>
+
+        <div id="viewport3d" class="viewport"></div>
+        <p id="viewport-status" class="viewport-caption">Loading 2026 F1 Brake Corner…</p>
+        <div class="stage-hint">Drag to orbit · Scroll to zoom · Click part to isolate · Sliders adjust hydraulic clamping & thermal load</div>
+      </section>
+
+      <!-- 1. Instrument Telemetry & Hydraulic Dynamometer Panel -->
+      <aside class="instrument panel-collapsible" id="panel-instrument" data-panel="instrument">
+        <div class="panel-head">
+          <h2 class="panel-title">Brake Dynamometer & Hydraulics</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="instrument" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <!-- Hydraulic Line Pressure Gauge -->
+          <div class="gauge-card">
+            <div class="gauge-row">
+              <span class="gauge-label">Line Pressure</span>
+              <span class="gauge-val" id="val-pressure">0.0 bar</span>
+            </div>
+            <div class="gauge-bar-track">
+              <div class="gauge-bar-fill pressure" id="bar-pressure"></div>
+            </div>
+          </div>
+
+          <!-- Disc Thermal Temperature Gauge -->
+          <div class="gauge-card">
+            <div class="gauge-row">
+              <span class="gauge-label">Disc Temperature</span>
+              <span class="gauge-val" id="val-temp">25.0 °C</span>
+            </div>
+            <div class="gauge-bar-track">
+              <div class="gauge-bar-fill temp" id="bar-temp"></div>
+            </div>
+          </div>
+
+          <!-- Clamping Force & Torque -->
+          <div class="gauge-card">
+            <div class="gauge-row">
+              <span class="gauge-label">Clamping Force</span>
+              <span class="gauge-val" id="val-clamp">0.00 kN</span>
+            </div>
+            <div class="gauge-row" style="margin-top: 4px;">
+              <span class="gauge-label">Retarding Torque</span>
+              <span class="gauge-val" id="val-torque">0.0 Nm</span>
+            </div>
+            <div class="gauge-row" style="margin-top: 4px;">
+              <span class="gauge-label">Friction Coeff (μ)</span>
+              <span class="gauge-val" id="val-mu">0.233</span>
+            </div>
+            <div class="gauge-row" style="margin-top: 4px;">
+              <span class="gauge-label">Seal Rollback</span>
+              <span class="gauge-val" id="val-rollback" style="color: var(--green);">ACTIVE (0.15 mm)</span>
+            </div>
+          </div>
+
+          <!-- Interactive Driver Pedal & Speed Sliders -->
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="slider-pedal">
+              <span>Driver Foot Effort</span>
+              <span class="num" id="val-pedal-ctrl">0 kgf</span>
+            </label>
+            <input type="range" class="slider" id="slider-pedal" min="0" max="180" step="1" value="0" />
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="slider-speed">
+              <span>Vehicle Ground Speed</span>
+              <span class="num" id="val-speed-ctrl">0 km/h</span>
+            </label>
+            <input type="range" class="slider" id="slider-speed" min="0" max="350" step="5" value="0" />
+          </div>
+
+          <!-- Quick Test Triggers -->
+          <div class="ctrl-group">
+            <span class="gauge-label">Simulation Presets</span>
+            <div class="btn-grid">
+              <button type="button" class="btn btn-primary" id="btn-test-320">320 km/h Stop</button>
+              <button type="button" class="btn" id="btn-test-dyno">Dyno Drag Test</button>
+              <button type="button" class="btn" id="btn-test-warm">Warm Race Lap</button>
+              <button type="button" class="btn btn-danger" id="btn-test-failsafe">BBW Shuttle Bypass</button>
+            </div>
+          </div>
+
+          <p class="hint">
+            <strong>Elastic Rollback:</strong> When pedal is released, EPDM square seals retract pistons by 0.15 mm, eliminating residual drag.
+          </p>
+        </div>
+      </aside>
+
+      <!-- 2. Part Explorer Panel -->
+      <aside class="parts panel-collapsible" id="parts-panel" data-panel="parts">
+        <div class="panel-head">
+          <h2 class="panel-title">Part Explorer</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="parts" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <p class="hint">
+            Every discrete component modeled in genuine 3D geometry. Click to isolate, inspect tolerances, and view material specifications.
+          </p>
+          <button type="button" class="btn" id="btn-parts-clear">Clear Isolation</button>
+          <div id="parts-focus-status" class="hint" style="color: var(--cyan); font-weight: 600;">All Parts Visible</div>
+          <div id="parts-list" class="parts-list"></div>
+        </div>
+      </aside>
+
+      <!-- 3. Race Telemetry & BBW Lab Bench Panel -->
+      <aside class="lab panel-collapsible" id="panel-lab" data-panel="lab">
+        <div class="panel-head">
+          <h2 class="panel-title">Brake-by-Wire & Pit Equipment</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="lab" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <!-- 2026 BBW Torque Blending -->
+          <div class="gauge-card">
+            <div class="gauge-row">
+              <span class="gauge-label">2026 Torque Blending</span>
+              <span class="gauge-val" id="val-bbw-split">60% F / 40% R</span>
+            </div>
+            <p class="hint" style="margin-top: 4px;">
+              350 kW MGU-K regen provides up to 2,836 Nm rear retarding torque, downsizing rear friction discs to 230 mm while front 345 mm discs absorb 60-65% total kinetic load.
+            </p>
+          </div>
+
+          <!-- Paoli DP6000 Wheel Gun Simulator -->
+          <div class="gauge-card">
+            <span class="gauge-label">Pit Stop Equipment</span>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <button type="button" class="btn btn-primary" id="btn-wheel-gun" style="flex: 1;">Trigger Paoli DP6000 Gun</button>
+            </div>
+            <p class="hint" style="margin-top: 6px;" id="wheel-gun-status">
+              Wheel captive nut torqued to 3,000 Nm with locking collets engaged.
+            </p>
+          </div>
+
+          <!-- Thermal Emissivity Curve -->
+          <div class="gauge-card">
+            <span class="gauge-label">Blackbody Radiation Physics</span>
+            <div class="gauge-row" style="margin-top: 4px;">
+              <span class="gauge-label">Radiation State</span>
+              <span class="gauge-val" id="val-blackbody">Dark Ambient</span>
+            </div>
+            <p class="hint" style="margin-top: 4px;">
+              Stefan-Boltzmann radiation: <em>P = ε·σ·A·(T⁴ - T_amb⁴)</em>. Discs glow cherry-red at 650°C, orange at 800°C, and incandescent yellow at >950°C.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Three.js Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="app.js?v=20260926-f1-brake"></script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+:root {
+  --bg: #0c1016;
+  --panel: #141b26;
+  --panel-2: #1a2330;
+  --border: #2a3545;
+  --text: #e6edf5;
+  --muted: #8b9bb0;
+  --cyan: #00d4e8;
+  --green: #3dd68c;
+  --amber: #f0b429;
+  --red: #f04460;
+  --key: #243041;
+  --key-hover: #2f3f55;
+  --radius: 8px;
+  --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: #0a0e14;
+  flex-shrink: 0;
+}
+.brand { display: flex; align-items: baseline; gap: 0.5rem; }
+.brand-mark { color: var(--cyan); font-weight: 700; letter-spacing: 0.12em; font-size: 0.85rem; }
+.brand-model { font-weight: 600; font-size: 1.1rem; }
+.brand-tag { color: var(--muted); font-size: 0.8rem; margin-left: 0.5rem; }
+.topbar-status { display: flex; align-items: center; gap: 0.75rem; }
+.pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.pill-green { background: rgba(61, 214, 140, 0.15); color: var(--green); border: 1px solid var(--green); }
+.pill-amber { background: rgba(240, 180, 41, 0.15); color: var(--amber); border: 1px solid var(--amber); }
+.pill-red { background: rgba(240, 68, 96, 0.15); color: var(--red); border: 1px solid var(--red); }
+.muted { color: var(--muted); font-family: var(--mono); font-size: 0.82rem; }
+
+/* Workspace layout */
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px 300px 300px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* 3D Stage */
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% 40%, #151d2a 0%, #0a0e14 100%);
+  overflow: hidden;
+}
+.view-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(12, 16, 22, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.view-btn {
+  background: var(--key);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+.view-btn:hover { background: var(--key-hover); border-color: var(--cyan); }
+.view-btn.active { background: var(--cyan); color: #000; font-weight: 700; }
+
+.orbit-speed-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.orbit-speed-ctrl input[type="range"] { width: 65px; }
+.orbit-speed-ctrl select {
+  background: var(--key);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.75rem;
+}
+
+.cam-presets {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.cam-btn {
+  background: rgba(0, 212, 232, 0.12);
+  color: var(--cyan);
+  border-color: rgba(0, 212, 232, 0.3);
+}
+
+.viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+.viewport-caption {
+  position: absolute;
+  bottom: 28px;
+  left: 16px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+.stage-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 16px;
+  font-size: 0.72rem;
+  color: #55667a;
+}
+
+/* Collapsible Panels */
+.panel-collapsible {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+.panel-collapsible.collapsed {
+  width: 44px !important;
+}
+.panel-collapsible.collapsed .panel-body {
+  display: none;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+}
+.panel-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+.panel-collapse-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* Steering Display & Keypad */
+.lcd {
+  width: 100%;
+  border-radius: 6px;
+  background: #000;
+  border: 1px solid #334455;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.action-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+.key {
+  flex: 1;
+  background: var(--key);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 4px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+.key:hover { background: var(--key-hover); }
+.key-power.active { background: var(--green); color: #000; }
+.key-aero.active { background: var(--cyan); color: #000; }
+.key-pyro { background: rgba(240, 68, 96, 0.2); color: var(--red); border-color: var(--red); }
+.key-pyro:hover { background: var(--red); color: #fff; }
+
+.ctrl-group {
+  margin-bottom: 0.85rem;
+}
+.ctrl-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.ctrl-label span:last-child {
+  font-family: var(--mono);
+  color: var(--text);
+  font-weight: 600;
+}
+.ctrl-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--cyan);
+}
+
+.gear-cluster {
+  background: var(--panel-2);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.cluster-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.gear-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.gear-btn {
+  background: var(--key);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-weight: 700;
+  cursor: pointer;
+}
+.gear-btn:hover { border-color: var(--cyan); }
+.gear-btn.active { background: var(--cyan); color: #000; }
+
+/* Part Explorer */
+.part-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.part-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--key);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+.part-item:hover { background: var(--key-hover); border-color: var(--cyan); }
+.part-item.active { border-color: var(--cyan); background: rgba(0, 212, 232, 0.1); }
+.part-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  flex-shrink: 0;
+}
+
+/* Compliance Spec Table */
+.spec-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+.spec-key { color: var(--muted); }
+.spec-val { font-family: var(--mono); font-weight: 600; color: var(--text); }

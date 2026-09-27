@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>F1 2026 NIMBLE CAR · Complete Digital Twin</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">FIA 2026</span>
+        <span class="brand-model">NIMBLE CAR</span>
+        <span class="brand-tag">Exhaustive Procedural Digital Twin · 1:1 CAD Fidelity</span>
+      </div>
+      <div class="topbar-status">
+        <span id="status-pill" class="pill pill-green">Z-MODE (HIGH DOWNFORCE)</span>
+        <span id="status-detail" class="muted">ICE: 0 RPM · Speed: 0 km/h · Gear: N</span>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <!-- 3D Viewport & Stage -->
+      <section class="stage">
+        <div class="view-toolbar">
+          <button type="button" class="view-btn" id="btn-explode" title="Separate major assemblies">Exploded view</button>
+          <button type="button" class="view-btn" id="btn-wireframe" title="Toggle wireframe overlay">Wireframe</button>
+          <button type="button" class="view-btn" id="btn-auto-rotate" title="Orbit camera automatically">Auto-rotate</button>
+          
+          <label class="orbit-speed-ctrl" title="Auto-orbit speed">
+            <span>Orbit</span>
+            <input type="range" id="orbit-speed" min="0.2" max="4" step="0.1" value="1.0" />
+            <span id="orbit-speed-val">1.0×</span>
+          </label>
+          <label class="orbit-speed-ctrl" title="Camera distance">
+            <span>Zoom</span>
+            <input type="range" id="camera-zoom" min="0" max="100" step="1" value="50" />
+            <span id="camera-zoom-val">50%</span>
+          </label>
+          <label class="orbit-speed-ctrl light-ctrl" title="Lab studio lighting intensity">
+            <span>Light</span>
+            <input type="range" id="lab-light" min="0.2" max="2.5" step="0.05" value="1.2" />
+            <span id="lab-light-val">1.2×</span>
+          </label>
+          <label class="orbit-speed-ctrl light-ctrl" title="Lighting mood">
+            <span>Mood</span>
+            <select id="lab-light-mood" aria-label="Lighting mood">
+              <option value="neutral" selected>Studio Neutral</option>
+              <option value="bright">Bright Daylight</option>
+              <option value="dim">Night Race</option>
+              <option value="cool">Cool Blue</option>
+              <option value="warm">Warm Tungsten</option>
+            </select>
+          </label>
+
+          <!-- Standardized Viewpoint Auditing Buttons -->
+          <div class="cam-presets">
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_ISO" title="3/4 Isometric Perspective">ISO</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_FRONT" title="Front Elevation">Front</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_SIDE" title="Side Profile">Side</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_TOP" title="Top Planform">Top</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_EXPLODED" title="Kinematic Exploded Exposure">Exploded</button>
+            <button type="button" class="view-btn cam-btn" data-cam="STATE_ACTIVE" title="Active High-Speed Run">Active</button>
+          </div>
+
+          <button type="button" class="view-btn" id="btn-view-reset" title="Reset Camera">Reset view</button>
+        </div>
+
+        <div id="viewport3d" class="viewport"></div>
+        <p id="viewport-status" class="viewport-caption">Loading full car digital twin…</p>
+        <div class="stage-hint">Orbit: Left Click Drag · Pan: Right Click Drag · Zoom: Scroll Wheel · Sliders for Controls</div>
+      </section>
+
+      <!-- Instrument Telemetry & Controls Panel -->
+      <aside class="instrument panel-collapsible" id="panel-instrument" data-panel="instrument">
+        <div class="panel-head">
+          <h2 class="panel-title">Telemetry & Controls</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="instrument" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <div class="instrument-frame">
+            <!-- Steering Wheel PCU-8D Display Screen -->
+            <canvas id="lcd" width="512" height="256" class="lcd" aria-label="PCU-8D Steering Display"></canvas>
+
+            <!-- Powertrain Control Action Row -->
+            <div class="action-row">
+              <button type="button" class="key key-power" id="btn-engine-start" title="Engine Start / Stop">ICE START</button>
+              <button type="button" class="key key-aero" id="btn-aero-toggle" title="Toggle Z-Mode / X-Mode">Z-MODE (AERO)</button>
+              <button type="button" class="key key-pyro" id="btn-pyrofuse" title="HV Pyrofuse Cutoff">PYROFUSE</button>
+            </div>
+
+            <!-- Interactive Drivers Sliders -->
+            <div class="ctrl-group">
+              <label class="ctrl-label">
+                <span>Throttle Pedal</span>
+                <span id="val-throttle">0%</span>
+              </label>
+              <input type="range" id="slider-throttle" min="0" max="100" step="1" value="0" />
+            </div>
+
+            <div class="ctrl-group">
+              <label class="ctrl-label">
+                <span>Brake Pedal Effort (BBW)</span>
+                <span id="val-brake">0 kgf</span>
+              </label>
+              <input type="range" id="slider-brake" min="0" max="180" step="2" value="0" />
+            </div>
+
+            <div class="ctrl-group">
+              <label class="ctrl-label">
+                <span>Steering Angle</span>
+                <span id="val-steer">0.0°</span>
+              </label>
+              <input type="range" id="slider-steer" min="-30" max="30" step="0.5" value="0" />
+            </div>
+
+            <!-- Sequential Gear Selector -->
+            <div class="gear-cluster">
+              <span class="cluster-label">8-Speed Seamless Gearbox</span>
+              <div class="gear-buttons">
+                <button type="button" class="gear-btn" data-gear="R">R</button>
+                <button type="button" class="gear-btn active" data-gear="N">N</button>
+                <button type="button" class="gear-btn" data-gear="1">1</button>
+                <button type="button" class="gear-btn" data-gear="2">2</button>
+                <button type="button" class="gear-btn" data-gear="3">3</button>
+                <button type="button" class="gear-btn" data-gear="4">4</button>
+                <button type="button" class="gear-btn" data-gear="5">5</button>
+                <button type="button" class="gear-btn" data-gear="6">6</button>
+                <button type="button" class="gear-btn" data-gear="7">7</button>
+                <button type="button" class="gear-btn" data-gear="8">8</button>
+              </div>
+            </div>
+
+            <!-- Exploded View Slider -->
+            <div class="ctrl-group">
+              <label class="ctrl-label">
+                <span>Exploded View Separation</span>
+                <span id="val-exploded">0%</span>
+              </label>
+              <input type="range" id="slider-exploded" min="0" max="100" step="1" value="0" />
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Part Explorer & Isolation Panel -->
+      <aside class="parts panel-collapsible" id="panel-parts" data-panel="parts">
+        <div class="panel-head">
+          <h2 class="panel-title">Part Explorer</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="parts" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <div class="part-list">
+            <button type="button" class="part-item active" data-isolate="ALL">
+              <span class="part-dot"></span>
+              <span class="part-name">Full Vehicle Assembly (All Systems)</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="monocoque">
+              <span class="part-dot"></span>
+              <span class="part-name">1. Monocoque & Safety Cell (Ti Halo, Cockpit)</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="cockpitAccessories">
+              <span class="part-dot"></span>
+              <span class="part-name">2. Driver, Helmet, Mirrors & Sensors</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="brakes">
+              <span class="part-dot"></span>
+              <span class="part-name">3. Detailed Carbon Brakes (1400+ Hole Discs)</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="electrical">
+              <span class="part-dot"></span>
+              <span class="part-name">4. Electrical Looms & 800V Energy Store</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="powertrain">
+              <span class="part-dot"></span>
+              <span class="part-name">5. 1.6L V6 ICE, Valvetrain, Chain, Turbo & MGU-K</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="transmission">
+              <span class="part-dot"></span>
+              <span class="part-name">6. 8-Speed Seamless Gearbox, LSD & Driveshafts</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="suspension">
+              <span class="part-dot"></span>
+              <span class="part-name">7. Aerodynamic Suspension, Steering & Pirelli Tyres</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="floor">
+              <span class="part-dot"></span>
+              <span class="part-name">8. Underbody Floor, Jabroc Plank & Diffuser</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="bodywork">
+              <span class="part-dot"></span>
+              <span class="part-name">9. Active Front/Rear Wings, Sidepods & Shark Fin</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Technical Specifications & Compliance Panel -->
+      <aside class="lab panel-collapsible" id="panel-lab" data-panel="lab">
+        <div class="panel-head">
+          <h2 class="panel-title">2026 Regulations Compliance</h2>
+          <button type="button" class="panel-collapse-btn" data-collapse="lab" title="Collapse panel" aria-expanded="true">▾</button>
+        </div>
+        <div class="panel-body">
+          <div class="spec-table">
+            <div class="spec-row">
+              <span class="spec-key">Wheelbase</span>
+              <span class="spec-val">3400 mm (-200 mm)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Overall Width</span>
+              <span class="spec-val">1900 mm (-100 mm)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Minimum Weight</span>
+              <span class="spec-val">768 kg (-30 kg target)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">ICE Power</span>
+              <span class="spec-val">~400 kW (1.6L 90° V6)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">MGU-K Power</span>
+              <span class="spec-val">350 kW (up from 120 kW)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Fuel Energy Flow</span>
+              <span class="spec-val">3000 MJ/h max (Article C5)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">MGU-H</span>
+              <span class="spec-val">Banned (Pure Turbocharger)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Aero Drag Drop (X-Mode)</span>
+              <span class="spec-val">-55% Drag Reduction</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Front Tyres</span>
+              <span class="spec-val">280/710-18 (-25 mm)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Rear Tyres</span>
+              <span class="spec-val">375/710-18 (-30 mm)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Plank Material</span>
+              <span class="spec-val">10mm Jabroc + Titanium Pucks</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=2026"></script>
+</body>
+</html>
