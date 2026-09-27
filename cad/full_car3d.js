@@ -85,13 +85,31 @@ export function createFullCarAssembly(options = {}) {
     steeringRack: subassemblies.suspension.getObjectByName('Assembly_HPAS_Steering_Rack'),
     frontSuspension: subassemblies.suspension.getObjectByName('Front_Suspension_Assembly'),
     rearSuspension: subassemblies.suspension.getObjectByName('Rear_Suspension_Assembly'),
-    steeringWheel: subassemblies.monocoque.getObjectByName('Steering_Wheel_Assembly'),
+    frontLeftPivot: subassemblies.suspension.getObjectByName('Front_Upright_Pivot_Left'),
+    frontRightPivot: subassemblies.suspension.getObjectByName('Front_Upright_Pivot_Right'),
+    frontLeftBrake: subassemblies.brakes.getObjectByName('Brake_Front_Left_Pivot'),
+    frontRightBrake: subassemblies.brakes.getObjectByName('Brake_Front_Right_Pivot'),
+    frontSuspLeft: subassemblies.suspension.getObjectByName('Front_Suspension_Left'),
+    frontSuspRight: subassemblies.suspension.getObjectByName('Front_Suspension_Right'),
+    rearSuspLeft: subassemblies.suspension.getObjectByName('Rear_Suspension_Left'),
+    rearSuspRight: subassemblies.suspension.getObjectByName('Rear_Suspension_Right'),
+    steeringWheel: subassemblies.monocoque.getObjectByName('McLaren_PCU8D_FullAssembly') || subassemblies.monocoque.getObjectByName('Pivot_Steering_Wheel_Assembly'),
     frontWingFlaps: [
       subassemblies.bodywork.getObjectByName('FrontWing_ActiveFlap_Left'),
       subassemblies.bodywork.getObjectByName('FrontWing_ActiveFlap_Right')
     ],
-    rearWingFlap: subassemblies.bodywork.getObjectByName('RearWing_Active_UpperFlap')
+    rearWingFlap: subassemblies.bodywork.getObjectByName('RearWing_Active_UpperFlap'),
+    frontAero: subassemblies.bodywork.getObjectByName('Assembly_Active_Front_Aero'),
+    rearWing: subassemblies.bodywork.getObjectByName('Assembly_Active_Rear_Wing'),
+    wheelSpindles: []
   };
+
+  // Find all wheel spindles in the car assembly
+  masterCar.traverse(child => {
+    if (child.isGroup && child.name && child.name.startsWith('Wheel_Spindle_')) {
+      kinematics.wheelSpindles.push(child);
+    }
+  });
 
   // Base positions for exploded view offsets
   const basePositions = new Map();
@@ -112,6 +130,7 @@ export function createFullCarAssembly(options = {}) {
       steeringAngle = 0, // radians
       aeroMode = 'Z_MODE', // 'Z_MODE' (high downforce) or 'X_MODE' (low drag)
       gear = 1,
+      brakeKgf = 0,
       explodedProgress = 0 // 0.0 (assembled) to 1.0 (fully exploded)
     } = state;
 
@@ -138,7 +157,7 @@ export function createFullCarAssembly(options = {}) {
       }
     }
 
-    // 2. Drivetrain & Wheel Rotation (Wheel speed proportional to vehicle velocity)
+    // 2. Drivetrain & Wheel Spindle Rotation (Proportional to vehicle velocity)
     if (speedKmH > 0) {
       // Tyre radius = 0.355 m (3.55 dm). Circumference = 2 * PI * 0.355 = 2.23 m
       const wheelRps = (speedKmH * 1000 / 3600) / 2.23;
@@ -147,17 +166,53 @@ export function createFullCarAssembly(options = {}) {
       if (kinematics.driveshafts) {
         kinematics.driveshafts.rotation.y += wheelAngVel * dt;
       }
+
+      kinematics.wheelSpindles.forEach(spindle => {
+        if (spindle) {
+          spindle.rotation.y -= wheelAngVel * dt;
+        }
+      });
     }
 
-    // 3. Steering Kinematics
+    // 3. Steering Kinematics & Full Suspension Articulation
     if (kinematics.steeringWheel) {
-      kinematics.steeringWheel.rotation.x = -steeringAngle * 2.5; // Steering ratio
+      kinematics.steeringWheel.rotation.z = -steeringAngle * 2.5; // Steering column ratio
     }
     if (kinematics.steeringRack) {
       kinematics.steeringRack.position.y = steeringAngle * 0.45; // Lateral rack travel
     }
+    if (kinematics.frontLeftPivot) {
+      kinematics.frontLeftPivot.rotation.z = -steeringAngle;
+    }
+    if (kinematics.frontRightPivot) {
+      kinematics.frontRightPivot.rotation.z = -steeringAngle;
+    }
+    if (kinematics.frontLeftBrake) {
+      kinematics.frontLeftBrake.rotation.z = -steeringAngle;
+    }
+    if (kinematics.frontRightBrake) {
+      kinematics.frontRightBrake.rotation.z = -steeringAngle;
+    }
 
-    // 4. Active Aerodynamics Kinematics (Z-Mode vs X-Mode)
+    // 4. Dynamic Carbon Brake Disc Glowing (Red-hot under heavy braking)
+    const brakeEffort = (brakeKgf || 0) / 180;
+    if (materials.carbonFrictionDisc) {
+      if (brakeEffort > 0.05) {
+        if (!materials.carbonFrictionDisc.emissive) {
+          materials.carbonFrictionDisc.emissive = new THREE.Color(0, 0, 0);
+        }
+        materials.carbonFrictionDisc.emissive.setRGB(brakeEffort * 1.0, brakeEffort * 0.28, 0.02);
+        materials.carbonFrictionDisc.emissiveIntensity = brakeEffort * 2.8;
+      } else if (materials.carbonFrictionDisc.emissiveIntensity > 0) {
+        materials.carbonFrictionDisc.emissiveIntensity = THREE.MathUtils.lerp(
+          materials.carbonFrictionDisc.emissiveIntensity,
+          0,
+          0.05
+        );
+      }
+    }
+
+    // 5. Active Aerodynamics Kinematics (Z-Mode vs X-Mode)
     // Z-Mode: Front flaps +22°, Rear flap +26° (High downforce cornering)
     // X-Mode: Front flaps +4°, Rear flap +3° (Low drag straight line)
     const isXMode = aeroMode === 'X_MODE';
@@ -174,41 +229,122 @@ export function createFullCarAssembly(options = {}) {
       kinematics.rearWingFlap.rotation.y = THREE.MathUtils.lerp(kinematics.rearWingFlap.rotation.y, targetRearAngle, 0.15);
     }
 
-    // 5. Clean Vertical & Longitudinal Exploded View Offsets
+    // 6. Dramatic Exploded View Offsets (Exhaustive Mechanical Exposure)
     if (explodedProgress > 0) {
-      // Bodywork and Active Wings elevate vertically
+      // Bodywork elevates high overhead (+18.0 dm = 1.8 meters)
       if (subassemblies.bodywork) {
-        subassemblies.bodywork.position.z = THREE.MathUtils.lerp(0, 8.5, explodedProgress);
+        subassemblies.bodywork.position.z = THREE.MathUtils.lerp(0, 18.0, explodedProgress);
+      }
+      // Front wing slides forward (-12.0 dm = -1.2 meters)
+      if (kinematics.frontAero) {
+        kinematics.frontAero.position.x = THREE.MathUtils.lerp(0, -12.0, explodedProgress);
+      }
+      // Rear wing lifts and moves rearward
+      if (kinematics.rearWing) {
+        kinematics.rearWing.position.x = THREE.MathUtils.lerp(0, 8.0, explodedProgress);
+        kinematics.rearWing.position.z = THREE.MathUtils.lerp(0, 4.0, explodedProgress);
       }
       // Cockpit accessories & Helmet elevate
       if (subassemblies.cockpitAccessories) {
-        subassemblies.cockpitAccessories.position.z = THREE.MathUtils.lerp(0, 6.2, explodedProgress);
+        subassemblies.cockpitAccessories.position.z = THREE.MathUtils.lerp(0, 7.5, explodedProgress);
       }
-      // Powertrain and Turbo separate horizontally/vertically
+      // Powertrain and Turbo separate upward (+4.0 dm)
       if (subassemblies.powertrain) {
         subassemblies.powertrain.position.z = THREE.MathUtils.lerp(0, 4.0, explodedProgress);
       }
-      // Transmission separates rearward
+      // Transmission separates rearward (+7.0 dm)
       if (subassemblies.transmission) {
-        subassemblies.transmission.position.x = THREE.MathUtils.lerp(0, 5.0, explodedProgress);
+        subassemblies.transmission.position.x = THREE.MathUtils.lerp(0, 7.0, explodedProgress);
       }
-      // Wheels and suspension expand outward laterally
-      if (subassemblies.suspension) {
-        subassemblies.suspension.position.z = THREE.MathUtils.lerp(0, 1.5, explodedProgress);
+      // Electrical harness & 800V battery elevate (+2.5 dm)
+      if (subassemblies.electrical) {
+        subassemblies.electrical.position.z = THREE.MathUtils.lerp(0, 2.5, explodedProgress);
       }
-      // Floor drops slightly downward
+      // Floor drops downward (-5.0 dm)
       if (subassemblies.floor) {
-        subassemblies.floor.position.z = THREE.MathUtils.lerp(0, -2.5, explodedProgress);
+        subassemblies.floor.position.z = THREE.MathUtils.lerp(0, -5.0, explodedProgress);
+      }
+      // Suspension corners & wheels expand outward laterally (±6.0 dm)
+      if (kinematics.frontSuspLeft) {
+        kinematics.frontSuspLeft.position.y = THREE.MathUtils.lerp(0, 6.0, explodedProgress);
+      }
+      if (kinematics.frontSuspRight) {
+        kinematics.frontSuspRight.position.y = THREE.MathUtils.lerp(0, -6.0, explodedProgress);
+      }
+      if (kinematics.rearSuspLeft) {
+        kinematics.rearSuspLeft.position.y = THREE.MathUtils.lerp(0, 6.0, explodedProgress);
+      }
+      if (kinematics.rearSuspRight) {
+        kinematics.rearSuspRight.position.y = THREE.MathUtils.lerp(0, -6.0, explodedProgress);
+      }
+      // Brake corners expand laterally with wheels
+      if (subassemblies.brakes) {
+        subassemblies.brakes.traverse(child => {
+          if (child.name === 'Brake_Front_Left_Pivot') {
+            child.position.y = THREE.MathUtils.lerp(7.1, 13.1, explodedProgress);
+          } else if (child.name === 'Brake_Front_Right_Pivot') {
+            child.position.y = THREE.MathUtils.lerp(-7.1, -13.1, explodedProgress);
+          }
+        });
       }
     } else {
       // Reset to precise assembled datum coordinates
       if (subassemblies.bodywork) subassemblies.bodywork.position.set(0, 0, 0);
+      if (kinematics.frontAero) kinematics.frontAero.position.set(0, 0, 0);
+      if (kinematics.rearWing) kinematics.rearWing.position.set(0, 0, 0);
       if (subassemblies.cockpitAccessories) subassemblies.cockpitAccessories.position.set(0, 0, 0);
       if (subassemblies.powertrain) subassemblies.powertrain.position.set(0, 0, 0);
       if (subassemblies.transmission) subassemblies.transmission.position.set(0, 0, 0);
-      if (subassemblies.suspension) subassemblies.suspension.position.set(0, 0, 0);
+      if (subassemblies.electrical) subassemblies.electrical.position.set(0, 0, 0);
       if (subassemblies.floor) subassemblies.floor.position.set(0, 0, 0);
+      if (kinematics.frontSuspLeft) kinematics.frontSuspLeft.position.set(0, 0, 0);
+      if (kinematics.frontSuspRight) kinematics.frontSuspRight.position.set(0, 0, 0);
+      if (kinematics.rearSuspLeft) kinematics.rearSuspLeft.position.set(0, 0, 0);
+      if (kinematics.rearSuspRight) kinematics.rearSuspRight.position.set(0, 0, 0);
+      if (subassemblies.brakes) {
+        subassemblies.brakes.traverse(child => {
+          if (child.name === 'Brake_Front_Left_Pivot') child.position.set(0.0, 7.1, 3.55);
+          if (child.name === 'Brake_Front_Right_Pivot') child.position.set(0.0, -7.1, 3.55);
+        });
+      }
     }
+  };
+
+  /**
+   * setCutawayMode: Toggle semi-transparent ghost carbon on outer bodywork
+   * to fully reveal internal engine pistons, valvetrain, turbo, MGU-K, 8-speed gearbox,
+   * 800V battery, electrical looms, and carbon brake assemblies.
+   */
+  let cutawayActive = false;
+  const ghostMaterial = new THREE.MeshStandardMaterial({
+    color: 0x142036,
+    roughness: 0.18,
+    metalness: 0.85,
+    transparent: true,
+    opacity: 0.18,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+
+  masterCar.setCutawayMode = function(enabled) {
+    cutawayActive = enabled;
+    subassemblies.bodywork.traverse(child => {
+      if (child.isMesh && child.material) {
+        // Skip decals so liveries don't artifact
+        if (child.name && child.name.includes('Decal')) {
+          child.visible = !enabled;
+          return;
+        }
+        if (enabled) {
+          if (!child.userData.origMaterial) {
+            child.userData.origMaterial = child.material;
+          }
+          child.material = ghostMaterial;
+        } else if (child.userData.origMaterial) {
+          child.material = child.userData.origMaterial;
+        }
+      }
+    });
   };
 
   /**
@@ -230,6 +366,24 @@ export function createFullCarAssembly(options = {}) {
    * isolateAssembly: Show only a selected subassembly and dim others
    */
   masterCar.isolateAssembly = function(assemblyName) {
+    if (assemblyName === 'steering') {
+      Object.keys(subassemblies).forEach(key => {
+        subassemblies[key].visible = (key === 'monocoque');
+      });
+      if (subassemblies.monocoque) {
+        subassemblies.monocoque.children.forEach(child => {
+          child.visible = (child.name === 'Pivot_Steering_Wheel_Assembly');
+        });
+      }
+      return;
+    }
+
+    if (subassemblies.monocoque) {
+      subassemblies.monocoque.children.forEach(child => {
+        child.visible = true;
+      });
+    }
+
     Object.keys(subassemblies).forEach(key => {
       const sub = subassemblies[key];
       if (!assemblyName || assemblyName === 'ALL' || key === assemblyName) {

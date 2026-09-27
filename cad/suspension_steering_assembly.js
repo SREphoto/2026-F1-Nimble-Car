@@ -92,7 +92,11 @@ export function createSuspensionSteering(options = {}) {
     const tyreRadius = 3.55;               // 710mm diameter = 3.55 dm radius
     const rimRadius = 2.286;               // 18 inches = 457.2mm diameter = 2.286 dm radius
 
-    // 1. Pirelli 18-inch Slick Tyre Tread & Sidewall
+    // 1. Spindle Group (Contains all parts rotating with wheel velocity around local Y axle)
+    const spindle = new THREE.Group();
+    spindle.name = `Wheel_Spindle_${isRear ? 'Rear' : 'Front'}_${isLeft ? 'Left' : 'Right'}`;
+
+    // Pirelli 18-inch Slick Tyre Tread & Sidewall
     // Realistic curved crown profile revolving around local Y axle
     const tyreShape = new THREE.Shape();
     tyreShape.moveTo(rimRadius, -tyreWidth / 2);
@@ -105,13 +109,10 @@ export function createSuspensionSteering(options = {}) {
     tyreShape.quadraticCurveTo(rimRadius + 0.3, tyreWidth / 2 + 0.15, rimRadius, tyreWidth / 2);                 // Opposite bead
     tyreShape.closePath();
 
-    // LatheGeometry revolves points around local Y-axis:
-    // In our coordinate system, the wheel axle IS the Y-axis!
-    // No rotation needed: tyre natively rolls forward along X and spans Z!
     const tyreGeo = new THREE.LatheGeometry(tyreShape.getPoints(24), 36);
     const tyreMesh = new THREE.Mesh(tyreGeo, materials.pirelliRubber);
     tyreMesh.rotation.set(0, 0, 0);
-    cornerGroup.add(tyreMesh);
+    spindle.add(tyreMesh);
 
     // Authentic High-DPI Procedural Pirelli P Zero Sidewall Decal
     const sidewallTex = createPirelliSidewallTexture(isLeft);
@@ -127,13 +128,13 @@ export function createSuspensionSteering(options = {}) {
     sidewallMesh.rotation.x = isLeft ? -Math.PI / 2 : Math.PI / 2;
     sidewallMesh.position.set(0, isLeft ? (tyreWidth / 2 + 0.02) : -(tyreWidth / 2 + 0.02), 0);
     sidewallMesh.name = 'Pirelli_PZero_SidewallDecal';
-    cornerGroup.add(sidewallMesh);
+    spindle.add(sidewallMesh);
 
     // 2. BBS Forged Magnesium 18-inch Rim Barrel (Cylinder along Y-axis)
     const rimBarrelGeo = new THREE.CylinderGeometry(rimRadius, rimRadius, tyreWidth, 36, 1, true);
     const rimBarrel = new THREE.Mesh(rimBarrelGeo, materials.bbsMagnesium);
     rimBarrel.rotation.set(0, 0, 0); // Natively aligns along Y axle
-    cornerGroup.add(rimBarrel);
+    spindle.add(rimBarrel);
 
     // 3. Concave Carbon Fiber Aerodynamic Wheel Dish Cover (Matching Reference Images 1 & 2)
     const dishShape = new THREE.Shape();
@@ -153,7 +154,7 @@ export function createSuspensionSteering(options = {}) {
       dishMesh.position.set(0, -(tyreWidth / 2 - 0.08), 0);
     }
     dishMesh.name = 'Aero_WheelCover_ConcaveDish';
-    cornerGroup.add(dishMesh);
+    spindle.add(dishMesh);
 
     // 10 Radial Cooling Slats on Carbon Dish
     for (let v = 0; v < 10; v++) {
@@ -163,12 +164,17 @@ export function createSuspensionSteering(options = {}) {
       const vR = (0.7 + rimRadius) / 2;
       vent.position.set(Math.cos(vAng) * vR, isLeft ? (tyreWidth / 2 - 0.04) : -(tyreWidth / 2 - 0.04), Math.sin(vAng) * vR);
       vent.rotation.y = vAng;
-      cornerGroup.add(vent);
+      spindle.add(vent);
     }
 
-    // 4. Centerlock Nut & Conical Hub (Matching Reference Images: Gold Anodized Cone)
+    // 4. Centerlock Nut & Conical Hub (Matching Reference Images 1 & 2: Bright Yellow Nut)
     const hubConeGeo = new THREE.CylinderGeometry(0.18, 0.45, 0.38, 20);
-    const hubCone = new THREE.Mesh(hubConeGeo, materials.heatShieldGold || materials.titaniumAnodized);
+    const nutMat = new THREE.MeshStandardMaterial({
+      color: 0xd6e200, // Bright electric yellow centerlock socket
+      roughness: 0.28,
+      metalness: 0.40
+    });
+    const hubCone = new THREE.Mesh(hubConeGeo, nutMat);
     if (isLeft) {
       hubCone.rotation.set(0, 0, 0);
       hubCone.position.set(0, tyreWidth / 2 + 0.12, 0);
@@ -177,14 +183,14 @@ export function createSuspensionSteering(options = {}) {
       hubCone.position.set(0, -(tyreWidth / 2 + 0.12), 0);
     }
     hubCone.name = 'Centerlock_ConicalNut';
-    cornerGroup.add(hubCone);
+    spindle.add(hubCone);
 
     // Captive Wheel Nut Locking Pin
     const lockPinGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.28, 8);
     const lockPin = new THREE.Mesh(lockPinGeo, materials.titaniumBright);
     lockPin.rotation.z = Math.PI / 2;
     lockPin.position.set(0, isLeft ? (tyreWidth / 2 + 0.22) : -(tyreWidth / 2 + 0.22), 0);
-    cornerGroup.add(lockPin);
+    spindle.add(lockPin);
 
     // 5 Drive Pins in Hub Face
     for (let p = 0; p < 5; p++) {
@@ -193,8 +199,10 @@ export function createSuspensionSteering(options = {}) {
       const pin = new THREE.Mesh(pinGeo, materials.titaniumBright);
       pin.position.set(Math.cos(pAng) * 0.85, isLeft ? (tyreWidth / 2) : -(tyreWidth / 2), Math.sin(pAng) * 0.85);
       pin.rotation.set(0, 0, 0);
-      cornerGroup.add(pin);
+      spindle.add(pin);
     }
+
+    cornerGroup.add(spindle);
 
     // 5. 4x Zylon Safety Wheel Tethers (Anchored to Upright Carrier Inboard)
     for (let t = 0; t < 4; t++) {
@@ -246,14 +254,28 @@ export function createSuspensionSteering(options = {}) {
     const pullRodInner = new THREE.Vector3(1.8, side * 1.8, 2.2);
     fsCorner.add(createAeroLink(pullRodOuter, pullRodInner, 0.28, 0.08, materials.titaniumBright));
 
-    // Front Upright Carrier (Aluminum-Lithium monobloc casting)
+    // Front Upright & Steering Kingpin Pivot Group (Articulates with steering angle)
+    const frontPivot = new THREE.Group();
+    frontPivot.position.set(0.0, side * 6.9, 3.55);
+    frontPivot.rotation.x = isLeft ? -0.052 : 0.052; // Static negative camber (-3.0 deg)
+    frontPivot.name = `Front_Upright_Pivot_${isLeft ? 'Left' : 'Right'}`;
+
+    // Front Upright Carrier (Aluminum-Lithium monobloc casting) at origin of pivot
     const uprightGeo = new THREE.BoxGeometry(0.75, 0.45, 2.4);
     const uprightMesh = new THREE.Mesh(uprightGeo, materials.alLi2099);
-    uprightMesh.position.set(0.0, side * 6.9, 3.55);
-    fsCorner.add(uprightMesh);
+    uprightMesh.position.set(0, 0, 0);
+    frontPivot.add(uprightMesh);
 
-    // Front Wheel & 18" Tyre
-    fsCorner.add(createWheelCorner(0.0, side * 8.0, 3.55, false, isLeft));
+    // Steering arm extending forward-inboard from upright
+    const steerArmGeo = new THREE.BoxGeometry(0.4, 0.12, 0.12);
+    const steerArm = new THREE.Mesh(steerArmGeo, materials.alLi2099);
+    steerArm.position.set(-0.35, side * -0.15, 0);
+    frontPivot.add(steerArm);
+
+    // Front Wheel Corner (Hub is 1.1 dm outboard from pivot: 6.9 + 1.1 = 8.0 dm track)
+    frontPivot.add(createWheelCorner(0.0, side * 1.1, 0.0, false, isLeft));
+
+    fsCorner.add(frontPivot);
 
     frontSuspGroup.add(fsCorner);
   });
@@ -369,7 +391,9 @@ export function createSuspensionSteering(options = {}) {
     rsCorner.add(uprightMesh);
 
     // Rear Wheel & Wide 375mm Pirelli Tyre
-    rsCorner.add(createWheelCorner(34.0, side * 7.75, 3.55, true, isLeft));
+    const rearWheel = createWheelCorner(34.0, side * 7.75, 3.55, true, isLeft);
+    rearWheel.rotation.x = isLeft ? -0.030 : 0.030; // Static negative camber (-1.7 deg)
+    rsCorner.add(rearWheel);
 
     rearSuspGroup.add(rsCorner);
   });

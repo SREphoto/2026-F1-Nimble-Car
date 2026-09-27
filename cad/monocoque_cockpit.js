@@ -25,6 +25,12 @@ import {
   createStudWith12PtNut,
   createTorxScrew,
 } from "./fasteners.js";
+import {
+  createHaloApexDecalTexture,
+  createHaloArmDecalTexture,
+  createCockpitRimDecals,
+} from "./procedural_livery.js";
+import { createSteeringWheelPCU8D } from "./steering_wheel_pcu8d.js";
 
 export function buildMonocoqueAndCockpit(scene, mats) {
   const root = new THREE.Group();
@@ -225,6 +231,74 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     bolt.position.set(16.5, hy + (hy > 0 ? 0.18 : -0.18), 5.8);
     haloGroup.add(bolt);
   }
+
+  // -------------------------------------------------------------
+  // 2B. HALO SPONSOR DECALS & COCKPIT RIM GRAPHICS
+  // Matching Onboard Cockpit View (media_1790507836542.webp)
+  // -------------------------------------------------------------
+  // 1. Center Apex Decal: TAG Heuer Crest & 1Password
+  const haloApexTex = createHaloApexDecalTexture();
+  const haloApexMat = new THREE.MeshBasicMaterial({
+    map: haloApexTex,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const haloApexGeo = new THREE.PlaneGeometry(1.2, 0.6);
+  const haloApexMesh = new THREE.Mesh(haloApexGeo, haloApexMat);
+  haloApexMesh.position.set(9.22, 0, 7.32);
+  haloApexMesh.rotation.x = -Math.PI / 2;
+  haloApexMesh.rotation.z = Math.PI / 2;
+  haloApexMesh.name = "Decal_Halo_Apex_TAGHeuer";
+  haloGroup.add(haloApexMesh);
+
+  // 2. Driver Left Arm: AT&T Globe Logo & Text
+  const haloAttTex = createHaloArmDecalTexture(true);
+  const haloAttMat = new THREE.MeshBasicMaterial({
+    map: haloAttTex,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const haloAttGeo = new THREE.PlaneGeometry(1.4, 0.35);
+  const haloAttMesh = new THREE.Mesh(haloAttGeo, haloAttMat);
+  haloAttMesh.position.set(10.6, 1.45, 7.32);
+  haloAttMesh.rotation.x = -Math.PI / 2;
+  haloAttMesh.rotation.z = Math.PI / 2 - 0.32;
+  haloAttMesh.name = "Decal_Halo_Left_ATT";
+  haloGroup.add(haloAttMesh);
+
+  // 3. Driver Right Arm: ORACLE White Text
+  const haloOracleTex = createHaloArmDecalTexture(false);
+  const haloOracleMat = new THREE.MeshBasicMaterial({
+    map: haloOracleTex,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const haloOracleGeo = new THREE.PlaneGeometry(1.4, 0.35);
+  const haloOracleMesh = new THREE.Mesh(haloOracleGeo, haloOracleMat);
+  haloOracleMesh.position.set(10.6, -1.45, 7.32);
+  haloOracleMesh.rotation.x = -Math.PI / 2;
+  haloOracleMesh.rotation.z = Math.PI / 2 + 0.32;
+  haloOracleMesh.name = "Decal_Halo_Right_ORACLE";
+  haloGroup.add(haloOracleMesh);
+
+  // 4. Cockpit Rims: Verstappen & #1 Decals
+  [-1, 1].forEach((side) => {
+    const isLeft = side > 0;
+    const rimTex = createCockpitRimDecals(isLeft);
+    const rimMat = new THREE.MeshBasicMaterial({
+      map: rimTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const rimGeo = new THREE.PlaneGeometry(1.6, 0.38);
+    const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+    rimMesh.position.set(12.5, side * 3.14, 4.58);
+    rimMesh.rotation.x = isLeft ? -Math.PI / 2.2 : Math.PI / 2.2;
+    rimMesh.rotation.z = isLeft ? Math.PI / 2 : -Math.PI / 2;
+    rimMesh.name = `Decal_CockpitRim_${isLeft ? "LH" : "RH"}`;
+    tubGroup.add(rimMesh);
+  });
+
   root.add(haloGroup);
 
   // -------------------------------------------------------------
@@ -372,70 +446,48 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   qrMesh.position.set(-0.15, 0, -0.08);
   steeringGroup.add(qrMesh);
 
-  // PCU-8D Steering Wheel Carbon Monocoque Casing
-  const wheelCasingShape = new THREE.Shape();
-  wheelCasingShape.moveTo(-1.3, -0.9);
-  wheelCasingShape.lineTo(1.3, -0.9);
-  wheelCasingShape.lineTo(1.4, 0.9);
-  wheelCasingShape.lineTo(-1.4, 0.9);
-  wheelCasingShape.closePath();
+  // High-Fidelity PCU-8D Steering Wheel Model (Matching 4 Reference CAD Drawings)
+  const pcu8dWheel = createSteeringWheelPCU8D();
+  // Front face points toward driver (+X) with ergonomic rake angle
+  pcu8dWheel.rotation.set(0, -Math.PI / 2 + 0.20, 0);
+  pcu8dWheel.name = "McLaren_PCU8D_FullAssembly";
+  steeringGroup.add(pcu8dWheel);
 
-  const wheelGeo = new THREE.ExtrudeGeometry(wheelCasingShape, {
-    steps: 1, depth: 0.28, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.03
+  // Driver Blue Racing Gloves Gripping the Wheel (media_1790507836542.webp)
+  const gloveMat = new THREE.MeshStandardMaterial({
+    color: 0x163866, // Dark racing blue Nomex fabric
+    roughness: 0.85,
+    metalness: 0.08
   });
-  wheelGeo.center();
-  const wheelMesh = new THREE.Mesh(wheelGeo, mats.carbonGlossAero);
-  wheelMesh.rotation.x = Math.PI / 2;
-  wheelMesh.rotation.y = -0.35; // Authentic ergonomic rake angle
-  wheelMesh.name = "Steering_Wheel_Assembly";
-  steeringGroup.add(wheelMesh);
+  [-1.35, 1.35].forEach((handY) => {
+    const isLeft = handY > 0;
+    const gloveGroup = new THREE.Group();
+    gloveGroup.name = `Driver_RacingGlove_${isLeft ? "LH" : "RH"}`;
 
-  // Dual Contoured Silicone Hand Grips
-  for (const gy of [-1.35, 1.35]) {
-    const gripGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.45, 20);
-    const grip = new THREE.Mesh(gripGeo, mats.rubberSeal);
-    grip.position.set(0, gy, 0);
-    grip.rotation.y = -0.35;
-    steeringGroup.add(grip);
-  }
+    // Palm / Hand knuckle wrap around grip
+    const palmGeo = new THREE.CylinderGeometry(0.24, 0.26, 0.95, 16);
+    const palm = new THREE.Mesh(palmGeo, gloveMat);
+    palm.position.set(0.04, handY, 0);
+    palm.rotation.y = -0.35;
+    gloveGroup.add(palm);
 
-  // Central 4.3" High-Contrast Color LCD Display
-  const lcdGeo = new THREE.PlaneGeometry(1.15, 0.72);
-  const lcdMat = new THREE.MeshBasicMaterial({ color: 0x081018 });
-  const lcd = new THREE.Mesh(lcdGeo, lcdMat);
-  lcd.rotation.y = Math.PI / 2;
-  lcd.position.set(-0.16, 0, 0.15);
-  lcd.name = "UI_LCD_PCU8D";
-  steeringGroup.add(lcd);
+    // Forearm sleeve entering cockpit
+    const armGeo = new THREE.CylinderGeometry(0.28, 0.32, 2.4, 16);
+    const arm = new THREE.Mesh(armGeo, gloveMat);
+    arm.position.set(1.1, handY * 0.9, -0.35);
+    arm.rotation.z = Math.PI / 6;
+    arm.rotation.y = isLeft ? 0.3 : -0.3;
+    gloveGroup.add(arm);
 
-  // 6x Front Face Rotary Switches
-  const rotLocs = [
-    [-0.32, -0.42], [0.0, -0.42], [0.32, -0.42],
-    [-0.32, -0.68], [0.0, -0.68], [0.32, -0.68]
-  ];
-  rotLocs.forEach(([ry, rz], idx) => {
-    const knobGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.08, 18);
-    const knob = new THREE.Mesh(knobGeo, mats.anodizedBlue);
-    knob.rotation.y = Math.PI / 2;
-    knob.position.set(-0.16, ry, rz);
-    knob.name = `Knob_Rotary_Encoder_0${idx + 1}`;
-    steeringGroup.add(knob);
+    // White Nomex grip pads on inner palm
+    const padGeo = new THREE.BoxGeometry(0.05, 0.18, 0.65);
+    const padMat = new THREE.MeshStandardMaterial({ color: 0xe0e6ed, roughness: 0.9 });
+    const pad = new THREE.Mesh(padGeo, padMat);
+    pad.position.set(-0.18, handY, 0);
+    gloveGroup.add(pad);
+
+    steeringGroup.add(gloveGroup);
   });
-
-  // Rear Carbon Shifter Paddles & Clutch Launch Paddles
-  for (const py of [-1.15, 1.15]) {
-    const paddleGeo = new THREE.BoxGeometry(0.02, 0.28, 0.85);
-    const paddle = new THREE.Mesh(paddleGeo, mats.carbonMatteStructural);
-    paddle.position.set(0.22, py, 0.12);
-    paddle.name = `Btn_Paddle_Shift_${py > 0 ? "Up_LH" : "Down_RH"}`;
-    steeringGroup.add(paddle);
-
-    const clutchGeo = new THREE.BoxGeometry(0.02, 0.22, 0.55);
-    const clutch = new THREE.Mesh(clutchGeo, mats.carbonMatteStructural);
-    clutch.position.set(0.22, py, -0.45);
-    clutch.name = `Btn_Paddle_Clutch_${py > 0 ? "LH" : "RH"}`;
-    steeringGroup.add(clutch);
-  }
 
   root.add(steeringGroup);
 

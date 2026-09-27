@@ -608,17 +608,25 @@ export function createDetailedBrakes(options = {}) {
 
   const mats = options.materials || defaultMaterials;
 
-  // Front Left Corner (LH)
+  // Front Left Corner (LH) with Kingpin Steering Pivot
+  const flPivot = new THREE.Group();
+  flPivot.position.set(0.0, 7.1, 3.55);
+  flPivot.name = "Brake_Front_Left_Pivot";
   const fl = buildDetailedBrakeCorner(null, mats, "LH");
-  fl.position.set(0.0, 7.1, 3.55);
+  fl.position.set(0, 0, 0);
   fl.rotation.x = Math.PI / 2;
-  group.add(fl);
+  flPivot.add(fl);
+  group.add(flPivot);
 
-  // Front Right Corner (RH)
+  // Front Right Corner (RH) with Kingpin Steering Pivot
+  const frPivot = new THREE.Group();
+  frPivot.position.set(0.0, -7.1, 3.55);
+  frPivot.name = "Brake_Front_Right_Pivot";
   const fr = buildDetailedBrakeCorner(null, mats, "RH");
-  fr.position.set(0.0, -7.1, 3.55);
+  fr.position.set(0, 0, 0);
   fr.rotation.x = -Math.PI / 2;
-  group.add(fr);
+  frPivot.add(fr);
+  group.add(frPivot);
 
   // Rear Left Corner (LH)
   const rl = buildDetailedBrakeCorner(null, mats, "LH");

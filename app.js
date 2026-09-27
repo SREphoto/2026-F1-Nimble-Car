@@ -13,6 +13,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createFullCarAssembly } from './cad/full_car3d.js';
+import { createTrackEnvironment } from './cad/track_environment.js';
+import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
 
 // =========================================================================
@@ -23,6 +25,7 @@ const state = {
   rpm: 0,
   speedKmH: 0,
   gear: 'N',
+  prevGear: 'N',
   throttle: 0,        // 0 to 1
   brakeKgf: 0,        // 0 to 180
   steeringDeg: 0,     // -30 to +30 deg
@@ -30,9 +33,13 @@ const state = {
   pyrofuseCut: false,
   batterySoc: 0.85,
   explodedProgress: 0.0,
+  cutawayActive: false,
   wireframe: false,
   autoRotate: false,
   orbitSpeed: 1.0,
+  soundMuted: true,
+  tourActive: false,
+  tourAngle: 0,
   labLightIntensity: 1.2
 };
 
@@ -41,10 +48,11 @@ const state = {
 // =========================================================================
 const container = document.getElementById('viewport3d');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0c1016);
+scene.background = new THREE.Color(0x3a5676); // Race day sky
+scene.fog = new THREE.FogExp2(0x3a5676, 0.0015);
 
-const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 200);
-camera.position.set(-32, 22, 45); // Default 3/4 isometric
+const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 400);
+camera.position.set(-36, 18, 42); // 3/4 front view framing car on finish line
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(container.clientWidth, container.clientHeight);
@@ -52,13 +60,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.20;
 container.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.target.set(17, 3.5, 0); // Center on mid-car chassis datum
+controls.target.set(12, 3.2, 0); // Focus on front wing / cockpit crossing finish line
 
 window.THREE = THREE;
 window.camera = camera;
@@ -67,39 +75,40 @@ window.scene = scene;
 window.renderer = renderer;
 
 // =========================================================================
-// 3. STUDIO LIGHTING & ENVIRONMENT (Standard Y-Up Studio Frame)
+// 3. RACE TRACK ENVIRONMENT & LIGHTING
 // =========================================================================
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+// 3A. Formula 1 Grand Prix Finish Line Track Environment
+const trackEnv = createTrackEnvironment();
+scene.add(trackEnv);
+
+// 3B. Directional Sun & Stadium Floodlights
+const ambientLight = new THREE.AmbientLight(0xddeeff, 0.75);
 scene.add(ambientLight);
 
-// Overhead Key Light
-const mainKeyLight = new THREE.DirectionalLight(0xffffff, 1.8);
-mainKeyLight.position.set(20, 50, 25);
-mainKeyLight.castShadow = true;
-mainKeyLight.shadow.mapSize.width = 2048;
-mainKeyLight.shadow.mapSize.height = 2048;
-mainKeyLight.shadow.bias = -0.0005;
-scene.add(mainKeyLight);
+// Primary Sunlight (High angled sun casting crisp shadows on tarmac)
+const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.2);
+sunLight.position.set(60, 140, 50);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 4096;
+sunLight.shadow.mapSize.height = 4096;
+sunLight.shadow.camera.near = 10;
+sunLight.shadow.camera.far = 350;
+sunLight.shadow.camera.left = -120;
+sunLight.shadow.camera.right = 120;
+sunLight.shadow.camera.top = 120;
+sunLight.shadow.camera.bottom = -120;
+sunLight.shadow.bias = -0.0003;
+scene.add(sunLight);
 
-// Front Fill Light (Illuminates nosecone and front wing)
-const frontFillLight = new THREE.DirectionalLight(0xccddff, 1.2);
-frontFillLight.position.set(-40, 20, 15);
+// Front Fill Light (Illuminates nosecone, front wing, and chequered line)
+const frontFillLight = new THREE.DirectionalLight(0xb0d0ff, 1.4);
+frontFillLight.position.set(-80, 45, 10);
 scene.add(frontFillLight);
 
-// Opposite Side Fill Light
-const sideFillLight = new THREE.DirectionalLight(0x88bbff, 0.9);
-sideFillLight.position.set(17, 15, -40);
-scene.add(sideFillLight);
-
-// Rear Rim Light (Highlights rear wing, dorsal fin, and exhaust)
-const rimLight = new THREE.DirectionalLight(0xffeedd, 1.3);
-rimLight.position.set(45, 25, 0);
-scene.add(rimLight);
-
-// Studio Floor Datum Grid (Horizontal Y = 0 ground plane)
-const gridHelper = new THREE.GridHelper(80, 80, 0x00d4e8, 0x1f2937);
-gridHelper.position.set(17, 0, 0);
-scene.add(gridHelper);
+// Pit Wall & Grandstand Bounce Light
+const bounceLight = new THREE.DirectionalLight(0xffeedd, 0.9);
+bounceLight.position.set(15, 25, -60);
+scene.add(bounceLight);
 
 // =========================================================================
 // 4. LOAD PROCEDURAL FULL CAR ASSEMBLY
@@ -211,6 +220,13 @@ document.querySelectorAll('.panel-collapse-btn').forEach(btn => {
 });
 
 // Viewport Toolbar Buttons
+const btnCutaway = document.getElementById('btn-cutaway');
+btnCutaway?.addEventListener('click', () => {
+  state.cutawayActive = !state.cutawayActive;
+  btnCutaway.classList.toggle('active', state.cutawayActive);
+  carModel?.setCutawayMode(state.cutawayActive);
+});
+
 const btnExplode = document.getElementById('btn-explode');
 btnExplode?.addEventListener('click', () => {
   state.explodedProgress = state.explodedProgress > 0 ? 0 : 1.0;
@@ -226,6 +242,21 @@ btnWireframe?.addEventListener('click', () => {
   state.wireframe = !state.wireframe;
   btnWireframe.classList.toggle('active', state.wireframe);
   carModel?.setWireframeMode(state.wireframe);
+});
+
+const btnAudio = document.getElementById('btn-audio');
+btnAudio?.addEventListener('click', () => {
+  soundEngine.init();
+  state.soundMuted = !state.soundMuted;
+  soundEngine.setMuted(state.soundMuted);
+  btnAudio.classList.toggle('active', !state.soundMuted);
+  btnAudio.textContent = state.soundMuted ? '🔊 Sound: Off' : '🔊 Sound: On';
+});
+
+const btnTour = document.getElementById('btn-tour');
+btnTour?.addEventListener('click', () => {
+  state.tourActive = !state.tourActive;
+  btnTour.classList.toggle('active', state.tourActive);
 });
 
 const btnAutoRotate = document.getElementById('btn-auto-rotate');
@@ -253,38 +284,56 @@ document.getElementById('camera-zoom')?.addEventListener('input', e => {
 document.getElementById('lab-light')?.addEventListener('input', e => {
   state.labLightIntensity = parseFloat(e.target.value);
   document.getElementById('lab-light-val').textContent = `${state.labLightIntensity.toFixed(1)}×`;
-  mainKeyLight.intensity = 1.8 * state.labLightIntensity;
-  ambientLight.intensity = 0.45 * state.labLightIntensity;
+  sunLight.intensity = 2.2 * state.labLightIntensity;
+  ambientLight.intensity = 0.75 * state.labLightIntensity;
 });
 
 document.getElementById('lab-light-mood')?.addEventListener('change', e => {
   const mood = e.target.value;
-  if (mood === 'bright') {
-    scene.background.setHex(0x1a2330);
+  if (mood === 'sunset') {
+    scene.background.setHex(0x5a2412);
+    scene.fog.color.setHex(0x5a2412);
+    sunLight.color.setHex(0xff7722);
+    sunLight.intensity = 2.6 * state.labLightIntensity;
+    ambientLight.color.setHex(0xffbb88);
+    ambientLight.intensity = 0.65 * state.labLightIntensity;
+  } else if (mood === 'night') {
+    scene.background.setHex(0x050812);
+    scene.fog.color.setHex(0x050812);
+    sunLight.color.setHex(0x88aacc);
+    sunLight.intensity = 0.8 * state.labLightIntensity;
+    ambientLight.color.setHex(0x223344);
+    ambientLight.intensity = 0.40 * state.labLightIntensity;
+  } else if (mood === 'studio') {
+    scene.background.setHex(0x0a0d14);
+    scene.fog.color.setHex(0x0a0d14);
+    sunLight.color.setHex(0xffffff);
+    sunLight.intensity = 1.8 * state.labLightIntensity;
     ambientLight.color.setHex(0xffffff);
-  } else if (mood === 'dim') {
-    scene.background.setHex(0x05070a);
-    ambientLight.color.setHex(0x334455);
-  } else if (mood === 'cool') {
-    scene.background.setHex(0x0c131f);
-    ambientLight.color.setHex(0x88ccff);
-  } else if (mood === 'warm') {
-    scene.background.setHex(0x16120c);
-    ambientLight.color.setHex(0xffddaa);
+    ambientLight.intensity = 0.55 * state.labLightIntensity;
   } else {
-    scene.background.setHex(0x0c1016);
-    ambientLight.color.setHex(0xffffff);
+    // Grand Prix (Day)
+    scene.background.setHex(0x3a5676);
+    scene.fog.color.setHex(0x3a5676);
+    sunLight.color.setHex(0xfff5ea);
+    sunLight.intensity = 2.2 * state.labLightIntensity;
+    ambientLight.color.setHex(0xddeeff);
+    ambientLight.intensity = 0.75 * state.labLightIntensity;
   }
 });
 
-// Standardized Viewpoint Camera Presets (Y-Up Studio Frame)
+// Standardized Viewpoint Camera Presets (Finish Line Framing)
 const CAMERA_PRESETS = {
-  CAM_ISO: { pos: [-36, 26, 48], target: [16, 3.5, 0] },
-  CAM_FRONT: { pos: [-48, 5.0, 0], target: [10, 3.2, 0] },
-  CAM_SIDE: { pos: [16.8, 5.0, 84], target: [16.8, 3.5, 0] },
-  CAM_TOP: { pos: [16.8, 92, 0.001], target: [16.8, 0, 0] },
-  CAM_EXPLODED: { pos: [-36, 36, 56], target: [16, 6.0, 0] },
-  STATE_ACTIVE: { pos: [-34, 20, 44], target: [16, 3.5, 0] }
+  CAM_ISO: { pos: [-38, 16, 42], target: [10, 3.2, 0] },
+  CAM_FRONT: { pos: [-46, 4.2, 0], target: [6, 2.8, 0] },
+  CAM_SIDE: { pos: [14, 4.8, 76], target: [14, 3.2, 0] },
+  CAM_TOP: { pos: [14, 88, 0.001], target: [14, 0, 0] },
+  CAM_REAR: { pos: [56, 5.6, 0], target: [34, 5.2, 0] },
+  CAM_STEERING: { pos: [11.2, 5.6, 0], target: [8.2, 4.2, 0] },
+  CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
+  CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
+  CAM_EXPLODED: { pos: [-42, 38, 58], target: [14, 6.0, 0] },
+  STATE_ACTIVE: { pos: [-32, 14, 36], target: [8, 3.2, 0] }
 };
 
 window.setCameraView = function(viewName) {
@@ -351,6 +400,7 @@ window.setCameraView = function(viewName) {
       steeringAngle: THREE.MathUtils.degToRad(state.steeringDeg),
       aeroMode: state.aeroMode,
       gear: state.gear,
+      brakeKgf: state.brakeKgf,
       explodedProgress: state.explodedProgress
     });
   }
@@ -380,6 +430,7 @@ btnEngineStart?.addEventListener('click', () => {
 const btnAeroToggle = document.getElementById('btn-aero-toggle');
 btnAeroToggle?.addEventListener('click', () => {
   state.aeroMode = state.aeroMode === 'Z_MODE' ? 'X_MODE' : 'Z_MODE';
+  soundEngine.playAeroSwitch();
   btnAeroToggle.classList.toggle('active', state.aeroMode === 'X_MODE');
   btnAeroToggle.textContent = `${state.aeroMode} (AERO)`;
   const pill = document.getElementById('status-pill');
@@ -414,6 +465,7 @@ document.getElementById('slider-brake')?.addEventListener('input', e => {
   // Safety interlock: heavy braking drops X-Mode to Z-Mode
   if (state.brakeKgf > 15 && state.aeroMode === 'X_MODE') {
     state.aeroMode = 'Z_MODE';
+    soundEngine.playAeroSwitch();
     btnAeroToggle?.classList.remove('active');
     if (btnAeroToggle) btnAeroToggle.textContent = 'Z-MODE (AERO)';
   }
@@ -430,22 +482,47 @@ document.getElementById('slider-exploded')?.addEventListener('input', e => {
   btnExplode?.classList.toggle('active', state.explodedProgress > 0);
 });
 
-// Gear Buttons
+// Gear Buttons with Pneumatic Shift Pop SFX
 document.querySelectorAll('.gear-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const g = btn.dataset.gear;
-    state.gear = isNaN(g) ? g : parseInt(g);
+    const newGear = isNaN(g) ? g : parseInt(g);
+    if (newGear !== state.gear) {
+      soundEngine.playShiftPop();
+    }
+    state.gear = newGear;
   });
 });
 
-// Part Explorer Isolation
+// Part Explorer Isolation & Focused Camera Framing
+const PART_TARGETS = {
+  ALL: { target: [12, 3.2, 0], pos: [-38, 16, 42] },
+  monocoque: { target: [12, 3.5, 0], pos: [-4, 12, 22] },
+  cockpitAccessories: { target: [13, 6.2, 0], pos: [8, 12, 16] },
+  steering: { target: [8.2, 4.2, 0], pos: [11.2, 5.6, 0] },
+  brakes: { target: [0, 3.5, 8], pos: [-10, 8, 20] },
+  electrical: { target: [18, 3.0, 0], pos: [18, 14, 18] },
+  powertrain: { target: [24, 3.8, 0], pos: [18, 14, 20] },
+  transmission: { target: [34, 3.6, 0], pos: [44, 12, 20] },
+  suspension: { target: [0, 3.5, 8], pos: [-12, 8, 22] },
+  floor: { target: [16, 1.2, 0], pos: [16, 8, 34] },
+  bodywork: { target: [16, 4.0, 0], pos: [-26, 18, 40] }
+};
+
 document.querySelectorAll('.part-item').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.part-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    carModel?.isolateAssembly(item.dataset.isolate);
+    const partKey = item.dataset.isolate;
+    carModel?.isolateAssembly(partKey);
+
+    // Frame camera on the selected part
+    const pt = PART_TARGETS[partKey] || PART_TARGETS.ALL;
+    controls.target.set(...pt.target);
+    camera.position.set(...pt.pos);
+    controls.update();
   });
 });
 
@@ -478,6 +555,25 @@ function animate() {
     state.speedKmH = Math.max(0, state.speedKmH - 30 * dt);
   }
 
+  // Update Procedural Sound Engine
+  soundEngine.update({
+    rpm: state.rpm,
+    throttle: state.throttle,
+    speedKmH: state.speedKmH,
+    gear: state.gear,
+    aeroMode: state.aeroMode,
+    brakeKgf: state.brakeKgf
+  });
+
+  // Cinematic 360° Drone Tour Flyaround
+  if (state.tourActive) {
+    state.tourAngle += 0.008;
+    camera.position.x = 12 + Math.sin(state.tourAngle) * 44;
+    camera.position.z = Math.cos(state.tourAngle) * 44;
+    camera.position.y = 14 + Math.sin(state.tourAngle * 1.5) * 6;
+    camera.lookAt(controls.target);
+  }
+
   // Update Topbar Status
   const statusDetail = document.getElementById('status-detail');
   if (statusDetail) {
@@ -492,6 +588,7 @@ function animate() {
       steeringAngle: THREE.MathUtils.degToRad(state.steeringDeg),
       aeroMode: state.aeroMode,
       gear: state.gear,
+      brakeKgf: state.brakeKgf,
       explodedProgress: state.explodedProgress
     });
   }
@@ -499,7 +596,9 @@ function animate() {
   // Update PCU-8D Display
   updateLcdDisplay();
 
-  controls.update();
+  if (!state.tourActive) {
+    controls.update();
+  }
   renderer.render(scene, camera);
 }
 

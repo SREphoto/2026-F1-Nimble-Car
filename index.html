@@ -33,8 +33,11 @@
       <!-- 3D Viewport & Stage -->
       <section class="stage">
         <div class="view-toolbar">
-          <button type="button" class="view-btn" id="btn-explode" title="Separate major assemblies">Exploded view</button>
+          <button type="button" class="view-btn" id="btn-cutaway" title="Toggle translucent bodywork to inspect internal engine, MGU-K, battery, and gearbox">X-Ray (Cutaway)</button>
+          <button type="button" class="view-btn" id="btn-explode" title="Separate major assemblies along kinematic axes">Exploded view</button>
           <button type="button" class="view-btn" id="btn-wireframe" title="Toggle wireframe overlay">Wireframe</button>
+          <button type="button" class="view-btn" id="btn-audio" title="Toggle authentic procedural V6 turbo engine sound">🔊 Sound: Off</button>
+          <button type="button" class="view-btn" id="btn-tour" title="Cinematic 360° drone flyaround">Cinematic Tour</button>
           <button type="button" class="view-btn" id="btn-auto-rotate" title="Orbit camera automatically">Auto-rotate</button>
           
           <label class="orbit-speed-ctrl" title="Auto-orbit speed">
@@ -47,19 +50,18 @@
             <input type="range" id="camera-zoom" min="0" max="100" step="1" value="50" />
             <span id="camera-zoom-val">50%</span>
           </label>
-          <label class="orbit-speed-ctrl light-ctrl" title="Lab studio lighting intensity">
+          <label class="orbit-speed-ctrl light-ctrl" title="Circuit floodlight & sun intensity">
             <span>Light</span>
             <input type="range" id="lab-light" min="0.2" max="2.5" step="0.05" value="1.2" />
             <span id="lab-light-val">1.2×</span>
           </label>
-          <label class="orbit-speed-ctrl light-ctrl" title="Lighting mood">
-            <span>Mood</span>
-            <select id="lab-light-mood" aria-label="Lighting mood">
-              <option value="neutral" selected>Studio Neutral</option>
-              <option value="bright">Bright Daylight</option>
-              <option value="dim">Night Race</option>
-              <option value="cool">Cool Blue</option>
-              <option value="warm">Warm Tungsten</option>
+          <label class="orbit-speed-ctrl light-ctrl" title="Track atmosphere and lighting mood">
+            <span>Atmosphere</span>
+            <select id="lab-light-mood" aria-label="Track atmosphere">
+              <option value="grandprix" selected>Grand Prix (Day)</option>
+              <option value="sunset">Sunset (Golden Hour)</option>
+              <option value="night">Night Race (Floodlights)</option>
+              <option value="studio">Studio Focus</option>
             </select>
           </label>
 
@@ -69,6 +71,10 @@
             <button type="button" class="view-btn cam-btn" data-cam="CAM_FRONT" title="Front Elevation">Front</button>
             <button type="button" class="view-btn cam-btn" data-cam="CAM_SIDE" title="Side Profile">Side</button>
             <button type="button" class="view-btn cam-btn" data-cam="CAM_TOP" title="Top Planform">Top</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_REAR" title="Direct Rear View (Wings, Exhaust & FIA Rain Light)">Rear</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_STEERING" title="McLaren PCU-8D Steering Wheel Close-Up">Steering</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_COCKPIT" title="Driver POV Through Halo">Cockpit</button>
+            <button type="button" class="view-btn cam-btn" data-cam="CAM_WHEEL" title="Pirelli Tire & Wheel Cover Close-Up">Wheel</button>
             <button type="button" class="view-btn cam-btn" data-cam="CAM_EXPLODED" title="Exploded View">Exploded</button>
             <button type="button" class="view-btn cam-btn" data-cam="STATE_ACTIVE" title="Active High-Speed Run">Active</button>
           </div>
@@ -172,6 +178,10 @@
             <button type="button" class="part-item" data-isolate="cockpitAccessories">
               <span class="part-dot"></span>
               <span class="part-name">2. Driver, Helmet, Mirrors & Sensors</span>
+            </button>
+            <button type="button" class="part-item" data-isolate="steering">
+              <span class="part-dot"></span>
+              <span class="part-name">McLaren Applied PCU-8D Steering Wheel</span>
             </button>
             <button type="button" class="part-item" data-isolate="brakes">
               <span class="part-dot"></span>

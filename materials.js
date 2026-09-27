@@ -8,10 +8,13 @@ import * as THREE from "three";
 export function createCarMaterials() {
   const mats = {
     // Carbon Composites
-    carbonGlossAero: new THREE.MeshStandardMaterial({
+    carbonGlossAero: new THREE.MeshPhysicalMaterial({
       color: 0x14171c,
-      roughness: 0.14,
-      metalness: 0.55,
+      roughness: 0.20,
+      metalness: 0.45,
+      clearcoat: 0.95,
+      clearcoatRoughness: 0.08,
+      reflectivity: 0.85,
       side: THREE.DoubleSide,
     }),
     carbonMatteStructural: new THREE.MeshStandardMaterial({
@@ -30,11 +33,15 @@ export function createCarMaterials() {
       color: 0x1c1e22,
       roughness: 0.82,
       metalness: 0.12,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0.0,
     }),
     carbonFrictionSweptTrack: new THREE.MeshStandardMaterial({
       color: 0x24282f,
       roughness: 0.65,
       metalness: 0.28,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0.0,
     }),
 
     // Titanium & Alloys
@@ -209,6 +216,18 @@ export function createCarMaterials() {
       emissiveIntensity: 3.5,
       roughness: 0.2,
     }),
+    ledGreen: new THREE.MeshStandardMaterial({
+      color: 0x00e676,
+      emissive: 0x00e676,
+      emissiveIntensity: 3.5,
+      roughness: 0.2,
+    }),
+    ledBlue: new THREE.MeshStandardMaterial({
+      color: 0x00b0ff,
+      emissive: 0x00b0ff,
+      emissiveIntensity: 3.5,
+      roughness: 0.2,
+    }),
     ledAmber: new THREE.MeshStandardMaterial({
       color: 0xffa500,
       emissive: 0xffa500,
@@ -221,11 +240,14 @@ export function createCarMaterials() {
       emissiveIntensity: 1.2,
       roughness: 0.25,
     }),
-    // Oracle Red Bull Racing 2026 Livery Palette
-    redBullNavy: new THREE.MeshStandardMaterial({
-      color: 0x0f1d32, // Deep metallic racing navy blue
-      roughness: 0.28,
-      metalness: 0.52,
+    // 2026 Livery Palette
+    redBullNavy: new THREE.MeshPhysicalMaterial({
+      color: 0x0a1424, // Deep metallic racing midnight navy blue
+      roughness: 0.18,
+      metalness: 0.65,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
+      reflectivity: 0.90,
       side: THREE.DoubleSide,
     }),
     redBullYellow: new THREE.MeshStandardMaterial({
@@ -250,6 +272,31 @@ export function createCarMaterials() {
       color: 0x00a399, // Petronas teal / accent livery color
       roughness: 0.25,
       metalness: 0.45,
+    }),
+
+    // Showroom Stage & Graphic Enhancements
+    showcaseTarmac: new THREE.MeshStandardMaterial({
+      color: 0x0c0f14,
+      roughness: 0.35,
+      metalness: 0.45,
+      side: THREE.DoubleSide,
+    }),
+    showcaseEdgeChrome: new THREE.MeshStandardMaterial({
+      color: 0xd4dbe4,
+      roughness: 0.15,
+      metalness: 0.95,
+    }),
+    neonCyan: new THREE.MeshStandardMaterial({
+      color: 0x00d4e8,
+      emissive: 0x00d4e8,
+      emissiveIntensity: 2.2,
+      roughness: 0.1,
+    }),
+    neonRed: new THREE.MeshStandardMaterial({
+      color: 0xd90429,
+      emissive: 0xd90429,
+      emissiveIntensity: 2.0,
+      roughness: 0.1,
     }),
   };
 

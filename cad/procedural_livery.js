@@ -27,7 +27,16 @@ function finalizeTexture(canvas) {
 }
 
 /**
+/**
  * 1. Pirelli 18-Inch Sidewall Texture (Yellow Medium Compound)
+ * Matches reference photos media_1790507833839.webp & media_1790507835807.webp:
+ * - Electric blue outer rim bead ring
+ * - Official Pirelli yellow typography with horizontal top bar and red accent in P
+ * - FSC certified tree eco-logo
+ * - Curved checkered flag yellow ribbon arc with concentric inner dashed line
+ * - White barcode sticker with "C3303" and barcode stripes
+ * - Bold italic yellow "P ZERO" lettering
+ * - Fine white technical serial text ("18 INCH - FOR RACING USE ONLY - MADE IN ROMANIA")
  */
 export function createPirelliSidewallTexture(isLeft = true) {
   const size = 1024;
@@ -38,38 +47,47 @@ export function createPirelliSidewallTexture(isLeft = true) {
   const cx = size / 2;
   const cy = size / 2;
 
-  // Dark matte rubber base
+  // Dark matte scrubbed rubber base with micro-radial noise
   ctx.fillStyle = '#16181c';
   ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.49, 0, Math.PI * 2);
+  ctx.arc(cx, cy, size * 0.495, 0, Math.PI * 2);
   ctx.fill();
 
+  // Subtle radial rubber scrub texture
+  ctx.strokeStyle = '#1b1d22';
+  ctx.lineWidth = 1.5;
+  for (let a = 0; a < Math.PI * 2; a += 0.03) {
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * (size * 0.33), cy + Math.sin(a) * (size * 0.33));
+    ctx.lineTo(cx + Math.cos(a) * (size * 0.49), cy + Math.sin(a) * (size * 0.49));
+    ctx.stroke();
+  }
+
   // Outer Bead & Inner Rim Shadows
-  ctx.strokeStyle = '#0d0f12';
+  ctx.strokeStyle = '#0a0c0e';
+  ctx.lineWidth = 12;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.485, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // ELECTRIC BLUE RIM BEAD FLANGE RING (From reference photos media_1790507833839 & media_1790507835807)
+  ctx.strokeStyle = '#0055ff';
   ctx.lineWidth = 14;
   ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.47, 0, Math.PI * 2);
+  ctx.arc(cx, cy, size * 0.332, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Pirelli Bright Yellow Circular Stripe
-  ctx.strokeStyle = '#f6b800';
-  ctx.lineWidth = 22;
+  ctx.strokeStyle = '#1a88ff';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.40, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Inner Yellow Accent Line
-  ctx.strokeStyle = '#f6b800';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+  ctx.arc(cx, cy, size * 0.338, 0, Math.PI * 2);
   ctx.stroke();
 
   // Helper to draw curved text along an arc
-  function drawCurvedText(text, radius, startAngle, letterSpacing = 0.045, isTop = true) {
+  function drawCurvedText(text, radius, startAngle, letterSpacing = 0.045, isTop = true, font = '900 48px "Arial Black", sans-serif', color = '#f6b800') {
     ctx.save();
-    ctx.font = '900 52px "Arial Black", "Impact", sans-serif';
-    ctx.fillStyle = '#f6b800';
+    ctx.font = font;
+    ctx.fillStyle = color;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -88,22 +106,100 @@ export function createPirelliSidewallTexture(isLeft = true) {
     ctx.restore();
   }
 
-  // Top Text: "P ZERO"
-  drawCurvedText('P  Z E R O', size * 0.40, -Math.PI / 2, 0.055, true);
+  // 1. TOP SECTION: "PIRELLI" LOGO (At -Math.PI / 2)
+  drawCurvedText('P I R E L L I', size * 0.425, -Math.PI / 2, 0.048, true, '900 52px "Arial Black", sans-serif', '#f6b800');
 
-  // Bottom Text: "PIRELLI"
-  drawCurvedText('P I R E L L I', size * 0.40, Math.PI / 2, 0.052, false);
-
-  // Red Accent Tab next to Pirelli logo
+  // Red Accent Stripe inside P
   ctx.save();
+  const pAngle = -Math.PI / 2 - 0.12;
+  ctx.translate(cx + Math.cos(pAngle) * size * 0.425, cy + Math.sin(pAngle) * size * 0.425);
+  ctx.rotate(pAngle + Math.PI / 2);
   ctx.fillStyle = '#d90429';
-  const redTabAng = Math.PI / 2 + 0.28;
-  ctx.translate(cx + Math.cos(redTabAng) * size * 0.40, cy + Math.sin(redTabAng) * size * 0.40);
-  ctx.rotate(redTabAng - Math.PI / 2);
-  ctx.fillRect(-18, -10, 36, 20);
+  ctx.fillRect(-10, -3, 20, 6);
   ctx.restore();
 
-  // Center Rim Opening (Transparent hole for carbon dish)
+  // FSC Certified Tree Eco-Logo (Beside Pirelli)
+  ctx.save();
+  const fscAngle = -Math.PI / 2 - 0.22;
+  ctx.translate(cx + Math.cos(fscAngle) * size * 0.422, cy + Math.sin(fscAngle) * size * 0.422);
+  ctx.rotate(fscAngle + Math.PI / 2);
+  ctx.fillStyle = '#f6b800';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🌲', 0, -4);
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('FSC', 0, 12);
+  ctx.restore();
+
+  // 2. YELLOW CHECKERED FLAG ARC WITH CONCENTRIC DASHED LINE (Right quadrant)
+  const chkRadius = size * 0.412;
+  const startChk = -Math.PI / 2 + 0.25;
+  const endChk = Math.PI / 2 - 0.25;
+  const numCols = 22;
+  const colStep = (endChk - startChk) / numCols;
+
+  for (let c = 0; c < numCols; c++) {
+    const a1 = startChk + c * colStep;
+    const a2 = a1 + colStep * 0.85;
+
+    // Outer row
+    if (c % 2 === 0) {
+      ctx.strokeStyle = '#f6b800';
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.arc(cx, cy, chkRadius + 5, a1, a2);
+      ctx.stroke();
+    }
+    // Inner row
+    if (c % 2 === 1) {
+      ctx.strokeStyle = '#f6b800';
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.arc(cx, cy, chkRadius - 5, a1, a2);
+      ctx.stroke();
+    }
+  }
+
+  // Inner dashed yellow line running along checkered ribbon
+  ctx.save();
+  ctx.setLineDash([8, 6]);
+  ctx.strokeStyle = '#f6b800';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, chkRadius - 13, startChk, endChk);
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. WHITE BARCODE STICKER WITH "C3303" (Near lower-right shoulder)
+  ctx.save();
+  const bcAngle = Math.PI / 2 - 0.38;
+  ctx.translate(cx + Math.cos(bcAngle) * size * 0.43, cy + Math.sin(bcAngle) * size * 0.43);
+  ctx.rotate(bcAngle + Math.PI / 2);
+  // White rectangular sticker backing
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-18, -26, 36, 52);
+  // Barcode stripes
+  ctx.fillStyle = '#000000';
+  const barWidths = [2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 3, 2];
+  let curX = -15;
+  barWidths.forEach(bw => {
+    ctx.fillRect(curX, -22, bw, 28);
+    curX += bw + 1.5;
+  });
+  // "C3303" text
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('C3303', 0, 18);
+  ctx.restore();
+
+  // 4. BOTTOM SECTION: "P ZERO" (At Math.PI / 2)
+  drawCurvedText('P  Z E R O', size * 0.425, Math.PI / 2, 0.055, false, 'italic 900 54px "Arial Black", sans-serif', '#f6b800');
+
+  // 5. TECHNICAL SERIAL LETTERING IN CRISP WHITE
+  drawCurvedText('18" FOR RACING USE ONLY · MAXIMUM LOAD 850 KG · 2026 SPEC', size * 0.368, -Math.PI / 2, 0.024, true, 'bold 13px monospace', '#b0bec5');
+  drawCurvedText('SAFETY WARNING · DO NOT MOUNT ON 17" RIMS · FIA HOMOLOGATION', size * 0.368, Math.PI / 2, 0.023, false, 'bold 13px monospace', '#b0bec5');
+
+  // Center Rim Opening (Transparent hole for carbon wheel dish cover)
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
   ctx.arc(cx, cy, size * 0.32, 0, Math.PI * 2);
@@ -112,6 +208,7 @@ export function createPirelliSidewallTexture(isLeft = true) {
 
   return finalizeTexture(canvas);
 }
+
 
 /**
  * 2. Sidepod Flank Sponsor Livery: ORACLE & Red Bull Racing
@@ -487,6 +584,248 @@ export function createEndplateTexture(isLeft = true) {
   ctx.quadraticCurveTo(size * 0.5, size * 0.65, 0, size * 0.75);
   ctx.closePath();
   ctx.fill();
+
+  return finalizeTexture(canvas);
+}
+
+/**
+ * 7. Halo Apex Decal Texture (TAG Heuer Crest + 1Password)
+ * Matching reference photo media_1790507836542.webp
+ */
+export function createHaloApexDecalTexture() {
+  const w = 512;
+  const h = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // Transparent background
+  ctx.clearRect(0, 0, w, h);
+
+  // TAG Heuer Shield Crest (Center Apex)
+  ctx.save();
+  ctx.translate(w / 2, 85);
+
+  // Shield boundary
+  ctx.beginPath();
+  ctx.moveTo(-75, -55);
+  ctx.lineTo(75, -55);
+  ctx.lineTo(75, 5);
+  ctx.lineTo(0, 65);
+  ctx.lineTo(-75, 5);
+  ctx.closePath();
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Green upper section (TAG)
+  ctx.beginPath();
+  ctx.moveTo(-70, -50);
+  ctx.lineTo(70, -50);
+  ctx.lineTo(70, 0);
+  ctx.lineTo(-70, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#00843d';
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 36px "Arial Black", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('TAG', 0, -25);
+
+  // Red lower section (HEUER)
+  ctx.beginPath();
+  ctx.moveTo(-70, 0);
+  ctx.lineTo(70, 0);
+  ctx.lineTo(70, 5);
+  ctx.lineTo(0, 58);
+  ctx.lineTo(-70, 5);
+  ctx.closePath();
+  ctx.fillStyle = '#d90429';
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px "Arial Black", sans-serif';
+  ctx.fillText('HEUER', 0, 24);
+  ctx.restore();
+
+  // 1Password Logo & Text (Lower Lip)
+  ctx.save();
+  ctx.translate(w / 2, 205);
+  // Keyhole/padlock circle icon
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(-95, 0, 16, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-97, -6, 4, 12);
+
+  // "1Password" text
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('1Password', -65, 0);
+  ctx.restore();
+
+  return finalizeTexture(canvas);
+}
+
+/**
+ * 8. Halo Arm Sponsor Decal (AT&T on Left, ORACLE on Right)
+ * Matching reference photo media_1790507836542.webp
+ */
+export function createHaloArmDecalTexture(isLeft = true) {
+  const w = 512;
+  const h = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  if (isLeft) {
+    // Driver's Left Arm: AT&T Globe + Text
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    // Globe symbol
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(-90, 0, 28, 0, Math.PI * 2);
+    ctx.stroke();
+    // Globe horizontal bands
+    for (let b = -18; b <= 18; b += 9) {
+      const bw = Math.sqrt(Math.max(0, 28 * 28 - b * b));
+      ctx.beginPath();
+      ctx.moveTo(-90 - bw, b);
+      ctx.lineTo(-90 + bw, b);
+      ctx.stroke();
+    }
+    // "AT&T" text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 54px "Arial Black", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('AT&T', -45, 0);
+    ctx.restore();
+  } else {
+    // Driver's Right Arm: ORACLE White Text
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 56px "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ORACLE', 0, 0);
+    ctx.restore();
+  }
+
+  return finalizeTexture(canvas);
+}
+
+/**
+ * 9. Cockpit Rim Driver & Sponsor Decals
+ * Matching reference photo media_1790507836542.webp
+ */
+export function createCockpitRimDecals(isLeft = true) {
+  const w = 512;
+  const h = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  if (isLeft) {
+    // Left Rim: M. VERSTAPPEN + Dutch Flag
+    ctx.save();
+    ctx.translate(60, h / 2);
+    // Dutch Flag (Red, White, Blue horizontal stripes)
+    const fw = 42;
+    const fh = 28;
+    ctx.fillStyle = '#ae1c28'; // Dutch Red
+    ctx.fillRect(0, -fh / 2, fw, fh / 3);
+    ctx.fillStyle = '#ffffff'; // White
+    ctx.fillRect(0, -fh / 2 + fh / 3, fw, fh / 3);
+    ctx.fillStyle = '#21468b'; // Dutch Blue
+    ctx.fillRect(0, -fh / 2 + (2 * fh) / 3, fw, fh / 3);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, -fh / 2, fw, fh);
+
+    // "M. VERSTAPPEN" text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('M. VERSTAPPEN', fw + 16, 0);
+    ctx.restore();
+  } else {
+    // Right Rim: #1 + Dutch Flag + Pepe Jeans
+    ctx.save();
+    ctx.translate(60, h / 2);
+    // Driver Number 1 in Red Bull font
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 36px "Arial Black", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('1', 0, 0);
+
+    // Dutch Flag
+    const fw = 38;
+    const fh = 26;
+    const fx = 35;
+    ctx.fillStyle = '#ae1c28';
+    ctx.fillRect(fx, -fh / 2, fw, fh / 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(fx, -fh / 2 + fh / 3, fw, fh / 3);
+    ctx.fillStyle = '#21468b';
+    ctx.fillRect(fx, -fh / 2 + (2 * fh) / 3, fw, fh / 3);
+
+    // "Pepe Jeans"
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'italic bold 24px sans-serif';
+    ctx.fillText('Pepe Jeans', fx + fw + 18, 0);
+    ctx.restore();
+  }
+
+  return finalizeTexture(canvas);
+}
+
+/**
+ * 10. Rear Wing Endplate Inner Gradient (Red-to-Blue Fade)
+ * Matching reference photo media_1790507837418.webp
+ */
+export function createRearWingEndplateInnerTexture(isLeft = true) {
+  const w = 512;
+  const h = 1024;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // Red-to-Deep-Navy gradient fade running down the inner endplate
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0.0, '#d90429'); // Vibrant Red Bull red at top
+  grad.addColorStop(0.35, '#880c28');
+  grad.addColorStop(0.70, '#0c1626'); // Transition into deep metallic navy
+  grad.addColorStop(1.0, '#060a12');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Carbon twill weave micro-pattern
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.lineWidth = 2;
+  for (let y = 0; y < h; y += 12) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y + 24);
+    ctx.stroke();
+  }
 
   return finalizeTexture(canvas);
 }

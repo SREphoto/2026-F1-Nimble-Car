@@ -1,30 +1,59 @@
 /**
- * 2026 Formula 1 "Nimble Car" Bodywork
+ * 2026 Formula 1 "Nimble Car" Bodywork & Active Aerodynamics
  * SREdesigns - Samuel R Erwin III
  * 
- * 3D CAD for the 2026 Formula 1 "Nimble Car":
- * 1. 3D Sculpted Parabolic FIS Nosecone (Drooping from Bulkhead A to front wing, Yellow tip, Navy body)
- * 2. Active Front Wing & FWEP (Swept spoon mainplane, active 2-stage flaps, diveplanes, footplates, slot gap separators)
- * 3. 3D Sculpted Sidepods & Radiator Intakes (Overbite letterbox scoops, deep undercuts, waterslide gulley, cooling gills)
- * 4. Engine Cover, Airbox & Dorsal Shark Fin (Yellow roll hoop airbox intake, Coke-bottle taper, shark fin, Inconel exhaust)
- * 5. Active Rear Wing Assembly (Spoon mainplane, swan-neck pylons, dual vertical rain LEDs)
- * 
- * Coordinate System (Universal Automotive Datum):
- * - X: Longitudinal axis (Front Wing X = -10.5 to -8.5 dm, Nosecone X = -9.5 to 0 dm, Cockpit X = 0 to 22 dm, Rear Axle X = 34 dm, Rear Wing X = 36.5 to 38.5 dm)
- * - Y: Lateral axis (-Y right, +Y left, width spanning ±9.5 dm at wheels)
- * - Z: Vertical axis (0 ground datum, 1.0 floor plank, 3.55 wheel axle center, 7.2 halo, 9.45 airbox apex)
+ * 3D CAD for 2026 Formula 1 Active Front & Rear Wings, FIS Nosecone,
+ * Sidepods, Radiator Ducts, Shark Fin, and Endplates.
+ * Fully matching user wireframe engineering drawings.
  */
 
 import * as THREE from 'three';
 import { materials } from '../materials.js';
-import { createSocketHeadBolt, createTorxScrew } from './fasteners.js';
 import {
   createSidepodLiveryTexture,
   createEngineCoverLiveryTexture,
   createNoseconeLiveryTexture,
   createRearWingOracleTexture,
-  createEndplateTexture
+  createEndplateTexture,
+  createRearWingEndplateInnerTexture
 } from './procedural_livery.js';
+
+/**
+ * Helper: Create an explicit 3D quad decal with deterministic UVs
+ * Guaranteed zero upside-down or backwards rotation issues.
+ * @param {THREE.Vector3} p00 - Bottom-Left (UV 0, 0)
+ * @param {THREE.Vector3} p10 - Bottom-Right (UV 1, 0)
+ * @param {THREE.Vector3} p11 - Top-Right (UV 1, 1)
+ * @param {THREE.Vector3} p01 - Top-Left (UV 0, 1)
+ * @param {THREE.Material} material
+ */
+function createDecalQuad(p00, p10, p11, p01, material) {
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array([
+    p00.x, p00.y, p00.z,
+    p10.x, p10.y, p10.z,
+    p11.x, p11.y, p11.z,
+
+    p00.x, p00.y, p00.z,
+    p11.x, p11.y, p11.z,
+    p01.x, p01.y, p01.z,
+  ]);
+  const uvs = new Float32Array([
+    0, 0,
+    1, 0,
+    1, 1,
+
+    0, 0,
+    1, 1,
+    0, 1,
+  ]);
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.castShadow = true;
+  return mesh;
+}
 
 export function createActiveWingsBodywork(options = {}) {
   const group = new THREE.Group();
@@ -39,48 +68,46 @@ export function createActiveWingsBodywork(options = {}) {
 
   // =========================================================================
   // 1. ACTIVE FRONT WING & FIS NOSECONE ASSEMBLY
-  // Matches Reference Images 1, 2, 7 & 8:
-  // - 3D aerodynamic drooping nosecone tapering from Bulkhead A-A down to front wing
-  // - Swept carbon spoon mainplane
-  // - 2-stage active movable upper flaps with slot gap separators
-  // - Cambered outwash front wing endplates with curved diveplanes and footplates
+  // Matches User Wireframe Drawing (media_1790507089454.png):
+  // - Smooth parabolic drooping nosecone from Bulkhead A down to front wing datum
+  // - Low-ground-clearance spoon mainplane (Z = 0.55 dm = 55 mm off tarmac)
+  // - 2-Stage active flaps with authentic slot gaps
+  // - Flared ski-ramp footplate on outer endplates
   // =========================================================================
   const frontAeroGroup = new THREE.Group();
   frontAeroGroup.name = 'Assembly_Active_Front_Aero';
 
   // -------------------------------------------------------------------------
   // 1A. PROCEDURAL 3D LOFTED NOSECONE (FIA Front Impact Structure)
-  // Drooping smoothly from Bulkhead A-A (X = 0) to Front Wing (X = -9.5 dm)
+  // Drooping continuously from Cockpit Bulkhead (X = 0) down to Front Wing (X = -10.2)
   // -------------------------------------------------------------------------
   const noseGroup = new THREE.Group();
   noseGroup.name = 'Nosecone_FIS_Assembly';
 
-  // Build a true 3D lofted aerodynamic nosecone using quad rings
-  const numRings = 24;
+  const numRings = 28;
   const numSegments = 32;
   const noseVertices = [];
   const noseIndices = [];
   const noseUvs = [];
 
   for (let i = 0; i <= numRings; i++) {
-    const u = i / numRings; // 0.0 at Bulkhead A-A (X=0), 1.0 at nose tip (X=-9.5)
-    const x = -u * 9.5;
+    const u = i / numRings; // 0.0 at Bulkhead A-A (X=0), 1.0 at nose tip (X=-10.2)
+    const x = -u * 10.2;
 
-    // Centerline droop curve matching Bulkhead A-A (Z=2.7) down to nose tip (Z=1.35)
-    const zCenter = 2.70 - 1.35 * Math.pow(u, 1.2);
+    // Smooth continuous convex curvature from Z = 3.9 down to Z = 1.05
+    const zCenter = 2.60 - 1.55 * Math.pow(u, 1.35);
 
-    // Cross-sectional radii (smoothly tapering from bulkhead to sleek aerodynamic tip)
-    const ry = 1.60 * (1.0 - 0.65 * u); // Half-width (1.60 dm down to 0.56 dm)
-    const rz = 1.50 * (1.0 - 0.62 * u); // Half-height (1.50 dm down to 0.57 dm)
+    // Cross-sectional radii (smoothly tapering from monocoque to aerodynamic tip)
+    const ry = 1.65 * (1.0 - 0.68 * u); // Half-width (1.65 dm down to 0.52 dm)
+    const rz = 1.55 * (1.0 - 0.64 * u); // Half-height (1.55 dm down to 0.55 dm)
 
     for (let j = 0; j <= numSegments; j++) {
       const theta = (j / numSegments) * Math.PI * 2;
-      // Flattish bottom, elliptical top
       const y = Math.cos(theta) * ry;
       let z = zCenter + Math.sin(theta) * rz;
       if (Math.sin(theta) < 0) {
-        // Flatten underside for clean under-nose aerodynamic keel
-        z = zCenter + Math.sin(theta) * rz * 0.8;
+        // Flat underside for clean ground effect keel
+        z = zCenter + Math.sin(theta) * rz * 0.75;
       }
 
       noseVertices.push(x, y, z);
@@ -88,7 +115,6 @@ export function createActiveWingsBodywork(options = {}) {
     }
   }
 
-  // Generate quad strip indices
   for (let i = 0; i < numRings; i++) {
     for (let j = 0; j < numSegments; j++) {
       const a = i * (numSegments + 1) + j;
@@ -112,176 +138,179 @@ export function createActiveWingsBodywork(options = {}) {
   noseMesh.name = 'Nosecone_MainBody_Navy';
   noseGroup.add(noseMesh);
 
-  // Vibrant Racing Yellow Nose Tip (Matching Reference Image 1 & 7)
-  const tipGeo = new THREE.SphereGeometry(0.55, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  // Vibrant Racing Yellow Nose Tip Dome
+  const tipGeo = new THREE.SphereGeometry(0.52, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
   const tipMesh = new THREE.Mesh(tipGeo, yellowMat);
   tipMesh.rotation.z = Math.PI / 2;
-  tipMesh.position.set(-9.5, 0, 1.35);
+  tipMesh.position.set(-10.2, 0, 1.05);
   tipMesh.scale.set(0.65, 1.0, 0.95);
   tipMesh.name = 'Nosecone_YellowTip';
   noseGroup.add(tipMesh);
 
-  // Red Bull Charging Bull Flank Silhouettes on Nose
-  [-1, 1].forEach((side, bIdx) => {
-    const bullGroup = new THREE.Group();
-    bullGroup.position.set(-5.5, side * 1.15, 2.45);
-    bullGroup.rotation.y = side > 0 ? 0.08 : -0.08;
-
-    // Golden Sun disk
-    const sunGeo = new THREE.CircleGeometry(0.35, 20);
-    const sunMesh = new THREE.Mesh(sunGeo, yellowMat);
-    sunMesh.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
-    bullGroup.add(sunMesh);
-
-    // Bull Red silhouette badge
-    const bullShape = new THREE.Shape();
-    bullShape.moveTo(-0.45, -0.15);
-    bullShape.lineTo(-0.2, 0.15);
-    bullShape.quadraticCurveTo(0.0, 0.35, 0.3, 0.25);
-    bullShape.lineTo(0.45, 0.1);
-    bullShape.lineTo(0.25, -0.05);
-    bullShape.lineTo(0.15, -0.2);
-    bullShape.closePath();
-
-    const bullMesh = new THREE.Mesh(new THREE.ShapeGeometry(bullShape), redMat);
-    bullMesh.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
-    bullMesh.position.set(0, side * 0.02, 0);
-    bullGroup.add(bullMesh);
-
-    noseGroup.add(bullGroup);
+  // Horizontal Side Camera Pods on Nose (Matching wireframe drawing)
+  [-1, 1].forEach((side, cIdx) => {
+    const camGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 12);
+    const camMesh = new THREE.Mesh(camGeo, carbonMatte);
+    camMesh.rotation.x = Math.PI / 2;
+    camMesh.position.set(-6.5, side * 1.55, 2.3);
+    noseGroup.add(camMesh);
   });
 
-  // Carbon Fiber Under-Nose Keel & Pylons (attaching to Front Wing mainplane)
-  const keelGeo = new THREE.BoxGeometry(4.5, 0.42, 0.55);
-  const keelMesh = new THREE.Mesh(keelGeo, carbonMat);
-  keelMesh.position.set(-6.5, 0, 1.6);
-  noseGroup.add(keelMesh);
-
-  [-0.65, 0.65].forEach((pY, pIdx) => {
-    const pylonGeo = new THREE.BoxGeometry(0.85, 0.08, 0.65);
-    const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
-    pylonMesh.position.set(-8.8, pY, 1.1);
-    noseGroup.add(pylonMesh);
-  });
-
-  // Telemetry Pitot Tube Mast (Mounted on top of monocoque/nose junction at X = -1.2, Z = 4.4)
-  const pitotMastGeo = new THREE.CylinderGeometry(0.02, 0.03, 0.65, 12);
+  // Vertical Pitot Mast on Upper Nose Bridge (Matching wireframe markup)
+  const pitotMastGeo = new THREE.CylinderGeometry(0.02, 0.03, 0.75, 12);
   const pitotMast = new THREE.Mesh(pitotMastGeo, materials.titaniumBright);
-  pitotMast.position.set(-1.2, 0, 4.45);
+  pitotMast.position.set(-2.0, 0, 4.45);
   noseGroup.add(pitotMast);
 
-  const pitotProbeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.35, 8);
+  const pitotProbeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.45, 8);
   const pitotProbe = new THREE.Mesh(pitotProbeGeo, materials.titaniumBright);
   pitotProbe.rotation.z = Math.PI / 2;
-  pitotProbe.position.set(-1.35, 0, 4.75);
+  pitotProbe.position.set(-2.2, 0, 4.8);
   noseGroup.add(pitotProbe);
 
   frontAeroGroup.add(noseGroup);
 
   // -------------------------------------------------------------------------
   // 1B. ACTIVE FRONT WING MAINPLANE & FLAPS
-  // Spanning Y in [-8.6, +8.6] dm with 2-stage active flaps
+  // Spanning Y in [-8.8, +8.8] dm, ground clearance Z = 0.55 dm (55 mm off tarmac)
   // -------------------------------------------------------------------------
   const frontWingGroup = new THREE.Group();
   frontWingGroup.name = 'FrontWing_Aerofoil_Assembly';
-  frontWingGroup.position.set(-9.2, 0.0, 1.15);
+  frontWingGroup.position.set(-9.8, 0.0, 0.55);
 
-  // Swept Mainplane with 3D Center Droop
-  const fwCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(1.2, -8.6, 0.45),
-    new THREE.Vector3(0.6, -5.5, 0.15),
-    new THREE.Vector3(0.0, 0.0, 0.0),
-    new THREE.Vector3(0.6, 5.5, 0.15),
-    new THREE.Vector3(1.2, 8.6, 0.45)
-  ]);
+  // Front Wing Mainplane Mesh (Contoured continuous carbon spoon mainplane)
+  const mainplaneWidth = 17.6; // 1760 mm span
+  const mainplaneChord = 2.4;  // 240 mm chord
+  const mainplaneShape = new THREE.Shape();
+  mainplaneShape.moveTo(-1.2, 0.0);
+  mainplaneShape.quadraticCurveTo(0.0, 0.16, 1.2, 0.06);
+  mainplaneShape.lineTo(1.15, -0.02);
+  mainplaneShape.quadraticCurveTo(0.0, 0.04, -1.2, -0.04);
+  mainplaneShape.closePath();
 
-  // Mainplane Aerofoil Cross Section
-  // Note: Frenet frames along fwCurve map shape X to normal (Z/height) and shape Y to binormal (X/length)
-  const fwShape = new THREE.Shape();
-  fwShape.moveTo(0.0, -1.6); // Leading edge (front)
-  fwShape.quadraticCurveTo(0.08, -0.4, 0.03, 1.4); // Upper camber surface
-  fwShape.lineTo(-0.03, 1.35); // Trailing edge (rear)
-  fwShape.quadraticCurveTo(-0.02, -0.4, -0.01, -1.6); // Lower flat surface
-  fwShape.closePath();
+  const fwMainGeo = new THREE.ExtrudeGeometry(mainplaneShape, { steps: 24, depth: mainplaneWidth, bevelEnabled: false });
+  fwMainGeo.center();
 
-  // Extrude along sweep
-  const fwExtrudeSettings = {
-    steps: 24,
-    bevelEnabled: false,
-    extrudePath: fwCurve
-  };
-  const fwMainGeo = new THREE.ExtrudeGeometry(fwShape, fwExtrudeSettings);
+  // Apply subtle sweep-back and center spoon droop across vertices
+  const fwPos = fwMainGeo.attributes.position;
+  for (let p = 0; p < fwPos.count; p++) {
+    const ySpan = fwPos.getY(p); // Spanwise coordinate before rotation
+    const normSpan = Math.abs(ySpan) / (mainplaneWidth / 2);
+    // Sweep-back: tips move rearward by 1.2 dm
+    fwPos.setX(p, fwPos.getX(p) + Math.pow(normSpan, 1.5) * 1.2);
+    // Center droop: tips rise by 0.35 dm
+    fwPos.setZ(p, fwPos.getZ(p) + Math.pow(normSpan, 2.0) * 0.35);
+  }
+  fwMainGeo.computeVertexNormals();
+
   const fwMainMesh = new THREE.Mesh(fwMainGeo, carbonMat);
+  fwMainMesh.rotation.x = Math.PI / 2; // Span along Y
   fwMainMesh.castShadow = true;
   fwMainMesh.name = 'FrontWing_Mainplane';
   frontWingGroup.add(fwMainMesh);
 
-  // 2-Stage Active Upper Flaps (Left & Right)
-  const activeFlapAngle = options.frontFlapAngle || 0.38; // Z-Mode angle
+  // -------------------------------------------------------------------------
+  // 1C. 2-STAGE ACTIVE UPPER FLAPS (Left & Right)
+  // Articulating between Z-Mode (+22°) and X-Mode (+4°)
+  // -------------------------------------------------------------------------
+  const activeFlapAngle = options.frontFlapAngle || 0.38;
 
   [-1, 1].forEach((side, sIdx) => {
     const isLeft = side > 0;
     const flapAssembly = new THREE.Group();
     flapAssembly.name = `FrontWing_ActiveFlap_${isLeft ? 'Left' : 'Right'}`;
-    flapAssembly.position.set(0.4, side * 4.6, 0.28);
+    flapAssembly.position.set(0.25, side * 5.0, 0.22);
 
-    // Active Flap Pivot
     const pivotNode = new THREE.Group();
     pivotNode.rotation.y = isLeft ? activeFlapAngle : -activeFlapAngle;
 
-    // Aerodynamic Upper Flap Blade
-    const flapShape = new THREE.Shape();
-    flapShape.moveTo(-0.7, 0);
-    flapShape.quadraticCurveTo(0.1, 0.14, 0.9, 0.08);
-    flapShape.lineTo(0.85, 0.02);
-    flapShape.quadraticCurveTo(0.1, 0.05, -0.7, -0.02);
-    flapShape.closePath();
+    // Flap 1 (Lower Active Element)
+    const flap1Shape = new THREE.Shape();
+    flap1Shape.moveTo(-0.55, 0.0);
+    flap1Shape.quadraticCurveTo(0.0, 0.12, 0.65, 0.05);
+    flap1Shape.lineTo(0.60, 0.01);
+    flap1Shape.quadraticCurveTo(0.0, 0.04, -0.55, -0.02);
+    flap1Shape.closePath();
 
-    const flapGeo = new THREE.ExtrudeGeometry(flapShape, { steps: 4, depth: 7.2, bevelEnabled: false });
-    flapGeo.center();
-    const flapMesh = new THREE.Mesh(flapGeo, navyMat);
-    flapMesh.rotation.x = Math.PI / 2;
-    pivotNode.add(flapMesh);
+    const flap1Geo = new THREE.ExtrudeGeometry(flap1Shape, { steps: 4, depth: 7.2, bevelEnabled: false });
+    flap1Geo.center();
+    const flap1Mesh = new THREE.Mesh(flap1Geo, navyMat);
+    flap1Mesh.rotation.x = Math.PI / 2;
+    pivotNode.add(flap1Mesh);
 
-    // 4x Slot Gap Separators
+    // Flap 2 (Upper Gurney Element with 12mm slot gap)
+    const flap2Shape = new THREE.Shape();
+    flap2Shape.moveTo(-0.40, 0.0);
+    flap2Shape.quadraticCurveTo(0.0, 0.10, 0.45, 0.04);
+    flap2Shape.lineTo(0.42, 0.01);
+    flap2Shape.quadraticCurveTo(0.0, 0.03, -0.40, -0.02);
+    flap2Shape.closePath();
+
+    const flap2Geo = new THREE.ExtrudeGeometry(flap2Shape, { steps: 4, depth: 6.8, bevelEnabled: false });
+    flap2Geo.center();
+    const flap2Mesh = new THREE.Mesh(flap2Geo, navyMat);
+    flap2Mesh.rotation.x = Math.PI / 2;
+    flap2Mesh.position.set(0.35, 0, 0.18); // Elevated slot gap
+    pivotNode.add(flap2Mesh);
+
+    // 4x Slot Gap Separators (connecting Flap 1 and Flap 2)
     for (let s = 0; s < 4; s++) {
-      const sepY = -3.0 + s * 2.0;
-      const sepGeo = new THREE.BoxGeometry(0.35, 0.03, 0.16);
-      const sepMesh = new THREE.Mesh(sepGeo, carbonMat);
-      sepMesh.position.set(0.1, sepY, -0.08);
+      const sepY = -2.7 + s * 1.8;
+      const sepGeo = new THREE.BoxGeometry(0.35, 0.03, 0.22);
+      const sepMesh = new THREE.Mesh(sepGeo, carbonMatte);
+      sepMesh.position.set(0.18, sepY, 0.09);
       pivotNode.add(sepMesh);
     }
-
-    // Electro-hydraulic actuator horn
-    const hornGeo = new THREE.BoxGeometry(0.24, 0.04, 0.20);
-    const horn = new THREE.Mesh(hornGeo, materials.titaniumBright);
-    horn.position.set(-0.25, 0, 0.08);
-    pivotNode.add(horn);
 
     flapAssembly.add(pivotNode);
     frontWingGroup.add(flapAssembly);
 
     // -----------------------------------------------------------------------
-    // Front Wing Endplate (FWEP) with Outwash Diveplane & Ground Footplate
+    // 1D. FRONT WING ENDPLATE (FWEP) & FLARED SKI-RAMP FOOTPLATE
+    // Directly matching user red circle markup in media_1790507089454.png!
     // -----------------------------------------------------------------------
     const fwepGroup = new THREE.Group();
-    fwepGroup.position.set(0.8, side * 8.65, 0.35);
+    fwepGroup.position.set(0.6, side * 8.8, 0.25);
 
-    // Vertical Carbon Endplate
-    const fwepShape = new THREE.Shape();
-    fwepShape.moveTo(-2.2, -0.35);
-    fwepShape.lineTo(1.8, -0.35);
-    fwepShape.lineTo(1.8, 2.2);
-    fwepShape.quadraticCurveTo(-0.2, 2.4, -2.2, 0.8);
-    fwepShape.closePath();
+    // 1. Vertical Curved Endplate Wall
+    const fwepWallShape = new THREE.Shape();
+    fwepWallShape.moveTo(-2.4, -0.25); // Forward lower point
+    fwepWallShape.lineTo(1.8, -0.25);  // Aft lower point
+    fwepWallShape.lineTo(1.8, 1.4);    // Aft upper point
+    fwepWallShape.quadraticCurveTo(0.0, 2.6, -2.4, 1.2); // Smooth curved upper leading crest
+    fwepWallShape.closePath();
 
-    const fwepGeo = new THREE.ExtrudeGeometry(fwepShape, { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 });
-    const fwepMesh = new THREE.Mesh(fwepGeo, navyMat);
-    fwepMesh.rotation.set(Math.PI / 2, 0, 0);
-    fwepMesh.position.set(0, 0, 0);
-    fwepGroup.add(fwepMesh);
+    const fwepWallGeo = new THREE.ExtrudeGeometry(fwepWallShape, {
+      steps: 1,
+      depth: 0.05,
+      bevelEnabled: true,
+      bevelThickness: 0.015,
+      bevelSize: 0.015,
+      bevelSegments: 2
+    });
+    const fwepWallMesh = new THREE.Mesh(fwepWallGeo, navyMat);
+    fwepWallMesh.rotation.set(Math.PI / 2, 0, 0);
+    fwepWallMesh.position.set(0, 0, 0);
+    fwepGroup.add(fwepWallMesh);
 
-    // Mobil 1 Livery Decal on Front Wing Endplate
+    // 2. Wide Flared Ski-Ramp Footplate (Circled in Red by User!)
+    // Curves outward horizontally and curls slightly upward
+    const footplateShape = new THREE.Shape();
+    footplateShape.moveTo(-2.4, 0.0);
+    footplateShape.lineTo(1.8, 0.0);
+    footplateShape.quadraticCurveTo(1.6, 0.85, 0.0, 0.95); // Flaring outward like a ski
+    footplateShape.quadraticCurveTo(-1.8, 0.95, -2.4, 0.0);
+    footplateShape.closePath();
+
+    const footplateGeo = new THREE.ExtrudeGeometry(footplateShape, { steps: 1, depth: 0.04, bevelEnabled: false });
+    const footplateMesh = new THREE.Mesh(footplateGeo, carbonMat);
+    // Orient flat on ground, flaring outward
+    footplateMesh.rotation.set(isLeft ? 0.08 : -0.08, 0, 0); // Slight ski angle
+    footplateMesh.position.set(0, isLeft ? 0.02 : -0.02, -0.25);
+    if (!isLeft) footplateMesh.scale.y = -1; // Mirror outward for right side
+    fwepGroup.add(footplateMesh);
+
+    // 3. Upright Mobil 1 Decal on Endplate Outer Face
     const epTex = createEndplateTexture(isLeft);
     const epDecalMat = new THREE.MeshStandardMaterial({
       map: epTex,
@@ -290,46 +319,16 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const epDecalGeo = new THREE.PlaneGeometry(3.6, 2.4);
-    const epDecal = new THREE.Mesh(epDecalGeo, epDecalMat);
-    epDecal.rotation.set(Math.PI / 2, 0, 0);
-    epDecal.position.set(-0.2, isLeft ? 0.035 : -0.035, 0.95);
-    fwepGroup.add(epDecal);
-
-    // Outer Curved Diveplane (Sheds tyre wake vortex)
-    const diveShape = new THREE.Shape();
-    diveShape.moveTo(-1.1, 0);
-    diveShape.lineTo(1.1, 0);
-    diveShape.quadraticCurveTo(0, 0.35, -1.1, 0.15);
-    diveShape.closePath();
-
-    const diveGeo = new THREE.ExtrudeGeometry(diveShape, { steps: 1, depth: 0.04, bevelEnabled: false });
-    const diveMesh = new THREE.Mesh(diveGeo, carbonMat);
-    diveMesh.rotation.set(0, 0, 0);
-    diveMesh.position.set(-0.1, isLeft ? 0.15 : -0.15, 0.85);
-    fwepGroup.add(diveMesh);
-
-    // Horizontal Ground Sealing Footplate
-    const footGeo = new THREE.BoxGeometry(3.6, 0.45, 0.03);
-    const footMesh = new THREE.Mesh(footGeo, carbonMat);
-    footMesh.position.set(-0.2, isLeft ? 0.15 : -0.15, -0.35);
-    fwepGroup.add(footMesh);
+    const p00 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, -0.1);
+    const p10 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, -0.1);
+    const p11 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 1.4);
+    const p01 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 1.4);
+    const epDecalMesh = isLeft
+      ? createDecalQuad(p00, p10, p11, p01, epDecalMat)
+      : createDecalQuad(p10, p00, p01, p11, epDecalMat);
+    fwepGroup.add(epDecalMesh);
 
     frontWingGroup.add(fwepGroup);
-
-    // Front Wheel Wake Deflector / Mudguard (Mounted behind front wing, inboard of tyre)
-    const deflectorShape = new THREE.Shape();
-    deflectorShape.moveTo(0, 0);
-    deflectorShape.lineTo(1.8, 0);
-    deflectorShape.quadraticCurveTo(1.4, 2.0, 0, 1.8);
-    deflectorShape.closePath();
-
-    const deflectorGeo = new THREE.ExtrudeGeometry(deflectorShape, { steps: 1, depth: 0.04, bevelEnabled: false });
-    const deflectorMesh = new THREE.Mesh(deflectorGeo, carbonMat);
-    deflectorMesh.rotation.set(Math.PI / 2, 0, 0);
-    deflectorMesh.position.set(6.8, side * 6.5, 0.4);
-    deflectorMesh.name = `FrontWheel_WakeDeflector_${isLeft ? 'L' : 'R'}`;
-    frontWingGroup.add(deflectorMesh);
   });
 
   frontAeroGroup.add(frontWingGroup);
@@ -337,106 +336,61 @@ export function createActiveWingsBodywork(options = {}) {
 
   // =========================================================================
   // 2. SCULPTED 3D SIDEPODS & INTERNAL RADIATOR CORES
-  // Matches Reference Images 1, 3, 5, 7:
-  // - Overbite letterbox radiator scoop at X = 5.5 dm
-  // - Deep lower undercut channel directing clean air to floor edge
-  // - Downwash waterslide / gulley contour tapering to tight Coke-bottle rear
-  // - Internal aluminum charge-air coolers and water radiators with fin matrices
-  // - 6x cooling exit gills along upper shoulder
+  // Overbite letterbox intakes, deep undercuts, and right-side-up ORACLE livery
   // =========================================================================
   const sidepodGroup = new THREE.Group();
-  sidepodGroup.name = 'Assembly_Sidepods_Cooling';
+  sidepodGroup.name = 'Sidepod_Assembly_LH_RH';
 
-  [-1, 1].forEach((side, spIdx) => {
+  [-1, 1].forEach((side, idx) => {
     const isLeft = side > 0;
     const pod = new THREE.Group();
-    pod.name = `Sidepod_${isLeft ? 'Left' : 'Right'}`;
 
-    // -----------------------------------------------------------------------
-    // 2A. PROCEDURAL 3D LOFTED SIDEPOD BODY
-    // -----------------------------------------------------------------------
-    const podStations = [
-      // x, y_inner, y_outer, z_bottom, z_top, undercut_y
-      { x: 5.0,  yi: 2.8, yo: 6.6, zb: 0.55, zt: 4.5, yu: 3.2 },  // Intake cowl
-      { x: 7.5,  yi: 3.0, yo: 6.8, zb: 0.55, zt: 4.5, yu: 3.4 },  // Deep undercut
-      { x: 10.5, yi: 3.1, yo: 6.8, zb: 0.55, zt: 4.4, yu: 3.6 },  // Maximum shoulder
-      { x: 14.0, yi: 3.1, yo: 6.5, zb: 0.55, zt: 3.8, yu: 3.5 },  // Waterslide gulley
-      { x: 17.5, yi: 2.9, yo: 5.8, zb: 0.55, zt: 3.2, yu: 3.3 },  // Downwash slope
-      { x: 21.0, yi: 2.6, yo: 4.8, zb: 0.55, zt: 2.6, yu: 3.0 },  // Coke-bottle waist
-      { x: 24.5, yi: 2.3, yo: 3.8, zb: 0.55, zt: 2.1, yu: 2.7 },  // Rear coke bottle
-      { x: 27.5, yi: 2.0, yo: 2.8, zb: 0.55, zt: 1.8, yu: 2.4 }   // Tail exit at rear suspension
-    ];
+    // Sidepod Outer Shell Profile (Lofted from X = 5.0 to X = 28.5)
+    const podShape = new THREE.Shape();
+    podShape.moveTo(5.0, 1.8);
+    podShape.lineTo(6.5, 3.8);   // Overbite forward top lip
+    podShape.lineTo(16.0, 3.8);  // Flat shoulder
+    podShape.quadraticCurveTo(24.0, 3.6, 28.5, 1.2); // Downwash Coke-bottle ramp
+    podShape.lineTo(28.5, 0.4);
+    podShape.lineTo(5.0, 0.4);   // Floor datum
+    podShape.closePath();
 
-    const podVertices = [];
-    const podIndices = [];
-    const podUvs = [];
+    const podExtrude = {
+      steps: 4,
+      depth: 4.8,
+      bevelEnabled: true,
+      bevelThickness: 0.35,
+      bevelSize: 0.35,
+      bevelSegments: 4
+    };
+    const podGeo = new THREE.ExtrudeGeometry(podShape, podExtrude);
+    podGeo.center();
 
-    const numRad = 16;
-    for (let i = 0; i < podStations.length; i++) {
-      const st = podStations[i];
-      const u = i / (podStations.length - 1);
-
-      for (let j = 0; j <= numRad; j++) {
-        const v = j / numRad;
-        const theta = v * Math.PI * 2;
-
-        let py, pz;
-        if (v < 0.25) {
-          // Top Waterslide surface: from inner tub to outer shoulder
-          const f = v / 0.25;
-          py = st.yi + f * (st.yo - st.yi);
-          pz = st.zt - Math.sin(f * Math.PI) * 0.22; // Gulley dip
-        } else if (v < 0.50) {
-          // Outer flank: from top shoulder down to undercut bottom
-          const f = (v - 0.25) / 0.25;
-          py = st.yo - f * (st.yo - (st.x < 11.0 ? st.yu : st.yo * 0.9));
-          pz = st.zt - f * (st.zt - st.zb);
-        } else if (v < 0.75) {
-          // Bottom floor edge / undercut tunnel
-          const f = (v - 0.50) / 0.25;
-          py = (st.x < 11.0 ? st.yu : st.yo * 0.9) - f * ((st.x < 11.0 ? st.yu : st.yo * 0.9) - st.yi);
-          pz = st.zb;
-        } else {
-          // Inner wall against survival cell / engine
-          const f = (v - 0.75) / 0.25;
-          py = st.yi;
-          pz = st.zb + f * (st.zt - st.zb);
-        }
-
-        podVertices.push(st.x, isLeft ? py : -py, pz);
-        podUvs.push(u, v);
+    // Sculpt deep undercut into vertices
+    const pAttr = podGeo.attributes.position;
+    for (let p = 0; p < pAttr.count; p++) {
+      const pX = pAttr.getX(p);
+      const pY = pAttr.getY(p);
+      const pZ = pAttr.getZ(p);
+      if (pX < 0 && pZ < 0) {
+        // Deep front undercut
+        pAttr.setY(p, pY * 0.72);
       }
     }
-
-    for (let i = 0; i < podStations.length - 1; i++) {
-      for (let j = 0; j < numRad; j++) {
-        const a = i * (numRad + 1) + j;
-        const b = (i + 1) * (numRad + 1) + j;
-        const c = (i + 1) * (numRad + 1) + (j + 1);
-        const d = i * (numRad + 1) + (j + 1);
-        if (isLeft) {
-          podIndices.push(a, b, d);
-          podIndices.push(b, c, d);
-        } else {
-          podIndices.push(a, d, b);
-          podIndices.push(b, d, c);
-        }
-      }
-    }
-
-    const podGeo = new THREE.BufferGeometry();
-    podGeo.setAttribute('position', new THREE.Float32BufferAttribute(podVertices, 3));
-    podGeo.setAttribute('uv', new THREE.Float32BufferAttribute(podUvs, 2));
-    podGeo.setIndex(podIndices);
     podGeo.computeVertexNormals();
 
     const podMesh = new THREE.Mesh(podGeo, navyMat);
+    podMesh.rotation.x = isLeft ? Math.PI / 2 : -Math.PI / 2;
+    podMesh.position.set(16.5, side * 6.2, 2.1);
     podMesh.castShadow = true;
     podMesh.receiveShadow = true;
     podMesh.name = `Sidepod_Body_${isLeft ? 'LH' : 'RH'}`;
     pod.add(podMesh);
 
-    // High-Resolution Procedural Livery Decal on Sidepod Outer Flank (Giant ORACLE wordmark)
+    // -----------------------------------------------------------------------
+    // Right-Side-Up Procedural Livery Decal on Sidepod Outer Flank
+    // Uses explicit 3D quad coordinates: 100% upright on both LH and RH sides
+    // -----------------------------------------------------------------------
     const sidepodTex = createSidepodLiveryTexture(isLeft);
     const sidepodLiveryMat = new THREE.MeshStandardMaterial({
       map: sidepodTex,
@@ -445,22 +399,20 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const flankPanelGeo = new THREE.PlaneGeometry(16.5, 3.2, 16, 4);
-    const posAttr = flankPanelGeo.attributes.position;
-    for (let p = 0; p < posAttr.count; p++) {
-      const px = posAttr.getX(p);
-      const u = (px + 8.25) / 16.5;
-      const yTaper = u > 0.5 ? Math.sin((u - 0.5) * Math.PI) * 1.4 : 0;
-      posAttr.setY(p, posAttr.getY(p) - (isLeft ? yTaper : -yTaper));
-    }
-    flankPanelGeo.computeVertexNormals();
-    const flankMesh = new THREE.Mesh(flankPanelGeo, sidepodLiveryMat);
-    flankMesh.rotation.set(Math.PI / 2, 0, 0);
-    flankMesh.position.set(15.2, isLeft ? 6.75 : -6.75, 2.5);
+
+    const flankY = side * 8.65;
+    const spP00 = new THREE.Vector3(7.0, flankY, 0.8);  // Front lower
+    const spP10 = new THREE.Vector3(25.0, flankY, 0.8); // Rear lower
+    const spP11 = new THREE.Vector3(25.0, flankY, 3.8); // Rear upper
+    const spP01 = new THREE.Vector3(7.0, flankY, 3.8);  // Front upper
+
+    const flankMesh = isLeft
+      ? createDecalQuad(spP00, spP10, spP11, spP01, sidepodLiveryMat)
+      : createDecalQuad(spP10, spP00, spP01, spP11, sidepodLiveryMat);
     flankMesh.name = `Sidepod_OracleLivery_${isLeft ? 'LH' : 'RH'}`;
     pod.add(flankMesh);
 
-    // Front Letterbox Radiator Intake Opening Lip (Overbite forward cowl)
+    // Forward Letterbox Radiator Intake Opening Lip (Overbite forward cowl)
     const inletRimGeo = new THREE.TorusGeometry(1.65, 0.12, 12, 24, Math.PI);
     const inletRim = new THREE.Mesh(inletRimGeo, carbonMat);
     inletRim.rotation.y = Math.PI / 2;
@@ -468,36 +420,12 @@ export function createActiveWingsBodywork(options = {}) {
     inletRim.position.set(5.3, side * 4.85, 3.4);
     pod.add(inletRim);
 
-    // Internal Radiator Core (Angled at 42° for maximum heat rejection)
+    // Internal Radiator Core (Angled at 42°)
     const radCoreGeo = new THREE.BoxGeometry(0.18, 2.5, 1.9);
     const radCore = new THREE.Mesh(radCoreGeo, materials.titaniumBright);
-    radCore.rotation.y = -0.55; // Angled forward rake
+    radCore.rotation.y = -0.55;
     radCore.position.set(7.5, side * 4.85, 2.8);
     pod.add(radCore);
-
-    // Aluminum Billet Header Tanks & Braided Coolant Lines
-    [-0.9, 0.9].forEach(hZ => {
-      const hoseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 12);
-      const hose = new THREE.Mesh(hoseGeo, materials.titaniumAnodized);
-      hose.position.set(7.3, side * 4.85, 2.8 + hZ);
-      pod.add(hose);
-    });
-
-    // 6x Stamped Carbon Cooling Exit Louvers (Gills on upper shoulder)
-    for (let l = 0; l < 6; l++) {
-      const lx = 12.5 + l * 0.95;
-      const louverGeo = new THREE.BoxGeometry(0.72, 1.25, 0.04);
-      const louver = new THREE.Mesh(louverGeo, carbonMatte);
-      louver.rotation.y = -0.32;
-      louver.position.set(lx, side * 4.8, 3.65 - l * 0.22);
-      pod.add(louver);
-    }
-
-    // Red Bull Livery Streak along Waterslide Shoulder
-    const streakGeo = new THREE.BoxGeometry(11.5, 0.08, 0.18);
-    const streak = new THREE.Mesh(streakGeo, redMat);
-    streak.position.set(13.5, side * 6.45, 3.45);
-    pod.add(streak);
 
     sidepodGroup.add(pod);
   });
@@ -506,26 +434,18 @@ export function createActiveWingsBodywork(options = {}) {
 
   // =========================================================================
   // 3. ENGINE COVER, PRIMARY AIRBOX & DORSAL SHARK FIN
-  // Matches Reference Images 1, 3, 5:
-  // - Roll hoop with yellow primary airbox inlet scoop & T-cam
-  // - Sculpted carbon engine cover wrapping tight over V6 & turbo
-  // - Dorsal shark fin along spine
-  // - Central Inconel exhaust pipe & FIA red rain light
   // =========================================================================
   const engineCoverGroup = new THREE.Group();
   engineCoverGroup.name = 'Engine_Cover_Airbox_Fin_Assembly';
 
-  // -------------------------------------------------------------------------
-  // 3A. PRIMARY AIRBOX SCOOP (Matching Reference Image 1 & 7: Bright Yellow)
-  // -------------------------------------------------------------------------
+  // Primary Airbox Scoop (Yellow)
   const airboxGroup = new THREE.Group();
   airboxGroup.position.set(14.8, 0.0, 7.8);
 
-  // Yellow Airbox Intake Scoop Cowl
   const scoopShape = new THREE.Shape();
   scoopShape.moveTo(-0.9, -0.85);
   scoopShape.lineTo(0.9, -0.85);
-  scoopShape.quadraticCurveTo(1.15, 0.65, 0.0, 1.05); // Rounded top apex
+  scoopShape.quadraticCurveTo(1.15, 0.65, 0.0, 1.05);
   scoopShape.quadraticCurveTo(-1.15, 0.65, -0.9, -0.85);
   scoopShape.closePath();
 
@@ -549,20 +469,7 @@ export function createActiveWingsBodywork(options = {}) {
   scoopMesh.name = 'Airbox_Scoop_Yellow';
   airboxGroup.add(scoopMesh);
 
-  // Black Intake Orifice / Duct Entrance
-  const ductHoleGeo = new THREE.CylinderGeometry(0.72, 0.72, 1.4, 20);
-  const ductHole = new THREE.Mesh(ductHoleGeo, materials.socketRecessMat);
-  ductHole.rotation.z = Math.PI / 2;
-  ductHole.position.set(0.2, 0, 0);
-  airboxGroup.add(ductHole);
-
-  // Vertical Carbon Splitter Vane dividing combustion vs cooling airflow
-  const splitVaneGeo = new THREE.BoxGeometry(1.6, 0.06, 1.7);
-  const splitVane = new THREE.Mesh(splitVaneGeo, carbonMat);
-  splitVane.position.set(0.4, 0, 0);
-  airboxGroup.add(splitVane);
-
-  // Official FIA Yellow T-Camera on Roll Hoop Apex (Z = 9.55 dm)
+  // FIA Yellow T-Camera on Roll Hoop Apex
   const tCamGeo = new THREE.BoxGeometry(0.45, 0.85, 0.18);
   const tCam = new THREE.Mesh(tCamGeo, yellowMat);
   tCam.position.set(0.8, 0, 1.75);
@@ -571,176 +478,133 @@ export function createActiveWingsBodywork(options = {}) {
 
   engineCoverGroup.add(airboxGroup);
 
-  // -------------------------------------------------------------------------
-  // 3B. 3D LOFTED ENGINE COVER SHELL
-  // Wraps tightly around the V6 turbo engine from X = 17.5 to X = 33.0
-  // -------------------------------------------------------------------------
-    const coverStations = [
-      { x: 14.8, rw: 2.9, zc: 5.8, rz: 2.8 }, // Roll hoop bulkhead
-      { x: 18.0, rw: 2.7, zc: 5.5, rz: 2.6 }, // Over V6 plenum
-      { x: 21.5, rw: 2.4, zc: 5.1, rz: 2.3 }, // Over cylinder heads
-      { x: 25.5, rw: 2.0, zc: 4.6, rz: 1.9 }, // Over turbo & MGU-K
-      { x: 29.5, rw: 1.6, zc: 4.1, rz: 1.5 }, // Over gearbox casing
-      { x: 33.2, rw: 1.0, zc: 3.6, rz: 1.0 }  // Central exhaust exit
-    ];
+  // 3D Lofted Engine Cover Shell (Tight wrap over V6 turbo)
+  const coverStations = [
+    { x: 14.8, rw: 2.9, zc: 5.8, rz: 2.8 },
+    { x: 18.0, rw: 2.7, zc: 5.5, rz: 2.6 },
+    { x: 21.5, rw: 2.4, zc: 5.1, rz: 2.3 },
+    { x: 25.5, rw: 2.0, zc: 4.6, rz: 1.9 },
+    { x: 29.5, rw: 1.6, zc: 4.1, rz: 1.5 },
+    { x: 33.2, rw: 1.0, zc: 3.6, rz: 1.0 }
+  ];
 
-    const ecVerts = [];
-    const ecIndices = [];
-    const ecUvs = [];
-    const ecSegments = 32;
-    const zFloor = 0.55;
+  const ecVerts = [];
+  const ecIndices = [];
+  const ecUvs = [];
+  const ecSegments = 32;
 
-    for (let i = 0; i < coverStations.length; i++) {
-      const st = coverStations[i];
-      const u = i / (coverStations.length - 1);
-
-      for (let j = 0; j <= ecSegments; j++) {
-        const v = j / ecSegments;
-        let y, z;
-
-        if (v < 0.25) {
-          // Left vertical flank rising from floor to shoulder
-          const f = v / 0.25;
-          y = -st.rw;
-          z = zFloor + f * (st.zc - zFloor);
-        } else if (v < 0.75) {
-          // Curved top arch over engine
-          const f = (v - 0.25) / 0.50;
-          const phi = -Math.PI / 2 + f * Math.PI;
-          y = Math.sin(phi) * st.rw;
-          z = st.zc + Math.cos(phi) * st.rz;
-        } else {
-          // Right vertical flank dropping from shoulder down to floor
-          const f = (v - 0.75) / 0.25;
-          y = st.rw;
-          z = st.zc - f * (st.zc - zFloor);
-        }
-
-        ecVerts.push(st.x, y, z);
-        ecUvs.push(u, v);
-      }
+  for (let i = 0; i < coverStations.length; i++) {
+    const st = coverStations[i];
+    const u = i / (coverStations.length - 1);
+    for (let j = 0; j <= ecSegments; j++) {
+      const v = j / ecSegments;
+      const phi = v * Math.PI; // Top half-shell
+      const y = Math.cos(phi) * st.rw;
+      const z = Math.max(0.55, st.zc + Math.sin(phi) * st.rz);
+      ecVerts.push(st.x, y, z);
+      ecUvs.push(u, v);
     }
+  }
 
-    for (let i = 0; i < coverStations.length - 1; i++) {
-      for (let j = 0; j < ecSegments; j++) {
-        const a = i * (ecSegments + 1) + j;
-        const b = (i + 1) * (ecSegments + 1) + j;
-        const c = (i + 1) * (ecSegments + 1) + (j + 1);
-        const d = i * (ecSegments + 1) + (j + 1);
-        ecIndices.push(a, d, b);
-        ecIndices.push(b, d, c);
-      }
+  for (let i = 0; i < coverStations.length - 1; i++) {
+    for (let j = 0; j < ecSegments; j++) {
+      const a = i * (ecSegments + 1) + j;
+      const b = (i + 1) * (ecSegments + 1) + j;
+      const c = (i + 1) * (ecSegments + 1) + (j + 1);
+      const d = i * (ecSegments + 1) + (j + 1);
+      ecIndices.push(a, b, d);
+      ecIndices.push(b, c, d);
     }
+  }
 
-    const ecGeo = new THREE.BufferGeometry();
-    ecGeo.setAttribute('position', new THREE.Float32BufferAttribute(ecVerts, 3));
-    ecGeo.setAttribute('uv', new THREE.Float32BufferAttribute(ecUvs, 2));
-    ecGeo.setIndex(ecIndices);
-    ecGeo.computeVertexNormals();
+  const ecGeo = new THREE.BufferGeometry();
+  ecGeo.setAttribute('position', new THREE.Float32BufferAttribute(ecVerts, 3));
+  ecGeo.setAttribute('uv', new THREE.Float32BufferAttribute(ecUvs, 2));
+  ecGeo.setIndex(ecIndices);
+  ecGeo.computeVertexNormals();
 
-    const ecMesh = new THREE.Mesh(ecGeo, navyMat);
-    ecMesh.castShadow = true;
-    ecMesh.receiveShadow = true;
-    ecMesh.name = 'EngineCover_MainShell';
-    engineCoverGroup.add(ecMesh);
+  const ecMesh = new THREE.Mesh(ecGeo, navyMat);
+  ecMesh.castShadow = true;
+  ecMesh.receiveShadow = true;
+  ecMesh.name = 'EngineCover_MainShell';
+  engineCoverGroup.add(ecMesh);
 
-    // Red Bull Charging Bull & Yellow Sun Flank Livery on Engine Cover (Matching Reference Images 1 & 7)
-    [-1, 1].forEach((side, bIdx) => {
-      const isLeft = side > 0;
-      const ecLiveryTex = createEngineCoverLiveryTexture(isLeft);
-      const ecLiveryMat = new THREE.MeshStandardMaterial({
-        map: ecLiveryTex,
-        transparent: true,
-        roughness: 0.28,
-        metalness: 0.35,
-        side: THREE.DoubleSide
-      });
-      const ecDecalGeo = new THREE.PlaneGeometry(12.5, 3.8);
-      const ecDecal = new THREE.Mesh(ecDecalGeo, ecLiveryMat);
-      ecDecal.rotation.set(Math.PI / 2, 0, 0);
-      ecDecal.position.set(22.5, side * 2.55, 5.0);
-      ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
-      engineCoverGroup.add(ecDecal);
+  // Red Bull Charging Bull Decals on Engine Cover Flanks
+  [-1, 1].forEach((side, bIdx) => {
+    const isLeft = side > 0;
+    const ecLiveryTex = createEngineCoverLiveryTexture(isLeft);
+    const ecLiveryMat = new THREE.MeshStandardMaterial({
+      map: ecLiveryTex,
+      transparent: true,
+      roughness: 0.28,
+      metalness: 0.35,
+      side: THREE.DoubleSide
     });
+    const ecY = side * 2.55;
+    const ecP00 = new THREE.Vector3(16.0, ecY, 3.2);
+    const ecP10 = new THREE.Vector3(28.0, ecY, 3.2);
+    const ecP11 = new THREE.Vector3(28.0, ecY, 6.8);
+    const ecP01 = new THREE.Vector3(16.0, ecY, 6.8);
+    const ecDecal = isLeft
+      ? createDecalQuad(ecP00, ecP10, ecP11, ecP01, ecLiveryMat)
+      : createDecalQuad(ecP10, ecP00, ecP01, ecP11, ecLiveryMat);
+    ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
+    engineCoverGroup.add(ecDecal);
+  });
 
-    // -------------------------------------------------------------------------
-    // 3C. DORSAL SHARK FIN (Yaw Stability Stabilizer)
-    // Extending from roll hoop apex (X = 14.8, Z = 9.2) to rear wing (X = 33.0, Z = 5.8)
-    // -------------------------------------------------------------------------
-    const finShape = new THREE.Shape();
-    finShape.moveTo(14.8, 8.2);
-    finShape.lineTo(14.8, 9.2); // Roll hoop apex
-    finShape.lineTo(33.0, 5.8); // Rear wing pylon junction
-    finShape.lineTo(33.0, 4.2);
-    finShape.quadraticCurveTo(24.0, 5.8, 14.8, 8.2);
-    finShape.closePath();
+  // Dorsal Shark Fin along Engine Spine
+  const finShape = new THREE.Shape();
+  finShape.moveTo(14.8, 8.2);
+  finShape.lineTo(14.8, 9.2); // Apex
+  finShape.lineTo(33.0, 5.8); // Rear wing pylon junction
+  finShape.lineTo(33.0, 4.2);
+  finShape.quadraticCurveTo(24.0, 5.8, 14.8, 8.2);
+  finShape.closePath();
 
-    const finExtrude = { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
-    const finGeo = new THREE.ExtrudeGeometry(finShape, finExtrude);
-    finGeo.center();
-    const finMesh = new THREE.Mesh(finGeo, navyMat);
-    finMesh.rotation.set(Math.PI / 2, 0, 0);
-    finMesh.position.set((14.8 + 33.0) / 2, 0, (9.2 + 4.2) / 2);
-    finMesh.name = 'EngineCover_DorsalSharkFin';
-    engineCoverGroup.add(finMesh);
+  const finExtrude = { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
+  const finGeo = new THREE.ExtrudeGeometry(finShape, finExtrude);
+  finGeo.center();
+  const finMesh = new THREE.Mesh(finGeo, navyMat);
+  finMesh.rotation.set(Math.PI / 2, 0, 0);
+  finMesh.position.set(23.9, 0, 6.7);
+  finMesh.name = 'Dorsal_Shark_Fin';
+  engineCoverGroup.add(finMesh);
 
-    // Red Bull Yellow & Red Speed Edges on Shark Fin
-    const finEdgeGeo = new THREE.BoxGeometry(18.2, 0.08, 0.12);
-    const finEdge = new THREE.Mesh(finEdgeGeo, yellowMat);
-    finEdge.rotation.y = -0.19;
-    finEdge.position.set(23.9, 0, 7.5);
-    engineCoverGroup.add(finEdge);
-
-  // -------------------------------------------------------------------------
-  // 3D. CENTRAL INCONEL EXHAUST & FIA RED RAIN LIGHT
-  // Matches Reference Images 3 & 4 (Rear view)!
-  // -------------------------------------------------------------------------
+  // Central Single Inconel Tailpipe Exhaust (Article C5.8) - media_1790507837418.webp
   const exhaustGroup = new THREE.Group();
-  exhaustGroup.position.set(33.2, 0.0, 3.6);
+  exhaustGroup.name = 'PU_Exhaust_Tailpipe_Assembly';
+  exhaustGroup.position.set(36.2, 0, 3.75);
 
-  // Inconel Round Tailpipe (76mm FIA spec)
-  const tailpipeGeo = new THREE.CylinderGeometry(0.38, 0.38, 1.6, 24, 1, true);
-  const tailpipeMesh = new THREE.Mesh(tailpipeGeo, materials.inconelTurbine);
-  tailpipeMesh.rotation.z = Math.PI / 2;
-  exhaustGroup.add(tailpipeMesh);
+  // Main tubular exhaust pipe
+  const tailpipeGeo = new THREE.CylinderGeometry(0.40, 0.44, 4.2, 32, 1, true);
+  const tailpipe = new THREE.Mesh(tailpipeGeo, materials.inconelExhaust);
+  tailpipe.rotation.z = Math.PI / 2;
+  exhaustGroup.add(tailpipe);
 
-  // Thermal Gold Ceramic Heat Shield Surround Ring
-  const shieldRingGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.28, 24, 1, true);
-  const shieldRing = new THREE.Mesh(shieldRingGeo, materials.heatShieldGold);
-  shieldRing.rotation.z = Math.PI / 2;
-  shieldRing.position.set(-0.6, 0, 0);
-  exhaustGroup.add(shieldRing);
-
-  // Glowing Exhaust Core
-  const glowCoreGeo = new THREE.CylinderGeometry(0.33, 0.33, 0.9, 16);
-  const glowCore = new THREE.Mesh(glowCoreGeo, materials.ledRed);
-  glowCore.rotation.z = Math.PI / 2;
-  glowCore.position.set(-0.4, 0, 0);
-  exhaustGroup.add(glowCore);
-
-  // Rear Impact Structure (RIS) housing Central FIA Red Rain Light directly below exhaust
-  const risHousingGeo = new THREE.BoxGeometry(1.2, 0.95, 0.85);
-  const risHousing = new THREE.Mesh(risHousingGeo, carbonMat);
-  risHousing.position.set(0.2, 0, -1.2);
-  exhaustGroup.add(risHousing);
-
-  // Central 15-LED Red Rain Safety Light
-  const rainLightGeo = new THREE.BoxGeometry(0.08, 0.75, 0.55);
-  const rainLight = new THREE.Mesh(rainLightGeo, materials.ledRed);
-  rainLight.position.set(0.82, 0, -1.2);
-  rainLight.name = 'FIA_CentralRainLight';
-  exhaustGroup.add(rainLight);
+  // Heat Discoloration Lip (Titanium blue/gold heat oxidation ring)
+  const lipGeo = new THREE.TorusGeometry(0.40, 0.035, 12, 32);
+  const lipMat = new THREE.MeshStandardMaterial({
+    color: 0x3d66aa, // Heat-tinted titanium blue
+    roughness: 0.25,
+    metalness: 0.92
+  });
+  const lip = new THREE.Mesh(lipGeo, lipMat);
+  lip.rotation.y = Math.PI / 2;
+  lip.position.set(2.1, 0, 0);
+  exhaustGroup.add(lip);
 
   engineCoverGroup.add(exhaustGroup);
+
   group.add(engineCoverGroup);
 
   // =========================================================================
-  // 4. ACTIVE REAR WING ASSEMBLY
-  // Matches Reference Images 1, 3, 4 (Rear view):
-  // - 3D contoured spoon mainplane (14.8 dm width)
+  // 4. ACTIVE REAR WING ASSEMBLY (REAR SPOILER)
+  // Rebuilt with genuine horizontal spoon aerofoil geometry (zero Frenet frame bugs)
+  // - True horizontal spoon mainplane (14.8 dm width, chord 2.4 dm along X)
   // - Active upper flap articulating between 26° (Z-Mode) and 3° (X-Mode)
-  // - Dual angled swan-neck endplate pylons rising from diffuser floor
-  // - Dual vertical red LED safety rain light strips on endplate trailing edges (12 LEDs each side!)
+  // - Backward-facing 100% upright bold ORACLE wordmark
+  // - Dual structural swan-neck pylons mounting from diffuser
+  // - Dual vertical red LED safety rain light strips (12 LEDs each)
   // =========================================================================
   const rearWingGroup = new THREE.Group();
   rearWingGroup.name = 'Assembly_Active_Rear_Wing';
@@ -748,39 +612,46 @@ export function createActiveWingsBodywork(options = {}) {
 
   const rwFlapAngle = options.rearFlapAngle || 0.45; // Default Z-Mode angle
 
-  // Spoon-Shaped Mainplane with 45mm center droop
-  const rwCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, -7.4, 0.35),
-    new THREE.Vector3(0.1, -3.8, 0.05),
-    new THREE.Vector3(0.2, 0.0, 0.0),
-    new THREE.Vector3(0.1, 3.8, 0.05),
-    new THREE.Vector3(0.0, 7.4, 0.35)
-  ]);
+  // -------------------------------------------------------------------------
+  // 4A. REAR WING SPOON MAINPLANE (Genuine Horizontal Aerofoil)
+  // -------------------------------------------------------------------------
+  const rwSpan = 14.8;  // 1480 mm width
+  const rwChord = 2.4;  // 240 mm chord along X
+  const rwMainShape = new THREE.Shape();
+  rwMainShape.moveTo(-1.2, 0.0);
+  rwMainShape.quadraticCurveTo(0.0, 0.18, 1.2, 0.06);
+  rwMainShape.lineTo(1.15, -0.02);
+  rwMainShape.quadraticCurveTo(0.0, 0.04, -1.2, -0.04);
+  rwMainShape.closePath();
 
-  const rwShape = new THREE.Shape();
-  rwShape.moveTo(-1.2, 0);
-  rwShape.quadraticCurveTo(0.1, 0.16, 1.2, 0.08);
-  rwShape.lineTo(1.1, -0.05);
-  rwShape.quadraticCurveTo(0.1, -0.02, -1.2, -0.04);
-  rwShape.closePath();
+  const rwMainGeo = new THREE.ExtrudeGeometry(rwMainShape, { steps: 20, depth: rwSpan, bevelEnabled: false });
+  rwMainGeo.center();
 
-  const rwMainGeo = new THREE.ExtrudeGeometry(rwShape, {
-    steps: 20,
-    bevelEnabled: false,
-    extrudePath: rwCurve
-  });
+  // Apply spoon center droop (curving down 35 mm at Y = 0)
+  const rwMainPos = rwMainGeo.attributes.position;
+  for (let p = 0; p < rwMainPos.count; p++) {
+    const ySpan = rwMainPos.getY(p);
+    const norm = Math.abs(ySpan) / (rwSpan / 2);
+    // Center dips down by 0.35 dm (spoon droop)
+    rwMainPos.setZ(p, rwMainPos.getZ(p) + (Math.pow(norm, 2.0) - 0.5) * 0.35);
+  }
+  rwMainGeo.computeVertexNormals();
+
   const rwMainMesh = new THREE.Mesh(rwMainGeo, carbonMat);
+  rwMainMesh.rotation.x = Math.PI / 2; // Span along Y, chord along X, thickness along Z
   rwMainMesh.castShadow = true;
   rwMainMesh.name = 'RearWing_Spoon_Mainplane';
   rearWingGroup.add(rwMainMesh);
 
-  // Active Movable Upper Flap
+  // -------------------------------------------------------------------------
+  // 4B. ACTIVE MOVABLE UPPER FLAP & BACKWARD-FACING ORACLE DECAL
+  // -------------------------------------------------------------------------
   const rwFlapPivot = new THREE.Group();
-  rwFlapPivot.position.set(0.65, 0, 0.28);
+  rwFlapPivot.position.set(0.65, 0, 0.32);
   rwFlapPivot.rotation.y = rwFlapAngle; // DRS / X-Mode articulation
 
   const rwFlapShape = new THREE.Shape();
-  rwFlapShape.moveTo(-0.6, 0);
+  rwFlapShape.moveTo(-0.6, 0.0);
   rwFlapShape.quadraticCurveTo(0.1, 0.16, 0.85, 0.06);
   rwFlapShape.lineTo(0.8, 0.0);
   rwFlapShape.quadraticCurveTo(0.1, 0.06, -0.6, -0.02);
@@ -789,11 +660,12 @@ export function createActiveWingsBodywork(options = {}) {
   const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 4, depth: 14.4, bevelEnabled: false });
   rwFlapGeo.center();
   const rwFlapMesh = new THREE.Mesh(rwFlapGeo, carbonMat);
-  rwFlapMesh.rotation.x = Math.PI / 2;
+  rwFlapMesh.rotation.x = Math.PI / 2; // Span along Y
   rwFlapMesh.name = 'RearWing_Active_UpperFlap';
   rwFlapPivot.add(rwFlapMesh);
 
-  // Giant Bold White ORACLE Typography Decal across Rear Wing Upper Flap
+  // Backward-Facing 100% Upright Bold ORACLE Wordmark
+  // Normal faces +X (rearward), Up is +Z, Width spans -Y to +Y
   const rwOracleTex = createRearWingOracleTexture();
   const rwOracleMat = new THREE.MeshStandardMaterial({
     map: rwOracleTex,
@@ -801,13 +673,16 @@ export function createActiveWingsBodywork(options = {}) {
     metalness: 0.40,
     side: THREE.DoubleSide
   });
-  const oracleDecalGeo = new THREE.PlaneGeometry(14.2, 1.4);
-  const oracleDecal = new THREE.Mesh(oracleDecalGeo, rwOracleMat);
-  oracleDecal.rotation.set(-Math.PI / 2, 0, 0);
-  oracleDecal.position.set(0.1, 0, 0.08);
+
+  const oP00 = new THREE.Vector3(0.72, -7.1, 0.02); // Bottom-Left (viewer's left from behind = car's right)
+  const oP10 = new THREE.Vector3(0.72, 7.1, 0.02);  // Bottom-Right (viewer's right from behind = car's left)
+  const oP11 = new THREE.Vector3(0.72, 7.1, 0.55);  // Top-Right
+  const oP01 = new THREE.Vector3(0.72, -7.1, 0.55); // Top-Left
+  const oracleDecal = createDecalQuad(oP00, oP10, oP11, oP01, rwOracleMat);
+  oracleDecal.name = 'RearWing_OracleDecal';
   rwFlapPivot.add(oracleDecal);
 
-  // Centerline Moog Electro-Hydraulic DRS Actuator Ram
+  // Centerline Electro-Hydraulic DRS Actuator Ram
   const actRamGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.45, 12);
   const actRam = new THREE.Mesh(actRamGeo, materials.titaniumAnodized);
   actRam.rotation.z = Math.PI / 2;
@@ -816,40 +691,171 @@ export function createActiveWingsBodywork(options = {}) {
 
   rearWingGroup.add(rwFlapPivot);
 
-  // Dual Swan-Neck Endplate Pylons & Vertical Red Rain LED Strips (Left & Right)
-  // Exactly matching Reference Image 3 (Rear view with glowing red vertical LED strips)!
-  [-1, 1].forEach((side, epIdx) => {
-    const isLeft = side > 0;
-    const endplateGroup = new THREE.Group();
-    endplateGroup.name = `RearWing_Endplate_${isLeft ? 'Left' : 'Right'}`;
+  // -------------------------------------------------------------------------
+  // 4C. AUTHENTIC 3D SCULPTED ENDPLATES (Matching User Wireframe Drawing media_1790507435304.jpg)
+  // Full-height compound contoured carbon walls with top bevel, flared mid-height hip,
+  // bottom angled diffuser/beam wing junction, and 12-LED vertical rain light strips.
+  // -------------------------------------------------------------------------
+  function createSculptedEndplate(isLeft = true) {
+    const side = isLeft ? 1 : -1;
+    const epGroup = new THREE.Group();
+    epGroup.name = `RearWing_Endplate_${isLeft ? 'Left' : 'Right'}`;
 
-    // Angled Swan-Neck Pylon rising from diffuser floor
-    const pylonCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-1.8, side * 3.8, -4.8), // Diffuser mounting foot
-      new THREE.Vector3(-1.2, side * 5.2, -2.5),
-      new THREE.Vector3(-0.6, side * 6.5, -0.4),
-      new THREE.Vector3(0.0, side * 7.4, 0.3)    // Endplate junction
-    ]);
-    const pylonGeo = new THREE.TubeGeometry(pylonCurve, 24, 0.12, 8, false);
-    pylonGeo.scale(1.8, 0.7, 1.0); // Aerodynamic flat chord
-    const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
-    endplateGroup.add(pylonMesh);
+    // Stations along Z from top to bottom (relative to wing center Z = 0)
+    // Defines { z, yOuter, yInner, xFwd, xAft }
+    const stations = [
+      { z:  1.45, yOuter: 7.35, yInner: 7.15, xFwd: -1.4, xAft:  1.50 }, // Top crest
+      { z:  1.15, yOuter: 7.75, yInner: 7.15, xFwd: -1.5, xAft:  1.60 }, // Bevelled top chamfer
+      { z:  0.40, yOuter: 7.82, yInner: 7.12, xFwd: -1.6, xAft:  1.70 }, // Upper flap junction
+      { z: -0.10, yOuter: 7.85, yInner: 7.10, xFwd: -1.6, xAft:  1.70 }, // Mainplane junction
+      { z: -1.00, yOuter: 7.95, yInner: 7.05, xFwd: -1.6, xAft:  1.80 }, // Descending waist
+      { z: -1.85, yOuter: 8.12, yInner: 6.95, xFwd: -1.6, xAft:  1.85 }, // Mid-height flared hip (maximum width)
+      { z: -2.70, yOuter: 7.85, yInner: 6.85, xFwd: -1.5, xAft:  1.75 }, // Inward sweep below tire line
+      { z: -3.50, yOuter: 7.55, yInner: 6.72, xFwd: -1.4, xAft:  1.55 }, // Beam wing junction
+      { z: -4.20, yOuter: 7.35, yInner: 6.65, xFwd: -1.2, xAft:  1.30 }  // Bottom angled tip above diffuser
+    ];
 
-    // Vertical Carbon Endplate Fin
-    const epFinShape = new THREE.Shape();
-    epFinShape.moveTo(-1.8, -0.8);
-    epFinShape.lineTo(1.8, -0.6);
-    epFinShape.lineTo(1.8, 1.6);
-    epFinShape.lineTo(-1.8, 1.4);
-    epFinShape.closePath();
+    const numZ = stations.length;
+    const numX = 12; // Chord segments
+    const verts = [];
+    const uvs = [];
+    const indices = [];
 
-    const epFinGeo = new THREE.ExtrudeGeometry(epFinShape, { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 });
-    const epFinMesh = new THREE.Mesh(epFinGeo, navyMat);
-    epFinMesh.rotation.set(Math.PI / 2, 0, 0);
-    epFinMesh.position.set(0, side * 7.4, 0.4);
-    endplateGroup.add(epFinMesh);
+    // 1. Outer Face
+    for (let i = 0; i < numZ; i++) {
+      const st = stations[i];
+      const z = st.z;
+      const y = side * st.yOuter;
+      for (let j = 0; j <= numX; j++) {
+        const u = j / numX;
+        const x = THREE.MathUtils.lerp(st.xFwd, st.xAft, u);
+        verts.push(x, y, z);
+        uvs.push(u, i / (numZ - 1));
+      }
+    }
 
-    // Mobil 1 Livery on Rear Wing Endplate
+    const rowSize = numX + 1;
+    for (let i = 0; i < numZ - 1; i++) {
+      for (let j = 0; j < numX; j++) {
+        const a = i * rowSize + j;
+        const b = (i + 1) * rowSize + j;
+        const c = (i + 1) * rowSize + (j + 1);
+        const d = i * rowSize + (j + 1);
+        if (isLeft) {
+          indices.push(a, b, d);
+          indices.push(b, c, d);
+        } else {
+          indices.push(a, d, b);
+          indices.push(b, d, c);
+        }
+      }
+    }
+
+    // 2. Inner Face
+    const innerOffset = verts.length / 3;
+    for (let i = 0; i < numZ; i++) {
+      const st = stations[i];
+      const z = st.z;
+      const y = side * st.yInner;
+      for (let j = 0; j <= numX; j++) {
+        const u = j / numX;
+        const x = THREE.MathUtils.lerp(st.xFwd, st.xAft, u);
+        verts.push(x, y, z);
+        uvs.push(u, i / (numZ - 1));
+      }
+    }
+
+    for (let i = 0; i < numZ - 1; i++) {
+      for (let j = 0; j < numX; j++) {
+        const a = innerOffset + i * rowSize + j;
+        const b = innerOffset + (i + 1) * rowSize + j;
+        const c = innerOffset + (i + 1) * rowSize + (j + 1);
+        const d = innerOffset + i * rowSize + (j + 1);
+        if (isLeft) {
+          indices.push(a, d, b);
+          indices.push(b, d, c);
+        } else {
+          indices.push(a, b, d);
+          indices.push(b, c, d);
+        }
+      }
+    }
+
+    // 3. Perimeter walls connecting Outer and Inner faces:
+    // Leading Edge (j = 0)
+    for (let i = 0; i < numZ - 1; i++) {
+      const outA = i * rowSize;
+      const outB = (i + 1) * rowSize;
+      const inA = innerOffset + i * rowSize;
+      const inB = innerOffset + (i + 1) * rowSize;
+      if (isLeft) {
+        indices.push(outA, inA, outB);
+        indices.push(inA, inB, outB);
+      } else {
+        indices.push(outA, outB, inA);
+        indices.push(inA, outB, inB);
+      }
+    }
+
+    // Trailing Edge (j = numX)
+    for (let i = 0; i < numZ - 1; i++) {
+      const outA = i * rowSize + numX;
+      const outB = (i + 1) * rowSize + numX;
+      const inA = innerOffset + i * rowSize + numX;
+      const inB = innerOffset + (i + 1) * rowSize + numX;
+      if (isLeft) {
+        indices.push(outA, outB, inA);
+        indices.push(inA, outB, inB);
+      } else {
+        indices.push(outA, inA, outB);
+        indices.push(inA, inB, outB);
+      }
+    }
+
+    // Top Edge (i = 0)
+    for (let j = 0; j < numX; j++) {
+      const outA = j;
+      const outB = j + 1;
+      const inA = innerOffset + j;
+      const inB = innerOffset + j + 1;
+      if (isLeft) {
+        indices.push(outA, outB, inA);
+        indices.push(inA, outB, inB);
+      } else {
+        indices.push(outA, inA, outB);
+        indices.push(inA, inB, outB);
+      }
+    }
+
+    // Bottom Edge (i = numZ - 1)
+    const bRowOut = (numZ - 1) * rowSize;
+    const bRowIn = innerOffset + (numZ - 1) * rowSize;
+    for (let j = 0; j < numX; j++) {
+      const outA = bRowOut + j;
+      const outB = bRowOut + j + 1;
+      const inA = bRowIn + j;
+      const inB = bRowIn + j + 1;
+      if (isLeft) {
+        indices.push(outA, inA, outB);
+        indices.push(inA, inB, outB);
+      } else {
+        indices.push(outA, outB, inA);
+        indices.push(inA, outB, inB);
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+
+    const mesh = new THREE.Mesh(geo, navyMat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    epGroup.add(mesh);
+
+    // Livery Decal on Flared Outer Hip
     const epTex = createEndplateTexture(isLeft);
     const epDecalMat = new THREE.MeshStandardMaterial({
       map: epTex,
@@ -858,40 +864,195 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const epDecalGeo = new THREE.PlaneGeometry(3.5, 2.3);
-    const epDecal = new THREE.Mesh(epDecalGeo, epDecalMat);
-    epDecal.rotation.set(Math.PI / 2, 0, 0);
-    epDecal.position.set(0, side * (7.4 + (isLeft ? 0.035 : -0.035)), 0.4);
-    endplateGroup.add(epDecal);
+    const hipY = side * (8.12 + 0.04);
+    const epP00 = new THREE.Vector3(-1.4, hipY, -2.5);
+    const epP10 = new THREE.Vector3( 1.4, hipY, -2.5);
+    const epP11 = new THREE.Vector3( 1.4, hipY,  0.8);
+    const epP01 = new THREE.Vector3(-1.4, hipY,  0.8);
+    const epDecal = isLeft
+      ? createDecalQuad(epP00, epP10, epP11, epP01, epDecalMat)
+      : createDecalQuad(epP10, epP00, epP01, epP11, epDecalMat);
+    epDecal.name = `RearWing_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
+    epGroup.add(epDecal);
 
-    // VERTICAL RED LED RAIN LIGHT STRIP (Matching Reference Image 3 & 4!)
-    // 12 discrete high-intensity red LEDs aligned vertically on endplate trailing edge
+    // Inner Face Red-to-Blue Carbon Gradient Fade (media_1790507837418.webp)
+    const innerGradTex = createRearWingEndplateInnerTexture(isLeft);
+    const innerGradMat = new THREE.MeshStandardMaterial({
+      map: innerGradTex,
+      roughness: 0.32,
+      metalness: 0.30,
+      side: THREE.DoubleSide
+    });
+    const inY = side * (6.95 - 0.02);
+    const inP00 = new THREE.Vector3(-1.4, inY, -3.8);
+    const inP10 = new THREE.Vector3( 1.4, inY, -3.8);
+    const inP11 = new THREE.Vector3( 1.4, inY,  1.2);
+    const inP01 = new THREE.Vector3(-1.4, inY,  1.2);
+    const innerDecal = isLeft
+      ? createDecalQuad(inP10, inP00, inP01, inP11, innerGradMat)
+      : createDecalQuad(inP00, inP10, inP11, inP01, innerGradMat);
+    innerDecal.name = `RearWing_InnerGradient_${isLeft ? 'LH' : 'RH'}`;
+    epGroup.add(innerDecal);
+
+    // VERTICAL RED LED RAIN LIGHT STRIP (12 LEDs along trailing edge of endplate)
     const ledStripGroup = new THREE.Group();
-    ledStripGroup.position.set(1.82, side * 7.42, 0.4);
-
-    const stripHousingGeo = new THREE.BoxGeometry(0.05, 0.05, 1.8);
-    const stripHousing = new THREE.Mesh(stripHousingGeo, carbonMatte);
-    ledStripGroup.add(stripHousing);
-
-    const ledGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.04, 8);
+    ledStripGroup.name = `RainLED_Strip_${isLeft ? 'LH' : 'RH'}`;
+    const ledGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.04, 8);
     for (let k = 0; k < 12; k++) {
-      const ledZ = -0.8 + k * 0.145;
+      const t = k / 11;
+      const ledZ = THREE.MathUtils.lerp(1.2, -3.8, t);
+      const ledX = THREE.MathUtils.lerp(1.5, 1.35, t) + 0.02;
+      const ledY = side * THREE.MathUtils.lerp(7.4, 7.3, t);
       const led = new THREE.Mesh(ledGeo, materials.ledRed);
       led.rotation.z = Math.PI / 2;
-      led.position.set(0.03, 0, ledZ);
+      led.position.set(ledX, ledY, ledZ);
       led.name = `RainLED_${isLeft ? 'LH' : 'RH'}_${k}`;
       ledStripGroup.add(led);
     }
-    endplateGroup.add(ledStripGroup);
+    epGroup.add(ledStripGroup);
 
-    rearWingGroup.add(endplateGroup);
+    return epGroup;
+  }
+
+  // Add Left and Right 3D Sculpted Endplates
+  rearWingGroup.add(createSculptedEndplate(true));
+  rearWingGroup.add(createSculptedEndplate(false));
+
+  // -------------------------------------------------------------------------
+  // 4D. STRUCTURAL LOWER BEAM WING (Matching media_1790507435304.jpg)
+  // -------------------------------------------------------------------------
+  const beamWingGroup = new THREE.Group();
+  beamWingGroup.name = 'RearWing_BeamWing_Assembly';
+  beamWingGroup.position.set(0.4, 0, -3.6);
+
+  const bwSpan = 13.4; // Spans from Y = -6.7 to Y = +6.7 dm (between endplates)
+  const bwShape = new THREE.Shape();
+  bwShape.moveTo(-0.9, 0.0);
+  bwShape.quadraticCurveTo(-0.1, 0.18, 0.9, 0.04);
+  bwShape.lineTo(0.85, -0.06);
+  bwShape.quadraticCurveTo(-0.1, -0.02, -0.9, -0.04);
+  bwShape.closePath();
+
+  const bwGeo = new THREE.ExtrudeGeometry(bwShape, { steps: 16, depth: bwSpan, bevelEnabled: false });
+  bwGeo.center();
+  const bwMesh = new THREE.Mesh(bwGeo, carbonMat);
+  bwMesh.rotation.x = Math.PI / 2;
+  bwMesh.castShadow = true;
+  beamWingGroup.add(bwMesh);
+  rearWingGroup.add(beamWingGroup);
+
+  // -------------------------------------------------------------------------
+  // 4E. REAR IMPACT STRUCTURE (RIS) & FIA CENTRAL RAIN LIGHT (media_1790507837418.webp)
+  // - High-strength carbon impact attenuator cone
+  // - Prominent bright yellow chamfered bezel around FIA rain safety light
+  // - Oval ring of 18 intense red LEDs in illuminated recessed socket
+  // -------------------------------------------------------------------------
+  const crashBoxGroup = new THREE.Group();
+  crashBoxGroup.name = 'Rear_Impact_Structure_CrashBox';
+  crashBoxGroup.position.set(0.9, 0.0, -3.8);
+
+  // Structural Carbon Impact Attenuator Cone
+  const crashBoxGeo = new THREE.BoxGeometry(2.8, 1.8, 1.2);
+  const crashBox = new THREE.Mesh(crashBoxGeo, carbonMatte);
+  crashBox.castShadow = true;
+  crashBoxGroup.add(crashBox);
+
+  // BRIGHT YELLOW CHAMFERED BEZEL SURROUND (media_1790507837418.webp)
+  const yellowBezelShape = new THREE.Shape();
+  yellowBezelShape.moveTo(-0.85, -0.65);
+  yellowBezelShape.lineTo(0.85, -0.65);
+  yellowBezelShape.quadraticCurveTo(0.95, -0.65, 0.95, -0.55);
+  yellowBezelShape.lineTo(0.85, 0.55);
+  yellowBezelShape.quadraticCurveTo(0.75, 0.65, 0.65, 0.65);
+  yellowBezelShape.lineTo(-0.65, 0.65);
+  yellowBezelShape.quadraticCurveTo(-0.75, 0.65, -0.85, 0.55);
+  yellowBezelShape.lineTo(-0.95, -0.55);
+  yellowBezelShape.quadraticCurveTo(-0.95, -0.65, -0.85, -0.65);
+  yellowBezelShape.closePath();
+
+  // Inner cutout for dark LED socket
+  const bezelHole = new THREE.Path();
+  bezelHole.moveTo(-0.65, -0.45);
+  bezelHole.lineTo(0.65, -0.45);
+  bezelHole.quadraticCurveTo(0.75, 0, 0.65, 0.45);
+  bezelHole.lineTo(-0.65, 0.45);
+  bezelHole.quadraticCurveTo(-0.75, 0, -0.65, -0.45);
+  bezelHole.closePath();
+  yellowBezelShape.holes.push(bezelHole);
+
+  const bezelExtrude = { steps: 1, depth: 0.12, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
+  const yellowBezelGeo = new THREE.ExtrudeGeometry(yellowBezelShape, bezelExtrude);
+  yellowBezelGeo.center();
+  const yellowBezelMat = new THREE.MeshStandardMaterial({
+    color: 0xffdd00, // Vibrant FIA inspection yellow
+    roughness: 0.25,
+    metalness: 0.15
+  });
+  const yellowBezel = new THREE.Mesh(yellowBezelGeo, yellowBezelMat);
+  yellowBezel.rotation.y = Math.PI / 2;
+  yellowBezel.position.set(1.44, 0, 0);
+  crashBoxGroup.add(yellowBezel);
+
+  // Dark Carbon Recessed Socket Face
+  const socketGeo = new THREE.BoxGeometry(0.04, 1.35, 0.95);
+  const socketMesh = new THREE.Mesh(socketGeo, materials.carbonMatteStructural);
+  socketMesh.position.set(1.45, 0, 0);
+  crashBoxGroup.add(socketMesh);
+
+  // OVAL RING OF 18 RED FIA RAIN LIGHT LEDs (media_1790507837418.webp)
+  const rainLightGroup = new THREE.Group();
+  rainLightGroup.name = 'FIA_Rear_Rain_Safety_Light';
+  rainLightGroup.position.set(1.48, 0, 0);
+
+  const numRingLeds = 18;
+  const rx = 0.52; // Lateral radius
+  const rz = 0.36; // Vertical radius
+  const ledGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.04, 12);
+  const ledRedMat = new THREE.MeshStandardMaterial({
+    color: 0xff0000,
+    emissive: 0xff0000,
+    emissiveIntensity: 3.8,
+    roughness: 0.1
   });
 
-  // Lower Beam Wing (Extracts diffuser upwash)
-  const beamWingGeo = new THREE.BoxGeometry(0.85, 9.2, 0.04);
-  const beamWing = new THREE.Mesh(beamWingGeo, carbonMat);
-  beamWing.position.set(-1.4, 0, -4.6);
-  rearWingGroup.add(beamWing);
+  for (let k = 0; k < numRingLeds; k++) {
+    const ang = (k * Math.PI * 2) / numRingLeds;
+    const lY = Math.cos(ang) * rx;
+    const lZ = Math.sin(ang) * rz;
+    const led = new THREE.Mesh(ledGeo, ledRedMat);
+    led.rotation.z = Math.PI / 2;
+    led.position.set(0.02, lY, lZ);
+    rainLightGroup.add(led);
+  }
+
+  // 4 Central Core LEDs inside the oval ring
+  [-0.18, 0.18].forEach(cy => {
+    [-0.12, 0.12].forEach(cz => {
+      const coreLed = new THREE.Mesh(ledGeo, ledRedMat);
+      coreLed.rotation.z = Math.PI / 2;
+      coreLed.position.set(0.02, cy, cz);
+      rainLightGroup.add(coreLed);
+    });
+  });
+
+  crashBoxGroup.add(rainLightGroup);
+  rearWingGroup.add(crashBoxGroup);
+
+  // -------------------------------------------------------------------------
+  // 4F. DUAL SWAN-NECK MOUNTING PYLONS
+  // -------------------------------------------------------------------------
+  [-0.9, 0.9].forEach(pylonY => {
+    const pylonCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.0, pylonY, -3.2),  // Attaches to Crash Box
+      new THREE.Vector3(-0.6, pylonY, -1.8), // Arches over exhaust
+      new THREE.Vector3(-0.9, pylonY, -0.4),
+      new THREE.Vector3(-0.6, pylonY, 0.0)   // Under mainplane
+    ]);
+    const pylonGeo = new THREE.TubeGeometry(pylonCurve, 16, 0.08, 8, false);
+    pylonGeo.scale(1.8, 0.6, 1.0);
+    const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
+    rearWingGroup.add(pylonMesh);
+  });
 
   group.add(rearWingGroup);
 
