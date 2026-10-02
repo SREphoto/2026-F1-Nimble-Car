@@ -53,8 +53,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     { x: 7.2,  w: 2.30, zb: 0.6, zt: 5.2, open: false }, // Forward cockpit rim & Halo mount
     { x: 10.5, w: 3.10, zb: 0.6, zt: 4.5, open: true  }, // Cockpit opening / steering wheel
     { x: 14.5, w: 3.20, zb: 0.6, zt: 4.5, open: true  }, // Driver seating area
-    { x: 17.5, w: 3.15, zb: 0.6, zt: 6.2, open: false }, // Rear cockpit bulkhead & Roll hoop
-    { x: 22.0, w: 2.85, zb: 0.6, zt: 6.0, open: false }  // Bulkhead D-D (Engine interface)
+    { x: 17.5, w: 3.0,  zb: 0.6, zt: 5.8, open: false }, // Rear cockpit bulkhead & Roll hoop (inside the engine cover)
+    { x: 22.0, w: 2.6,  zb: 0.6, zt: 5.4, open: false }  // Bulkhead D-D (Engine interface)
   ];
 
   const tubVerts = [];
@@ -106,7 +106,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   tubGroup.add(tubMesh);
 
   // Bulkhead A-A (Front chassis bulkhead at X = 0) with 4x M14 Titanium FIS Nose Studs
-  const bulkAGeo = new THREE.BoxGeometry(0.18, 3.2, 3.0);
+  const bulkAGeo = new THREE.BoxGeometry(0.18, 2.8, 2.5); // inside the nose root section
   const bulkA = new THREE.Mesh(bulkAGeo, mats.carbonMatteStructural || mats.carbonGloss);
   bulkA.position.set(0.0, 0, 2.7);
   bulkA.name = "Body_Chassis_Bulkhead_AA";
@@ -127,17 +127,17 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
 
   // Bulkhead D-D (Rear fuel cell / engine interface bulkhead at X = 22.0 dm)
-  const bulkDGeo = new THREE.BoxGeometry(0.24, 5.6, 5.2); // fits inside tub section at D-D (Y ±2.85, Z 0.6-6.0)
+  const bulkDGeo = new THREE.BoxGeometry(0.24, 4.9, 4.5); // fits inside tub section at D-D (Y ±2.6, Z 0.6-5.4)
   const bulkD = new THREE.Mesh(bulkDGeo, mats.titaniumAnodized);
-  bulkD.position.set(22.0, 0, 3.3);
+  bulkD.position.set(22.0, 0, 3.0);
   bulkD.name = "Body_Chassis_Bulkhead_DD";
   tubGroup.add(bulkD);
 
   // 6x M12 Titanium Engine Interface Studs with 12-point jet nuts
   const engineStudLocs = [
-    [-2.2, 1.4], [2.2, 1.4],
-    [-2.6, 3.2], [2.6, 3.2],
-    [-1.8, 5.2], [1.8, 5.2]
+    [-2.0, 1.4], [2.0, 1.4],
+    [-2.1, 3.2], [2.1, 3.2],
+    [-1.6, 4.8], [1.6, 4.8]
   ];
   engineStudLocs.forEach(([sy, sz], idx) => {
     const stud = createStudWith12PtNut(
@@ -309,13 +309,13 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     new THREE.CatmullRomCurve3([
       // Narrow hoop: two pillars rise from the tub and the arch is enclosed by the
       // forward-facing airbox intake (bodywork, X 15.75-19.25, Z 7.1-9.3)
-      new THREE.Vector3(17.5, -0.75, 6.2),
+      new THREE.Vector3(17.5, -0.75, 5.8),
       new THREE.Vector3(17.5, -0.75, 8.0),
       new THREE.Vector3(17.5, -0.35, 8.8),
       new THREE.Vector3(17.5, 0, 8.95),
       new THREE.Vector3(17.5, 0.35, 8.8),
       new THREE.Vector3(17.5, 0.75, 8.0),
-      new THREE.Vector3(17.5, 0.75, 6.2)
+      new THREE.Vector3(17.5, 0.75, 5.8)
     ]),
     32, 0.24, 16, false
   );
