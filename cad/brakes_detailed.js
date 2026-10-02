@@ -608,39 +608,36 @@ export function createDetailedBrakes(options = {}) {
 
   const mats = options.materials || defaultMaterials;
 
-  // Front Left Corner (LH) with Kingpin Steering Pivot
-  const flPivot = new THREE.Group();
-  flPivot.position.set(0.0, 7.1, 3.55);
-  flPivot.name = "Brake_Front_Left_Pivot";
-  const fl = buildDetailedBrakeCorner(null, mats, "LH");
-  fl.position.set(0, 0, 0);
-  fl.rotation.x = Math.PI / 2;
-  flPivot.add(fl);
-  group.add(flPivot);
+  // Brake corners share the suspension kingpin / camber so they stay concentric with the wheels.
+  // RH corners are true mirror images of the LH corner (scale.y = -1 on the corner pivot),
+  // so caliper, duct and IR sensor sit at the same height on both sides.
+  // Front: kingpin at Y = ±6.8 (Front_Upright_Pivot_*), disc 0.2 dm outboard, static camber -3.0 deg
+  // Rear:  upright at Y = ±6.25, disc at Y = ±6.45, static camber -1.7 deg
+  const FRONT_KINGPIN_Y = 6.8;
+  const REAR_BRAKE_Y = 6.45;
+  [[1, 'Left', 'LH'], [-1, 'Right', 'RH']].forEach(([side, sideName, tag]) => {
+    const fPivot = new THREE.Group();
+    fPivot.name = `Brake_Front_${sideName}_Pivot`;
+    fPivot.position.set(0.0, side * FRONT_KINGPIN_Y, 3.55);
+    fPivot.rotation.x = side * 0.052; // same negative camber as the upright
+    fPivot.scale.set(1, side, 1);     // mirror RH
+    const fc = buildDetailedBrakeCorner(null, mats, tag);
+    fc.position.set(0, 0.2, 0.05); // wheel hub sits 0.05 above kingpin datum
+    fc.rotation.x = Math.PI / 2;      // disc axis -> lateral (Y)
+    fPivot.add(fc);
+    group.add(fPivot);
 
-  // Front Right Corner (RH) with Kingpin Steering Pivot
-  const frPivot = new THREE.Group();
-  frPivot.position.set(0.0, -7.1, 3.55);
-  frPivot.name = "Brake_Front_Right_Pivot";
-  const fr = buildDetailedBrakeCorner(null, mats, "RH");
-  fr.position.set(0, 0, 0);
-  fr.rotation.x = -Math.PI / 2;
-  frPivot.add(fr);
-  group.add(frPivot);
-
-  // Rear Left Corner (LH)
-  const rl = buildDetailedBrakeCorner(null, mats, "LH");
-  rl.position.set(34.0, 6.8, 3.55);
-  rl.rotation.x = Math.PI / 2;
-  rl.scale.set(0.85, 0.85, 0.85);
-  group.add(rl);
-
-  // Rear Right Corner (RH)
-  const rr = buildDetailedBrakeCorner(null, mats, "RH");
-  rr.position.set(34.0, -6.8, 3.55);
-  rr.rotation.x = -Math.PI / 2;
-  rr.scale.set(0.85, 0.85, 0.85);
-  group.add(rr);
+    const rPivot = new THREE.Group();
+    rPivot.name = `Brake_Rear_${sideName}_Pivot`;
+    rPivot.position.set(34.0, side * REAR_BRAKE_Y, 3.59);
+    rPivot.rotation.x = side * 0.030;
+    rPivot.scale.set(1, side, 1);
+    const rc = buildDetailedBrakeCorner(null, mats, tag);
+    rc.rotation.x = Math.PI / 2;
+    rc.scale.set(0.85, 0.85, 0.85);
+    rPivot.add(rc);
+    group.add(rPivot);
+  });
 
   return group;
 }
