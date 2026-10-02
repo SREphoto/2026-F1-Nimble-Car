@@ -178,23 +178,40 @@ function paintSidewall(ctx, S, kind) {
   ctx.font = font(BOLD, 0.06 * px);
   arcText(ctx, 'TM', C, C, 3.22 * px, 'bottom', { centre: Math.PI / 2 + 0.49, spacing: 0 });
 
-  // Chequered compound band: left side, ~7 o'clock up to ~11 o'clock
-  const sq = 0.072 * px;
-  const r1 = 3.05 * px, r2 = r1 + sq;     // two rows
-  const a0 = Math.PI * 0.74, a1 = Math.PI * 1.34;
-  for (let a = a0, k = 0; a < a1; a += sq / r1, k++) {
-    [r1, r2].forEach((rr, row) => {
-      if ((k + row) % 2) return;
-      ctx.save();
-      ctx.translate(C + (rr + sq / 2) * Math.cos(a), C + (rr + sq / 2) * Math.sin(a));
-      ctx.rotate(a);
-      ctx.fillRect(-sq / 2, -sq / 2, sq, sq * 0.96);
-      ctx.restore();
-    });
+  // Pirelli compound band (left side, ~11 o'clock down to ~7 o'clock), as on the 2026 tyre:
+  // starts next to the wordmark as a 2-row chequer, then the outer row closes into a
+  // solid stripe while the inner row carries on as dashes whose gaps open up.
+  const sq = 0.10 * px;
+  const rIn = 2.99 * px;                  // inner row (radial start)
+  const rOut = rIn + sq;                  // outer row
+  const aTop = Math.PI * 1.34, aEnd = Math.PI * 0.76;
+  const cell = (a, rr, len, wid) => {     // tangential length `len`, radial width `wid`
+    ctx.save();
+    ctx.translate(C + (rr + wid / 2) * Math.cos(a), C + (rr + wid / 2) * Math.sin(a));
+    ctx.rotate(a);
+    ctx.fillRect(-wid / 2, -len / 2, wid, len);
+    ctx.restore();
+  };
+  // 1) chequer section (about 5 cells per row)
+  const step = sq / rOut;
+  const nChq = 9;
+  for (let k = 0; k < nChq; k++) {
+    const a = aTop - (k + 0.5) * step;
+    cell(a, (k % 2) ? rIn : rOut, sq * 0.98, sq * 0.98);
   }
-  // thin line continuing the band towards the wordmarks
-  ctx.lineWidth = 0.028 * px;
-  ctx.beginPath(); ctx.arc(C, C, r2 + sq + 0.03 * px, a0, a1); ctx.stroke();
+  // 2) solid outer stripe + spaced inner dashes
+  const aSolid = aTop - nChq * step;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = sq * 0.62;
+  ctx.lineCap = 'butt';
+  ctx.beginPath(); ctx.arc(C, C, rOut + sq * 0.62, aEnd, aSolid + step * 0.6); ctx.stroke();
+  // short tie between the chequer and the stripe
+  cell(aSolid - step * 0.1, rOut, sq * 0.9, sq * 0.98);
+  for (let a = aSolid - step * 1.4, gap = 1.0; a > aEnd + step; ) {
+    cell(a, rIn, sq * 0.95, sq * 0.82);
+    a -= step * (0.95 + gap);
+    gap = Math.min(2.6, gap * 1.18);
+  }
 
   // Barcode / ID label near the rim at ~5 o'clock (paper label: white + black bars)
   const labA = Math.PI * 0.30, labR = 2.66 * px;
@@ -262,6 +279,23 @@ function paintTread(W, H) {
     sx.clearRect(0, 0, W, H);
     sx.drawImage(tmp, 0, 0);
   }
+  // Outer shoulder: heavy graining + rough scrub band (the shoulder that works hardest,
+  // as on the reference). Outboard edge = v = 1 = top rows of the canvas.
+  for (let i = 0; i < 6500; i++) {
+    const yN = 0.26 * Math.pow(rand(), 1.5);
+    const x = rand() * W, y = yN * H, len = (4 + rand() * 16) * (H / 512), ang = Math.PI / 2 + (rand() - 0.5) * 0.9;
+    const g = rand() > 0.5 ? 190 : 60;
+    hx.strokeStyle = `rgba(${g},${g},${g},${0.45 + rand() * 0.45})`;
+    hx.lineWidth = 1 + rand() * 2.2;
+    wrap((o) => { hx.beginPath(); hx.moveTo(x + o, y); hx.lineTo(x + o + Math.cos(ang) * len, y + Math.sin(ang) * len); hx.stroke(); });
+  }
+  for (let i = 0; i < 700; i++) {
+    const yN = 0.24 * Math.pow(rand(), 1.3);
+    const x = rand() * W, y = yN * H, len = (30 + rand() * 160) * (W / 1024), ang = 0.32 + (rand() - 0.5) * 0.6;
+    sx.strokeStyle = `rgba(255,255,255,${0.12 + rand() * 0.28})`;
+    sx.lineWidth = 1.5 + rand() * 4;
+    wrap((o) => { sx.beginPath(); sx.moveTo(x + o, y); sx.lineTo(x + o + Math.cos(ang) * len, y + Math.sin(ang) * len); sx.stroke(); });
+  }
   // Marbles / pick-up blobs
   for (let i = 0; i < 110; i++) {
     const x = rand() * W, y = rand() * H, r = 1 + rand() * 2.5;
@@ -277,7 +311,7 @@ function paintTread(W, H) {
     const h = hd[i * 4], s = sd[i * 4] / 255;
     const n = rand();
     // colour: dark rubber, lighter where scuffed, a hair of noise
-    const base = 22 + n * 5 + (h - 128) * 0.04;
+    const base = 22 + n * 5 + (h - 128) * 0.09;
     const c = base + s * 48;
     ci.data[i * 4] = c; ci.data[i * 4 + 1] = c; ci.data[i * 4 + 2] = c + 1; ci.data[i * 4 + 3] = 255;
     di.data[i * 4] = Math.max(0, Math.min(255, h + (n - 0.5) * 18));   // height
