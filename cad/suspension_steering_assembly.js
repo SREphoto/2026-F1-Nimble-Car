@@ -45,41 +45,58 @@ export function createSuspensionSteering(options = {}) {
   const group = new THREE.Group();
   group.name = 'Suspension_Steering_Wheels_Assembly';
 
-  // Helper: Create an aerodynamic suspension link (teardrop streamline cross-section)
-  function createAeroLink(startPt, endPt, chord = 0.45, thickness = 0.12, mat = materials.carbonGloss) {
-    const linkGroup = new THREE.Group();
-    const vec = new THREE.Vector3().subVectors(endPt, startPt);
-    const length = vec.length();
+  // Every link registers here; updateLinks() re-solves them from their end points.
+  const dynamicLinks = [];
+  let rackBar = null; // sliding steering rack bar (assigned in section 2)
+  const _tmpV = new THREE.Vector3();
+  const _zAxis = new THREE.Vector3(0, 0, 1);
 
-    // Teardrop foil shape
+  // Helper: Create an aerodynamic suspension link (teardrop streamline cross-section).
+  // The inner end is fixed to the chassis (or follows `innerFn`, e.g. the steering rack);
+  // the outer end can be expressed in an upright's local frame (`outerOn`) so it follows
+  // the upright through steering and suspension travel without moving the inner mount.
+  function createAeroLink(startPt, endPt, chord = 0.45, thickness = 0.12, mat = materials.carbonGloss, opts = {}) {
+    const linkGroup = new THREE.Group();
+
+    // Teardrop foil shape, extruded to unit length along +Z and scaled to the link length
     const shape = new THREE.Shape();
     shape.moveTo(-chord * 0.35, 0);
     shape.quadraticCurveTo(0, thickness * 0.6, chord * 0.45, 0);
     shape.quadraticCurveTo(0, -thickness * 0.6, -chord * 0.35, 0);
     shape.closePath();
-
-    const extrudeSettings = { steps: 1, depth: length, bevelEnabled: false };
-    const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    const geo = new THREE.ExtrudeGeometry(shape, { steps: 1, depth: 1, bevelEnabled: false });
     const mesh = new THREE.Mesh(geo, mat);
-
-    // Orient along vector
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), vec.clone().normalize());
-    mesh.position.copy(startPt);
     linkGroup.add(mesh);
 
     // Uniball Spherical Bearings at both ends
-    [startPt, endPt].forEach(pt => {
-      const uniballGeo = new THREE.SphereGeometry(0.12, 12, 12);
-      const uniball = new THREE.Mesh(uniballGeo, materials.titaniumBright);
-      uniball.position.copy(pt);
-      linkGroup.add(uniball);
-
-      const retainerGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.14, 12);
-      const retainer = new THREE.Mesh(retainerGeo, materials.titaniumAnodized);
-      retainer.position.copy(pt);
-      linkGroup.add(retainer);
+    const ends = [0, 1].map(() => {
+      const uniball = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), materials.titaniumBright);
+      const retainer = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 12), materials.titaniumAnodized);
+      linkGroup.add(uniball, retainer);
+      return [uniball, retainer];
     });
 
+    const link = {
+      group: linkGroup,
+      inner: startPt.clone(),
+      innerFn: opts.innerFn || null,          // () => Vector3 in the link group's parent frame
+      outerOn: opts.outerOn || null,          // upright Object3D (sibling frame of the link)
+      outer: opts.outerOn ? opts.outerLocal.clone() : endPt.clone(),
+      update() {
+        const a = this.innerFn ? this.innerFn() : this.inner;
+        let b = this.outer;
+        if (this.outerOn) { this.outerOn.updateMatrix(); b = _tmpV.copy(this.outer).applyMatrix4(this.outerOn.matrix); }
+        const v = new THREE.Vector3().subVectors(b, a);
+        const len = Math.max(1e-4, v.length());
+        mesh.position.copy(a);
+        mesh.quaternion.setFromUnitVectors(_zAxis, v.multiplyScalar(1 / len));
+        mesh.scale.set(1, 1, len);
+        ends[0][0].position.copy(a); ends[0][1].position.copy(a);
+        ends[1][0].position.copy(b); ends[1][1].position.copy(b);
+      }
+    };
+    link.update();
+    dynamicLinks.push(link);
     return linkGroup;
   }
 
@@ -234,32 +251,35 @@ export function createSuspensionSteering(options = {}) {
     const fsCorner = new THREE.Group();
     fsCorner.name = `Front_Suspension_${isLeft ? 'Left' : 'Right'}`;
 
-    const hubPt = new THREE.Vector3(0.0, side * 7.2, 3.55);
+    // Front Upright & Steering Kingpin Pivot Group (steers and moves with suspension travel).
+    // Created first so the wishbones' outer ball joints can follow it.
+    const frontPivot = new THREE.Group();
+    frontPivot.position.set(0.0, side * 6.8, 3.55);
+    frontPivot.name = `Front_Upright_Pivot_${isLeft ? 'Left' : 'Right'}`;
+    frontPivot.userData.basePosition = frontPivot.position.clone();
+    const onUpright = (pt) => ({ outerOn: frontPivot, outerLocal: pt.clone().sub(frontPivot.position) });
 
     // Upper Wishbone (Forward Leg & Aft Leg)
     // Inboard pickups sit on the nose / tub skin (nose ±1.45 wide at X=-1.8, tub ±1.7 at X=1.5)
     const fwdUpperIn = new THREE.Vector3(-1.8, side * 1.35, 3.6);
     const aftUpperIn = new THREE.Vector3(1.4, side * 1.65, 4.0);
     const upperOuter = new THREE.Vector3(0.0, side * 6.6, 4.5);
-    fsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.42, 0.11));
-    fsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.42, 0.11));
+    fsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.42, 0.11, undefined, onUpright(upperOuter)));
+    fsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.42, 0.11, undefined, onUpright(upperOuter)));
 
     // Lower Wishbone (Forward Leg & Aft Leg)
     const fwdLowerIn = new THREE.Vector3(-1.6, side * 1.3, 1.9);
     const aftLowerIn = new THREE.Vector3(1.6, side * 1.7, 1.6);
     const lowerOuter = new THREE.Vector3(0.0, side * 6.6, 2.5);
-    fsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.48, 0.12));
-    fsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.48, 0.12));
+    fsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.48, 0.12, undefined, onUpright(lowerOuter)));
+    fsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.48, 0.12, undefined, onUpright(lowerOuter)));
 
     // Pull-Rod Strut (Runs diagonally from upright upper clevis to lower tub rocker)
     const pullRodOuter = new THREE.Vector3(0.0, side * 6.4, 4.3);
     const pullRodInner = new THREE.Vector3(1.8, side * 1.8, 2.2);
-    fsCorner.add(createAeroLink(pullRodOuter, pullRodInner, 0.28, 0.08, materials.titaniumBright));
+    // (inner end on the chassis rocker, outer end on the upright)
+    fsCorner.add(createAeroLink(pullRodInner, pullRodOuter, 0.28, 0.08, materials.titaniumBright, onUpright(pullRodOuter)));
 
-    // Front Upright & Steering Kingpin Pivot Group (Articulates with steering angle)
-    const frontPivot = new THREE.Group();
-    frontPivot.position.set(0.0, side * 6.8, 3.55);
-    frontPivot.name = `Front_Upright_Pivot_${isLeft ? 'Left' : 'Right'}`;
 
     // Front Upright Carrier (Aluminum-Lithium monobloc casting) at origin of pivot
     const uprightGeo = new THREE.BoxGeometry(0.75, 0.45, 2.4);
@@ -280,6 +300,14 @@ export function createSuspensionSteering(options = {}) {
     frontPivot.add(frontWheel);
 
     fsCorner.add(frontPivot);
+
+    // Track rod: inner end rides on the steering rack bar, outer end on the steering arm
+    const trInnerBase = new THREE.Vector3(0.5, side * 2.7, 3.2);
+    const trOuter = new THREE.Vector3(-0.35, side * 6.65, 3.55); // steering-arm tip (pivot-local -0.35, -side*0.15, 0)
+    fsCorner.add(createAeroLink(trInnerBase, trOuter, 0.32, 0.09, materials.carbonGloss, {
+      innerFn: () => trInnerBase.clone().setY(trInnerBase.y + (rackBar ? rackBar.position.y : 0)),
+      ...onUpright(trOuter)
+    }));
 
     frontSuspGroup.add(fsCorner);
   });
@@ -347,12 +375,19 @@ export function createSuspensionSteering(options = {}) {
     steeringGroup.add(lineMesh);
   });
 
-  // Track Rods / Tie Rods (Extending left and right to steering arms on uprights)
-  [-1, 1].forEach((side, trIdx) => {
-    const trStart = new THREE.Vector3(0, side * 2.7, 0);
-    const trEnd = new THREE.Vector3(-0.85, side * 6.65, 0.35); // meets upright steering arm
-    steeringGroup.add(createAeroLink(trStart, trEnd, 0.32, 0.09, materials.carbonGloss));
+  // Sliding rack bar (the only part that translates with steering; the housing, pinion and
+  // lines stay bolted to the chassis). Track rods are built with each front corner and their
+  // inner ends follow this bar.
+  rackBar = new THREE.Group();
+  rackBar.name = 'Steering_Rack_Bar';
+  const rackBarMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5.6, 12), materials.titaniumBright);
+  rackBar.add(rackBarMesh);
+  [-1, 1].forEach(side => {
+    const endMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.25, 12), materials.titaniumAnodized);
+    endMesh.position.set(0, side * 2.7, 0);
+    rackBar.add(endMesh);
   });
+  steeringGroup.add(rackBar);
 
   group.add(steeringGroup);
 
@@ -368,36 +403,44 @@ export function createSuspensionSteering(options = {}) {
     const rsCorner = new THREE.Group();
     rsCorner.name = `Rear_Suspension_${isLeft ? 'Left' : 'Right'}`;
 
+    // Rear upright (moves with suspension travel; links' outer ends follow it)
+    const rearUpright = new THREE.Group();
+    rearUpright.name = `Rear_Upright_${isLeft ? 'Left' : 'Right'}`;
+    rearUpright.position.set(34.0, side * 6.25, 3.55);
+    rearUpright.userData.basePosition = rearUpright.position.clone();
+    const onRearUpright = (pt) => ({ outerOn: rearUpright, outerLocal: pt.clone().sub(rearUpright.position) });
+
     // Upper Wishbone (Forward Leg & Aft Leg)
     // Inboard pickups on the gearbox casing (top Z 3.75, Y ±1.2, X 27.4-35.0)
     const fwdUpperIn = new THREE.Vector3(32.2, side * 1.2, 3.7);
     const aftUpperIn = new THREE.Vector3(34.8, side * 1.2, 3.6);
     const upperOuter = new THREE.Vector3(34.0, side * 6.1, 4.6);
-    rsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.46, 0.12));
-    rsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.46, 0.12));
+    rsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.46, 0.12, undefined, onRearUpright(upperOuter)));
+    rsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.46, 0.12, undefined, onRearUpright(upperOuter)));
 
     // Lower Wishbone (Forward Leg & Aft Leg)
     const fwdLowerIn = new THREE.Vector3(31.8, side * 1.3, 1.7);
     const aftLowerIn = new THREE.Vector3(34.8, side * 1.3, 1.7);
     const lowerOuter = new THREE.Vector3(34.0, side * 6.1, 2.5);
-    rsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.52, 0.13));
-    rsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.52, 0.13));
+    rsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.52, 0.13, undefined, onRearUpright(lowerOuter)));
+    rsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.52, 0.13, undefined, onRearUpright(lowerOuter)));
 
     // Push-Rod Strut (Runs diagonally from upright lower clevis to upper gearbox rocker)
     const pushRodOuter = new THREE.Vector3(34.0, side * 5.9, 2.6);
     const pushRodInner = new THREE.Vector3(32.5, side * 1.25, 3.85); // ends on the rocker
-    rsCorner.add(createAeroLink(pushRodOuter, pushRodInner, 0.32, 0.09, materials.titaniumBright));
+    rsCorner.add(createAeroLink(pushRodInner, pushRodOuter, 0.32, 0.09, materials.titaniumBright, onRearUpright(pushRodOuter)));
 
     // Rear Upright Carrier
     const uprightGeo = new THREE.BoxGeometry(0.85, 0.55, 2.5);
     const uprightMesh = new THREE.Mesh(uprightGeo, materials.alLi2099);
-    uprightMesh.position.set(34.0, side * 6.25, 3.55);
-    rsCorner.add(uprightMesh);
+    uprightMesh.position.set(0, 0, 0);
+    rearUpright.add(uprightMesh);
 
-    // Rear Wheel & Wide 375mm Pirelli Tyre
-    const rearWheel = createWheelCorner(34.0, side * 7.4, 3.59, true, isLeft);
+    // Rear Wheel & Wide 375mm Pirelli Tyre (hub at 34.0, ±7.4, 3.59)
+    const rearWheel = createWheelCorner(0.0, side * 1.15, 0.04, true, isLeft);
     rearWheel.rotation.x = side * 0.030; // Static negative camber (-1.7 deg): top leans inboard
-    rsCorner.add(rearWheel);
+    rearUpright.add(rearWheel);
+    rsCorner.add(rearUpright);
 
     rearSuspGroup.add(rsCorner);
   });
@@ -421,6 +464,10 @@ export function createSuspensionSteering(options = {}) {
   rearSuspGroup.add(rInboardGroup);
 
   group.add(rearSuspGroup);
+
+  // Re-solve every link from its (fixed) inner mount to its (moving) outer joint.
+  group.userData.updateLinks = () => dynamicLinks.forEach(l => l.update());
+  group.userData.updateLinks();
 
   return group;
 }
