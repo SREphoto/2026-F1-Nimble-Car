@@ -16,6 +16,7 @@ import { createFullCarAssembly } from './cad/full_car3d.js';
 import { createTrackEnvironment } from './cad/track_environment.js';
 import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
+import { applyLivery } from './cad/livery_decals.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -118,6 +119,8 @@ try {
   carModel = createFullCarAssembly();
   carModel.rotation.x = -Math.PI / 2; // Map automotive CAD Z-up to Three.js Y-up
   scene.add(carModel);
+  // SREdesigns livery: projected decals, paint/carbon finish, env reflections
+  try { applyLivery(carModel, renderer); } catch (liveryErr) { console.error('Livery pass failed:', liveryErr); }
   const statusEl = document.getElementById('viewport-status');
   if (statusEl) statusEl.textContent = '2026 F1 Nimble Car assembled · SREdesigns - Samuel R Erwin III';
 } catch (err) {
