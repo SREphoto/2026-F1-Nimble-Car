@@ -177,7 +177,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     new THREE.Vector3(9.2, 0, 7.2)
   ];
   const pylonCurve = new THREE.CatmullRomCurve3(pylonPoints);
-  const pylonGeo = new THREE.TubeGeometry(pylonCurve, 32, 0.18, 16, false);
+  const pylonGeo = new THREE.TubeGeometry(pylonCurve, 32, 0.15, 20, false);
   const forwardPylon = new THREE.Mesh(pylonGeo, mats.titaniumHalo);
   forwardPylon.castShadow = true;
   haloGroup.add(forwardPylon);
@@ -191,14 +191,14 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     new THREE.Vector3(16.5, 2.0, 5.8)
   ];
   const hoopCurveLH = new THREE.CatmullRomCurve3(hoopPoints);
-  const hoopGeoLH = new THREE.TubeGeometry(hoopCurveLH, 32, 0.19, 16, false);
+  const hoopGeoLH = new THREE.TubeGeometry(hoopCurveLH, 48, 0.15, 20, false); // slimmer halo tube
   const hoopLH = new THREE.Mesh(hoopGeoLH, mats.titaniumHalo);
   hoopLH.castShadow = true;
   haloGroup.add(hoopLH);
 
   const hoopPointsRH = hoopPoints.map(p => new THREE.Vector3(p.x, -p.y, p.z));
   const hoopCurveRH = new THREE.CatmullRomCurve3(hoopPointsRH);
-  const hoopGeoRH = new THREE.TubeGeometry(hoopCurveRH, 32, 0.19, 16, false);
+  const hoopGeoRH = new THREE.TubeGeometry(hoopCurveRH, 48, 0.15, 20, false);
   const hoopRH = new THREE.Mesh(hoopGeoRH, mats.titaniumHalo);
   hoopRH.castShadow = true;
   haloGroup.add(hoopRH);
@@ -208,11 +208,11 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     const vx = 9.8 + v * 1.2;
     const vaneGeo = new THREE.BoxGeometry(0.35, 0.08, 0.02);
     const vaneLH = new THREE.Mesh(vaneGeo, mats.carbonGlossAero);
-    vaneLH.position.set(vx, 1.2 + v * 0.4, 7.38);
+    vaneLH.position.set(vx, 1.2 + v * 0.4, 7.35);
     haloGroup.add(vaneLH);
 
     const vaneRH = new THREE.Mesh(vaneGeo, mats.carbonGlossAero);
-    vaneRH.position.set(vx, -(1.2 + v * 0.4), 7.38);
+    vaneRH.position.set(vx, -(1.2 + v * 0.4), 7.35);
     haloGroup.add(vaneRH);
   }
 
@@ -245,7 +245,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloApexGeo = new THREE.PlaneGeometry(1.2, 0.6);
   const haloApexMesh = new THREE.Mesh(haloApexGeo, haloApexMat);
-  haloApexMesh.position.set(9.22, 0, 7.42);
+  haloApexMesh.position.set(9.22, 0, 7.37);
   haloApexMesh.rotation.set(0, 0, Math.PI / 2); // lie flat on top of halo (normal +Z)
   haloApexMesh.name = "Decal_Halo_Apex_TAGHeuer";
   haloGroup.add(haloApexMesh);
@@ -259,7 +259,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloAttGeo = new THREE.PlaneGeometry(1.4, 0.35);
   const haloAttMesh = new THREE.Mesh(haloAttGeo, haloAttMat);
-  haloAttMesh.position.set(10.6, 1.45, 7.42);
+  haloAttMesh.position.set(10.6, 1.45, 7.37);
   haloAttMesh.rotation.set(0, 0, Math.PI / 2 - 0.32);
   haloAttMesh.name = "Decal_Halo_Left_ATT";
   haloGroup.add(haloAttMesh);
@@ -273,7 +273,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloOracleGeo = new THREE.PlaneGeometry(1.4, 0.35);
   const haloOracleMesh = new THREE.Mesh(haloOracleGeo, haloOracleMat);
-  haloOracleMesh.position.set(10.6, -1.45, 7.42);
+  haloOracleMesh.position.set(10.6, -1.45, 7.37);
   haloOracleMesh.rotation.set(0, 0, Math.PI / 2 + 0.32);
   haloOracleMesh.name = "Decal_Halo_Right_ORACLE";
   haloGroup.add(haloOracleMesh);
