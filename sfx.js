@@ -219,6 +219,11 @@ class SoundEngine {
     clickOsc.start(t);
     clickOsc.stop(t + 0.035);
   }
+
+  // Names used by app.js (gear buttons / aero toggle). They were missing, which threw inside the
+  // click handlers before the gear / aero state was applied.
+  playShiftPop() { this.playShift(); }
+  playAeroSwitch() { this.playClick(); }
 }
 
 export const soundEngine = new SoundEngine();
