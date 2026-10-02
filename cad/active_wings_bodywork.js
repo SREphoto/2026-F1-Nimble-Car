@@ -176,7 +176,7 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   const frontWingGroup = new THREE.Group();
   frontWingGroup.name = 'FrontWing_Aerofoil_Assembly';
-  frontWingGroup.position.set(-9.8, 0.0, 0.55);
+  frontWingGroup.position.set(-8.6, 0.0, 0.55); // trailing edges close to the front tyres
 
   // Front Wing Mainplane Mesh (Contoured continuous carbon spoon mainplane)
   const mainplaneWidth = 17.6; // 1760 mm span
@@ -194,12 +194,13 @@ export function createActiveWingsBodywork(options = {}) {
   // Apply subtle sweep-back and center spoon droop across vertices
   const fwPos = fwMainGeo.attributes.position;
   for (let p = 0; p < fwPos.count; p++) {
-    const ySpan = fwPos.getY(p); // Spanwise coordinate before rotation
-    const normSpan = Math.abs(ySpan) / (mainplaneWidth / 2);
+    // Before the mesh's Rx(90deg): local Z = span, local Y = thickness (becomes world up)
+    const zSpan = fwPos.getZ(p);
+    const normSpan = Math.abs(zSpan) / (mainplaneWidth / 2);
     // Sweep-back: tips move rearward by 1.2 dm
     fwPos.setX(p, fwPos.getX(p) + Math.pow(normSpan, 1.5) * 1.2);
-    // Center droop: tips rise by 0.35 dm
-    fwPos.setZ(p, fwPos.getZ(p) + Math.pow(normSpan, 2.0) * 0.35);
+    // Center droop (spoon): tips rise by 0.35 dm
+    fwPos.setY(p, fwPos.getY(p) + Math.pow(normSpan, 2.0) * 0.35);
   }
   fwMainGeo.computeVertexNormals();
 
@@ -222,7 +223,10 @@ export function createActiveWingsBodywork(options = {}) {
     flapAssembly.position.set(0.25, side * 5.0, 0.22);
 
     const pivotNode = new THREE.Group();
-    pivotNode.rotation.y = isLeft ? activeFlapAngle : -activeFlapAngle;
+    // Same sign on both sides; negative rotation about +Y raises the trailing edge.
+    // full_car3d.js animates this toward -0.38 (Z-mode) / -0.07 (X-mode).
+    pivotNode.rotation.y = 0;
+    flapAssembly.rotation.y = -Math.abs(activeFlapAngle);
 
     // Flap 1 (Lower Active Element)
     const flap1Shape = new THREE.Shape();
@@ -234,6 +238,7 @@ export function createActiveWingsBodywork(options = {}) {
 
     const flap1Geo = new THREE.ExtrudeGeometry(flap1Shape, { steps: 4, depth: 7.2, bevelEnabled: false });
     flap1Geo.center();
+    flap1Geo.scale(1.5, 1, 1); // longer chord so the flap stack reaches toward the tyres
     const flap1Mesh = new THREE.Mesh(flap1Geo, navyMat);
     flap1Mesh.rotation.x = Math.PI / 2;
     pivotNode.add(flap1Mesh);
@@ -248,9 +253,10 @@ export function createActiveWingsBodywork(options = {}) {
 
     const flap2Geo = new THREE.ExtrudeGeometry(flap2Shape, { steps: 4, depth: 6.8, bevelEnabled: false });
     flap2Geo.center();
+    flap2Geo.scale(1.5, 1, 1);
     const flap2Mesh = new THREE.Mesh(flap2Geo, navyMat);
     flap2Mesh.rotation.x = Math.PI / 2;
-    flap2Mesh.position.set(0.35, 0, 0.18); // Elevated slot gap
+    flap2Mesh.position.set(0.55, 0, 0.18); // Elevated slot gap
     pivotNode.add(flap2Mesh);
 
     // 4x Slot Gap Separators (connecting Flap 1 and Flap 2)
@@ -258,7 +264,7 @@ export function createActiveWingsBodywork(options = {}) {
       const sepY = -2.7 + s * 1.8;
       const sepGeo = new THREE.BoxGeometry(0.35, 0.03, 0.22);
       const sepMesh = new THREE.Mesh(sepGeo, carbonMatte);
-      sepMesh.position.set(0.18, sepY, 0.09);
+      sepMesh.position.set(0.3, sepY, 0.09);
       pivotNode.add(sepMesh);
     }
 
@@ -307,7 +313,8 @@ export function createActiveWingsBodywork(options = {}) {
     // Orient flat on ground, flaring outward
     footplateMesh.rotation.set(isLeft ? 0.08 : -0.08, 0, 0); // Slight ski angle
     footplateMesh.position.set(0, isLeft ? 0.02 : -0.02, -0.25);
-    if (!isLeft) footplateMesh.scale.y = -1; // Mirror outward for right side
+    // Mirror outward for right side; flare limited to 0.62 dm so the car stays within 1900 mm
+    footplateMesh.scale.y = (isLeft ? 1 : -1) * 0.65;
     fwepGroup.add(footplateMesh);
 
     // 3. Upright Mobil 1 Decal on Endplate Outer Face
@@ -323,9 +330,9 @@ export function createActiveWingsBodywork(options = {}) {
     const p10 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, -0.1);
     const p11 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 1.4);
     const p01 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 1.4);
-    const epDecalMesh = isLeft
-      ? createDecalQuad(p00, p10, p11, p01, epDecalMat)
-      : createDecalQuad(p10, p00, p01, p11, epDecalMat);
+    const epDecalMesh = isLeft // reads correctly from outside the car
+      ? createDecalQuad(p10, p00, p01, p11, epDecalMat)
+      : createDecalQuad(p00, p10, p11, p01, epDecalMat);
     fwepGroup.add(epDecalMesh);
 
     frontWingGroup.add(fwepGroup);
@@ -357,7 +364,7 @@ export function createActiveWingsBodywork(options = {}) {
 
     const podExtrude = {
       steps: 4,
-      depth: 4.8,
+      depth: 3.4,
       bevelEnabled: true,
       bevelThickness: 0.35,
       bevelSize: 0.35,
@@ -380,8 +387,11 @@ export function createActiveWingsBodywork(options = {}) {
     podGeo.computeVertexNormals();
 
     const podMesh = new THREE.Mesh(podGeo, navyMat);
-    podMesh.rotation.x = isLeft ? Math.PI / 2 : -Math.PI / 2;
-    podMesh.position.set(16.5, side * 6.2, 2.1);
+    // Rx(+90deg) on both sides keeps the profile right-side-up (shape Y -> world Z);
+    // the RH pod is a true mirror (local Z becomes lateral after the rotation).
+    podMesh.rotation.x = Math.PI / 2;
+    if (!isLeft) podMesh.scale.z = -1;
+    podMesh.position.set(16.5, side * 5.3, 2.1); // Y = 3.25 ... 7.35 (inside the floor edge)
     podMesh.castShadow = true;
     podMesh.receiveShadow = true;
     podMesh.name = `Sidepod_Body_${isLeft ? 'LH' : 'RH'}`;
@@ -400,15 +410,18 @@ export function createActiveWingsBodywork(options = {}) {
       side: THREE.DoubleSide
     });
 
-    const flankY = side * 8.65;
+    const flankY = side * 7.4;
     const spP00 = new THREE.Vector3(7.0, flankY, 0.8);  // Front lower
     const spP10 = new THREE.Vector3(25.0, flankY, 0.8); // Rear lower
     const spP11 = new THREE.Vector3(25.0, flankY, 3.8); // Rear upper
     const spP01 = new THREE.Vector3(7.0, flankY, 3.8);  // Front upper
 
+    // Seen from the car's left (+Y) the viewer's right is -X (forward), so the LH quad starts
+    // at the rear-lower corner; the RH quad starts at the front-lower corner. (The two were
+    // swapped, which mirrored the text; it was hidden inside the over-wide pod until now.)
     const flankMesh = isLeft
-      ? createDecalQuad(spP00, spP10, spP11, spP01, sidepodLiveryMat)
-      : createDecalQuad(spP10, spP00, spP01, spP11, sidepodLiveryMat);
+      ? createDecalQuad(spP10, spP00, spP01, spP11, sidepodLiveryMat)
+      : createDecalQuad(spP00, spP10, spP11, spP01, sidepodLiveryMat);
     flankMesh.name = `Sidepod_OracleLivery_${isLeft ? 'LH' : 'RH'}`;
     pod.add(flankMesh);
 
@@ -417,14 +430,14 @@ export function createActiveWingsBodywork(options = {}) {
     const inletRim = new THREE.Mesh(inletRimGeo, carbonMat);
     inletRim.rotation.y = Math.PI / 2;
     inletRim.rotation.x = isLeft ? 0 : Math.PI;
-    inletRim.position.set(5.3, side * 4.85, 3.4);
+    inletRim.position.set(5.3, side * 4.6, 3.4);
     pod.add(inletRim);
 
     // Internal Radiator Core (Angled at 42°)
     const radCoreGeo = new THREE.BoxGeometry(0.18, 2.5, 1.9);
     const radCore = new THREE.Mesh(radCoreGeo, materials.titaniumBright);
     radCore.rotation.y = -0.55;
-    radCore.position.set(7.5, side * 4.85, 2.8);
+    radCore.position.set(7.5, side * 4.6, 2.8);
     pod.add(radCore);
 
     sidepodGroup.add(pod);
@@ -440,7 +453,8 @@ export function createActiveWingsBodywork(options = {}) {
 
   // Primary Airbox Scoop (Yellow)
   const airboxGroup = new THREE.Group();
-  airboxGroup.position.set(14.8, 0.0, 7.8);
+  airboxGroup.name = 'Airbox_RollHoop_Intake';
+  airboxGroup.position.set(16.0, 0.0, 8.2); // single forward-facing intake over the roll hoop, behind the helmet
 
   const scoopShape = new THREE.Shape();
   scoopShape.moveTo(-0.9, -0.85);
@@ -469,18 +483,26 @@ export function createActiveWingsBodywork(options = {}) {
   scoopMesh.name = 'Airbox_Scoop_Yellow';
   airboxGroup.add(scoopMesh);
 
-  // FIA Yellow T-Camera on Roll Hoop Apex
-  const tCamGeo = new THREE.BoxGeometry(0.45, 0.85, 0.18);
-  const tCam = new THREE.Mesh(tCamGeo, yellowMat);
-  tCam.position.set(0.8, 0, 1.75);
-  tCam.name = 'FIA_T_Camera_Yellow';
-  airboxGroup.add(tCam);
+  // Dark intake mouth on the forward face so the opening reads as forward-facing
+  const mouthShape = new THREE.Shape();
+  mouthShape.moveTo(-0.7, -0.6);
+  mouthShape.lineTo(0.7, -0.6);
+  mouthShape.quadraticCurveTo(0.9, 0.5, 0.0, 0.82);
+  mouthShape.quadraticCurveTo(-0.9, 0.5, -0.7, -0.6);
+  mouthShape.closePath();
+  const mouthGeo = new THREE.ShapeGeometry(mouthShape);
+  const mouthMesh = new THREE.Mesh(mouthGeo, new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9, side: THREE.DoubleSide }));
+  mouthMesh.quaternion.copy(scoopMesh.quaternion);
+  mouthMesh.position.set(1.5 - 1.76, 0, -0.1); // just ahead of the scoop's front face
+  mouthMesh.name = 'Airbox_Intake_Mouth';
+  airboxGroup.add(mouthMesh);
+  // (The FIA T-camera is modelled once, in cockpit_accessories_driver.js, on top of this intake.)
 
   engineCoverGroup.add(airboxGroup);
 
   // 3D Lofted Engine Cover Shell (Tight wrap over V6 turbo)
   const coverStations = [
-    { x: 14.8, rw: 2.9, zc: 5.8, rz: 2.8 },
+    { x: 17.2, rw: 2.8, zc: 5.6, rz: 2.7 },
     { x: 18.0, rw: 2.7, zc: 5.5, rz: 2.6 },
     { x: 21.5, rw: 2.4, zc: 5.1, rz: 2.3 },
     { x: 25.5, rw: 2.0, zc: 4.6, rz: 1.9 },
@@ -492,10 +514,15 @@ export function createActiveWingsBodywork(options = {}) {
   const ecIndices = [];
   const ecUvs = [];
   const ecSegments = 32;
+  const ecSkirtZ = 3.9; // side skirts close the slot down to the sidepod tops
+  const ecRow = ecSegments + 3; // skirt point + arc + skirt point
 
   for (let i = 0; i < coverStations.length; i++) {
     const st = coverStations[i];
     const u = i / (coverStations.length - 1);
+    const skirtZ = Math.min(st.zc, ecSkirtZ);
+    ecVerts.push(st.x, st.rw, skirtZ);
+    ecUvs.push(u, 0);
     for (let j = 0; j <= ecSegments; j++) {
       const v = j / ecSegments;
       const phi = v * Math.PI; // Top half-shell
@@ -504,14 +531,16 @@ export function createActiveWingsBodywork(options = {}) {
       ecVerts.push(st.x, y, z);
       ecUvs.push(u, v);
     }
+    ecVerts.push(st.x, -st.rw, skirtZ);
+    ecUvs.push(u, 1);
   }
 
   for (let i = 0; i < coverStations.length - 1; i++) {
-    for (let j = 0; j < ecSegments; j++) {
-      const a = i * (ecSegments + 1) + j;
-      const b = (i + 1) * (ecSegments + 1) + j;
-      const c = (i + 1) * (ecSegments + 1) + (j + 1);
-      const d = i * (ecSegments + 1) + (j + 1);
+    for (let j = 0; j < ecRow - 1; j++) {
+      const a = i * ecRow + j;
+      const b = (i + 1) * ecRow + j;
+      const c = (i + 1) * ecRow + (j + 1);
+      const d = i * ecRow + (j + 1);
       ecIndices.push(a, b, d);
       ecIndices.push(b, c, d);
     }
@@ -541,24 +570,24 @@ export function createActiveWingsBodywork(options = {}) {
       side: THREE.DoubleSide
     });
     const ecY = side * 2.55;
-    const ecP00 = new THREE.Vector3(16.0, ecY, 3.2);
-    const ecP10 = new THREE.Vector3(28.0, ecY, 3.2);
-    const ecP11 = new THREE.Vector3(28.0, ecY, 6.8);
-    const ecP01 = new THREE.Vector3(16.0, ecY, 6.8);
-    const ecDecal = isLeft
-      ? createDecalQuad(ecP00, ecP10, ecP11, ecP01, ecLiveryMat)
-      : createDecalQuad(ecP10, ecP00, ecP01, ecP11, ecLiveryMat);
+    const ecP00 = new THREE.Vector3(18.5, ecY, 4.2);
+    const ecP10 = new THREE.Vector3(26.0, ecY, 4.2);
+    const ecP11 = new THREE.Vector3(26.0, ecY, 6.2);
+    const ecP01 = new THREE.Vector3(18.5, ecY, 6.2);
+    const ecDecal = isLeft // same winding rule as the sidepod livery (reads correctly from outside)
+      ? createDecalQuad(ecP10, ecP00, ecP01, ecP11, ecLiveryMat)
+      : createDecalQuad(ecP00, ecP10, ecP11, ecP01, ecLiveryMat);
     ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
     engineCoverGroup.add(ecDecal);
   });
 
   // Dorsal Shark Fin along Engine Spine
   const finShape = new THREE.Shape();
-  finShape.moveTo(14.8, 8.2);
-  finShape.lineTo(14.8, 9.2); // Apex
+  finShape.moveTo(18.0, 7.9);  // Starts behind the roll hoop / airbox
+  finShape.lineTo(18.0, 8.8); // Apex
   finShape.lineTo(33.0, 5.8); // Rear wing pylon junction
   finShape.lineTo(33.0, 4.2);
-  finShape.quadraticCurveTo(24.0, 5.8, 14.8, 8.2);
+  finShape.quadraticCurveTo(24.0, 5.8, 18.0, 7.9);
   finShape.closePath();
 
   const finExtrude = { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
@@ -566,7 +595,7 @@ export function createActiveWingsBodywork(options = {}) {
   finGeo.center();
   const finMesh = new THREE.Mesh(finGeo, navyMat);
   finMesh.rotation.set(Math.PI / 2, 0, 0);
-  finMesh.position.set(23.9, 0, 6.7);
+  finMesh.position.set(25.5, 0, 6.5); // re-centred on the shape's bounding box
   finMesh.name = 'Dorsal_Shark_Fin';
   engineCoverGroup.add(finMesh);
 
@@ -610,7 +639,7 @@ export function createActiveWingsBodywork(options = {}) {
   rearWingGroup.name = 'Assembly_Active_Rear_Wing';
   rearWingGroup.position.set(36.8, 0.0, 7.4);
 
-  const rwFlapAngle = options.rearFlapAngle || 0.45; // Default Z-Mode angle
+  const rwFlapAngle = options.rearFlapAngle ?? -0.45; // Default Z-Mode angle (negative = trailing edge up)
 
   // -------------------------------------------------------------------------
   // 4A. REAR WING SPOON MAINPLANE (Genuine Horizontal Aerofoil)
@@ -649,7 +678,7 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   const rwFlapPivot = new THREE.Group();
   rwFlapPivot.name = 'RearWing_Active_UpperFlap';
-  rwFlapPivot.position.set(0.65, 0, 0.32);
+  rwFlapPivot.position.set(1.05, 0, 0.5); // behind and above the mainplane trailing edge (slot gap)
   rwFlapPivot.rotation.y = rwFlapAngle; // DRS / X-Mode pitch articulation around lateral Y axis
 
   const rwFlapShape = new THREE.Shape();
@@ -874,9 +903,9 @@ export function createActiveWingsBodywork(options = {}) {
     const epP10 = new THREE.Vector3( 1.4, hipY, -2.5);
     const epP11 = new THREE.Vector3( 1.4, hipY,  0.8);
     const epP01 = new THREE.Vector3(-1.4, hipY,  0.8);
-    const epDecal = isLeft
-      ? createDecalQuad(epP00, epP10, epP11, epP01, epDecalMat)
-      : createDecalQuad(epP10, epP00, epP01, epP11, epDecalMat);
+    const epDecal = isLeft // reads correctly from outside the car
+      ? createDecalQuad(epP10, epP00, epP01, epP11, epDecalMat)
+      : createDecalQuad(epP00, epP10, epP11, epP01, epDecalMat);
     epDecal.name = `RearWing_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
     epGroup.add(epDecal);
 
@@ -928,7 +957,7 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   const beamWingGroup = new THREE.Group();
   beamWingGroup.name = 'RearWing_BeamWing_Assembly';
-  beamWingGroup.position.set(0.4, 0, -3.6);
+  beamWingGroup.position.set(0.4, 0, -2.9); // world Z 4.5, clear above the exhaust (Z 3.31-4.19)
 
   const bwSpan = 13.4; // Spans from Y = -6.7 to Y = +6.7 dm (between endplates)
   const bwShape = new THREE.Shape();
@@ -949,111 +978,22 @@ export function createActiveWingsBodywork(options = {}) {
   rearWingGroup.add(beamWingGroup);
 
   // -------------------------------------------------------------------------
-  // 4E. REAR IMPACT STRUCTURE (RIS) & FIA CENTRAL RAIN LIGHT (media_1790507837418.webp)
-  // - High-strength carbon impact attenuator cone
-  // - Prominent bright yellow chamfered bezel around FIA rain safety light
-  // - Oval ring of 18 intense red LEDs in illuminated recessed socket
+  // 4E. REAR IMPACT STRUCTURE & RAIN LIGHT
+  // Modelled once, on the gearbox, in transmission_moving_gears.js (RIS X 35.0-37.4, Z 2.0-3.35).
   // -------------------------------------------------------------------------
-  const crashBoxGroup = new THREE.Group();
-  crashBoxGroup.name = 'Rear_Impact_Structure_CrashBox';
-  crashBoxGroup.position.set(0.9, 0.0, -3.8);
-
-  // Structural Carbon Impact Attenuator Cone
-  const crashBoxGeo = new THREE.BoxGeometry(2.8, 1.8, 1.2);
-  const crashBox = new THREE.Mesh(crashBoxGeo, carbonMatte);
-  crashBox.castShadow = true;
-  crashBoxGroup.add(crashBox);
-
-  // BRIGHT YELLOW CHAMFERED BEZEL SURROUND (media_1790507837418.webp)
-  const yellowBezelShape = new THREE.Shape();
-  yellowBezelShape.moveTo(-0.85, -0.65);
-  yellowBezelShape.lineTo(0.85, -0.65);
-  yellowBezelShape.quadraticCurveTo(0.95, -0.65, 0.95, -0.55);
-  yellowBezelShape.lineTo(0.85, 0.55);
-  yellowBezelShape.quadraticCurveTo(0.75, 0.65, 0.65, 0.65);
-  yellowBezelShape.lineTo(-0.65, 0.65);
-  yellowBezelShape.quadraticCurveTo(-0.75, 0.65, -0.85, 0.55);
-  yellowBezelShape.lineTo(-0.95, -0.55);
-  yellowBezelShape.quadraticCurveTo(-0.95, -0.65, -0.85, -0.65);
-  yellowBezelShape.closePath();
-
-  // Inner cutout for dark LED socket
-  const bezelHole = new THREE.Path();
-  bezelHole.moveTo(-0.65, -0.45);
-  bezelHole.lineTo(0.65, -0.45);
-  bezelHole.quadraticCurveTo(0.75, 0, 0.65, 0.45);
-  bezelHole.lineTo(-0.65, 0.45);
-  bezelHole.quadraticCurveTo(-0.75, 0, -0.65, -0.45);
-  bezelHole.closePath();
-  yellowBezelShape.holes.push(bezelHole);
-
-  const bezelExtrude = { steps: 1, depth: 0.12, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
-  const yellowBezelGeo = new THREE.ExtrudeGeometry(yellowBezelShape, bezelExtrude);
-  yellowBezelGeo.center();
-  const yellowBezelMat = new THREE.MeshStandardMaterial({
-    color: 0xffdd00, // Vibrant FIA inspection yellow
-    roughness: 0.25,
-    metalness: 0.15
-  });
-  const yellowBezel = new THREE.Mesh(yellowBezelGeo, yellowBezelMat);
-  yellowBezel.rotation.y = Math.PI / 2;
-  yellowBezel.position.set(1.44, 0, 0);
-  crashBoxGroup.add(yellowBezel);
-
-  // Dark Carbon Recessed Socket Face
-  const socketGeo = new THREE.BoxGeometry(0.04, 1.35, 0.95);
-  const socketMesh = new THREE.Mesh(socketGeo, materials.carbonMatteStructural);
-  socketMesh.position.set(1.45, 0, 0);
-  crashBoxGroup.add(socketMesh);
-
-  // OVAL RING OF 18 RED FIA RAIN LIGHT LEDs (media_1790507837418.webp)
-  const rainLightGroup = new THREE.Group();
-  rainLightGroup.name = 'FIA_Rear_Rain_Safety_Light';
-  rainLightGroup.position.set(1.48, 0, 0);
-
-  const numRingLeds = 18;
-  const rx = 0.52; // Lateral radius
-  const rz = 0.36; // Vertical radius
-  const ledGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.04, 12);
-  const ledRedMat = new THREE.MeshStandardMaterial({
-    color: 0xff0000,
-    emissive: 0xff0000,
-    emissiveIntensity: 3.8,
-    roughness: 0.1
-  });
-
-  for (let k = 0; k < numRingLeds; k++) {
-    const ang = (k * Math.PI * 2) / numRingLeds;
-    const lY = Math.cos(ang) * rx;
-    const lZ = Math.sin(ang) * rz;
-    const led = new THREE.Mesh(ledGeo, ledRedMat);
-    led.rotation.z = Math.PI / 2;
-    led.position.set(0.02, lY, lZ);
-    rainLightGroup.add(led);
-  }
-
-  // 4 Central Core LEDs inside the oval ring
-  [-0.18, 0.18].forEach(cy => {
-    [-0.12, 0.12].forEach(cz => {
-      const coreLed = new THREE.Mesh(ledGeo, ledRedMat);
-      coreLed.rotation.z = Math.PI / 2;
-      coreLed.position.set(0.02, cy, cz);
-      rainLightGroup.add(coreLed);
-    });
-  });
-
-  crashBoxGroup.add(rainLightGroup);
-  rearWingGroup.add(crashBoxGroup);
 
   // -------------------------------------------------------------------------
   // 4F. DUAL SWAN-NECK MOUNTING PYLONS
   // -------------------------------------------------------------------------
-  [-0.9, 0.9].forEach(pylonY => {
+  [-0.55, 0.55].forEach(pylonY => {
+    // The cross-section is flattened with geometry.scale(1.8, 0.6, 1), which also scales
+    // the path, so pre-divide by the same factors to land the pylon where intended.
+    const yp = pylonY / 0.6;
     const pylonCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.0, pylonY, -3.2),  // Attaches to Crash Box
-      new THREE.Vector3(-0.6, pylonY, -1.8), // Arches over exhaust
-      new THREE.Vector3(-0.9, pylonY, -0.4),
-      new THREE.Vector3(-0.6, pylonY, 0.0)   // Under mainplane
+      new THREE.Vector3(-0.6 / 1.8, yp, -4.05), // Foot on top of the RIS (world X 36.2, Z 3.35)
+      new THREE.Vector3(-0.8 / 1.8, yp, -2.6),  // Passes beside the exhaust
+      new THREE.Vector3(-0.9 / 1.8, yp, -1.0),
+      new THREE.Vector3(-0.6 / 1.8, yp, 0.0)    // Under mainplane
     ]);
     const pylonGeo = new THREE.TubeGeometry(pylonCurve, 16, 0.08, 8, false);
     pylonGeo.scale(1.8, 0.6, 1.0);
