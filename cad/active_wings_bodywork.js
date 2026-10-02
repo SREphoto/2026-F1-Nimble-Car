@@ -154,57 +154,28 @@ export function createActiveWingsBodywork(options = {}) {
   const noseGroup = new THREE.Group();
   noseGroup.name = 'Nosecone_FIS_Assembly';
 
-  const numRings = 40;
-  const numSegments = 40;
-  // Nose profile (u = 0 at Bulkhead A-A, X = 0; u = 1 at the tip, X = -10.0)
-  const noseZc = u => 2.70 - 1.15 * Math.pow(u, 1.6);
-  const noseRy = u => 1.60 * (1.0 - 0.69 * Math.pow(u, 0.85));
-  const noseRz = u => 1.50 * (1.0 - 0.65 * Math.pow(u, 0.9));
-  const noseVertices = [];
-  const noseIndices = [];
-  const noseUvs = [];
-
-  for (let i = 0; i <= numRings; i++) {
-    const u = i / numRings; // 0.0 at Bulkhead A-A (X=0), 1.0 at nose tip (X=-10.2)
-    const x = -u * 10.0;
-
-    // Long, gently drooping nose; the tip stays above the wing on two pillars
-    const zCenter = noseZc(u);
-
-    // Cross-sectional radii (smoothly tapering from monocoque to a rounded tip)
-    const ry = noseRy(u); // Half-width 1.60 -> 0.50 dm
-    const rz = noseRz(u); // Half-height 1.50 -> 0.52 dm
-
-    for (let j = 0; j <= numSegments; j++) {
-      const theta = (j / numSegments) * Math.PI * 2;
-      const y = Math.cos(theta) * ry;
-      let z = zCenter + Math.sin(theta) * rz;
-      if (Math.sin(theta) < 0) {
-        // Flat underside for clean ground effect keel
-        z = zCenter + Math.sin(theta) * rz * 0.75;
-      }
-
-      noseVertices.push(x, y, z);
-      noseUvs.push(u, j / numSegments);
-    }
+  // Wide, flat 2026-style nose (refs 07/08/10): broad flattened-superellipse sections,
+  // drooping from Bulkhead A-A (X = 0) to a blunt rounded tip over the wing on two pillars.
+  const NOSE_L = 9.0;   // lofted body length (dm)
+  const TIP_L = 0.8;    // rounded tip length (dm) -> tip at X = -9.8
+  const noseZc = u => 2.70 - 1.25 * Math.pow(u, 1.5);          // centreline 2.70 -> 1.45 dm
+  const noseRy = u => 1.75 - 0.63 * Math.pow(u, 1.0);          // half-width 1.75 -> 1.12 dm (wide)
+  const noseRz = u => 1.50 - 1.12 * Math.pow(u, 0.75);         // half-height 1.50 -> 0.38 dm (flat)
+  const noseRing = (st, v) => {
+    const th = v * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+    const { x, u, k } = st; // k = tip rounding factor (1 on the body)
+    const ry = noseRy(u) * Math.sqrt(k), rz = noseRz(u) * Math.sqrt(k);
+    // boxy at the root so it fully encloses Bulkhead A-A and the FIS studs, rounder/flatter forward
+    const b = Math.min(1, u / 0.3), under = 1 - 0.3 * Math.min(1, u / 0.4);
+    return [x, ry * spow(c, 0.4 + 0.22 * b), noseZc(u) + rz * spow(sn, 0.6 + 0.2 * b) * (sn < 0 ? under : 1.0)];
+  };
+  const bodyStations = [], tipStations = [];
+  for (let i = 0; i <= 40; i++) { const u = i / 40; bodyStations.push({ x: -u * NOSE_L, u, k: 1 }); }
+  for (let i = 0; i <= 12; i++) {
+    const t = i / 12; // quarter-ellipse closing of the tip
+    tipStations.push({ x: -NOSE_L - TIP_L * Math.sin(t * Math.PI / 2), u: 1, k: Math.max(0, Math.cos(t * Math.PI / 2)) });
   }
-
-  for (let i = 0; i < numRings; i++) {
-    for (let j = 0; j < numSegments; j++) {
-      const a = i * (numSegments + 1) + j;
-      const b = (i + 1) * (numSegments + 1) + j;
-      const c = (i + 1) * (numSegments + 1) + (j + 1);
-      const d = i * (numSegments + 1) + (j + 1);
-      noseIndices.push(a, b, d);
-      noseIndices.push(b, c, d);
-    }
-  }
-
-  const noseGeo = new THREE.BufferGeometry();
-  noseGeo.setAttribute('position', new THREE.Float32BufferAttribute(noseVertices, 3));
-  noseGeo.setAttribute('uv', new THREE.Float32BufferAttribute(noseUvs, 2));
-  noseGeo.setIndex(noseIndices);
-  noseGeo.computeVertexNormals();
+  const noseGeo = loftGeometry(bodyStations, noseRing, 48);
 
   const noseMesh = new THREE.Mesh(noseGeo, navyMat);
   noseMesh.castShadow = true;
@@ -212,12 +183,9 @@ export function createActiveWingsBodywork(options = {}) {
   noseMesh.name = 'Nosecone_MainBody_Navy';
   noseGroup.add(noseMesh);
 
-  // Vibrant Racing Yellow Nose Tip Dome
-  const tipGeo = new THREE.SphereGeometry(0.52, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-  const tipMesh = new THREE.Mesh(tipGeo, yellowMat);
-  tipMesh.rotation.z = Math.PI / 2;
-  tipMesh.position.set(-10.0, 0, noseZc(1));
-  tipMesh.scale.set(0.65, 1.0, 0.95);
+  // Racing-yellow blunt rounded tip (continues the loft, closes to a point)
+  const tipMesh = new THREE.Mesh(loftGeometry(tipStations, noseRing, 48), yellowMat);
+  tipMesh.castShadow = true;
   tipMesh.name = 'Nosecone_YellowTip';
   noseGroup.add(tipMesh);
 
@@ -248,12 +216,12 @@ export function createActiveWingsBodywork(options = {}) {
     pillarShape.moveTo(-0.45, 0);
     pillarShape.quadraticCurveTo(-0.1, 0.07, 0.45, 0.0);
     pillarShape.quadraticCurveTo(-0.1, -0.07, -0.45, 0);
-    const pu = 0.84; // station under the nose
-    const zTop = noseZc(pu) - noseRz(pu) * 0.75 + 0.08;
+    const pu = 0.93; // station under the nose (X = -8.4)
+    const zTop = noseZc(pu) - noseRz(pu) * 0.7 + 0.06;
     const zBot = 0.62;
     const pillarGeo = new THREE.ExtrudeGeometry(pillarShape, { steps: 1, depth: zTop - zBot, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
     const pillar = new THREE.Mesh(pillarGeo, navyMat);
-    pillar.position.set(-8.4, side * 0.32, zBot);
+    pillar.position.set(-8.4, side * 0.55, zBot);
     pillar.name = `Nosecone_Pillar_${side > 0 ? 'LH' : 'RH'}`;
     noseGroup.add(pillar);
   });
@@ -368,44 +336,52 @@ export function createActiveWingsBodywork(options = {}) {
     const fwepGroup = new THREE.Group();
     fwepGroup.position.set(0.6, side * 8.8, 0.25);
 
-    // 1. Vertical Curved Endplate Wall
-    const fwepWallShape = new THREE.Shape();
-    fwepWallShape.moveTo(-2.4, -0.25); // Forward lower point
-    fwepWallShape.lineTo(1.8, -0.25);  // Aft lower point
-    fwepWallShape.lineTo(1.8, 1.4);    // Aft upper point
-    fwepWallShape.quadraticCurveTo(0.0, 2.6, -2.4, 1.2); // Smooth curved upper leading crest
-    fwepWallShape.closePath();
-
-    const fwepWallGeo = new THREE.ExtrudeGeometry(fwepWallShape, {
-      steps: 1,
-      depth: 0.05,
-      bevelEnabled: true,
-      bevelThickness: 0.015,
-      bevelSize: 0.015,
-      bevelSegments: 2
-    });
-    const fwepWallMesh = new THREE.Mesh(fwepWallGeo, navyMat);
-    fwepWallMesh.rotation.set(Math.PI / 2, 0, 0);
-    fwepWallMesh.position.set(0, 0, 0);
+    // 1+2. Tall curved endplate that sweeps outward and down into a footplate at the bottom
+    // (Samuel's sketch / ref 07). One continuous thin shell: lip -> quarter-round -> wall.
+    const EP_R = 0.5, EP_LIP = 0.12, EP_T = 0.05, EP_ZB = -0.30;
+    const epTop = sx => -0.30 + 1.35 + 1.05 * (1 - Math.pow(1 - sx, 2)); // top edge rises to the rear
+    // profile point (out, z) for parameter v in [0,1] at chord station sx
+    const epProfile = (sx, v) => {
+      const arc = EP_R * Math.PI / 2, wall = Math.max(0.2, epTop(sx) - (EP_ZB + EP_R));
+      const L = EP_LIP + arc + wall, d = v * L;
+      if (d <= EP_LIP) return [EP_R + EP_LIP - d, EP_ZB];
+      if (d <= EP_LIP + arc) { const a = Math.PI / 2 - (d - EP_LIP) / EP_R; return [EP_R - EP_R * Math.cos(a), EP_ZB + EP_R - EP_R * Math.sin(a)]; }
+      return [0, EP_ZB + EP_R + (d - EP_LIP - arc)];
+    };
+    const epNs = 18, epNv = 22, epVerts = [], epIdx = [];
+    const epPt = (i, j, inner) => {
+      const sx = i / epNs, v = j / epNv, x = -2.4 + 4.2 * sx;
+      const p0 = epProfile(sx, v), dv = 1e-3;
+      const pa = epProfile(sx, Math.max(0, v - dv)), pb = epProfile(sx, Math.min(1, v + dv));
+      const tx = pb[0] - pa[0], tz = pb[1] - pa[1], tl = Math.hypot(tx, tz) || 1;
+      const n = [tz / tl, -tx / tl]; // outward/up normal of the profile
+      const o = inner ? -EP_T : 0;
+      return [x, side * (p0[0] + n[0] * o), p0[1] + n[1] * o];
+    };
+    for (const inner of [false, true]) for (let i = 0; i <= epNs; i++) for (let j = 0; j <= epNv; j++) epVerts.push(...epPt(i, j, inner));
+    const ev = (inner, i, j) => (inner ? (epNs + 1) * (epNv + 1) : 0) + i * (epNv + 1) + j;
+    const quad = (a, b, c, d, f) => { if (f) epIdx.push(a, c, b, a, d, c); else epIdx.push(a, b, c, a, c, d); };
+    const fl = isLeft; // mirrored side flips the winding
+    for (let i = 0; i < epNs; i++) for (let j = 0; j < epNv; j++) {
+      quad(ev(false, i, j), ev(false, i + 1, j), ev(false, i + 1, j + 1), ev(false, i, j + 1), fl);
+      quad(ev(true, i, j), ev(true, i + 1, j), ev(true, i + 1, j + 1), ev(true, i, j + 1), !fl);
+    }
+    for (let i = 0; i < epNs; i++) { // bottom (lip) and top edges
+      quad(ev(false, i, 0), ev(true, i, 0), ev(true, i + 1, 0), ev(false, i + 1, 0), fl);
+      quad(ev(false, i, epNv), ev(false, i + 1, epNv), ev(true, i + 1, epNv), ev(true, i, epNv), fl);
+    }
+    for (let j = 0; j < epNv; j++) { // leading and trailing edges
+      quad(ev(false, 0, j), ev(false, 0, j + 1), ev(true, 0, j + 1), ev(true, 0, j), fl);
+      quad(ev(false, epNs, j), ev(true, epNs, j), ev(true, epNs, j + 1), ev(false, epNs, j + 1), fl);
+    }
+    const fwepGeo = new THREE.BufferGeometry();
+    fwepGeo.setAttribute('position', new THREE.Float32BufferAttribute(epVerts, 3));
+    fwepGeo.setIndex(epIdx);
+    fwepGeo.computeVertexNormals();
+    const fwepWallMesh = new THREE.Mesh(fwepGeo, navyMat);
+    fwepWallMesh.castShadow = true;
+    fwepWallMesh.name = `FrontWing_Endplate_${isLeft ? 'LH' : 'RH'}`;
     fwepGroup.add(fwepWallMesh);
-
-    // 2. Wide Flared Ski-Ramp Footplate (Circled in Red by User!)
-    // Curves outward horizontally and curls slightly upward
-    const footplateShape = new THREE.Shape();
-    footplateShape.moveTo(-2.4, 0.0);
-    footplateShape.lineTo(1.8, 0.0);
-    footplateShape.quadraticCurveTo(1.6, 0.85, 0.0, 0.95); // Flaring outward like a ski
-    footplateShape.quadraticCurveTo(-1.8, 0.95, -2.4, 0.0);
-    footplateShape.closePath();
-
-    const footplateGeo = new THREE.ExtrudeGeometry(footplateShape, { steps: 1, depth: 0.04, bevelEnabled: false });
-    const footplateMesh = new THREE.Mesh(footplateGeo, carbonMat);
-    // Orient flat on ground, flaring outward
-    footplateMesh.rotation.set(isLeft ? 0.08 : -0.08, 0, 0); // Slight ski angle
-    footplateMesh.position.set(0, isLeft ? 0.02 : -0.02, -0.25);
-    // Mirror outward for right side; flare limited to 0.62 dm so the car stays within 1900 mm
-    footplateMesh.scale.y = (isLeft ? 1 : -1) * 0.65;
-    fwepGroup.add(footplateMesh);
 
     // 3. Upright Mobil 1 Decal on Endplate Outer Face
     const epTex = createEndplateTexture(isLeft);
@@ -416,10 +392,10 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const p00 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, -0.1);
-    const p10 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, -0.1);
-    const p11 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 1.4);
-    const p01 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 1.4);
+    const p00 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 0.25);
+    const p10 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 0.25);
+    const p11 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 1.25);
+    const p01 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 1.25);
     const epDecalMesh = isLeft // reads correctly from outside the car
       ? createDecalQuad(p10, p00, p01, p11, epDecalMat)
       : createDecalQuad(p00, p10, p11, p01, epDecalMat);
@@ -442,17 +418,19 @@ export function createActiveWingsBodywork(options = {}) {
     const isLeft = side > 0;
     const pod = new THREE.Group();
 
-    // Sidepod shell lofted between cross-sections (X = 5.2 inlet to X = 29.6 tail):
+    // Sidepod shell lofted between cross-sections (X = 8.6 inlet to X = 29.6 tail):
     // wide inlet under the halo/mirror, undercut below, then a coke-bottle taper
     // inward and downward to the rear. yIn sits inside the tub/engine cover (hidden).
     const podStations = resampleStations([
-      { x: 5.2,  yIn: 2.0, yOut: 6.7, zb: 0.62, zt: 3.75, uc: 0.30 },
-      { x: 7.0,  yIn: 2.0, yOut: 7.3, zb: 0.62, zt: 3.95, uc: 0.38 },
-      { x: 11.0, yIn: 2.0, yOut: 7.32, zb: 0.62, zt: 3.95, uc: 0.42 },
-      { x: 15.0, yIn: 2.0, yOut: 7.2, zb: 0.62, zt: 3.8, uc: 0.42 },
-      { x: 19.0, yIn: 2.0, yOut: 6.3, zb: 0.62, zt: 3.45, uc: 0.38 },
-      { x: 23.0, yIn: 1.9, yOut: 4.9, zb: 0.62, zt: 2.85, uc: 0.30 },
-      { x: 26.5, yIn: 1.7, yOut: 3.7, zb: 0.62, zt: 2.0, uc: 0.2 },
+      // inlet starts under the halo / mirrors (refs 08-11), leaving room ahead of it
+      // for the bargeboard deflector and floor-edge fins
+      { x: 8.6,  yIn: 2.0, yOut: 5.9, zb: 0.62, zt: 3.7, uc: 0.30 },
+      { x: 10.4, yIn: 2.0, yOut: 6.6, zb: 0.62, zt: 3.95, uc: 0.40 },
+      { x: 13.5, yIn: 2.0, yOut: 6.7, zb: 0.62, zt: 3.9, uc: 0.45 },
+      { x: 16.5, yIn: 2.0, yOut: 6.3, zb: 0.62, zt: 3.7, uc: 0.45 },
+      { x: 19.5, yIn: 2.0, yOut: 5.5, zb: 0.62, zt: 3.35, uc: 0.40 },
+      { x: 23.0, yIn: 1.9, yOut: 4.5, zb: 0.62, zt: 2.8, uc: 0.30 },
+      { x: 26.5, yIn: 1.7, yOut: 3.5, zb: 0.62, zt: 2.0, uc: 0.2 },
       { x: 29.6, yIn: 1.5, yOut: 2.3, zb: 0.62, zt: 1.1, uc: 0.1 }
     ], 8);
     const podRing = (st, v, off = 0) => {
@@ -492,7 +470,7 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const decX0 = 7.0, decX1 = 16.5;
+    const decX0 = 10.4, decX1 = 19.5;
     const decStations = podStations.filter(st => st.x >= decX0 - 1e-6 && st.x <= decX1 + 1e-6);
     const vA = -0.17, vB = 0.17; // ring angle range on the outer flank (fraction of a turn)
     const flankGeo = loftGeometry(decStations, (st, v) => podRing(st, vA + (vB - vA) * v, 0.02), 16, { closed: false, flip: !isLeft });
@@ -520,7 +498,7 @@ export function createActiveWingsBodywork(options = {}) {
     const radCoreGeo = new THREE.BoxGeometry(0.18, 2.5, 1.9);
     const radCore = new THREE.Mesh(radCoreGeo, materials.titaniumBright);
     radCore.rotation.y = -0.55;
-    radCore.position.set(7.5, side * 4.6, 2.8);
+    radCore.position.set(10.6, side * 4.3, 2.4);
     pod.add(radCore);
 
     sidepodGroup.add(pod);
@@ -587,15 +565,17 @@ export function createActiveWingsBodywork(options = {}) {
   // then tapers down and inward over the engine and gearbox to the rear-wing pylons.
   // Each ring is a rounded "tent": hw * (1 - s^k)^0.5 at height fraction s.
   const ecStations = resampleStations([
-    { x: 15.6, hw: 2.4, zb: 3.6, zt: 6.6, k: 2.4 },
-    { x: 17.2, hw: 3.0, zb: 3.6, zt: 7.7, k: 1.9 },
-    { x: 19.2, hw: 3.0, zb: 3.6, zt: 8.45, k: 1.5 },
-    { x: 21.5, hw: 2.85, zb: 3.4, zt: 7.6, k: 1.7 },
-    { x: 24.5, hw: 2.2, zb: 3.0, zt: 6.3, k: 2.0 },
-    { x: 27.5, hw: 1.85, zb: 2.6, zt: 5.45, k: 2.2 },
-    { x: 30.5, hw: 1.5, zb: 2.5, zt: 4.5, k: 2.4 },
-    { x: 33.2, hw: 1.35, zb: 2.5, zt: 4.05, k: 2.6 },
-    { x: 34.6, hw: 1.05, zb: 2.6, zt: 3.75, k: 2.6 }
+    // front stations rise right up to the scoop underside (7.2-7.35 dm): no gap under the airbox
+    { x: 15.6, hw: 2.2, zb: 3.6, zt: 7.5, k: 3.0 },
+    { x: 17.2, hw: 3.25, zb: 3.4, zt: 8.05, k: 3.0 }, // boxy shoulders enclose the tub top
+    { x: 19.2, hw: 3.2, zb: 3.0, zt: 8.45, k: 2.4 },
+    // flanks drop into the sidepod tops so no engine/cam hardware shows through the seam
+    { x: 21.5, hw: 3.0, zb: 2.6, zt: 7.6, k: 2.6 },
+    { x: 24.5, hw: 2.3, zb: 2.3, zt: 6.3, k: 2.0 },
+    { x: 27.5, hw: 1.95, zb: 2.2, zt: 5.45, k: 2.2 },
+    { x: 30.5, hw: 1.6, zb: 2.2, zt: 4.5, k: 2.4 },
+    { x: 33.2, hw: 1.4, zb: 2.3, zt: 4.05, k: 2.6 },
+    { x: 34.6, hw: 1.1, zb: 2.5, zt: 3.75, k: 2.6 }
   ], 8);
   const ecRing = (st, v, off = 0) => {
     // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
@@ -610,6 +590,14 @@ export function createActiveWingsBodywork(options = {}) {
   ecMesh.receiveShadow = true;
   ecMesh.name = 'EngineCover_MainShell';
   engineCoverGroup.add(ecMesh);
+  // Close the cover's forward face behind the headrest (fan over the first tent ring)
+  {
+    const st0 = ecStations[0], ring = [];
+    for (let j = 0; j <= 32; j++) { const p = ecRing(st0, j / 32); ring.push(new THREE.Vector3(p[0], p[1], p[2])); }
+    const ecCap = new THREE.Mesh(capGeometry(ring), navyMat);
+    ecCap.name = 'EngineCover_FrontBulkheadCap';
+    engineCoverGroup.add(ecCap);
+  }
 
   // Red Bull Charging Bull Decals on Engine Cover Flanks
   [-1, 1].forEach((side, bIdx) => {
