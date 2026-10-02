@@ -348,40 +348,51 @@ export function createActiveWingsBodywork(options = {}) {
       if (d <= EP_LIP + arc) { const a = Math.PI / 2 - (d - EP_LIP) / EP_R; return [EP_R - EP_R * Math.cos(a), EP_ZB + EP_R - EP_R * Math.sin(a)]; }
       return [0, EP_ZB + EP_R + (d - EP_LIP - arc)];
     };
-    const epNs = 18, epNv = 22, epVerts = [], epIdx = [];
-    const epPt = (i, j, inner) => {
-      const sx = i / epNs, v = j / epNv, x = -2.4 + 4.2 * sx;
-      const p0 = epProfile(sx, v), dv = 1e-3;
-      const pa = epProfile(sx, Math.max(0, v - dv)), pb = epProfile(sx, Math.min(1, v + dv));
-      const tx = pb[0] - pa[0], tz = pb[1] - pa[1], tl = Math.hypot(tx, tz) || 1;
-      const n = [tz / tl, -tx / tl]; // outward/up normal of the profile
-      const o = inner ? -EP_T : 0;
-      return [x, side * (p0[0] + n[0] * o), p0[1] + n[1] * o];
+    // Built as two shells sharing the same profile: the flat wall (thin, so the paint
+    // branch's endplate decal finder still recognises it) and the swept-out foot.
+    const epLen = sx => EP_LIP + EP_R * Math.PI / 2 + Math.max(0.2, epTop(sx) - (EP_ZB + EP_R));
+    const epSplit = sx => (EP_LIP + EP_R * Math.PI / 2) / epLen(sx); // v where the wall starts
+    const buildEpShell = (vFrom, vTo, epNv, name, mat) => {
+      const epNs = 18, epVerts = [], epIdx = [];
+      const epPt = (i, j, inner) => {
+        const sx = i / epNs, x = -2.4 + 4.2 * sx;
+        const v = vFrom(sx) + (vTo(sx) - vFrom(sx)) * (j / epNv);
+        const p0 = epProfile(sx, v), dv = 1e-3;
+        const pa = epProfile(sx, Math.max(0, v - dv)), pb = epProfile(sx, Math.min(1, v + dv));
+        const tx = pb[0] - pa[0], tz = pb[1] - pa[1], tl = Math.hypot(tx, tz) || 1;
+        const n = [tz / tl, -tx / tl]; // outward/up normal of the profile
+        const o = inner ? -EP_T : 0;
+        return [x, side * (p0[0] + n[0] * o), p0[1] + n[1] * o];
+      };
+      for (const inner of [false, true]) for (let i = 0; i <= epNs; i++) for (let j = 0; j <= epNv; j++) epVerts.push(...epPt(i, j, inner));
+      const ev = (inner, i, j) => (inner ? (epNs + 1) * (epNv + 1) : 0) + i * (epNv + 1) + j;
+      const quad = (a, b, c, d, f) => { if (f) epIdx.push(a, c, b, a, d, c); else epIdx.push(a, b, c, a, c, d); };
+      const fl = isLeft; // mirrored side flips the winding
+      for (let i = 0; i < epNs; i++) for (let j = 0; j < epNv; j++) {
+        quad(ev(false, i, j), ev(false, i + 1, j), ev(false, i + 1, j + 1), ev(false, i, j + 1), fl);
+        quad(ev(true, i, j), ev(true, i + 1, j), ev(true, i + 1, j + 1), ev(true, i, j + 1), !fl);
+      }
+      for (let i = 0; i < epNs; i++) { // bottom and top edges
+        quad(ev(false, i, 0), ev(true, i, 0), ev(true, i + 1, 0), ev(false, i + 1, 0), fl);
+        quad(ev(false, i, epNv), ev(false, i + 1, epNv), ev(true, i + 1, epNv), ev(true, i, epNv), fl);
+      }
+      for (let j = 0; j < epNv; j++) { // leading and trailing edges
+        quad(ev(false, 0, j), ev(false, 0, j + 1), ev(true, 0, j + 1), ev(true, 0, j), fl);
+        quad(ev(false, epNs, j), ev(true, epNs, j), ev(true, epNs, j + 1), ev(false, epNs, j + 1), fl);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(epVerts, 3));
+      g.setIndex(epIdx);
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat);
+      m.castShadow = true;
+      m.name = name;
+      return m;
     };
-    for (const inner of [false, true]) for (let i = 0; i <= epNs; i++) for (let j = 0; j <= epNv; j++) epVerts.push(...epPt(i, j, inner));
-    const ev = (inner, i, j) => (inner ? (epNs + 1) * (epNv + 1) : 0) + i * (epNv + 1) + j;
-    const quad = (a, b, c, d, f) => { if (f) epIdx.push(a, c, b, a, d, c); else epIdx.push(a, b, c, a, c, d); };
-    const fl = isLeft; // mirrored side flips the winding
-    for (let i = 0; i < epNs; i++) for (let j = 0; j < epNv; j++) {
-      quad(ev(false, i, j), ev(false, i + 1, j), ev(false, i + 1, j + 1), ev(false, i, j + 1), fl);
-      quad(ev(true, i, j), ev(true, i + 1, j), ev(true, i + 1, j + 1), ev(true, i, j + 1), !fl);
-    }
-    for (let i = 0; i < epNs; i++) { // bottom (lip) and top edges
-      quad(ev(false, i, 0), ev(true, i, 0), ev(true, i + 1, 0), ev(false, i + 1, 0), fl);
-      quad(ev(false, i, epNv), ev(false, i + 1, epNv), ev(true, i + 1, epNv), ev(true, i, epNv), fl);
-    }
-    for (let j = 0; j < epNv; j++) { // leading and trailing edges
-      quad(ev(false, 0, j), ev(false, 0, j + 1), ev(true, 0, j + 1), ev(true, 0, j), fl);
-      quad(ev(false, epNs, j), ev(true, epNs, j), ev(true, epNs, j + 1), ev(false, epNs, j + 1), fl);
-    }
-    const fwepGeo = new THREE.BufferGeometry();
-    fwepGeo.setAttribute('position', new THREE.Float32BufferAttribute(epVerts, 3));
-    fwepGeo.setIndex(epIdx);
-    fwepGeo.computeVertexNormals();
-    const fwepWallMesh = new THREE.Mesh(fwepGeo, navyMat);
-    fwepWallMesh.castShadow = true;
-    fwepWallMesh.name = `FrontWing_Endplate_${isLeft ? 'LH' : 'RH'}`;
+    const fwepWallMesh = buildEpShell(epSplit, () => 1, 10, `FrontWing_Endplate_${isLeft ? 'LH' : 'RH'}`, navyMat);
     fwepGroup.add(fwepWallMesh);
+    const fwepFootMesh = buildEpShell(() => 0, epSplit, 14, `FrontWing_Endplate_Foot_${isLeft ? 'LH' : 'RH'}`, navyMat);
+    fwepGroup.add(fwepFootMesh);
 
     // 3. Upright Mobil 1 Decal on Endplate Outer Face
     const epTex = createEndplateTexture(isLeft);
