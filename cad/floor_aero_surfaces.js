@@ -137,6 +137,49 @@ export function createFloorAeroSurfaces(options = {}) {
       edgeGroup.add(fenceMesh);
     });
 
+    // Forward floor-edge fins (refs 08-11): a cascade of cambered vertical vanes on the
+    // floor's leading corner that turn the tyre wake outboard. Extruded straight up (+Z).
+    for (let f = 0; f < 5; f++) {
+      const ch = 1.1 - f * 0.08, camber = side * 0.1;
+      const finShape = new THREE.Shape();
+      finShape.moveTo(-ch / 2, 0);
+      finShape.quadraticCurveTo(0, camber + side * 0.04, ch / 2, 0);
+      finShape.quadraticCurveTo(0, camber - side * 0.04, -ch / 2, 0);
+      const h = 1.45 - f * 0.12;
+      const finGeo = new THREE.ExtrudeGeometry(finShape, { steps: 1, depth: h, bevelEnabled: false });
+      const fin = new THREE.Mesh(finGeo, materials.carbonGloss);
+      fin.position.set(8.0 + f * 0.85, side * (7.05 - f * 0.05), 0.5);
+      fin.rotation.z = side * 0.22; // leading edge toed in, trailing edge outboard
+      fin.castShadow = true;
+      fin.name = `Floor_Edge_Fin_${f + 1}_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(fin);
+    }
+
+    // Bargeboard / sidepod deflector: tall curved panel between the front wheel and the
+    // sidepod inlet, rolled over at the top (kept clear of the front tyre at full lock).
+    {
+      const bbShape = new THREE.Shape();
+      bbShape.moveTo(0, 0);
+      bbShape.lineTo(2.0, 0);
+      bbShape.lineTo(2.0, 2.55);
+      bbShape.quadraticCurveTo(0.9, 3.0, 0, 2.2);
+      bbShape.closePath();
+      const bbGeo = new THREE.ExtrudeGeometry(bbShape, { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 1 });
+      const bb = new THREE.Mesh(bbGeo, materials.carbonGloss);
+      bb.rotation.x = Math.PI / 2;           // shape Y -> world Z (up)
+      bb.rotation.y = 0;
+      bb.position.set(5.2, side * 5.6, 0.5);
+      bb.castShadow = true;
+      bb.name = `Bargeboard_Deflector_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(bb);
+      // Horizontal floor-edge "boomerang" strip joining the deflector foot to the fins
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 0.05), materials.carbonGloss);
+      strip.position.set(7.4, side * 6.6, 1.55);
+      strip.rotation.x = side * 0.25;
+      strip.name = `Floor_Edge_Boomerang_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(strip);
+    }
+
     floorGroup.add(edgeGroup);
   });
 
