@@ -101,13 +101,21 @@ export function createFullCarAssembly(options = {}) {
     rearWingFlap: subassemblies.bodywork.getObjectByName('RearWing_Active_UpperFlap'),
     frontAero: subassemblies.bodywork.getObjectByName('Assembly_Active_Front_Aero'),
     rearWing: subassemblies.bodywork.getObjectByName('Assembly_Active_Rear_Wing'),
-    wheelSpindles: []
+    wheelSpindles: [],
+    driveshaftSpins: [],
+    camSpins: []
   };
 
   // Find all wheel spindles in the car assembly
   masterCar.traverse(child => {
     if (child.isGroup && child.name && child.name.startsWith('Wheel_Spindle_')) {
       kinematics.wheelSpindles.push(child);
+    }
+    if (child.isGroup && child.name === 'Kinematic_CamSpin') {
+      kinematics.camSpins.push(child);
+    }
+    if (child.isGroup && child.name && child.name.startsWith('Driveshaft_Spin_')) {
+      kinematics.driveshaftSpins.push(child);
     }
   });
 
@@ -142,10 +150,8 @@ export function createFullCarAssembly(options = {}) {
       if (kinematics.crankshaft) {
         kinematics.crankshaft.rotation.x += crankAngularVelocity * dt;
       }
-      if (kinematics.valvetrain) {
-        // Camshafts turn at half crankshaft speed (4-stroke cycle)
-        kinematics.valvetrain.rotation.x += (crankAngularVelocity * 0.5) * dt;
-      }
+      // Camshafts turn at half crankshaft speed (4-stroke cycle), each about its own axis
+      kinematics.camSpins.forEach(c => { c.rotation.x += (crankAngularVelocity * 0.5) * dt; });
       if (kinematics.turbocharger) {
         // Turbo spins up to 125,000 rpm
         const turboRpm = Math.min(125000, rpm * 8.5);
@@ -163,9 +169,8 @@ export function createFullCarAssembly(options = {}) {
       const wheelRps = (speedKmH * 1000 / 3600) / 2.23;
       const wheelAngVel = wheelRps * 2 * Math.PI;
 
-      if (kinematics.driveshafts) {
-        kinematics.driveshafts.rotation.y += wheelAngVel * dt;
-      }
+      // Each (slightly inclined) driveshaft spins about its own axis
+      kinematics.driveshaftSpins.forEach(ds => { ds.rotation.y -= wheelAngVel * dt; });
 
       kinematics.wheelSpindles.forEach(spindle => {
         if (spindle) {
@@ -213,11 +218,12 @@ export function createFullCarAssembly(options = {}) {
     }
 
     // 5. Active Aerodynamics Kinematics (Z-Mode vs X-Mode)
-    // Z-Mode: Front flaps +22°, Rear flap +26° (High downforce cornering)
-    // X-Mode: Front flaps +4°, Rear flap +3° (Low drag straight line)
+    // Z-Mode: Front flaps 22°, Rear flap 26° (High downforce cornering)
+    // X-Mode: Front flaps 4°, Rear flap 3° (Low drag straight line)
+    // Negative rotation about +Y raises the trailing edge (rear of flap) = downforce-producing incidence.
     const isXMode = aeroMode === 'X_MODE';
-    const targetFrontAngle = isXMode ? 0.07 : 0.38; // radians
-    const targetRearAngle = isXMode ? 0.05 : 0.45;  // radians
+    const targetFrontAngle = isXMode ? -0.07 : -0.38; // radians
+    const targetRearAngle = isXMode ? -0.05 : -0.45;  // radians
 
     kinematics.frontWingFlaps.forEach(flap => {
       if (flap) {
@@ -281,9 +287,13 @@ export function createFullCarAssembly(options = {}) {
       if (subassemblies.brakes) {
         subassemblies.brakes.traverse(child => {
           if (child.name === 'Brake_Front_Left_Pivot') {
-            child.position.y = THREE.MathUtils.lerp(7.1, 13.1, explodedProgress);
+            child.position.y = THREE.MathUtils.lerp(6.8, 12.8, explodedProgress);
           } else if (child.name === 'Brake_Front_Right_Pivot') {
-            child.position.y = THREE.MathUtils.lerp(-7.1, -13.1, explodedProgress);
+            child.position.y = THREE.MathUtils.lerp(-6.8, -12.8, explodedProgress);
+          } else if (child.name === 'Brake_Rear_Left_Pivot') {
+            child.position.y = THREE.MathUtils.lerp(6.45, 12.45, explodedProgress);
+          } else if (child.name === 'Brake_Rear_Right_Pivot') {
+            child.position.y = THREE.MathUtils.lerp(-6.45, -12.45, explodedProgress);
           }
         });
       }
@@ -303,8 +313,10 @@ export function createFullCarAssembly(options = {}) {
       if (kinematics.rearSuspRight) kinematics.rearSuspRight.position.set(0, 0, 0);
       if (subassemblies.brakes) {
         subassemblies.brakes.traverse(child => {
-          if (child.name === 'Brake_Front_Left_Pivot') child.position.set(0.0, 7.1, 3.55);
-          if (child.name === 'Brake_Front_Right_Pivot') child.position.set(0.0, -7.1, 3.55);
+          if (child.name === 'Brake_Front_Left_Pivot') child.position.set(0.0, 6.8, 3.55);
+          if (child.name === 'Brake_Front_Right_Pivot') child.position.set(0.0, -6.8, 3.55);
+          if (child.name === 'Brake_Rear_Left_Pivot') child.position.set(34.0, 6.45, 3.59);
+          if (child.name === 'Brake_Rear_Right_Pivot') child.position.set(34.0, -6.45, 3.59);
         });
       }
     }
