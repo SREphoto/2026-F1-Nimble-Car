@@ -211,7 +211,7 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   const headrestGroup = new THREE.Group();
   headrestGroup.name = 'Cockpit_Headrest_Assembly';
-  headrestGroup.position.set(13.8, 0, 5.85);
+  headrestGroup.position.set(14.6, 0, 4.25); // lies flat on the cockpit rim
 
   const headrestShape = new THREE.Shape();
   // Outer perimeter of headrest
@@ -239,8 +239,8 @@ export function createCockpitAccessories(options = {}) {
   };
   const headrestGeo = new THREE.ExtrudeGeometry(headrestShape, headrestExtrude);
   const headrestMesh = new THREE.Mesh(headrestGeo, materials.carbonMatte);
-  headrestMesh.rotation.x = -Math.PI / 2;
-  headrestMesh.position.set(0, 0.47, 0);
+  headrestMesh.rotation.set(0, 0, 0); // U-shape in XY plane, extruded up +Z
+  headrestMesh.position.set(0, 0, 0);
   headrestGroup.add(headrestMesh);
 
   // Quick-Release Headrest Locating Pins (FIA requirement: removable in <5 sec)
@@ -357,7 +357,8 @@ export function createCockpitAccessories(options = {}) {
 
     // Stalk Chassis Mounting Foot with 3x Countersunk Torx Fasteners
     const footGroup = new THREE.Group();
-    footGroup.position.set(0.1, -side * 1.05, -0.65);
+    // stalkGeo.scale(1.8, 0.8, 1) also scales the stalk end point -> (0.18, -side*0.84, -0.65)
+    footGroup.position.set(0.18, -side * 0.84, -0.65);
     const footPlateGeo = new THREE.BoxGeometry(0.5, 0.25, 0.06);
     const footPlateMesh = new THREE.Mesh(footPlateGeo, materials.titaniumBright);
     footPlateMesh.rotation.y = side > 0 ? 0.2 : -0.2;
@@ -399,12 +400,12 @@ export function createCockpitAccessories(options = {}) {
 
   // =========================================================================
   // 4. FIA T-CAMERA ROLL HOOP POD (Mounted on Roll Hoop Airbox Peak)
-  // X = 15.6 dm, Y = 0.0 dm, Z = 9.85 dm (Apex of engine airbox)
+  // X = 17.4 dm, Y = 0.0 dm, Z = 9.65 dm (on top of the roll-hoop airbox)
   // Standardized housing with forward and rearward facing cameras
   // =========================================================================
   const tCamGroup = new THREE.Group();
   tCamGroup.name = 'Assembly_FIA_T_Camera';
-  tCamGroup.position.set(15.6, 0, 9.82);
+  tCamGroup.position.set(17.4, 0, 9.65); // sits on the airbox crown (Z 9.27) above the roll hoop
 
   // Carbon Fiber Aerodynamic Mast
   const tMastGeo = new THREE.BoxGeometry(0.35, 0.22, 0.65);
@@ -495,7 +496,7 @@ export function createCockpitAccessories(options = {}) {
   // Pitot Tube Sensor (Dynamic pressure probe for airspeed and aero testing)
   // Curved stainless steel tube pointing forward
   const pitotGroup = new THREE.Group();
-  pitotGroup.position.set(7.2, 0, 4.38);
+  pitotGroup.position.set(7.2, 0, 5.22); // on tub top skin
 
   // Mounting flange with 3x miniature screws
   const pitotFlangeGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.03, 16);
@@ -538,7 +539,7 @@ export function createCockpitAccessories(options = {}) {
 
   // UHF Telemetry Blade Antenna (Team high-bandwidth radio antenna)
   const bladeGroup = new THREE.Group();
-  bladeGroup.position.set(8.5, 0, 4.52);
+  bladeGroup.position.set(8.5, 0, 4.82);
 
   const bladeShape = new THREE.Shape();
   bladeShape.moveTo(-0.15, 0);
@@ -558,14 +559,15 @@ export function createCockpitAccessories(options = {}) {
   // FIA GPS Transponder Antenna (Mushroom dome)
   const gpsDomeGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.08, 16);
   const gpsDomeMesh = new THREE.Mesh(gpsDomeGeo, materials.carbonMatte);
-  gpsDomeMesh.position.set(9.4, 0, 4.58);
+  gpsDomeMesh.position.set(9.4, 0, 4.6);
   sensorsGroup.add(gpsDomeMesh);
 
   // Vanity Cover / Access Hatch with 4x Camloc Fasteners
   // Covers damper/torsion bar maintenance hatch
   const hatchPlateGeo = new THREE.BoxGeometry(1.6, 2.2, 0.04);
   const hatchPlateMesh = new THREE.Mesh(hatchPlateGeo, materials.carbonSatin);
-  hatchPlateMesh.position.set(7.9, 0, 4.42);
+  hatchPlateMesh.position.set(7.9, 0, 5.0);
+  hatchPlateMesh.rotation.y = 0.21; // follow tub top slope (5.2 @ X7.2 -> 4.5 @ X10.5)
   sensorsGroup.add(hatchPlateMesh);
 
   // 4x Camloc 1/4-Turn Slotted Fasteners
@@ -574,7 +576,8 @@ export function createCockpitAccessories(options = {}) {
     { x: 8.55, y: -0.9 }, { x: 8.55, y: 0.9 }
   ].forEach((hPos, idx) => {
     const camlocGroup = new THREE.Group();
-    camlocGroup.position.set(hPos.x, hPos.y, 4.44);
+    camlocGroup.position.set(hPos.x, hPos.y, 5.02 - (hPos.x - 7.9) * 0.213);
+    camlocGroup.rotation.y = 0.21;
 
     const camlocHeadGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
     const camlocHeadMesh = new THREE.Mesh(camlocHeadGeo, materials.titaniumBright);
