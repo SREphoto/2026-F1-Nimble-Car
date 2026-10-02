@@ -15,7 +15,7 @@
  * Universal Automotive Datum:
  * - X: Longitudinal axis (0.0 at Bulkhead A-A / Front Axle, 22.0 at Bulkhead D-D)
  * - Y: Lateral axis (-Y right, +Y left)
- * - Z: Vertical axis (0.0 ground, 1.1 floor, 7.2 halo, 9.45 roll hoop apex)
+ * - Z: Vertical axis (0.0 ground, 0.6 tub floor, 7.4 halo, 9.3 airbox crown)
  */
 
 import * as THREE from "three";
@@ -50,11 +50,11 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     // x, half_width, z_bottom, z_top, is_cockpit_open
     { x: 0.0,  w: 1.60, zb: 1.2, zt: 4.2, open: false }, // Bulkhead A-A (Nose interface)
     { x: 3.5,  w: 1.85, zb: 1.15, zt: 4.4, open: false }, // Front suspension bulkhead
-    { x: 7.2,  w: 2.30, zb: 1.1, zt: 5.2, open: false }, // Forward cockpit rim & Halo mount
-    { x: 10.5, w: 3.10, zb: 1.1, zt: 4.5, open: true  }, // Cockpit opening / steering wheel
-    { x: 14.5, w: 3.20, zb: 1.1, zt: 4.5, open: true  }, // Driver seating area
-    { x: 17.5, w: 3.15, zb: 1.1, zt: 6.2, open: false }, // Rear cockpit bulkhead & Roll hoop
-    { x: 22.0, w: 2.85, zb: 1.1, zt: 6.0, open: false }  // Bulkhead D-D (Engine interface)
+    { x: 7.2,  w: 2.30, zb: 0.6, zt: 5.2, open: false }, // Forward cockpit rim & Halo mount
+    { x: 10.5, w: 3.10, zb: 0.6, zt: 4.5, open: true  }, // Cockpit opening / steering wheel
+    { x: 14.5, w: 3.20, zb: 0.6, zt: 4.5, open: true  }, // Driver seating area
+    { x: 17.5, w: 3.15, zb: 0.6, zt: 6.2, open: false }, // Rear cockpit bulkhead & Roll hoop
+    { x: 22.0, w: 2.85, zb: 0.6, zt: 6.0, open: false }  // Bulkhead D-D (Engine interface)
   ];
 
   const tubVerts = [];
@@ -127,7 +127,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
 
   // Bulkhead D-D (Rear fuel cell / engine interface bulkhead at X = 22.0 dm)
-  const bulkDGeo = new THREE.BoxGeometry(0.24, 6.4, 5.8);
+  const bulkDGeo = new THREE.BoxGeometry(0.24, 5.6, 5.2); // fits inside tub section at D-D (Y ±2.85, Z 0.6-6.0)
   const bulkD = new THREE.Mesh(bulkDGeo, mats.titaniumAnodized);
   bulkD.position.set(22.0, 0, 3.3);
   bulkD.name = "Body_Chassis_Bulkhead_DD";
@@ -245,9 +245,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloApexGeo = new THREE.PlaneGeometry(1.2, 0.6);
   const haloApexMesh = new THREE.Mesh(haloApexGeo, haloApexMat);
-  haloApexMesh.position.set(9.22, 0, 7.32);
-  haloApexMesh.rotation.x = -Math.PI / 2;
-  haloApexMesh.rotation.z = Math.PI / 2;
+  haloApexMesh.position.set(9.22, 0, 7.42);
+  haloApexMesh.rotation.set(0, 0, Math.PI / 2); // lie flat on top of halo (normal +Z)
   haloApexMesh.name = "Decal_Halo_Apex_TAGHeuer";
   haloGroup.add(haloApexMesh);
 
@@ -260,9 +259,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloAttGeo = new THREE.PlaneGeometry(1.4, 0.35);
   const haloAttMesh = new THREE.Mesh(haloAttGeo, haloAttMat);
-  haloAttMesh.position.set(10.6, 1.45, 7.32);
-  haloAttMesh.rotation.x = -Math.PI / 2;
-  haloAttMesh.rotation.z = Math.PI / 2 - 0.32;
+  haloAttMesh.position.set(10.6, 1.45, 7.42);
+  haloAttMesh.rotation.set(0, 0, Math.PI / 2 - 0.32);
   haloAttMesh.name = "Decal_Halo_Left_ATT";
   haloGroup.add(haloAttMesh);
 
@@ -275,9 +273,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
   const haloOracleGeo = new THREE.PlaneGeometry(1.4, 0.35);
   const haloOracleMesh = new THREE.Mesh(haloOracleGeo, haloOracleMat);
-  haloOracleMesh.position.set(10.6, -1.45, 7.32);
-  haloOracleMesh.rotation.x = -Math.PI / 2;
-  haloOracleMesh.rotation.z = Math.PI / 2 + 0.32;
+  haloOracleMesh.position.set(10.6, -1.45, 7.42);
+  haloOracleMesh.rotation.set(0, 0, Math.PI / 2 + 0.32);
   haloOracleMesh.name = "Decal_Halo_Right_ORACLE";
   haloGroup.add(haloOracleMesh);
 
@@ -307,14 +304,18 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   const rollHoopGroup = new THREE.Group();
   rollHoopGroup.name = "Body_RollHoop_Primary_172kN";
 
-  // Structural carbon arch (X = 17.5 dm, rises to Z = 9.45 dm, R >= 10 mm apex)
+  // Structural carbon arch (X = 17.5 dm, rises to Z = 8.95 dm inside the airbox)
   const archGeo = new THREE.TubeGeometry(
     new THREE.CatmullRomCurve3([
-      new THREE.Vector3(17.5, -1.2, 6.2),
-      new THREE.Vector3(17.5, -0.9, 8.4),
-      new THREE.Vector3(17.5, 0, 9.45),
-      new THREE.Vector3(17.5, 0.9, 8.4),
-      new THREE.Vector3(17.5, 1.2, 6.2)
+      // Narrow hoop: two pillars rise from the tub and the arch is enclosed by the
+      // forward-facing airbox intake (bodywork, X 15.75-19.25, Z 7.1-9.3)
+      new THREE.Vector3(17.5, -0.75, 6.2),
+      new THREE.Vector3(17.5, -0.75, 8.0),
+      new THREE.Vector3(17.5, -0.35, 8.8),
+      new THREE.Vector3(17.5, 0, 8.95),
+      new THREE.Vector3(17.5, 0.35, 8.8),
+      new THREE.Vector3(17.5, 0.75, 8.0),
+      new THREE.Vector3(17.5, 0.75, 6.2)
     ]),
     32, 0.24, 16, false
   );
@@ -322,26 +323,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   archMesh.castShadow = true;
   rollHoopGroup.add(archMesh);
 
-  // Triangular Airbox Inlet Scoop
-  const airboxShape = new THREE.Shape();
-  airboxShape.moveTo(-0.9, -0.6);
-  airboxShape.lineTo(0.9, -0.6);
-  airboxShape.lineTo(0, 0.85);
-  airboxShape.closePath();
-  const airboxGeo = new THREE.ExtrudeGeometry(airboxShape, {
-    steps: 1, depth: 1.8, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04
-  });
-  airboxGeo.center();
-  const airboxMesh = new THREE.Mesh(airboxGeo, mats.carbonGlossAero);
-  airboxMesh.rotation.x = Math.PI / 2;
-  airboxMesh.position.set(16.8, 0, 8.4);
-  rollHoopGroup.add(airboxMesh);
-
-  // Splitter Blade separating combustion intake from secondary ERS coolers
-  const splitBladeGeo = new THREE.BoxGeometry(1.6, 1.2, 0.04);
-  const splitBlade = new THREE.Mesh(splitBladeGeo, mats.titaniumBright);
-  splitBlade.position.set(16.8, 0, 8.2);
-  rollHoopGroup.add(splitBlade);
+  // Airbox inlet is modelled once, in active_wings_bodywork.js (Engine_Cover_Airbox_Fin_Assembly)
 
   // Marshal Status Warning LED Array on top of roll hoop
   const ledGroup = new THREE.Group();
@@ -355,7 +337,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     });
     const led = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.03, 16), ledMat);
     led.rotation.z = Math.PI / 2;
-    led.position.set(17.2, ly, 9.55);
+    led.position.set(16.2, ly, 9.3); // on the airbox crown, ahead of the T-camera
     ledGroup.add(led);
   }
   rollHoopGroup.add(ledGroup);
@@ -386,7 +368,9 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   seatGeo.center();
   const seatMesh = new THREE.Mesh(seatGeo, mats.carbonMatteStructural);
   seatMesh.rotation.x = Math.PI / 2;
-  seatMesh.position.set(12.5, 0, 2.1);
+  // Local Y is height (becomes world Z after Rx(90deg)), local Z is width:
+  seatMesh.scale.set(1, 0.75, 0.75);       // 5.2 dm shell -> 3.9 dm tall, 2.85 dm wide
+  seatMesh.position.set(12.5, 0, 2.65);    // base rests on tub floor (Z 0.6), top ~4.6
   seatMesh.castShadow = true;
   seatGroup.add(seatMesh);
 
@@ -435,23 +419,37 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // Telescopic carbon steering column
   const colGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 20);
   const colMesh = new THREE.Mesh(colGeo, mats.carbonMatteStructural);
-  colMesh.rotation.y = -Math.PI / 6;
-  colMesh.position.set(-0.95, 0, -0.55);
+  const colDir = new THREE.Vector3(-0.96, 0, -0.28).normalize(); // forward & down to rack
+  colMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), colDir);
+  colMesh.position.set(-1.15, 0, -0.34);
   steeringGroup.add(colMesh);
 
   // Quick-release hub collar (gold anodized aluminum)
   const qrGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.18, 24);
   const qrMesh = new THREE.Mesh(qrGeo, mats.goldActuator);
-  qrMesh.rotation.y = -Math.PI / 6;
+  qrMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), colDir);
   qrMesh.position.set(-0.15, 0, -0.08);
   steeringGroup.add(qrMesh);
 
   // High-Fidelity PCU-8D Steering Wheel Model (Matching 4 Reference CAD Drawings)
   const pcu8dWheel = createSteeringWheelPCU8D();
-  // Front face points toward driver (+X) with ergonomic rake angle
-  pcu8dWheel.rotation.set(0, -Math.PI / 2 + 0.20, 0);
+  // The wheel is authored with width on local X, height on local Y and its display face on +Z.
+  // Map: width -> lateral (+Y), height -> up (raked with the column), face -> toward the driver
+  // (opposite the column direction). Previously Ry(-90deg) stood the wheel on its side
+  // (2.8 dm wide axis vertical, grips at top and bottom).
+  // The orientation lives on a mount group so the kinematics can keep spinning the wheel
+  // itself about its own face normal (wheel.rotation.z) for steering.
+  const wheelMount = new THREE.Group();
+  wheelMount.name = "McLaren_PCU8D_Mount";
+  {
+    const faceN = colDir.clone().negate().normalize();           // (0.96, 0, 0.28)
+    const wheelX = new THREE.Vector3(0, 1, 0);
+    const wheelY = new THREE.Vector3().crossVectors(faceN, wheelX).normalize();
+    wheelMount.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(wheelX, wheelY, faceN));
+  }
   pcu8dWheel.name = "McLaren_PCU8D_FullAssembly";
-  steeringGroup.add(pcu8dWheel);
+  wheelMount.add(pcu8dWheel);
+  steeringGroup.add(wheelMount);
 
   // Driver Blue Racing Gloves Gripping the Wheel (media_1790507836542.webp)
   const gloveMat = new THREE.MeshStandardMaterial({
@@ -496,7 +494,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // -------------------------------------------------------------
   const pedalGroup = new THREE.Group();
   pedalGroup.name = "Body_PedalSled_Assembly";
-  pedalGroup.position.set(2.5, 0, 0.6);
+  pedalGroup.position.set(2.5, 0, 1.25); // rails on tub floor
 
   // Dual Aluminum Slider Guide Rails
   for (const ry of [-1.2, 1.2]) {
@@ -506,43 +504,43 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     pedalGroup.add(rail);
   }
 
-  // Brake Pedal (driver's left foot: -0.45)
+  // Brake Pedal (driver's left foot: +Y = left)
   const brakeArmGeo = new THREE.BoxGeometry(0.12, 0.14, 1.85);
   const brakeArm = new THREE.Mesh(brakeArmGeo, mats.uprightBilletAluminum);
-  brakeArm.position.set(0.3, -0.45, 0.95);
+  brakeArm.position.set(0.3, 0.45, 0.95);
   pedalGroup.add(brakeArm);
 
   const brakePadGeo = new THREE.BoxGeometry(0.08, 0.35, 0.45);
   const brakePad = new THREE.Mesh(brakePadGeo, mats.titaniumBright);
-  brakePad.position.set(0.12, -0.45, 1.75);
+  brakePad.position.set(0.12, 0.45, 1.75);
   brakePad.name = "Body_Pedal_Brake_Footpad";
   pedalGroup.add(brakePad);
 
   // Pushrod and Polyurethane Bump-Stop Spring Stack
   const pushrodGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.85, 16);
   const pushrod = new THREE.Mesh(pushrodGeo, mats.chromePlated);
-  pushrod.rotation.y = Math.PI / 2;
-  pushrod.position.set(-0.25, -0.45, 1.1);
+  pushrod.rotation.z = Math.PI / 2; // axis along X
+  pushrod.position.set(-0.25, 0.45, 1.1);
   pedalGroup.add(pushrod);
 
   // Polyurethane elastomeric bump-stop rings
   for (let s = 0; s < 4; s++) {
     const bumpGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.08, 16);
     const bump = new THREE.Mesh(bumpGeo, mats.rubberSeal);
-    bump.rotation.y = Math.PI / 2;
-    bump.position.set(-0.15 - s * 0.10, -0.45, 1.1);
+    bump.rotation.z = Math.PI / 2;
+    bump.position.set(-0.15 - s * 0.10, 0.45, 1.1);
     pedalGroup.add(bump);
   }
 
-  // Accelerator Pedal (Throttle on driver's right foot: +0.45)
+  // Accelerator Pedal (Throttle on driver's right foot: -Y = right)
   const throttleArmGeo = new THREE.BoxGeometry(0.08, 0.10, 1.75);
   const throttleArm = new THREE.Mesh(throttleArmGeo, mats.uprightBilletAluminum);
-  throttleArm.position.set(0.4, 0.45, 0.90);
+  throttleArm.position.set(0.4, -0.45, 0.90);
   pedalGroup.add(throttleArm);
 
   const throttlePadGeo = new THREE.BoxGeometry(0.06, 0.22, 0.55);
   const throttlePad = new THREE.Mesh(throttlePadGeo, mats.titaniumBright);
-  throttlePad.position.set(0.24, 0.45, 1.65);
+  throttlePad.position.set(0.24, -0.45, 1.65);
   throttlePad.name = "Body_Pedal_Throttle_Footpad";
   pedalGroup.add(throttlePad);
 
@@ -557,16 +555,16 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // Novec 1230 Aluminum Cylinder (mounted under driver knees)
   const cylGeo = new THREE.CylinderGeometry(0.35, 0.35, 1.45, 24);
   const fireCyl = new THREE.Mesh(cylGeo, mats.anodizedRed);
-  fireCyl.rotation.x = Math.PI / 2;
-  fireCyl.position.set(6.2, 0, 1.1);
+  fireCyl.rotation.z = Math.PI / 2; // lies along X
+  fireCyl.position.set(6.2, 0, 1.25);
   fireCyl.castShadow = true;
   fireGroup.add(fireCyl);
 
   // Solenoid firing head & pressure gauge
   const headGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.28, 16);
   const headMesh = new THREE.Mesh(headGeo, mats.titaniumBright);
-  headMesh.rotation.x = Math.PI / 2;
-  headMesh.position.set(5.35, 0, 1.1);
+  headMesh.rotation.z = Math.PI / 2;
+  headMesh.position.set(5.35, 0, 1.25);
   fireGroup.add(headMesh);
 
   root.add(fireGroup);
