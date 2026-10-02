@@ -82,7 +82,11 @@ export function createFullCarAssembly(options = {}) {
     mguk: subassemblies.powertrain.getObjectByName('Assembly_350kW_MGUK_Motor'),
     gears: subassemblies.transmission.getObjectByName('Kinematic_8Speed_GearTrain_Assembly'),
     driveshafts: subassemblies.transmission.getObjectByName('Kinematic_Driveshafts_Assembly'),
-    steeringRack: subassemblies.suspension.getObjectByName('Assembly_HPAS_Steering_Rack'),
+    steeringRack: subassemblies.suspension.getObjectByName('Steering_Rack_Bar'), // only the bar slides
+    rearLeftUpright: subassemblies.suspension.getObjectByName('Rear_Upright_Left'),
+    rearRightUpright: subassemblies.suspension.getObjectByName('Rear_Upright_Right'),
+    rearLeftBrake: subassemblies.brakes.getObjectByName('Brake_Rear_Left_Pivot'),
+    rearRightBrake: subassemblies.brakes.getObjectByName('Brake_Rear_Right_Pivot'),
     frontSuspension: subassemblies.suspension.getObjectByName('Front_Suspension_Assembly'),
     rearSuspension: subassemblies.suspension.getObjectByName('Rear_Suspension_Assembly'),
     frontLeftPivot: subassemblies.suspension.getObjectByName('Front_Upright_Pivot_Left'),
@@ -139,7 +143,9 @@ export function createFullCarAssembly(options = {}) {
       aeroMode = 'Z_MODE', // 'Z_MODE' (high downforce) or 'X_MODE' (low drag)
       gear = 1,
       brakeKgf = 0,
-      explodedProgress = 0 // 0.0 (assembled) to 1.0 (fully exploded)
+      explodedProgress = 0, // 0.0 (assembled) to 1.0 (fully exploded)
+      // Wheel travel relative to the chassis in dm (+ = bump / wheel up), per corner
+      suspensionTravel = null
     } = state;
 
     const dt = 1 / 60;
@@ -183,21 +189,26 @@ export function createFullCarAssembly(options = {}) {
     if (kinematics.steeringWheel) {
       kinematics.steeringWheel.rotation.z = -steeringAngle * 2.5; // Steering column ratio
     }
+    // Only the uprights steer and travel; inner wishbone, push/pull-rod and track-rod mounts
+    // stay on the chassis and the links are re-solved between the two ends each frame.
     if (kinematics.steeringRack) {
-      kinematics.steeringRack.position.y = steeringAngle * 0.45; // Lateral rack travel
+      // Rack bar slides with the steering-arm tip (arm 0.35 dm ahead of the kingpin)
+      kinematics.steeringRack.position.y = Math.sin(steeringAngle) * 0.35;
     }
-    if (kinematics.frontLeftPivot) {
-      kinematics.frontLeftPivot.rotation.z = -steeringAngle;
-    }
-    if (kinematics.frontRightPivot) {
-      kinematics.frontRightPivot.rotation.z = -steeringAngle;
-    }
-    if (kinematics.frontLeftBrake) {
-      kinematics.frontLeftBrake.rotation.z = -steeringAngle;
-    }
-    if (kinematics.frontRightBrake) {
-      kinematics.frontRightBrake.rotation.z = -steeringAngle;
-    }
+    const travel = { fl: 0, fr: 0, rl: 0, rr: 0, ...(suspensionTravel || {}) };
+    const setCorner = (upright, brake, t, steer) => {
+      if (upright) {
+        const base = upright.userData.basePosition;
+        if (base) upright.position.z = base.z + t;
+        if (steer !== null) upright.rotation.z = -steer;
+      }
+      if (brake && steer !== null) brake.rotation.z = -steer; // height follows travel in the datum reset below
+    };
+    setCorner(kinematics.frontLeftPivot, kinematics.frontLeftBrake, travel.fl, steeringAngle);
+    setCorner(kinematics.frontRightPivot, kinematics.frontRightBrake, travel.fr, steeringAngle);
+    setCorner(kinematics.rearLeftUpright, kinematics.rearLeftBrake, travel.rl, null);
+    setCorner(kinematics.rearRightUpright, kinematics.rearRightBrake, travel.rr, null);
+    if (subassemblies.suspension.userData.updateLinks) subassemblies.suspension.userData.updateLinks();
 
     // 4. Dynamic Carbon Brake Disc Glowing (Red-hot under heavy braking)
     const brakeEffort = (brakeKgf || 0) / 180;
@@ -313,10 +324,10 @@ export function createFullCarAssembly(options = {}) {
       if (kinematics.rearSuspRight) kinematics.rearSuspRight.position.set(0, 0, 0);
       if (subassemblies.brakes) {
         subassemblies.brakes.traverse(child => {
-          if (child.name === 'Brake_Front_Left_Pivot') child.position.set(0.0, 6.8, 3.55);
-          if (child.name === 'Brake_Front_Right_Pivot') child.position.set(0.0, -6.8, 3.55);
-          if (child.name === 'Brake_Rear_Left_Pivot') child.position.set(34.0, 6.45, 3.59);
-          if (child.name === 'Brake_Rear_Right_Pivot') child.position.set(34.0, -6.45, 3.59);
+          if (child.name === 'Brake_Front_Left_Pivot') child.position.set(0.0, 6.8, 3.55 + travel.fl);
+          if (child.name === 'Brake_Front_Right_Pivot') child.position.set(0.0, -6.8, 3.55 + travel.fr);
+          if (child.name === 'Brake_Rear_Left_Pivot') child.position.set(34.0, 6.45, 3.59 + travel.rl);
+          if (child.name === 'Brake_Rear_Right_Pivot') child.position.set(34.0, -6.45, 3.59 + travel.rr);
         });
       }
     }
