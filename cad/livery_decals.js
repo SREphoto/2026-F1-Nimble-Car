@@ -39,7 +39,6 @@ import {
   createHaloMarkTexture,
   createTagHeuerDecalTexture,
   createRedBullTextTexture,
-  createTyreSidewallDecalTexture,
 } from './procedural_livery.js';
 
 const _v = new THREE.Vector3();
@@ -112,8 +111,6 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (tub && o.parent === tub && o.material === materials.carbonSatinChassis) { o.material = carPaint; return; }
     // Halo: exposed gloss carbon fairing
     if (halo && o.parent === halo && o.material === materials.titaniumHalo) { o.material = materials.carbonGlossAero; return; }
-    // Centre-lock wheel nuts: Red Bull yellow
-    if (o.parent?.name?.startsWith('Wheel_Spindle_') && o.material.color?.getHex() === 0xd6e200) o.material.color.setHex(0xf6c200);
   });
 
   // ---------------------------------------------------------------------
@@ -369,44 +366,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     }
   }
 
-  // Tyres: Pirelli P Zero sidewall markings projected onto both sidewalls of each tyre
-  const tyreTex = new Map();
-  carModel.traverse((o) => {
-    if (!o.isMesh || o.material !== materials.pirelliRubberTread || !o.parent?.name?.startsWith('Wheel_Spindle_')) return;
-    const pos = o.geometry.attributes.position;
-    let rMin = Infinity, rMax = 0, yMax = 0;
-    for (let i = 0; i < pos.count; i++) {
-      const r = Math.hypot(pos.getX(i), pos.getZ(i));
-      rMin = Math.min(rMin, r); rMax = Math.max(rMax, r); yMax = Math.max(yMax, Math.abs(pos.getY(i)));
-    }
-    // One shared texture per tyre size (front/rear) to keep GPU memory down
-    const rimFrac = Math.round(((rMin + 0.05) / rMax) * 100) / 100;
-    const key = `MEDIUM_${rimFrac}`;
-    if (!tyreTex.has(key)) {
-      const tyreCanvasTex = createTyreSidewallDecalTexture({ rimFrac, compound: 'MEDIUM' });
-      tyreCanvasTex.anisotropy = maxAniso;
-      tyreTex.set(key, { tex: tyreCanvasTex, mat: makeDecalMaterial(tyreCanvasTex, { roughness: 0.7, clearcoat: 0.0 }) });
-    }
-    const { mat: tyreMat } = tyreTex.get(key);
-    // Tyre local frame: axle = local Y. Project along the axle from each side.
-    [1, -1].forEach((sy) => {
-      const centre = new THREE.Vector3(0, sy * (yMax - 0.05), 0).applyMatrix4(o.matrixWorld);
-      const axleOut = new THREE.Vector3(0, sy, 0).transformDirection(o.matrixWorld);
-      const upW = toWorldDir([0, 0, 1]);
-      const z = axleOut; const x = new THREE.Vector3().crossVectors(upW, z).normalize();
-      const y = new THREE.Vector3().crossVectors(z, x).normalize();
-      const rot = new THREE.Euler().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
-      const geo = new DecalGeometry(o, centre, rot, new THREE.Vector3(rMax * 2, rMax * 2, 0.55));
-      const filtered = filterFacingAuto(geo, z, o);
-      geo.dispose();
-      if (!filtered) return;
-      filtered.applyMatrix4(o.matrixWorld.clone().invert());
-      const d = new THREE.Mesh(filtered, tyreMat);
-      d.name = `Livery_Decal_TyreSidewall_${o.parent.name}_${sy > 0 ? 'A' : 'B'}`;
-      o.add(d);
-      report.decals++;
-    });
-  });
+  // Tyres & wheels (sidewall markings, nut colours) are built in cad/wheels_tyres.js
 
   // ---------------------------------------------------------------------
   // 4. Environment reflections for everything on the car
@@ -457,13 +417,4 @@ function filterFacing(geo, z, facing, threshold = 0.08) {
   out.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
   out.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
   return out;
-}
-
-/** Like filterFacing, but picks the winding sign that keeps the most surface. */
-function filterFacingAuto(geo, z, mesh) {
-  const fwd = filterFacing(geo, z, 1);
-  const back = filterFacing(geo, z, -1);
-  const area = (g) => (g ? g.attributes.position.count : 0);
-  if (area(fwd) >= area(back)) { back?.dispose(); return fwd; }
-  fwd?.dispose(); return back;
 }
