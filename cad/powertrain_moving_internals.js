@@ -103,11 +103,13 @@ export function createPowertrainInternals(options = {}) {
   }
 
   // 90° V6 Cylinder Banks (Bank 1: Left +45°, Bank 2: Right -45°)
+  // Each bank's bore axis (local +Z) leans OUTBOARD and passes through the crank axis (Z = -0.4 here).
+  // Rx(-a) tips local +Z toward +Y for the left bank.
   [-1, 1].forEach((bankSign, bIdx) => {
     const bankAngle = bankSign * (Math.PI / 4); // 45 degrees from vertical
     const bankGroup = new THREE.Group();
-    bankGroup.rotation.x = bankAngle;
-    bankGroup.position.set(0, bankSign * 0.45, 0.15);
+    bankGroup.rotation.x = -bankAngle;
+    bankGroup.position.set(0, bankSign * 0.55, 0.15);
 
     // Cylinder Bank Block Casting
     const bankCastingGeo = new THREE.BoxGeometry(4.2, 1.4, 1.8);
@@ -120,6 +122,7 @@ export function createPowertrainInternals(options = {}) {
       const cylX = -1.2 + c * 1.2;
       const boreGeo = new THREE.CylinderGeometry(0.48, 0.48, 1.7, 24, 1, true);
       const boreMesh = new THREE.Mesh(boreGeo, materials.titaniumBright);
+      boreMesh.rotation.x = Math.PI / 2; // liner axis along the bank's bore direction (local Z)
       boreMesh.position.set(cylX, 0, 0.7);
       bankGroup.add(boreMesh);
 
@@ -233,14 +236,14 @@ export function createPowertrainInternals(options = {}) {
     const pAssembly = new THREE.Group();
     pAssembly.name = `Assembly_Piston_Rod_Cyl${i + 1}`;
     pAssembly.position.set(cylX, 0, -0.4);
-    pAssembly.rotation.x = bankAngle;
+    pAssembly.rotation.x = -bankAngle; // same lean as its bank
 
     // H-Beam Connecting Rod
     const rodGroup = new THREE.Group();
     // Big-end journal eye
     const bigEndGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.16, 16);
     const bigEnd = new THREE.Mesh(bigEndGeo, materials.titaniumBright);
-    bigEnd.rotation.x = Math.PI / 2;
+    bigEnd.rotation.z = Math.PI / 2; // eye axis parallel to crank (X)
     rodGroup.add(bigEnd);
 
     // H-Beam Rod Beam (Center section with H-flanges)
@@ -260,7 +263,7 @@ export function createPowertrainInternals(options = {}) {
     // Small-end pin eye (bushing)
     const smallEndGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.14, 16);
     const smallEnd = new THREE.Mesh(smallEndGeo, materials.copperWindings);
-    smallEnd.rotation.x = Math.PI / 2;
+    smallEnd.rotation.z = Math.PI / 2;
     smallEnd.position.set(0, 0, 1.4);
     rodGroup.add(smallEnd);
 
@@ -290,6 +293,7 @@ export function createPowertrainInternals(options = {}) {
     // Piston Crown & Skirt
     const crownGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.55, 24);
     const crownMesh = new THREE.Mesh(crownGeo, materials.alLi2099);
+    crownMesh.rotation.x = Math.PI / 2; // crown axis along the bore (local Z), matching the rings
     crownMesh.position.set(0, 0, 0.2);
     pistonGroup.add(crownMesh);
 
@@ -323,14 +327,15 @@ export function createPowertrainInternals(options = {}) {
     // Floating Wrist Pin (Gudgeon Pin) with hollow center bore
     const pinGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.72, 16);
     const pinMesh = new THREE.Mesh(pinGeo, materials.titaniumBright);
-    pinMesh.rotation.x = Math.PI / 2;
+    pinMesh.rotation.z = Math.PI / 2; // wrist pin parallel to crank
     pistonGroup.add(pinMesh);
 
     // Spiralock Retaining Clips at both pin ends
     [-0.34, 0.34].forEach(pinEnd => {
       const clipGeo = new THREE.TorusGeometry(0.11, 0.012, 6, 16);
       const clipMesh = new THREE.Mesh(clipGeo, materials.titaniumAnodized);
-      clipMesh.position.set(0, pinEnd, 0);
+      clipMesh.position.set(pinEnd, 0, 0);
+      clipMesh.rotation.y = Math.PI / 2;
       pistonGroup.add(clipMesh);
     });
 
@@ -354,14 +359,24 @@ export function createPowertrainInternals(options = {}) {
 
     [-0.35, 0.35].forEach((camOffY, cType) => { // cType 0 = Intake, 1 = Exhaust
       const camGroup = new THREE.Group();
-      camGroup.rotation.x = bankAngle;
-      camGroup.position.set(0, bankSign * 0.45 + Math.cos(bankAngle) * camOffY, 1.65);
+      // On top of the bank's cylinder head: crank + 2.45 dm along the bore axis, ±camOffY across it
+      const s45 = Math.SQRT1_2;
+      camGroup.rotation.x = -bankAngle;
+      camGroup.position.set(
+        0,
+        bankSign * s45 * 2.45 + s45 * camOffY,
+        -0.4 + s45 * 2.45 - bankSign * s45 * camOffY
+      );
 
       // Hollow Camshaft Bar
       const barGeo = new THREE.CylinderGeometry(0.12, 0.12, 4.4, 16);
       const barMesh = new THREE.Mesh(barGeo, materials.titaniumBright);
       barMesh.rotation.z = Math.PI / 2;
-      camGroup.add(barMesh);
+      // Rotating parts of the camshaft spin about their own axis (see full_car3d.js)
+      const camSpin = new THREE.Group();
+      camSpin.name = 'Kinematic_CamSpin';
+      camGroup.add(camSpin);
+      camSpin.add(barMesh);
 
       // 6 Cam Lobes per shaft (2 per cylinder = 24 valves total)
       for (let l = 0; l < 6; l++) {
@@ -384,7 +399,7 @@ export function createPowertrainInternals(options = {}) {
         lobeMesh.position.set(lobeX, 0, 0);
         lobeMesh.rotation.y = Math.PI / 2;
         lobeMesh.rotation.x = lobeAngle;
-        camGroup.add(lobeMesh);
+        camSpin.add(lobeMesh);
 
         // Individual Valve, Springs & Retainer directly beneath each lobe
         const valveGroup = new THREE.Group();
@@ -393,26 +408,31 @@ export function createPowertrainInternals(options = {}) {
         // Valve Stem
         const stemGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.45, 12);
         const stemMesh = new THREE.Mesh(stemGeo, materials.titaniumBright);
+        stemMesh.rotation.x = Math.PI / 2; // valve axis along bank bore direction (local Z)
         valveGroup.add(stemMesh);
 
         // Concentric Dual Valve Springs (Outer spring + inner spring)
         const outerSpringGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.28, 12, 1, true);
         const outerSpring = new THREE.Mesh(outerSpringGeo, materials.titaniumAnodized);
+        outerSpring.rotation.x = Math.PI / 2;
         valveGroup.add(outerSpring);
 
         const innerSpringGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.26, 12, 1, true);
         const innerSpring = new THREE.Mesh(innerSpringGeo, materials.titaniumBright);
+        innerSpring.rotation.x = Math.PI / 2;
         valveGroup.add(innerSpring);
 
         // Titanium Spring Retainer & Valve Collet
         const retGeo = new THREE.CylinderGeometry(0.13, 0.08, 0.04, 12);
         const retMesh = new THREE.Mesh(retGeo, materials.titaniumBright);
+        retMesh.rotation.x = Math.PI / 2;
         retMesh.position.set(0, 0, 0.14);
         valveGroup.add(retMesh);
 
         // Valve Poppet Head (Titanium intake / Sodium-cooled Inconel exhaust)
         const headGeo = new THREE.CylinderGeometry(0.18, 0.03, 0.06, 16);
         const headMesh = new THREE.Mesh(headGeo, cType === 0 ? materials.titaniumBright : materials.inconelExhaust);
+        headMesh.rotation.x = -Math.PI / 2; // poppet face toward the combustion chamber
         headMesh.position.set(0, 0, -0.22);
         valveGroup.add(headMesh);
 
@@ -425,7 +445,7 @@ export function createPowertrainInternals(options = {}) {
       const camSprocket = new THREE.Mesh(camSprocketGeo, materials.titaniumAnodized);
       camSprocket.rotation.z = Math.PI / 2;
       camSprocket.position.set(-2.05, 0, 0);
-      camGroup.add(camSprocket);
+      camSpin.add(camSprocket);
 
       camGroup.name = `Camshaft_${bIdx === 0 ? 'Bank1' : 'Bank2'}_${cType === 0 ? 'Intake' : 'Exhaust'}`;
       valvetrainGroup.add(camGroup);
@@ -437,13 +457,13 @@ export function createPowertrainInternals(options = {}) {
   const chainSpline = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-2.05, 0.0, -0.95),  // Crankshaft sprocket bottom
     new THREE.Vector3(-2.05, 0.65, -0.4),  // Tensioner shoe 1
-    new THREE.Vector3(-2.05, 1.25, 0.8),   // Bank 1 outer guide
-    new THREE.Vector3(-2.05, 1.15, 1.65),  // Bank 1 camshaft sprocket
-    new THREE.Vector3(-2.05, 0.45, 1.65),  // Bank 1 inner sprocket
-    new THREE.Vector3(-2.05, 0.0, 1.25),   // Valley idler
-    new THREE.Vector3(-2.05, -0.45, 1.65), // Bank 2 inner sprocket
-    new THREE.Vector3(-2.05, -1.15, 1.65), // Bank 2 camshaft sprocket
-    new THREE.Vector3(-2.05, -1.25, 0.8),  // Bank 2 outer guide
+    new THREE.Vector3(-2.05, 2.3, 0.85),   // Bank 1 outer guide
+    new THREE.Vector3(-2.05, 2.2, 1.6),    // Bank 1 exhaust cam sprocket
+    new THREE.Vector3(-2.05, 1.6, 2.1),    // Bank 1 intake cam sprocket
+    new THREE.Vector3(-2.05, 0.0, 1.2),    // Valley idler
+    new THREE.Vector3(-2.05, -1.6, 2.1),   // Bank 2 intake cam sprocket
+    new THREE.Vector3(-2.05, -2.2, 1.6),   // Bank 2 exhaust cam sprocket
+    new THREE.Vector3(-2.05, -2.3, 0.85),  // Bank 2 outer guide
     new THREE.Vector3(-2.05, -0.65, -0.4)  // Tensioner shoe 2
   ], true);
 
@@ -498,7 +518,7 @@ export function createPowertrainInternals(options = {}) {
   // =========================================================================
   const turboGroup = new THREE.Group();
   turboGroup.name = 'Turbocharger_Assembly_2026';
-  turboGroup.position.set(engineBasePos.x + 1.8, 0.0, engineBasePos.z + 0.6);
+  turboGroup.position.set(27.6, 0.0, 4.2); // behind the block, above the bellhousing (clear of banks & clutch)
 
   // Common Shaft (High-strength ceramic ball bearing supported)
   const turboShaftGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.45, 16);
@@ -603,7 +623,7 @@ export function createPowertrainInternals(options = {}) {
   // =========================================================================
   const mgukGroup = new THREE.Group();
   mgukGroup.name = 'Assembly_350kW_MGUK_Motor';
-  mgukGroup.position.set(23.5, -1.6, 1.4);
+  mgukGroup.position.set(23.5, -2.25, 1.4); // outboard of sump and RH bank
 
   // Cylindrical Stator Housing with Helical Cooling Water Jacket
   const statorCasingGeo = new THREE.CylinderGeometry(0.72, 0.72, 1.6, 24);
