@@ -55,6 +55,76 @@ function createDecalQuad(p00, p10, p11, p01, material) {
   return mesh;
 }
 
+// -------------------------------------------------------------------------
+// LOFT HELPERS: smooth bodywork skinned between cross-sections
+// -------------------------------------------------------------------------
+function catmull(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+}
+
+// Interpolate every numeric key of a list of stations (sorted by x) with Catmull-Rom,
+// returning `steps` stations per span for a smooth, ripple-free loft.
+function resampleStations(stations, steps = 6) {
+  const out = [];
+  const keys = Object.keys(stations[0]);
+  for (let i = 0; i < stations.length - 1; i++) {
+    const s0 = stations[Math.max(0, i - 1)], s1 = stations[i], s2 = stations[i + 1], s3 = stations[Math.min(stations.length - 1, i + 2)];
+    for (let k = 0; k < steps; k++) {
+      const t = k / steps; const st = {};
+      keys.forEach(key => { st[key] = catmull(s0[key], s1[key], s2[key], s3[key], t); });
+      out.push(st);
+    }
+  }
+  out.push({ ...stations[stations.length - 1] });
+  return out;
+}
+
+// Skin rings: ringFn(station, v in [0,1]) -> [x, y, z]. Closed rings (v wraps) when `closed`.
+function loftGeometry(stations, ringFn, nSeg = 40, { closed = true, flip = false } = {}) {
+  const verts = [], uvs = [], idx = [];
+  const nRing = closed ? nSeg : nSeg + 1;
+  stations.forEach((st, i) => {
+    for (let j = 0; j < nRing; j++) {
+      const v = j / nSeg;
+      const p = ringFn(st, v);
+      verts.push(p[0], p[1], p[2]);
+      uvs.push(i / (stations.length - 1), v);
+    }
+  });
+  const segs = closed ? nSeg : nSeg;
+  for (let i = 0; i < stations.length - 1; i++) {
+    for (let j = 0; j < segs; j++) {
+      const j1 = closed ? (j + 1) % nRing : j + 1;
+      const a = i * nRing + j, b = (i + 1) * nRing + j, c = (i + 1) * nRing + j1, d = i * nRing + j1;
+      if (flip) { idx.push(a, d, b, b, d, c); } else { idx.push(a, b, d, b, c, d); }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// Fan cap over a ring (used for the sidepod inlet mouth / closed ends)
+function capGeometry(ringPts) {
+  const c = new THREE.Vector3();
+  ringPts.forEach(p => c.add(p)); c.multiplyScalar(1 / ringPts.length);
+  const verts = [c.x, c.y, c.z], idx = [];
+  ringPts.forEach(p => verts.push(p.x, p.y, p.z));
+  for (let j = 0; j < ringPts.length; j++) idx.push(0, 1 + j, 1 + ((j + 1) % ringPts.length));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// Signed superellipse helper: sgn(c)|c|^e
+const spow = (c, e) => Math.sign(c) * Math.pow(Math.abs(c), e);
+
 export function createActiveWingsBodywork(options = {}) {
   const group = new THREE.Group();
   group.name = 'Active_Wings_Bodywork_Assembly';
@@ -84,22 +154,26 @@ export function createActiveWingsBodywork(options = {}) {
   const noseGroup = new THREE.Group();
   noseGroup.name = 'Nosecone_FIS_Assembly';
 
-  const numRings = 28;
-  const numSegments = 32;
+  const numRings = 40;
+  const numSegments = 40;
+  // Nose profile (u = 0 at Bulkhead A-A, X = 0; u = 1 at the tip, X = -10.0)
+  const noseZc = u => 2.70 - 1.15 * Math.pow(u, 1.6);
+  const noseRy = u => 1.60 * (1.0 - 0.69 * Math.pow(u, 0.85));
+  const noseRz = u => 1.50 * (1.0 - 0.65 * Math.pow(u, 0.9));
   const noseVertices = [];
   const noseIndices = [];
   const noseUvs = [];
 
   for (let i = 0; i <= numRings; i++) {
     const u = i / numRings; // 0.0 at Bulkhead A-A (X=0), 1.0 at nose tip (X=-10.2)
-    const x = -u * 10.2;
+    const x = -u * 10.0;
 
-    // Smooth continuous convex curvature from Z = 3.9 down to Z = 1.05
-    const zCenter = 2.60 - 1.55 * Math.pow(u, 1.35);
+    // Long, gently drooping nose; the tip stays above the wing on two pillars
+    const zCenter = noseZc(u);
 
-    // Cross-sectional radii (smoothly tapering from monocoque to aerodynamic tip)
-    const ry = 1.65 * (1.0 - 0.68 * u); // Half-width (1.65 dm down to 0.52 dm)
-    const rz = 1.55 * (1.0 - 0.64 * u); // Half-height (1.55 dm down to 0.55 dm)
+    // Cross-sectional radii (smoothly tapering from monocoque to a rounded tip)
+    const ry = noseRy(u); // Half-width 1.60 -> 0.50 dm
+    const rz = noseRz(u); // Half-height 1.50 -> 0.52 dm
 
     for (let j = 0; j <= numSegments; j++) {
       const theta = (j / numSegments) * Math.PI * 2;
@@ -142,7 +216,7 @@ export function createActiveWingsBodywork(options = {}) {
   const tipGeo = new THREE.SphereGeometry(0.52, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
   const tipMesh = new THREE.Mesh(tipGeo, yellowMat);
   tipMesh.rotation.z = Math.PI / 2;
-  tipMesh.position.set(-10.2, 0, 1.05);
+  tipMesh.position.set(-10.0, 0, noseZc(1));
   tipMesh.scale.set(0.65, 1.0, 0.95);
   tipMesh.name = 'Nosecone_YellowTip';
   noseGroup.add(tipMesh);
@@ -152,21 +226,37 @@ export function createActiveWingsBodywork(options = {}) {
     const camGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 12);
     const camMesh = new THREE.Mesh(camGeo, carbonMatte);
     camMesh.rotation.x = Math.PI / 2;
-    camMesh.position.set(-6.5, side * 1.55, 2.3);
+    camMesh.position.set(-6.5, side * (noseRy(0.65) + 0.06), noseZc(0.65)); // on the nose flank
     noseGroup.add(camMesh);
   });
 
   // Vertical Pitot Mast on Upper Nose Bridge (Matching wireframe markup)
   const pitotMastGeo = new THREE.CylinderGeometry(0.02, 0.03, 0.75, 12);
   const pitotMast = new THREE.Mesh(pitotMastGeo, materials.titaniumBright);
-  pitotMast.position.set(-2.0, 0, 4.45);
+  pitotMast.position.set(-2.0, 0, noseZc(0.2) + noseRz(0.2) + 0.36); // standing on the nose top
   noseGroup.add(pitotMast);
 
   const pitotProbeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.45, 8);
   const pitotProbe = new THREE.Mesh(pitotProbeGeo, materials.titaniumBright);
   pitotProbe.rotation.z = Math.PI / 2;
-  pitotProbe.position.set(-2.2, 0, 4.8);
+  pitotProbe.position.set(-2.2, 0, noseZc(0.2) + noseRz(0.2) + 0.72);
   noseGroup.add(pitotProbe);
+
+  // Twin aerofoil pillars carrying the nose over the front-wing mainplane
+  [-1, 1].forEach(side => {
+    const pillarShape = new THREE.Shape();
+    pillarShape.moveTo(-0.45, 0);
+    pillarShape.quadraticCurveTo(-0.1, 0.07, 0.45, 0.0);
+    pillarShape.quadraticCurveTo(-0.1, -0.07, -0.45, 0);
+    const pu = 0.84; // station under the nose
+    const zTop = noseZc(pu) - noseRz(pu) * 0.75 + 0.08;
+    const zBot = 0.62;
+    const pillarGeo = new THREE.ExtrudeGeometry(pillarShape, { steps: 1, depth: zTop - zBot, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
+    const pillar = new THREE.Mesh(pillarGeo, navyMat);
+    pillar.position.set(-8.4, side * 0.32, zBot);
+    pillar.name = `Nosecone_Pillar_${side > 0 ? 'LH' : 'RH'}`;
+    noseGroup.add(pillar);
+  });
 
   frontAeroGroup.add(noseGroup);
 
@@ -352,54 +442,47 @@ export function createActiveWingsBodywork(options = {}) {
     const isLeft = side > 0;
     const pod = new THREE.Group();
 
-    // Sidepod Outer Shell Profile (Lofted from X = 5.0 to X = 28.5)
-    const podShape = new THREE.Shape();
-    podShape.moveTo(5.0, 1.8);
-    podShape.lineTo(6.5, 3.8);   // Overbite forward top lip
-    podShape.lineTo(16.0, 3.8);  // Flat shoulder
-    podShape.quadraticCurveTo(24.0, 3.6, 28.5, 1.2); // Downwash Coke-bottle ramp
-    podShape.lineTo(28.5, 0.4);
-    podShape.lineTo(5.0, 0.4);   // Floor datum
-    podShape.closePath();
-
-    const podExtrude = {
-      steps: 4,
-      depth: 3.4,
-      bevelEnabled: true,
-      bevelThickness: 0.35,
-      bevelSize: 0.35,
-      bevelSegments: 4
+    // Sidepod shell lofted between cross-sections (X = 5.2 inlet to X = 29.6 tail):
+    // wide inlet under the halo/mirror, undercut below, then a coke-bottle taper
+    // inward and downward to the rear. yIn sits inside the tub/engine cover (hidden).
+    const podStations = resampleStations([
+      { x: 5.2,  yIn: 2.0, yOut: 6.7, zb: 0.62, zt: 3.75, uc: 0.30 },
+      { x: 7.0,  yIn: 2.0, yOut: 7.3, zb: 0.62, zt: 3.95, uc: 0.38 },
+      { x: 11.0, yIn: 2.0, yOut: 7.32, zb: 0.62, zt: 3.95, uc: 0.42 },
+      { x: 15.0, yIn: 2.0, yOut: 7.2, zb: 0.62, zt: 3.8, uc: 0.42 },
+      { x: 19.0, yIn: 2.0, yOut: 6.3, zb: 0.62, zt: 3.45, uc: 0.38 },
+      { x: 23.0, yIn: 1.9, yOut: 4.9, zb: 0.62, zt: 2.85, uc: 0.30 },
+      { x: 26.5, yIn: 1.7, yOut: 3.7, zb: 0.62, zt: 2.0, uc: 0.2 },
+      { x: 29.6, yIn: 1.5, yOut: 2.3, zb: 0.62, zt: 1.1, uc: 0.1 }
+    ], 8);
+    const podRing = (st, v, off = 0) => {
+      const th = v * Math.PI * 2;
+      const c = Math.cos(th), sn = Math.sin(th);
+      const cy = (st.yIn + st.yOut) / 2, a = (st.yOut - st.yIn) / 2 + off;
+      const cz = (st.zb + st.zt) / 2, bz = (st.zt - st.zb) / 2 + off;
+      let y = cy + a * spow(c, 0.38);
+      const z = cz + bz * spow(sn, 0.5);
+      if (c > 0 && sn < 0) y -= a * st.uc * Math.pow(-sn, 1.6) * Math.pow(c, 0.3); // outboard undercut
+      return [st.x, side * y, z];
     };
-    const podGeo = new THREE.ExtrudeGeometry(podShape, podExtrude);
-    podGeo.center();
-
-    // Sculpt deep undercut into vertices
-    const pAttr = podGeo.attributes.position;
-    for (let p = 0; p < pAttr.count; p++) {
-      const pX = pAttr.getX(p);
-      const pY = pAttr.getY(p);
-      const pZ = pAttr.getZ(p);
-      if (pX < 0 && pZ < 0) {
-        // Deep front undercut
-        pAttr.setY(p, pY * 0.72);
-      }
-    }
-    podGeo.computeVertexNormals();
-
+    const podGeo = loftGeometry(podStations, (st, v) => podRing(st, v), 48, { flip: isLeft }); // outward-facing normals on both sides
     const podMesh = new THREE.Mesh(podGeo, navyMat);
-    // Rx(+90deg) on both sides keeps the profile right-side-up (shape Y -> world Z);
-    // the RH pod is a true mirror (local Z becomes lateral after the rotation).
-    podMesh.rotation.x = Math.PI / 2;
-    if (!isLeft) podMesh.scale.z = -1;
-    podMesh.position.set(16.5, side * 5.3, 2.1); // Y = 3.25 ... 7.35 (inside the floor edge)
     podMesh.castShadow = true;
     podMesh.receiveShadow = true;
     podMesh.name = `Sidepod_Body_${isLeft ? 'LH' : 'RH'}`;
     pod.add(podMesh);
 
+    // Rear end cap
+    const tailSt = podStations[podStations.length - 1];
+    const tailRing = []; for (let j = 0; j < 48; j++) { const p = podRing(tailSt, j / 48); tailRing.push(new THREE.Vector3(...p)); }
+    if (!isLeft) tailRing.reverse(); // keep the cap normal pointing rearward
+    const tailCap = new THREE.Mesh(capGeometry(tailRing), navyMat);
+    tailCap.name = `Sidepod_TailCap_${isLeft ? 'LH' : 'RH'}`;
+    pod.add(tailCap);
+
     // -----------------------------------------------------------------------
-    // Right-Side-Up Procedural Livery Decal on Sidepod Outer Flank
-    // Uses explicit 3D quad coordinates: 100% upright on both LH and RH sides
+    // Livery decal conforming to the pod's outer flank (offset 0.02 dm)
+    // Seen from outside: LH texture runs front-to-rear right-to-left, RH left-to-right
     // -----------------------------------------------------------------------
     const sidepodTex = createSidepodLiveryTexture(isLeft);
     const sidepodLiveryMat = new THREE.MeshStandardMaterial({
@@ -409,29 +492,29 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-
-    const flankY = side * 7.4;
-    const spP00 = new THREE.Vector3(7.0, flankY, 0.8);  // Front lower
-    const spP10 = new THREE.Vector3(25.0, flankY, 0.8); // Rear lower
-    const spP11 = new THREE.Vector3(25.0, flankY, 3.8); // Rear upper
-    const spP01 = new THREE.Vector3(7.0, flankY, 3.8);  // Front upper
-
-    // Seen from the car's left (+Y) the viewer's right is -X (forward), so the LH quad starts
-    // at the rear-lower corner; the RH quad starts at the front-lower corner. (The two were
-    // swapped, which mirrored the text; it was hidden inside the over-wide pod until now.)
-    const flankMesh = isLeft
-      ? createDecalQuad(spP10, spP00, spP01, spP11, sidepodLiveryMat)
-      : createDecalQuad(spP00, spP10, spP11, spP01, sidepodLiveryMat);
+    const decX0 = 7.0, decX1 = 16.5;
+    const decStations = podStations.filter(st => st.x >= decX0 - 1e-6 && st.x <= decX1 + 1e-6);
+    const vA = -0.17, vB = 0.17; // ring angle range on the outer flank (fraction of a turn)
+    const flankGeo = loftGeometry(decStations, (st, v) => podRing(st, vA + (vB - vA) * v, 0.02), 16, { closed: false, flip: !isLeft });
+    const fuv = flankGeo.attributes.uv;
+    for (let k = 0; k < fuv.count; k++) {
+      const uu = fuv.getX(k);
+      fuv.setXY(k, isLeft ? 1 - uu : uu, fuv.getY(k));
+    }
+    const flankMesh = new THREE.Mesh(flankGeo, sidepodLiveryMat);
     flankMesh.name = `Sidepod_OracleLivery_${isLeft ? 'LH' : 'RH'}`;
     pod.add(flankMesh);
 
-    // Forward Letterbox Radiator Intake Opening Lip (Overbite forward cowl)
-    const inletRimGeo = new THREE.TorusGeometry(1.65, 0.12, 12, 24, Math.PI);
-    const inletRim = new THREE.Mesh(inletRimGeo, carbonMat);
-    inletRim.rotation.y = Math.PI / 2;
-    inletRim.rotation.x = isLeft ? 0 : Math.PI;
-    inletRim.position.set(5.3, side * 4.6, 3.4);
+    // Forward inlet: carbon lip around the mouth and a dark recessed intake face
+    const inletSt = podStations[0];
+    const lipPts = []; for (let j = 0; j < 48; j++) { const p = podRing(inletSt, j / 48, -0.06); lipPts.push(new THREE.Vector3(p[0], p[1], p[2])); }
+    const inletRim = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lipPts, true), 96, 0.08, 8, true), carbonMat);
+    inletRim.name = `Sidepod_InletLip_${isLeft ? 'LH' : 'RH'}`;
     pod.add(inletRim);
+    const mouthPts = lipPts.map(p => new THREE.Vector3(p.x + 0.5, p.y, p.z));
+    const inletMouth = new THREE.Mesh(capGeometry(mouthPts), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.95, side: THREE.DoubleSide }));
+    inletMouth.name = `Sidepod_InletMouth_${isLeft ? 'LH' : 'RH'}`;
+    pod.add(inletMouth);
 
     // Internal Radiator Core (Angled at 42°)
     const radCoreGeo = new THREE.BoxGeometry(0.18, 2.5, 1.9);
@@ -500,58 +583,28 @@ export function createActiveWingsBodywork(options = {}) {
 
   engineCoverGroup.add(airboxGroup);
 
-  // 3D Lofted Engine Cover Shell (Tight wrap over V6 turbo)
-  const coverStations = [
-    { x: 17.2, rw: 2.8, zc: 5.6, rz: 2.7 },
-    { x: 18.0, rw: 2.7, zc: 5.5, rz: 2.6 },
-    { x: 21.5, rw: 2.4, zc: 5.1, rz: 2.3 },
-    { x: 25.5, rw: 2.0, zc: 4.6, rz: 1.9 },
-    { x: 29.5, rw: 1.6, zc: 4.1, rz: 1.5 },
-    { x: 33.2, rw: 1.0, zc: 3.6, rz: 1.0 }
-  ];
-
-  const ecVerts = [];
-  const ecIndices = [];
-  const ecUvs = [];
-  const ecSegments = 32;
-  const ecSkirtZ = 3.9; // side skirts close the slot down to the sidepod tops
-  const ecRow = ecSegments + 3; // skirt point + arc + skirt point
-
-  for (let i = 0; i < coverStations.length; i++) {
-    const st = coverStations[i];
-    const u = i / (coverStations.length - 1);
-    const skirtZ = Math.min(st.zc, ecSkirtZ);
-    ecVerts.push(st.x, st.rw, skirtZ);
-    ecUvs.push(u, 0);
-    for (let j = 0; j <= ecSegments; j++) {
-      const v = j / ecSegments;
-      const phi = v * Math.PI; // Top half-shell
-      const y = Math.cos(phi) * st.rw;
-      const z = Math.max(0.55, st.zc + Math.sin(phi) * st.rz);
-      ecVerts.push(st.x, y, z);
-      ecUvs.push(u, v);
-    }
-    ecVerts.push(st.x, -st.rw, skirtZ);
-    ecUvs.push(u, 1);
-  }
-
-  for (let i = 0; i < coverStations.length - 1; i++) {
-    for (let j = 0; j < ecRow - 1; j++) {
-      const a = i * ecRow + j;
-      const b = (i + 1) * ecRow + j;
-      const c = (i + 1) * ecRow + (j + 1);
-      const d = i * ecRow + (j + 1);
-      ecIndices.push(a, b, d);
-      ecIndices.push(b, c, d);
-    }
-  }
-
-  const ecGeo = new THREE.BufferGeometry();
-  ecGeo.setAttribute('position', new THREE.Float32BufferAttribute(ecVerts, 3));
-  ecGeo.setAttribute('uv', new THREE.Float32BufferAttribute(ecUvs, 2));
-  ecGeo.setIndex(ecIndices);
-  ecGeo.computeVertexNormals();
-
+  // 3D Lofted Engine Cover Shell: rises from the cockpit rim to the airbox crown,
+  // then tapers down and inward over the engine and gearbox to the rear-wing pylons.
+  // Each ring is a rounded "tent": hw * (1 - s^k)^0.5 at height fraction s.
+  const ecStations = resampleStations([
+    { x: 15.6, hw: 2.4, zb: 3.6, zt: 6.6, k: 2.4 },
+    { x: 17.2, hw: 3.0, zb: 3.6, zt: 7.7, k: 1.9 },
+    { x: 19.2, hw: 3.0, zb: 3.6, zt: 8.45, k: 1.5 },
+    { x: 21.5, hw: 2.85, zb: 3.4, zt: 7.6, k: 1.7 },
+    { x: 24.5, hw: 2.2, zb: 3.0, zt: 6.3, k: 2.0 },
+    { x: 27.5, hw: 1.85, zb: 2.6, zt: 5.45, k: 2.2 },
+    { x: 30.5, hw: 1.5, zb: 2.5, zt: 4.5, k: 2.4 },
+    { x: 33.2, hw: 1.35, zb: 2.5, zt: 4.05, k: 2.6 },
+    { x: 34.6, hw: 1.05, zb: 2.6, zt: 3.75, k: 2.6 }
+  ], 8);
+  const ecRing = (st, v, off = 0) => {
+    // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
+    const s1 = 1 - Math.abs(2 * v - 1);            // 0 at base, 1 at crown
+    const z = st.zb + (st.zt - st.zb) * s1 + off * 0.5;
+    const w = (st.hw + off) * Math.sqrt(Math.max(0, 1 - Math.pow(s1, st.k)));
+    return [st.x, (v < 0.5 ? 1 : -1) * w, z];
+  };
+  const ecGeo = loftGeometry(ecStations, (st, v) => ecRing(st, v), 48, { closed: false, flip: true });
   const ecMesh = new THREE.Mesh(ecGeo, navyMat);
   ecMesh.castShadow = true;
   ecMesh.receiveShadow = true;
@@ -569,14 +622,16 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const ecY = side * 2.55;
-    const ecP00 = new THREE.Vector3(18.5, ecY, 4.2);
-    const ecP10 = new THREE.Vector3(26.0, ecY, 4.2);
-    const ecP11 = new THREE.Vector3(26.0, ecY, 6.2);
-    const ecP01 = new THREE.Vector3(18.5, ecY, 6.2);
-    const ecDecal = isLeft // same winding rule as the sidepod livery (reads correctly from outside)
-      ? createDecalQuad(ecP10, ecP00, ecP01, ecP11, ecLiveryMat)
-      : createDecalQuad(ecP00, ecP10, ecP11, ecP01, ecLiveryMat);
+    // Conforming decal on the cover flank (X 19.5-26.5, lower-mid flank), offset 0.02 dm
+    const decSt = ecStations.filter(st => st.x >= 19.5 - 1e-6 && st.x <= 26.5 + 1e-6);
+    const vLo = isLeft ? 0.08 : 0.92, vHi = isLeft ? 0.36 : 0.64;
+    const ecDecGeo = loftGeometry(decSt, (st, v) => ecRing(st, vLo + (vHi - vLo) * v, 0.02), 12, { closed: false, flip: !isLeft });
+    const duv = ecDecGeo.attributes.uv;
+    for (let k = 0; k < duv.count; k++) {
+      const uu = duv.getX(k);
+      duv.setXY(k, isLeft ? 1 - uu : uu, duv.getY(k));
+    }
+    const ecDecal = new THREE.Mesh(ecDecGeo, ecLiveryMat);
     ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
     engineCoverGroup.add(ecDecal);
   });
@@ -586,8 +641,8 @@ export function createActiveWingsBodywork(options = {}) {
   finShape.moveTo(18.0, 7.9);  // Starts behind the roll hoop / airbox
   finShape.lineTo(18.0, 8.8); // Apex
   finShape.lineTo(33.0, 5.8); // Rear wing pylon junction
-  finShape.lineTo(33.0, 4.2);
-  finShape.quadraticCurveTo(24.0, 5.8, 18.0, 7.9);
+  finShape.lineTo(33.0, 3.95);
+  finShape.quadraticCurveTo(24.0, 5.9, 18.0, 7.9);
   finShape.closePath();
 
   const finExtrude = { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
@@ -595,7 +650,7 @@ export function createActiveWingsBodywork(options = {}) {
   finGeo.center();
   const finMesh = new THREE.Mesh(finGeo, navyMat);
   finMesh.rotation.set(Math.PI / 2, 0, 0);
-  finMesh.position.set(25.5, 0, 6.5); // re-centred on the shape's bounding box
+  finMesh.position.set(25.5, 0, (3.95 + 8.8) / 2); // re-centred on the shape's bounding box
   finMesh.name = 'Dorsal_Shark_Fin';
   engineCoverGroup.add(finMesh);
 
