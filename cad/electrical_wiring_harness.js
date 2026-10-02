@@ -291,9 +291,9 @@ export function createElectricalHarness(options = {}) {
   [-1, 1].forEach(side => {
     const rwPylonSpline = new THREE.CatmullRomCurve3([
       new THREE.Vector3(34.0, side * 1.5, 3.8),
-      new THREE.Vector3(35.5, side * 3.5, 4.6),
-      new THREE.Vector3(37.0, side * 6.0, 5.4),
-      new THREE.Vector3(37.9, side * 7.1, 6.0) // Vertical rain LED strip on endplate inner face
+      new THREE.Vector3(35.5, side * 2.2, 4.6),
+      new THREE.Vector3(37.0, side * 3.5, 5.4),  // stays inboard of the rear tyres
+      new THREE.Vector3(37.9, side * 4.55, 6.0)  // rain LED strip on the endplate inner face
     ]);
     const rwPylonGeo = new THREE.TubeGeometry(rwPylonSpline, 24, 0.035, 8, false);
     const rwPylonMesh = new THREE.Mesh(rwPylonGeo, materials.harnessBlack);

@@ -698,7 +698,10 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   // 4A. REAR WING SPOON MAINPLANE (Genuine Horizontal Aerofoil)
   // -------------------------------------------------------------------------
-  const rwSpan = 14.8;  // 1480 mm width
+  // Wing sits inboard of the rear tyres (tyre inner face Y = ±5.34 dm, ±5.525 with the PR #3 tyres)
+  const RW_OUT = 4.9;   // endplate outer face at its widest (Y = ±490 mm)
+  const RW_T = 0.2;     // endplate thickness
+  const rwSpan = 2 * (RW_OUT - 0.27 - RW_T / 2) * 1.0;  // mainplane ends buried mid-endplate
   const rwChord = 2.4;  // 240 mm chord along X
   const rwMainShape = new THREE.Shape();
   rwMainShape.moveTo(-1.2, 0.0);
@@ -742,7 +745,7 @@ export function createActiveWingsBodywork(options = {}) {
   rwFlapShape.quadraticCurveTo(0.1, 0.06, -0.6, -0.02);
   rwFlapShape.closePath();
 
-  const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 8, depth: 14.4, bevelEnabled: false });
+  const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 8, depth: rwSpan - 0.2, bevelEnabled: false });
   rwFlapGeo.center();
   rwFlapGeo.rotateX(Math.PI / 2); // Rotate on geometry: chord on X, span on Y, thickness on Z
   rwFlapGeo.computeVertexNormals();
@@ -762,10 +765,11 @@ export function createActiveWingsBodywork(options = {}) {
     side: THREE.DoubleSide
   });
 
-  const oP00 = new THREE.Vector3(0.72, -7.1, 0.02); // Bottom-Left (viewer's left from behind = car's right)
-  const oP10 = new THREE.Vector3(0.72, 7.1, 0.02);  // Bottom-Right (viewer's right from behind = car's left)
-  const oP11 = new THREE.Vector3(0.72, 7.1, 0.55);  // Top-Right
-  const oP01 = new THREE.Vector3(0.72, -7.1, 0.55); // Top-Left
+  const oW = rwSpan / 2 - 0.25;
+  const oP00 = new THREE.Vector3(0.72, -oW, 0.02); // Bottom-Left (viewer's left from behind = car's right)
+  const oP10 = new THREE.Vector3(0.72, oW, 0.02);  // Bottom-Right (viewer's right from behind = car's left)
+  const oP11 = new THREE.Vector3(0.72, oW, 0.55);  // Top-Right
+  const oP01 = new THREE.Vector3(0.72, -oW, 0.55); // Top-Left
   const oracleDecal = createDecalQuad(oP00, oP10, oP11, oP01, rwOracleMat);
   oracleDecal.name = 'RearWing_OracleDecal';
   rwFlapPivot.add(oracleDecal);
@@ -801,7 +805,18 @@ export function createActiveWingsBodywork(options = {}) {
       { z: -2.70, yOuter: 7.85, yInner: 6.85, xFwd: -1.5, xAft:  1.75 }, // Inward sweep below tire line
       { z: -3.50, yOuter: 7.55, yInner: 6.72, xFwd: -1.4, xAft:  1.55 }, // Beam wing junction
       { z: -4.20, yOuter: 7.35, yInner: 6.65, xFwd: -1.2, xAft:  1.30 }  // Bottom angled tip above diffuser
-    ];
+    ].map(st => {
+      // Same hip profile, moved inboard so the widest point is at RW_OUT, with a thin wall
+      const yOuter = st.yOuter - (8.12 - RW_OUT);
+      return { ...st, yOuter, yInner: yOuter - RW_T };
+    });
+    const outerAt = (z) => { // outer face Y at local height z
+      for (let k = 0; k < stations.length - 1; k++) {
+        const a = stations[k], b = stations[k + 1];
+        if (z <= a.z && z >= b.z) return THREE.MathUtils.lerp(a.yOuter, b.yOuter, (a.z - z) / (a.z - b.z));
+      }
+      return stations[stations.length - 1].yOuter;
+    };
 
     const numZ = stations.length;
     const numX = 12; // Chord segments
@@ -952,7 +967,8 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.35,
       side: THREE.DoubleSide
     });
-    const hipY = side * (8.12 + 0.04);
+    const hipY = side * (RW_OUT + 0.04);
+    // (outer face is not flat; keep the legacy quad on the hip band, the paint branch replaces it)
     const epP00 = new THREE.Vector3(-1.4, hipY, -2.5);
     const epP10 = new THREE.Vector3( 1.4, hipY, -2.5);
     const epP11 = new THREE.Vector3( 1.4, hipY,  0.8);
@@ -971,7 +987,7 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.30,
       side: THREE.DoubleSide
     });
-    const inY = side * (6.95 - 0.02);
+    const inY = side * (stations.reduce((m, st) => Math.min(m, st.yInner), 99) - 0.02); // innermost face
     const inP00 = new THREE.Vector3(-1.4, inY, -3.8);
     const inP10 = new THREE.Vector3( 1.4, inY, -3.8);
     const inP11 = new THREE.Vector3( 1.4, inY,  1.2);
@@ -990,7 +1006,7 @@ export function createActiveWingsBodywork(options = {}) {
       const t = k / 11;
       const ledZ = THREE.MathUtils.lerp(1.2, -3.8, t);
       const ledX = THREE.MathUtils.lerp(1.5, 1.35, t) + 0.02;
-      const ledY = side * THREE.MathUtils.lerp(7.4, 7.3, t);
+      const ledY = side * (outerAt(ledZ) - RW_T / 2); // in the trailing edge, between the faces
       const led = new THREE.Mesh(ledGeo, materials.ledRed);
       led.rotation.z = Math.PI / 2;
       led.position.set(ledX, ledY, ledZ);
@@ -1013,7 +1029,7 @@ export function createActiveWingsBodywork(options = {}) {
   beamWingGroup.name = 'RearWing_BeamWing_Assembly';
   beamWingGroup.position.set(0.4, 0, -2.9); // world Z 4.5, clear above the exhaust (Z 3.31-4.19)
 
-  const bwSpan = 13.4; // Spans from Y = -6.7 to Y = +6.7 dm (between endplates)
+  const bwSpan = 2 * (RW_OUT - 0.3 - RW_T / 2) - 0.2; // between the endplates (lower endplate is inboard of the hip)
   const bwShape = new THREE.Shape();
   bwShape.moveTo(-0.9, 0.0);
   bwShape.quadraticCurveTo(-0.1, 0.18, 0.9, 0.04);
