@@ -102,46 +102,82 @@ function withFacing(ctx, w, facingRight, fn) {
 // Logo drawing primitives
 // ---------------------------------------------------------------------------
 
-/** Stylised charging bull, facing +x, fitted into a w×h box centred at (cx, cy). */
-function drawBull(ctx, cx, cy, w, h, { fill = LIVERY.red, horn = LIVERY.yellow, outline = null } = {}) {
+/**
+ * Charging bull (Red Bull style), facing +x, fitted into a w×h box centred at (cx, cy).
+ * Head lowered with horns forward, front legs braced, hind legs driving back and the
+ * tail whipped up over the rump. Designed on a 400×220 grid; `keepAspect` scales
+ * uniformly (use it on small decals so the bull never squashes into a "pig").
+ */
+function drawBull(ctx, cx, cy, w, h, { fill = LIVERY.red, horn = null, outline = null, keepAspect = false } = {}) {
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.scale(w / 400, h / 200);
-  ctx.beginPath();
-  // Head lowered to the right, horns forward, tail flicked up at the left
-  ctx.moveTo(-190, -48);                               // tail tip
-  ctx.quadraticCurveTo(-176, -22, -150, -26);           // tail
-  ctx.bezierCurveTo(-110, -70, -20, -78, 60, -62);      // back
-  ctx.bezierCurveTo(100, -70, 130, -58, 150, -36);      // shoulder hump
-  ctx.lineTo(196, 2);                                   // forehead down to muzzle
-  ctx.lineTo(186, 26);                                  // muzzle
-  ctx.lineTo(150, 18);                                  // jaw
-  ctx.bezierCurveTo(132, 30, 122, 40, 110, 46);         // dewlap
-  ctx.lineTo(128, 92);                                  // front leg forward
-  ctx.lineTo(108, 96);
-  ctx.lineTo(84, 52);
-  ctx.lineTo(60, 60);
-  ctx.lineTo(40, 98);                                   // second front leg
-  ctx.lineTo(22, 96);
-  ctx.lineTo(30, 52);
-  ctx.bezierCurveTo(-20, 50, -60, 46, -96, 36);         // belly
-  ctx.lineTo(-150, 92);                                 // hind leg pushing back
-  ctx.lineTo(-172, 86);
-  ctx.lineTo(-128, 22);
-  ctx.bezierCurveTo(-150, 6, -158, -6, -156, -18);      // haunch
-  ctx.quadraticCurveTo(-182, -20, -190, -48);
-  ctx.closePath();
-  if (outline) { ctx.lineJoin = 'round'; ctx.lineWidth = 10; ctx.strokeStyle = outline; ctx.stroke(); }
+  if (keepAspect) { const k = Math.min(w / 400, h / 220); ctx.scale(k, k); } else ctx.scale(w / 400, h / 220);
+  const body = new Path2D();
+  // Wedge-shaped bull: massive shoulders/chest, small hindquarters (like the emblem)
+  // tail: whipped up from the rump with a tufted tip
+  body.moveTo(-132, -34);
+  body.bezierCurveTo(-158, -50, -176, -78, -166, -104);
+  body.quadraticCurveTo(-156, -116, -144, -108);         // tuft
+  body.quadraticCurveTo(-154, -102, -152, -92);
+  body.bezierCurveTo(-150, -70, -138, -54, -118, -44);
+  // back rising steeply to the big shoulder hump
+  body.bezierCurveTo(-70, -60, -10, -88, 40, -96);
+  body.bezierCurveTo(80, -100, 108, -86, 122, -64);      // hump -> poll of the head
+  // forehead down to a lowered, deep head
+  body.bezierCurveTo(140, -42, 162, -6, 178, 22);
+  body.quadraticCurveTo(194, 44, 190, 58);               // muzzle (head low)
+  body.quadraticCurveTo(176, 72, 158, 64);               // chin
+  body.bezierCurveTo(146, 60, 134, 62, 124, 70);         // jaw -> dewlap
+  // near front leg thrust forward, hoof planted
+  body.lineTo(158, 98);
+  body.lineTo(168, 110);
+  body.lineTo(146, 112);
+  body.lineTo(104, 82);
+  // far front leg folded under the chest
+  body.lineTo(98, 86);
+  body.lineTo(110, 104);
+  body.lineTo(92, 110);
+  body.lineTo(64, 80);
+  // belly rising toward the small rear
+  body.bezierCurveTo(20, 76, -40, 56, -86, 40);
+  // near hind leg driving back, fully extended
+  body.lineTo(-150, 78);
+  body.lineTo(-194, 92);
+  body.lineTo(-198, 80);
+  body.lineTo(-160, 62);
+  body.lineTo(-118, 30);
+  // far hind leg
+  body.lineTo(-126, 48);
+  body.lineTo(-170, 62);
+  body.lineTo(-172, 52);
+  body.lineTo(-134, 30);
+  // haunch back up to the rump
+  body.bezierCurveTo(-148, 12, -150, -16, -132, -34);
+  body.closePath();
+  // horns: long, sweeping forward from the top of the lowered head
+  const horns = new Path2D();
+  horns.moveTo(132, -50);
+  horns.bezierCurveTo(158, -78, 196, -88, 226, -76);
+  horns.bezierCurveTo(196, -70, 172, -52, 158, -26);
+  horns.closePath();
+  horns.moveTo(114, -66);
+  horns.bezierCurveTo(130, -100, 160, -116, 190, -112);
+  horns.bezierCurveTo(164, -100, 146, -82, 138, -56);
+  horns.closePath();
+  if (outline) {
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 12; ctx.strokeStyle = outline;
+    ctx.stroke(body); ctx.stroke(horns);
+  }
   ctx.fillStyle = fill;
-  ctx.fill();
-  // Horn
-  ctx.beginPath();
-  ctx.moveTo(150, -34);
-  ctx.quadraticCurveTo(176, -66, 214, -62);
-  ctx.quadraticCurveTo(184, -48, 168, -22);
-  ctx.closePath();
-  ctx.fillStyle = horn;
-  ctx.fill();
+  ctx.fill(body);
+  ctx.fillStyle = horn || fill;
+  ctx.fill(horns);
+  // eye + ear notch in the outline colour so the head reads
+  const accent = outline || LIVERY.yellow;
+  ctx.fillStyle = accent;
+  ctx.beginPath(); ctx.ellipse(160, 14, 7, 4.5, 0.9, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(126, -40); ctx.lineTo(106, -52); ctx.lineTo(128, -54); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 
@@ -301,7 +337,7 @@ export function createEngineCoverDecalTexture({ frontIsLeft = true } = {}) {
     ctx.moveTo(w * 0.78, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62);
     ctx.quadraticCurveTo(w * 0.9, h * 0.2, w * 0.78, 0);
     ctx.closePath(); ctx.fill();
-    drawBull(ctx, w * 0.5, h * 0.48, w * 0.86, h * 0.78, { outline: LIVERY.yellow, horn: LIVERY.yellow });
+    drawBull(ctx, w * 0.5, h * 0.55, w * 0.8, h * 0.8, { outline: LIVERY.yellow, keepAspect: true });
   });
   return finalizeTexture(canvas);
 }
@@ -313,9 +349,9 @@ export function createEngineTopDecalTexture() {
   // canvas right = car front; canvas vertical = across the car
   ctx.fillStyle = LIVERY.yellow;
   ctx.beginPath(); ctx.ellipse(w * 0.9, h * 0.5, w * 0.12, h * 0.36, 0, 0, Math.PI * 2); ctx.fill();
-  drawBull(ctx, w * 0.48, h * 0.3, w * 0.7, h * 0.36, { outline: LIVERY.yellow });
+  drawBull(ctx, w * 0.54, h * 0.27, w * 0.7, h * 0.48, { outline: LIVERY.yellow, keepAspect: true });
   ctx.save(); ctx.translate(0, h); ctx.scale(1, -1);
-  drawBull(ctx, w * 0.48, h * 0.3, w * 0.7, h * 0.36, { outline: LIVERY.yellow });
+  drawBull(ctx, w * 0.54, h * 0.27, w * 0.7, h * 0.48, { outline: LIVERY.yellow, keepAspect: true });
   ctx.restore();
   return finalizeTexture(canvas);
 }
@@ -372,7 +408,10 @@ export function createNoseSideDecalTexture({ frontIsLeft = true } = {}) {
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = LIVERY.red;
     ctx.beginPath(); ctx.moveTo(w * 0.53, 0); ctx.lineTo(w * 0.58, 0); ctx.lineTo(w * 0.52, h); ctx.lineTo(w * 0.47, h); ctx.closePath(); ctx.fill();
-    drawBull(ctx, w * 0.42, h * 0.44, w * 0.2, h * 0.62, { outline: LIVERY.yellow });
+    // yellow sun disc the bull charges into, then the bull (uniform scale: never squashed)
+    ctx.fillStyle = LIVERY.yellow;
+    ctx.beginPath(); ctx.arc(w * 0.47, h * 0.42, h * 0.3, 0, Math.PI * 2); ctx.fill();
+    drawBull(ctx, w * 0.40, h * 0.5, w * 0.24, h * 0.66, { outline: LIVERY.navyDeep, keepAspect: true });
   });
   drawATT(ctx, frontIsLeft ? w * 0.22 : w * 0.78, h * 0.46, w * 0.2, 150, LIVERY.navyDeep);
   return finalizeTexture(canvas);
