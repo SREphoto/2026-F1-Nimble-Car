@@ -18,6 +18,7 @@ import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
 import { initTrackMode } from './cad/track/track_mode.js';
 import { initTyreStates } from './cad/tyre_states.js';
+import { sumTravel } from './cad/track/ride_model.js';
 import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 
@@ -431,7 +432,7 @@ window.setCameraView = function(viewName) {
       gear: state.gear,
       brakeKgf: state.brakeKgf,
       explodedProgress: state.explodedProgress,
-      suspensionTravel: tyreStates?.suspensionTravel
+      suspensionTravel: sumTravel(tyreStates?.suspensionTravel, trackMode?.suspensionTravel)
     });
   }
   updateLcdDisplay();
@@ -625,7 +626,7 @@ function animate() {
       gear: state.gear,
       brakeKgf: state.brakeKgf,
       explodedProgress: state.explodedProgress,
-      suspensionTravel: tyreStates?.suspensionTravel
+      suspensionTravel: sumTravel(tyreStates?.suspensionTravel, trackMode?.suspensionTravel)
     });
   }
 

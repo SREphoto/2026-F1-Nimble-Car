@@ -315,6 +315,9 @@ export function createTransmissionGears(options = {}) {
     const dsAssembly = new THREE.Group();
     dsAssembly.name = `Driveshaft_${side > 0 ? 'Left' : 'Right'}`;
     dsAssembly.rotation.x = side * DS_TILT; // outer end rises toward the wheel hub
+    // Data for full_car3d.js updateKinematics: the shaft pivots at the diff and its outer
+    // end follows the rear hub up and down with suspension travel (corner key 'rl' / 'rr').
+    dsAssembly.userData.driveshaft = { side, baseTilt: DS_TILT, reach: 1.45 + 4.6, corner: side > 0 ? 'rl' : 'rr' };
 
     // Spins about its own (local Y) axis - see full_car3d.js updateKinematics
     const spin = new THREE.Group();
