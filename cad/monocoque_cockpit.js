@@ -494,9 +494,11 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   pedalGroup.position.set(2.5, 0, 1.36); // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
 
   // Dual Aluminum Slider Guide Rails
-  for (const ry of [-1.2, 1.2]) {
+  // (inboard of the tub's curved lower corners (tub floor z 1.24 at y 0.7), they used to poke through at y +-1.2)
+  for (const ry of [-0.7, 0.7]) {
     const railGeo = new THREE.BoxGeometry(2.4, 0.15, 0.12);
     const rail = new THREE.Mesh(railGeo, mats.titaniumBright);
+    rail.name = `Body_PedalSled_Rail_${ry > 0 ? 'L' : 'R'}`;
     rail.position.set(0, ry, 0);
     pedalGroup.add(rail);
   }

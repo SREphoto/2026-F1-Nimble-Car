@@ -132,6 +132,7 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
     // dark liner seen through the neck opening
     const liner = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1, side: THREE.BackSide }));
     liner.name = 'Helmet_InnerLiner';
+    liner.scale.setScalar(0.985); // just inside the shell so the two never fight for the same pixels
     group.add(liner);
   }
 
