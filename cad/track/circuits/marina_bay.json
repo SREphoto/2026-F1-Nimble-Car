@@ -62,6 +62,7 @@
   },
   "centreline": {
     "source": "osm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/marina_bay.csv",
     "spacing_m": 5.0,
     "samples": 993,

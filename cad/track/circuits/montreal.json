@@ -72,6 +72,7 @@
   },
   "centreline": {
     "source": "tumftm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/montreal.csv",
     "spacing_m": 5.0,
     "samples": 872,

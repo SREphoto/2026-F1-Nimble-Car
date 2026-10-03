@@ -87,6 +87,7 @@
   },
   "centreline": {
     "source": "tumftm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/monza.csv",
     "spacing_m": 5.0,
     "samples": 1158,

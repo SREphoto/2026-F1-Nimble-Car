@@ -27,9 +27,9 @@
     "checks": {
       "fia_centreline_m": 5414.0,
       "wikipedia_m": 5414.0,
-      "osm_loop_m": 5414.0,
+      "osm_loop_m": 5430.0,
       "tumftm_m": null,
-      "pack_centreline_m": 5414.0
+      "pack_centreline_m": 5430.0
     }
   },
   "corners": {
@@ -61,11 +61,20 @@
     "class": "Formula One"
   },
   "centreline": {
-    "source": "osm",
+    "source": "bacinger",
+    "geojson": {
+      "type": "geojson",
+      "file": "cad/track/raw/bacinger/es-2026.geojson",
+      "points": 115,
+      "length_m": 5430.5,
+      "stated_length_m": 5474,
+      "url": "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/es-2026.geojson",
+      "note": "Hand-drawn circuit line from the bacinger/f1-circuits project (MIT licence). About one point every 50 m, so corners are coarse. Used because the OSM circuit ways do not cover the whole lap."
+    },
     "csv": "cad/track/raw/centreline/madring.csv",
     "spacing_m": 5.0,
-    "samples": 1083,
-    "length_m": 5414.0,
+    "samples": 1086,
+    "length_m": 5430.5,
     "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
     "tumftm": null,
     "osm": {
@@ -85,13 +94,13 @@
   },
   "elevation": {
     "dataset": "eudem25m",
-    "samples": 541,
-    "spacing_m": 10.01,
-    "min_m": 665.6,
-    "max_m": 697.8,
-    "total_change_m": 32.2,
-    "total_climb_per_lap_m": 60.9,
-    "raw_change_m": 33.1,
+    "samples": 543,
+    "spacing_m": 10.0,
+    "min_m": 665.7,
+    "max_m": 698.0,
+    "total_change_m": 32.3,
+    "total_climb_per_lap_m": 65.6,
+    "raw_change_m": 33.2,
     "source": "opentopodata",
     "official_change_m": null,
     "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
@@ -113,14 +122,14 @@
     "fia_changes": null,
     "osm_hints": {
       "surface_area_m2_within_60m": {
-        "asphalt": 94320,
-        "grass": 12617
+        "asphalt": 173077,
+        "grass": 1062
       },
       "barrier_length_m_within_30m": {
         "fence": 1091,
         "guard_rail": 69,
-        "kerb": 1709,
-        "wall": 3584
+        "kerb": 1248,
+        "wall": 2529
       },
       "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
     },
@@ -130,23 +139,23 @@
   "pit_lane": {
     "speed_limit_kmh": 80,
     "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
-    "side": "left",
-    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "side": null,
+    "side_basis": "Not decided: the race direction of the centreline is not verified, so left/right is unknown. Pit entry/exit positions below may be swapped.",
     "length_m": 903.0,
     "length_all_pit_ways_m": 903.0,
     "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
     "entry": {
-      "s_m": 5369.0,
-      "lat_lon": [
-        40.464971,
-        -3.621438
-      ]
-    },
-    "exit": {
-      "s_m": 500.0,
+      "s_m": 4515.0,
       "lat_lon": [
         40.466801,
         -3.612117
+      ]
+    },
+    "exit": {
+      "s_m": 75.0,
+      "lat_lon": [
+        40.464971,
+        -3.621438
       ]
     },
     "osm_ways": [
@@ -214,16 +223,6 @@
     "grandstands": [],
     "bridges": [
       {
-        "kind": "footway bridge over track",
-        "name": null,
-        "osm_way": 516431587,
-        "lat_lon": [
-          40.47164,
-          -3.618058
-        ],
-        "s_m": 1500.0
-      },
-      {
         "kind": "trunk_link bridge over track",
         "name": null,
         "osm_way": 34049818,
@@ -231,7 +230,17 @@
           40.472329,
           -3.618656
         ],
-        "s_m": 1605.0
+        "s_m": 3485.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 516431587,
+        "lat_lon": [
+          40.47164,
+          -3.618058
+        ],
+        "s_m": 3570.0
       }
     ],
     "tunnels": [],
@@ -250,9 +259,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 1510.0,
+        "s_m": 3870.0,
         "side": "right",
-        "distance_m": 113.0
+        "distance_m": 10.3
       },
       {
         "name": "Pabellón 9",
@@ -268,9 +277,27 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 1095.0,
+        "s_m": 3610.0,
         "side": "right",
-        "distance_m": 13.9
+        "distance_m": 99.9
+      },
+      {
+        "name": "Pabellón 8",
+        "kind": "public",
+        "osm_way": 79851604,
+        "lat_lon": [
+          40.469124,
+          -3.61614
+        ],
+        "footprint_m": [
+          208.0,
+          143.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4020.0,
+        "side": "right",
+        "distance_m": 13.0
       },
       {
         "name": "Pabellón 3",
@@ -286,45 +313,81 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 730.0,
+        "s_m": 5060.0,
         "side": "right",
-        "distance_m": 14.9
+        "distance_m": 108.5
       },
       {
-        "name": "Pabellón 7",
+        "name": "Pabellón 4",
         "kind": "public",
-        "osm_way": 79851599,
+        "osm_way": 79851586,
         "lat_lon": [
-          40.468821,
-          -3.618713
+          40.466864,
+          -3.615697
         ],
         "footprint_m": [
-          215.0,
-          135.0
+          212.0,
+          131.0
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 970.0,
+        "s_m": 4155.0,
         "side": "right",
-        "distance_m": 14.6
+        "distance_m": 98.6
       },
       {
-        "name": "Pabellón 5",
+        "name": "Pabellón 14",
         "kind": "public",
-        "osm_way": 79851601,
+        "osm_way": 23978680,
         "lat_lon": [
-          40.467654,
-          -3.618146
+          40.467625,
+          -3.613534
+        ],
+        "footprint_m": [
+          162.0,
+          154.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4380.0,
+        "side": "right",
+        "distance_m": 6.6
+      },
+      {
+        "name": "Pabellón 12",
+        "kind": "public",
+        "osm_way": 79852010,
+        "lat_lon": [
+          40.466534,
+          -3.613164
         ],
         "footprint_m": [
           156.0,
-          126.0
+          152.0
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 915.0,
+        "s_m": 4670.0,
         "side": "right",
-        "distance_m": 74.3
+        "distance_m": 16.0
+      },
+      {
+        "name": "Pabellón 6",
+        "kind": "public",
+        "osm_way": 79851596,
+        "lat_lon": [
+          40.467939,
+          -3.615835
+        ],
+        "footprint_m": [
+          175.0,
+          132.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4125.0,
+        "side": "right",
+        "distance_m": 26.1
       },
       {
         "name": "Centro de Convenciones Norte",
@@ -340,9 +403,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 1420.0,
+        "s_m": 3665.0,
         "side": "right",
-        "distance_m": 40.8
+        "distance_m": 19.6
       },
       {
         "name": "Pabellón 1",
@@ -358,63 +421,27 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 510.0,
+        "s_m": 5060.0,
         "side": "right",
-        "distance_m": 36.7
+        "distance_m": 34.6
       },
       {
-        "name": "Espacio 5.1",
-        "kind": "building",
-        "osm_way": 1003443531,
+        "name": "Pabellón 2",
+        "kind": "public",
+        "osm_way": 79851606,
         "lat_lon": [
-          40.467563,
-          -3.619449
+          40.46605,
+          -3.615525
         ],
         "footprint_m": [
-          95.0,
-          70.0
-        ],
-        "height_m": null,
-        "levels": null,
-        "s_m": 925.0,
-        "side": "right",
-        "distance_m": 14.0
-      },
-      {
-        "name": "Edificio Apot",
-        "kind": "commercial",
-        "osm_way": 34049792,
-        "lat_lon": [
-          40.462291,
-          -3.617828
-        ],
-        "footprint_m": [
-          82.0,
+          113.0,
           77.0
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 250.0,
+        "s_m": 4870.0,
         "side": "right",
-        "distance_m": 138.7
-      },
-      {
-        "name": "Edificio Egeo",
-        "kind": "commercial",
-        "osm_way": 313631935,
-        "lat_lon": [
-          40.462934,
-          -3.618262
-        ],
-        "footprint_m": [
-          81.0,
-          63.0
-        ],
-        "height_m": null,
-        "levels": null,
-        "s_m": 250.0,
-        "side": "right",
-        "distance_m": 68.0
+        "distance_m": 34.8
       },
       {
         "name": "Espacio Raro",
@@ -430,45 +457,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 5184.0,
-        "side": "left",
-        "distance_m": 14.8
-      },
-      {
-        "name": "Dell EMC",
-        "kind": "commercial",
-        "osm_way": 234975219,
-        "lat_lon": [
-          40.467003,
-          -3.625704
-        ],
-        "footprint_m": [
-          70.0,
-          57.0
-        ],
-        "height_m": null,
-        "levels": null,
-        "s_m": 4974.0,
+        "s_m": 265.0,
         "side": "right",
-        "distance_m": 148.8
-      },
-      {
-        "name": "Cámaras de Comercio",
-        "kind": "commercial",
-        "osm_way": 234975235,
-        "lat_lon": [
-          40.466489,
-          -3.625415
-        ],
-        "footprint_m": [
-          61.0,
-          48.0
-        ],
-        "height_m": null,
-        "levels": null,
-        "s_m": 5004.0,
-        "side": "right",
-        "distance_m": 148.5
+        "distance_m": 15.7
       },
       {
         "name": "Ahorramás",
@@ -484,9 +475,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 3024.0,
-        "side": "right",
-        "distance_m": 128.1
+        "s_m": 2175.0,
+        "side": "left",
+        "distance_m": 131.6
       },
       {
         "name": "SET Campo de las Naciones",
@@ -502,9 +493,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 20.0,
-        "side": "right",
-        "distance_m": 24.6
+        "s_m": 60.0,
+        "side": "left",
+        "distance_m": 22.3
       }
     ],
     "named": [
@@ -517,7 +508,7 @@
         "source": "wikipedia"
       }
     ],
-    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions. Race direction not verified here: s_m and side follow the order of the source line and may be reversed."
   },
   "sources": [
     {
@@ -536,6 +527,12 @@
       "id": "fia_notes",
       "what": "FIA 2026 Race Director competition/event notes",
       "url": "https://www.fia.com/system/files/decision-document/2026_spanish_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "bacinger",
+      "what": "bacinger/f1-circuits GeoJSON circuit line (MIT licence)",
+      "url": "https://github.com/bacinger/f1-circuits/blob/394d8fbe70ef2c0b0c8d23ff7bee61fa09606055/circuits/es-2026.geojson",
       "retrieved": "2026-10-03"
     },
     {
@@ -560,7 +557,8 @@
   ],
   "gaps": [
     "No TUMFTM centreline; OSM centreline used, no track widths.",
-    "Race direction not verified.",
+    "Race direction not verified, so s_m, left/right sides and pit entry/exit may be reversed.",
+    "Centreline is a coarse hand-drawn line (bacinger/f1-circuits), not survey data.",
     "Track width not verified.",
     "Kerb types and positions not verified as data (only FIA change notes).",
     "Run-off surface per corner not verified (only FIA change notes and OSM hints).",

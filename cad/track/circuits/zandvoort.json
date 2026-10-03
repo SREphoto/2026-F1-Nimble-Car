@@ -102,6 +102,7 @@
   },
   "centreline": {
     "source": "osm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/zandvoort.csv",
     "spacing_m": 5.0,
     "samples": 851,

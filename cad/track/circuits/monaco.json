@@ -97,7 +97,7 @@
   },
   "direction": {
     "value": "clockwise",
-    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "basis": "OSM oneway tags / backward roles on the circuit ways",
     "stated_by_source": null,
     "note": "Computed from the orientation of the race-direction centreline."
   },
@@ -112,6 +112,7 @@
   },
   "centreline": {
     "source": "osm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/monaco.csv",
     "spacing_m": 5.0,
     "samples": 665,

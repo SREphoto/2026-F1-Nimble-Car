@@ -663,8 +663,10 @@ def build(c):
             speed_limit_source=('fia_notes (Race Director amendment)' if speed_override else
                                 'FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it'
                                 + (' (2025 notes; 2026 notes not issued yet)' if c['fia_year'] < 2026 else '')),
-            side=pit_side if pit_info else None,
-            side_basis='OSM pit lane position relative to the race-direction centreline' if pit_info else None,
+            side=pit_side if (pit_info and direction) else None,
+            side_basis=('OSM pit lane position relative to the race-direction centreline' if direction else
+                        'Not decided: the race direction of the centreline is not verified, so left/right is unknown. '
+                        'Pit entry/exit positions below may be swapped.') if pit_info else None,
             length_m=pit_info['main_len'] if pit_info else None,
             length_all_pit_ways_m=pit_info['length_m'] if pit_info else None,
             length_note='Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.' if pit_info else
@@ -689,7 +691,11 @@ def build(c):
     gaps = out['gaps']
     if not tum: gaps.append('No TUMFTM centreline; OSM centreline used, no track widths.')
     elif not tum['used']: gaps.append('TUMFTM file is an older layout; OSM centreline used, no current-layout track widths.')
-    if direction is None: gaps.append('Race direction not verified.')
+    if direction is None:
+        gaps.append('Race direction not verified, so s_m, left/right sides and pit entry/exit may be reversed.')
+        out['landmarks']['note'] += (' Race direction not verified here: s_m and side follow the order of the source line '
+                                     'and may be reversed.')
+    if alt_line: gaps.append('Centreline is a coarse hand-drawn line (bacinger/f1-circuits), not survey data.')
     if widths['min_m'] is None: gaps.append('Track width not verified.')
     gaps.append('Kerb types and positions not verified as data (only FIA change notes).')
     gaps.append('Run-off surface per corner not verified (only FIA change notes and OSM hints).')

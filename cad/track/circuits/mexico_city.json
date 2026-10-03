@@ -62,6 +62,7 @@
   },
   "centreline": {
     "source": "tumftm",
+    "geojson": null,
     "csv": "cad/track/raw/centreline/mexico_city.csv",
     "spacing_m": 5.0,
     "samples": 859,
