@@ -576,6 +576,29 @@ export function buildWheelsTyres(carModel, renderer, { verbose = false } = {}) {
     report.wheels.push(`${sp.name}:${outSign > 0 ? '+Y' : '-Y'}`);
   });
 
+  // Sit the tyres on the ground: with camber the 720 mm tyre's lowest point ended ~2 mm
+  // below Z = 0. Lift each wheel corner (the spindle's parent, which does not spin) so the
+  // lowest tread vertex is exactly at the ground plane in the car frame.
+  carModel.updateMatrixWorld(true);
+  report.groundLift = [];
+  spindles.forEach((sp) => {
+    const holder = sp.parent; if (!holder) return;
+    let minZ = Infinity; const v = new THREE.Vector3();
+    sp.traverse((o) => {
+      if (!o.isMesh || !/^Tyre_/.test(o.name)) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).applyMatrix4(carInv); if (v.z < minZ) minZ = v.z; }
+    });
+    if (!(minZ < 0)) return;
+    // car-frame +Z by -minZ, expressed in the holder's parent frame
+    const parentInv = new THREE.Matrix4().copy(holder.parent.matrixWorld).invert();
+    const a0 = new THREE.Vector3(0, 0, 0).applyMatrix4(carModel.matrixWorld).applyMatrix4(parentInv);
+    const a1 = new THREE.Vector3(0, 0, -minZ).applyMatrix4(carModel.matrixWorld).applyMatrix4(parentInv);
+    holder.position.add(a1.sub(a0));
+    report.groundLift.push(`${sp.name}:${(-minZ * 100).toFixed(1)}mm`);
+  });
+  carModel.updateMatrixWorld(true);
+
   report.ms = Math.round(((typeof performance !== 'undefined') ? performance.now() : 0) - t0);
   if (verbose || (typeof location !== 'undefined' && /[?&]liveryDebug/.test(location.search))) console.info('[wheels]', JSON.stringify(report));
   carModel.userData.wheels = { report, materials: mats };
