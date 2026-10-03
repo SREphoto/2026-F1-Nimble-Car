@@ -22,6 +22,9 @@ export function initTrackMode(ctx) {
   const { scene, camera, controls, carModel, state, sunLight, legacyEnv } = ctx;
   const circuit = createRedBullRing();
   const { track, raceline } = circuit;
+  const KERB_W = circuit.data.meta.kerb_w ?? 1.4;
+  const TURN_NAMES = circuit.data.turnNames || [];
+  const SECTOR_SP = (circuit.data.lines || []).filter(l => l.kind === 'sector').map(l => l.sp);
   scene.add(circuit.group);
   window.__RBR__ = circuit;
   console.info(`[RedBullRing] built in ${circuit.group.userData.buildMs} ms · ${track.length.toFixed(0)} m · ${circuit.group.userData.treeCount} trees`);
@@ -55,7 +58,7 @@ export function initTrackMode(ctx) {
   }
 
   // ------------------------------------------------------------------ vehicle state (metres, rear-axle reference)
-  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0 };
+  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0 };
   const ride = createRideModel(ctx.rideSpec);   // body heave / pitch / roll + per-corner travel (data in ride_model.js)
   const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0 };
   const keys = new Set();
@@ -65,7 +68,7 @@ export function initTrackMode(ctx) {
     const F = track.at(0);
     // origin is the pole box: front axle at (0,0,0) facing -X
     car.x = -F.tx * WHEELBASE; car.z = -F.tz * WHEELBASE; car.h = Math.atan2(F.tz, F.tx);
-    car.x += 0; car.v = 0; car.idx = -1; car.rlIdx = -1; car.lapStart = null; car.lap = 0;
+    car.x += 0; car.v = 0; car.idx = -1; car.rlIdx = -1; car.lapStart = null; car.lap = 0; car.sectors = [null, null, null];
     car.sp = car.prevSp = 0;
     poseCar();
   }
@@ -146,9 +149,10 @@ export function initTrackMode(ctx) {
     const L = car.Lf || surfaceAt(car.x, car.z, car.idx);
     const absLat = Math.abs(L.lat);
     const edge = L.lat > 0 ? L.wr : L.wl;
-    const runEdge = edge + 1.4 + (L.lat > 0 ? track.d.runR[L.i] : track.d.runL[L.i]);
-    const gravEdge = runEdge + (L.lat > 0 ? track.d.gravR[L.i] : track.d.gravL[L.i]);
-    car.surf = absLat <= edge + 1.4 ? 'asphalt' : absLat <= runEdge ? 'runoff' : absLat <= gravEdge ? 'gravel' : 'grass';
+    const kerbEdge = edge + KERB_W;
+    const runEdge = kerbEdge + (L.lat > 0 ? track.d.runR[L.i] : track.d.runL[L.i]);
+    const gravEdge = kerbEdge + (L.lat > 0 ? track.d.gravR[L.i] : track.d.gravL[L.i]);   // gravel starts right behind the kerb
+    car.surf = absLat <= kerbEdge ? 'asphalt' : absLat <= gravEdge ? 'gravel' : absLat <= runEdge ? 'runoff' : 'grass';
     const surfDrag = car.surf === 'gravel' ? 7 : car.surf === 'grass' ? 2.5 : 0;
     const kd = state.aeroMode === 'X_MODE' ? 0.00085 : 0.00118;
     let a = drive - kd * v * Math.abs(v) - 9.81 * Math.sin(car.pitch || 0) - Math.sign(v) * (0.25 + surfDrag);
@@ -379,6 +383,7 @@ export function initTrackMode(ctx) {
       <button type="button" id="rbr-classic" class="rbr-btn" title="Show the original finish-line studio set instead of the full circuit">Classic set</button>
     </div>
     <div class="rbr-tele"><span id="rbr-lap">Lap –</span><span id="rbr-time">0:00.000</span><span id="rbr-last">Last –</span><span id="rbr-best">Best –</span></div>
+    <div class="rbr-tele"><span id="rbr-s1">S1 –</span><span id="rbr-s2">S2 –</span><span id="rbr-s3">S3 –</span></div>
     <div class="rbr-tele"><span id="rbr-spd">0 km/h</span><span id="rbr-pos">Grid</span><span id="rbr-surf"></span></div>
     <canvas id="rbr-map" width="220" height="150"></canvas>`;
   const host = $('viewport3d');
@@ -418,6 +423,15 @@ export function initTrackMode(ctx) {
       o.stroke(); o.lineWidth = 1.5; o.strokeStyle = '#c9d4e0'; o.stroke();
       o.fillStyle = '#8b9bb0'; o.font = '9px sans-serif';
       circuit.group.userData.turns.forEach(t => o.fillText(String(t.n), t.x * s + mapXf.ox + 4, t.z * s + mapXf.oz - 3));
+      // DRS zones (activation line to the next braking zone), FIA circuit map
+      const L = circuit.data.lines || [];
+      o.strokeStyle = '#2bd46b'; o.lineWidth = 2.5;
+      L.filter(l => l.kind === 'drsAct').forEach(a => {
+        const tEnd = circuit.turnSp.map(t => ((t - a.sp) % track.length + track.length) % track.length).filter(d => d > 60).sort((x, y) => x - y)[0] - 120;
+        o.beginPath();
+        for (let d = 0; d <= tEnd; d += 5) { const P = track.at(a.sp + d); const X = P.x * s + mapXf.ox, Z = P.z * s + mapXf.oz; d ? o.lineTo(X, Z) : o.moveTo(X, Z); }
+        o.stroke();
+      });
       const F = track.at(circuit.lineSp); o.fillStyle = '#fff'; o.fillRect(F.x * s + mapXf.ox - 1, F.z * s + mapXf.oz - 4, 2, 8);
       mapXf.bg = off;
     }
@@ -436,26 +450,40 @@ export function initTrackMode(ctx) {
     $('rbr-time').textContent = car.lapStart != null ? fmt(now - car.lapStart) : '0:00.000';
     $('rbr-last').textContent = `Last ${fmt(car.last)}`;
     $('rbr-best').textContent = `Best ${fmt(car.best)}`;
+    const sf = t => t == null ? '–' : t.toFixed(3);
+    ['s1', 's2', 's3'].forEach((k, j) => { const el = $('rbr-' + k); if (el) el.textContent = `S${j + 1} ${sf(car.sectors[j])}`; });
     $('rbr-spd').textContent = `${Math.round(Math.abs(car.v) * 3.6)} km/h`;
     let label = mode.driving ? `${(car.sp / 1000).toFixed(2)} km` : 'Grid P1';
     const turns = circuit.group.userData.turns;
-    for (const t of turns) { const d = car.sp - t.sp; if (d > -80 && d < 60) label = `Turn ${t.n}`; }
+    for (const t of turns) { const d = car.sp - t.sp; if (d > -80 && d < 60) label = `Turn ${t.n}${TURN_NAMES[t.n - 1] ? ' ' + TURN_NAMES[t.n - 1] : ''}`; }
     $('rbr-pos').textContent = label;
     $('rbr-surf').textContent = car.surf !== 'asphalt' ? car.surf.toUpperCase() : '';
     drawMap();
   }
 
   // ------------------------------------------------------------------ lap timing
+  const crossed = (a, b, line) => {           // moved forward over a line at distance `line` (handles the lap wrap)
+    const d = ((b - a) % track.length + track.length) % track.length;
+    if (d > 50) return false;
+    const o = ((line - a) % track.length + track.length) % track.length;
+    return o > 0 && o <= d;
+  };
   function lapTiming() {
     const L = car.Lf; if (!L) return;
     car.prevSp = car.sp; car.sp = L.sp;
-    const line = circuit.lineSp;
-    if (car.prevSp < line && car.sp >= line && car.sp - car.prevSp < 50) {
-      const now = mode.simTime;
+    const now = mode.simTime;
+    // the grid is 120 m ahead of the finish line: the clock starts when the car leaves its grid box (standing-start lap)
+    if (car.lapStart == null && mode.driving && Math.abs(car.v) > 0.5 && car.sp < 60) { car.lapStart = now; car.secStart = now; car.lap = 1; }
+    // sector splits: finish line -> S1 line -> S2 line -> finish line (FIA circuit map)
+    SECTOR_SP.forEach((sp, j) => {
+      if (car.lapStart != null && crossed(car.prevSp, car.sp, sp)) { car.sectors[j] = now - car.secStart; car.secStart = now; }
+    });
+    if (crossed(car.prevSp, car.sp, circuit.lineSp)) {
       if (car.lapStart != null && car.lap > 0) {
         car.last = now - car.lapStart; car.best = car.best == null ? car.last : Math.min(car.best, car.last);
+        if (SECTOR_SP.length) car.sectors[SECTOR_SP.length] = now - car.secStart;
       }
-      car.lapStart = now; car.lap++;
+      car.lapStart = now; car.secStart = now; car.lap++;
     }
   }
 

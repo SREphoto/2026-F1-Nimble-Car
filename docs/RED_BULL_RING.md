@@ -1,7 +1,8 @@
 # Red Bull Ring — full-scale circuit
 
 The showcase now sits on a full, real-scale model of the **Red Bull Ring** (Spielberg, Styria, Austria):
-4.315 km lap (official 4.318 km), 10 turns, ~69 m of elevation change taken from a terrain model (official figure ~65 m).
+4.315 km lap (official 4.318 km), 10 turns, 65 m of elevation change (terrain model fitted to the official 65 m, 12 % up, 9.3 % down).
+See `cad/track/RED_BULL_RING_PLAN.md` for the comparison with the real circuit and the list of next steps.
 
 ## Where the data comes from
 
@@ -12,9 +13,10 @@ The showcase now sits on a full, real-scale model of the **Red Bull Ring** (Spie
 | Elevation (track + surrounding hills) | EU-DEM v1.1 25 m (Copernicus Land Monitoring Service) via the public [OpenTopoData](https://www.opentopodata.org/datasets/eudem/) API | Copernicus open data |
 
 `tools/track/build_red_bull_ring.py` downloads these, aligns the TUM centreline to OSM (ICP, median error ≈ 1 m),
-samples elevation every 2.5 m (smoothed ~10 m), derives kerbs / run-off / gravel / barrier offsets from curvature,
+samples elevation every 2.5 m (smoothed ~30 m and fitted to the official 65 m / 12 % / 9.3 %), places kerbs per corner,
+takes walls, tyre walls and grass edges from OSM and gravel from the FIA event notes,
 flattens the terrain under the circuit, and writes `cad/track/red_bull_ring_data.js` (metres). Re-run with
-`python3 tools/track/build_red_bull_ring.py` (needs `numpy` + `scipy`; downloads are cached in `.track_cache/`).
+`python3 tools/track/build_red_bull_ring.py` (needs `numpy`, `scipy` and `matplotlib`; downloads are cached in `.track_cache/`).
 
 ## Units and frame
 
@@ -28,7 +30,13 @@ grid box, car facing −X — exactly where the car has always been — so every
 - Asphalt run-off (wider on the outside of corners), gravel traps on the outside of the faster corners, grass verges
 - Concrete walls with debris fencing and posts all the way round, tyre walls in front of gravel traps
 - Pit lane (OSM geometry) with lane markings, speed-limit lines, 22 painted pit boxes, pit wall, pit building with garages
-- Start/finish straight: chequered line, gantry with start lights, 22 staggered grid boxes (8 m apart)
+- Start/finish straight: white start line with the gantry and start lights, 22 staggered grid boxes (8 m apart, pole on
+  the left), chequered finish line 120 m back (both lines from OpenStreetMap)
+- 2 m kerbs (inside at the apex, outside on the exit), yellow sausage kerbs at Turns 1 and 3, light-blue lines behind
+  the white lines, gravel only where the FIA notes confirm it (Turn 4, Turn 6, strips at Turns 9 and 10)
+- Walls and tyre walls at their OpenStreetMap positions, asphalt run-off out to the OpenStreetMap grass areas
+- Sector 1 and 2 lines, speed trap and DRS lines with boards (FIA circuit map); S1/S2/S3 times in the HUD
+- The steel bull sculpture on the hill above Turns 7 and 8
 - The nine OSM grandstands (stepped tiers with a crowd texture, roofs on the big ones)
 - Trackside signage: turn numbers 1–10, 100/200/300 m braking boards for T1, T3, T4, pit in/out, plain text hoardings
   (circuit name, "Spielberg", "Steiermark", "Grand Prix", SREdesigns) — no third-party logos
@@ -55,5 +63,5 @@ Overview**, **Classic set** (switches back to the original finish-line set).
 
 ## Known simplifications
 
-No track camber/banking; kerb, run-off and gravel layout is derived from curvature rather than surveyed;
+No track camber/banking; the size of the Turn 4 and Turn 6 gravel traps is an estimate;
 the pit lane is scenery (the pit wall blocks entry); grandstand and pit-building shapes are simplified from footprints.

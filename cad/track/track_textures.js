@@ -138,8 +138,15 @@ export const SIGN_CELLS = [
   { key: 'B300', text: '300', bg: '#ffffff', fg: '#111111' },
   { key: 'SRE', text: 'SREdesigns', bg: '#0c1626', fg: '#00d4e8', sub: '2026 NIMBLE CAR' },
   { key: 'GRANDPRIX', text: 'GRAND PRIX', bg: '#c8102e', fg: '#ffffff', sub: 'SPIELBERG 2026' },
+  { key: 'DRSDET', text: 'DRS', bg: '#111111', fg: '#ffffff', sub: 'DETECTION' },
+  { key: 'DRSACT', text: 'DRS', bg: '#ffffff', fg: '#111111', sub: 'ACTIVATION' },
+  { key: 'S1', text: 'SECTOR 1', bg: '#f2c200', fg: '#111111' },
+  { key: 'S2', text: 'SECTOR 2', bg: '#f2c200', fg: '#111111' },
+  { key: 'TRAP', text: 'SPEED TRAP', bg: '#f2c200', fg: '#111111' },
 ];
-for (let i = 1; i <= 10; i++) SIGN_CELLS.push({ key: 'T' + i, text: String(i), bg: '#0b1630', fg: '#ffffff', sub: 'TURN', turn: true });
+// corner names from the FIA circuit map (2025)
+const TURN_NAME = { 1: 'NIKI LAUDA', 3: 'REMUS', 4: 'RAUCH', 9: 'JOCHEN RINDT' };
+for (let i = 1; i <= 10; i++) SIGN_CELLS.push({ key: 'T' + i, text: String(i), bg: '#0b1630', fg: '#ffffff', sub: TURN_NAME[i] || 'TURN', turn: true });
 
 export function makeSignAtlas() {
   const cw = 512, ch = 128, cols = 4;
@@ -159,13 +166,13 @@ export function makeSignAtlas() {
       ctx.beginPath(); ctx.arc(x + cw / 2, y + ch / 2, 50, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#111'; ctx.font = 'bold 54px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 2);
     } else if (cell.turn) {
-      ctx.font = 'bold 30px sans-serif'; ctx.fillText(cell.sub, x + 150, y + ch / 2 + 2);
+      ctx.font = `bold ${cell.sub.length > 8 ? 26 : 30}px sans-serif`; ctx.fillText(cell.sub, x + 150, y + ch / 2 + 2, 270);
       ctx.font = 'bold 96px sans-serif'; ctx.fillText(cell.text, x + 340, y + ch / 2 + 6);
     } else if (cell.sub) {
       ctx.font = 'bold 56px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + 50);
       ctx.font = 'bold 26px sans-serif'; ctx.globalAlpha = 0.85; ctx.fillText(cell.sub, x + cw / 2, y + 100); ctx.globalAlpha = 1;
     } else {
-      ctx.font = 'bold 92px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 6);
+      ctx.font = `bold ${cell.text.length > 6 ? 64 : 92}px sans-serif`; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 6, cw - 30);
     }
     uv[cell.key] = [x / c.width, 1 - (y + ch) / c.height, (x + cw) / c.width, 1 - y / c.height];
   });
