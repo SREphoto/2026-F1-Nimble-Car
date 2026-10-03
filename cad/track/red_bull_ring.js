@@ -432,7 +432,7 @@ export function createRedBullRing() {
     const wl = -bSide * (PW / 2 + 0.25);
     for (let j = 0; j < pit.n; j++) {
       const L = track.locate(pit.x[j] + pit.rx(j) * wl, pit.z[j] + pit.rz(j) * wl, -1);
-      pitWallJ[j] = Math.abs(L.lat) > (L.lat > 0 ? L.wr : L.wl) + KERB_W + 0.6 ? 1 : 0;
+      pitWallJ[j] = Math.abs(L.lat) > (L.lat > 0 ? L.wr : L.wl) + 1.2 ? 1 : 0;
     }
     // no short wall pieces: drop runs shorter than 20 m
     for (let j = 0; j < pit.n;) {

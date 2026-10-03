@@ -113,7 +113,7 @@ function plateTextures() {
     const o = (y * S + x) * 4;
     const n = Math.sin(x * 0.31 + y * 0.17) * 0.5 + Math.sin(x * 0.07 - y * 0.11 + k1) * 0.5;
     const shade = 0.82 + 0.18 * n * 0.5 + (edge < 2 ? -0.25 : 0);   // weld seams darker
-    const base = [118, 58, 32];                                    // weathered Corten
+    const base = [156, 82, 46];                                    // weathered Corten
     img.data[o] = base[0] * shade + 20 * Math.sin(k1); img.data[o + 1] = base[1] * shade; img.data[o + 2] = base[2] * shade; img.data[o + 3] = 255;
     const al = solid ? 255 : 0;
     aimg.data[o] = aimg.data[o + 1] = aimg.data[o + 2] = al; aimg.data[o + 3] = 255;
@@ -163,7 +163,7 @@ export function buildBullSculpture() {
     const sh = Math.exp(-(((r[0] - 2.0) / 1.3) ** 2)), hq = Math.exp(-(((r[0] + 5.3) / 1.0) ** 2));
     r[3] *= 1 + 0.07 * sh + 0.05 * hq;
   }
-  const body = loft(bodyRows, 30, { tile: 3.2 });
+  const body = loft(bodyRows, 30, { tile: 5.5 });
 
   // --- legs [x, y, z, radius]: shoulder / hip inside the body down to the hoof
   const legs = [
@@ -176,17 +176,17 @@ export function buildBullSculpture() {
     // hind right, under
     [[-5.2, 8.0, -1.55, 1.7], [-4.2, 5.9, -1.65, 1.25], [-4.0, 4.4, -1.55, 0.78], [-5.0, 2.55, -1.45, 0.48], [-4.8, 0.85, -1.4, 0.38], [-4.75, 0.25, -1.4, 0.48]],
   ];
-  const legGeos = legs.map(j => limb(j, 6, 16, { tile: 3.2 }));
+  const legGeos = legs.map(j => limb(j, 6, 16, { tile: 5.5 }));
   const hooves = legs.map(j => {
     const h = j[j.length - 1];
     const g = new THREE.CylinderGeometry(0.42, 0.55, 0.5, 12); g.translate(h[0] + 0.05, 0.25, h[2]); return g;
   });
 
   // --- tail: from the top of the rump, hanging down, tuft at the end
-  const tail = limb([[-6.9, 8.9, 0, 0.32], [-7.6, 8.2, 0.05, 0.24], [-7.9, 6.6, 0.12, 0.17], [-7.85, 4.6, 0.2, 0.14], [-7.7, 3.4, 0.25, 0.2], [-7.6, 2.8, 0.25, 0.36], [-7.55, 2.3, 0.25, 0.1]], 6, 10, { tile: 3.2 });
+  const tail = limb([[-6.9, 8.9, 0, 0.32], [-7.6, 8.2, 0.05, 0.24], [-7.9, 6.6, 0.12, 0.17], [-7.85, 4.6, 0.2, 0.14], [-7.7, 3.4, 0.25, 0.2], [-7.6, 2.8, 0.25, 0.36], [-7.55, 2.3, 0.25, 0.1]], 6, 10, { tile: 5.5 });
 
   // --- ears (flattened lobes) and horns (gold, 7 m tip to tip, curving out then forward and up)
-  const ears = [-1, 1].map(s => limb([[5.15, 6.6, s * 1.05, 0.12], [5.0, 6.75, s * 1.7, 0.32], [4.95, 6.7, s * 2.25, 0.22], [4.95, 6.6, s * 2.55, 0.05]], 4, 10, { tile: 3.2 }));
+  const ears = [-1, 1].map(s => limb([[5.15, 6.6, s * 1.05, 0.12], [5.0, 6.75, s * 1.7, 0.32], [4.95, 6.7, s * 2.25, 0.22], [4.95, 6.6, s * 2.55, 0.05]], 4, 10, { tile: 5.5 }));
   const horns = [-1, 1].map(s => limb([
     [5.55, 6.85, s * 0.75, 0.42], [5.75, 7.05, s * 1.55, 0.38], [6.25, 7.15, s * 2.4, 0.31],
     [7.1, 7.15, s * 3.05, 0.22], [8.1, 7.35, s * 3.4, 0.12], [8.9, 7.75, s * 3.5, 0.025],
