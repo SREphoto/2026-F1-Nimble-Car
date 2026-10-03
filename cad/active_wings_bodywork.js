@@ -108,7 +108,7 @@ export const FRONT_WING_SPEC = {
   risersU: [0.40, 0.62, 0.88],                     // thin vertical brackets tying the three elements
   elements: [
     { name: 'FrontWing_Mainplane', thickness: 0.09, camber: 0.05,
-      leX: (u) => -1.4 + 0.5 * u ** 1.6, leZ: (u) => 0.02 + 0.24 * u * u,
+      leX: (u) => -1.4 + 2.0 * u ** 1.4, leZ: (u) => 0.02 + 0.24 * u * u, // R11/R12: strongly swept back from the nose out to the endplates
       chord: (u) => 1.6 - 0.2 * u - 0.25 * u ** 4, aoa: (u) => 0.05 + 0.07 * u },
     { name: 'FrontWing_MidElement', active: true, thickness: 0.08, camber: 0.06,
       chord: (u) => 0.5 + 0.3 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.05 * u, aoa: (u) => 0.22 + 0.10 * u,
@@ -118,7 +118,7 @@ export const FRONT_WING_SPEC = {
       zLift: (u) => 0.55 * smooth01((u - 0.62) / 0.38) },  // outer end sweeps up into the endplate
   ],
   endplate: {
-    x0: -1.15, x1: 2.4,     // chord extent in the wing frame; R11: starts just ahead of the mainplane tip LE (x -0.9), level with the nose tip
+    x0: 0.35, x1: 3.9,      // chord extent in the wing frame; starts just ahead of the swept mainplane tip LE (x 0.6)
     z0: -0.05,              // profile origin height in the wing frame (wing frame z 0 = world 0.55)
     thickness: 0.05,
     // front-view profile for the left side, [outward from the wall base, up]. The foot scrolls out,
@@ -129,7 +129,7 @@ export const FRONT_WING_SPEC = {
     heightScale: (sx) => 0.6 + 0.4 * (1 - (1 - sx) ** 2), // lower at the front, full height at the back
     // the scrolled foot is its own swept fin (R8): it kicks out, widest and tipped up at its front,
     // but (R11) its front stays level with the wall front in the top view
-    footX0: -1.3, footX1: 2.1,   // R11: the foot ends only just ahead of the wall, not far forward
+    footX0: 0.2, footX1: 3.6,    // R11: the foot ends only just ahead of the wall, not far forward
     footOut: (fx) => 0.62 + 0.38 * (1 - fx) ** 0.8,  // fx 0 = foot front, 1 = foot rear
     footKick: (fx) => 0.5 * (1 - fx) ** 3,           // front tip lifts like a fin
     footRise: (fx) => 0.7 + 0.3 * (1 - fx),          // scroll is tallest at the front, lower at the back
@@ -570,19 +570,20 @@ export function createActiveWingsBodywork(options = {}) {
     const isLeft = side > 0;
     const pod = new THREE.Group();
 
-    // Sidepod shell lofted between cross-sections (X = 8.6 inlet to X = 29.6 tail):
+    // Sidepod shell lofted between cross-sections (X = 8.6 inlet to X = 29.6 tail). R12 overlay:
+    // about 0.3 to 0.5 dm slimmer than before along its length, tapering harder behind x 23.
     // wide inlet under the halo/mirror, undercut below, then a coke-bottle taper
     // inward and downward to the rear. yIn sits inside the tub/engine cover (hidden).
     const podStations = resampleStations([
       // inlet starts under the halo / mirrors (refs 08-11), leaving room ahead of it
       // for the bargeboard deflector and floor-edge fins
-      { x: 8.6,  yIn: 2.0, yOut: 5.9, zb: 0.62, zt: 3.7, uc: 0.30 },
-      { x: 10.4, yIn: 2.0, yOut: 6.6, zb: 0.62, zt: 3.95, uc: 0.40 },
-      { x: 13.5, yIn: 2.0, yOut: 6.7, zb: 0.62, zt: 3.9, uc: 0.45 },
-      { x: 16.5, yIn: 2.0, yOut: 6.3, zb: 0.62, zt: 3.7, uc: 0.45 },
-      { x: 19.5, yIn: 2.0, yOut: 5.5, zb: 0.62, zt: 3.35, uc: 0.40 },
-      { x: 23.0, yIn: 1.9, yOut: 4.5, zb: 0.62, zt: 2.8, uc: 0.30 },
-      { x: 26.5, yIn: 1.7, yOut: 3.5, zb: 0.62, zt: 2.0, uc: 0.2 },
+      { x: 8.6,  yIn: 2.0, yOut: 5.6, zb: 0.62, zt: 3.7, uc: 0.30 },
+      { x: 10.4, yIn: 2.0, yOut: 6.1, zb: 0.62, zt: 3.95, uc: 0.40 },
+      { x: 13.5, yIn: 2.0, yOut: 6.2, zb: 0.62, zt: 3.9, uc: 0.45 },
+      { x: 16.5, yIn: 2.0, yOut: 6.0, zb: 0.62, zt: 3.7, uc: 0.45 },
+      { x: 19.5, yIn: 2.0, yOut: 5.4, zb: 0.62, zt: 3.35, uc: 0.40 },
+      { x: 23.0, yIn: 1.9, yOut: 4.4, zb: 0.62, zt: 2.8, uc: 0.30 },
+      { x: 26.5, yIn: 1.7, yOut: 3.1, zb: 0.62, zt: 2.0, uc: 0.2 },
       { x: 29.6, yIn: 1.5, yOut: 2.3, zb: 0.62, zt: 1.1, uc: 0.1 }
     ], 8);
     const podRing = (st, v, off = 0) => {

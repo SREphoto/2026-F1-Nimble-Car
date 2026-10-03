@@ -368,3 +368,12 @@ They cost very little, and removing them touches the livery code, so they are le
 
 ## 11. Image sheets
 All the before and after sheets are in `/workspace/f1-audit/review2/`. The raw single views are in `before_raw/` and `after_raw/`. Round 3 added `sheet_08_halo.png`, `sheet_09_mirrors.png` and `sheet_10_airbox.png`, and updated `sheet_01_whole_car.png` and `sheet_06_rear_wing.png`.
+
+## R11 / R12 top-down pass (PR #7)
+- Mirrors: moved forward from x 15.1 to x 9.0 dm (pod x 8.7 to 9.4), between Samuel's R12 'Mirror' lines (x 8.4 to 9.5) and well ahead of the helmet (x 12.4 to 15.2). Stalks rise off the sidepod top just behind the inlet lip.
+- Front suspension: the front and rear legs of each wishbone now meet the chassis close together (x -0.85 and +1.0 instead of -1.8 and +1.6), so the arms run nearly straight across as in R11.
+- Front wing: the mainplane leading edge now sweeps back 2.0 dm from the centre to the tip (was 0.5). Endplates and scrolled feet moved back with the tips (endplate x -8.25 to -4.7).
+- Red Bull on the front wing: one big word per side, 'Red' on the right and 'Bull' on the left, projected over all three elements and turned to follow the sweep. VISA stays on the top element, drawn above it.
+- Sidepods: 0.3 to 0.5 dm slimmer along their length (max half width 6.2, was 6.7), tapering harder behind x 23, to match the R12 outline.
+- TAG Heuer: on the flat top of the halo, centred, just behind the front post, top of the logo toward the nose.
+- Rear wing: left in place. Corrected for the camera perspective of R12 (the wing sits high, so it looks bigger and further back), its centre is within about 0.3 dm of ours. R12's endplates look about 1.5 dm longer front to back.

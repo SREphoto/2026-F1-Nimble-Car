@@ -418,7 +418,12 @@ export function createNoseSideDecalTexture({ frontIsLeft = true } = {}) {
 }
 
 /** Front wing mainplane: big Red Bull (reads from the front). */
-export function createFrontWingRedBullTexture() {
+export function createFrontWingRedBullTexture(word = null) {
+  if (word) { // one big word per side ('Red' right, 'Bull' left), spread over all three elements (R7, R11, R12)
+    const { canvas, ctx } = makeCanvas(2048, 1024);
+    fitText(ctx, word, 1024, 530, 1950, 900, s => `900 ${s}px ${HEAVY}`, { fill: LIVERY.red, stroke: LIVERY.white, strokeWidth: 60, spacing: -0.02 });
+    return finalizeTexture(canvas);
+  }
   const { canvas, ctx } = makeCanvas(2048, 512);
   drawRedBullText(ctx, 1024, 260, 1900, 360);
   return finalizeTexture(canvas);

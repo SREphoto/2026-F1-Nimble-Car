@@ -275,22 +275,22 @@ export function createSuspensionSteering(options = {}) {
 
     // Upper Wishbone (Forward Leg & Aft Leg)
     // Inboard pickups sit on the nose / tub skin (nose ±1.45 wide at X=-1.8, tub ±1.7 at X=1.5)
-    const fwdUpperIn = new THREE.Vector3(-1.8, side * 1.35, 3.6);
-    const aftUpperIn = new THREE.Vector3(1.4, side * 1.65, 4.0);
+    const fwdUpperIn = new THREE.Vector3(-0.85, side * 1.45, 3.65); // R11: legs close together so the arm runs nearly straight across
+    const aftUpperIn = new THREE.Vector3(0.95, side * 1.62, 3.95);
     const upperOuter = new THREE.Vector3(0.0, side * 6.6, 4.5);
     fsCorner.add(createAeroLink(fwdUpperIn, upperOuter, ...SS.front.upper, undefined, onUpright(upperOuter)));
     fsCorner.add(createAeroLink(aftUpperIn, upperOuter, ...SS.front.upper, undefined, { ...onUpright(upperOuter), sharedOuter: true }));
 
     // Lower Wishbone (Forward Leg & Aft Leg)
-    const fwdLowerIn = new THREE.Vector3(-1.6, side * 1.3, 1.9);
-    const aftLowerIn = new THREE.Vector3(1.6, side * 1.7, 1.6);
+    const fwdLowerIn = new THREE.Vector3(-0.85, side * 1.4, 1.9);
+    const aftLowerIn = new THREE.Vector3(1.0, side * 1.68, 1.65);
     const lowerOuter = new THREE.Vector3(0.0, side * 6.6, 2.5);
     fsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, ...SS.front.lower, undefined, onUpright(lowerOuter)));
     fsCorner.add(createAeroLink(aftLowerIn, lowerOuter, ...SS.front.lower, undefined, { ...onUpright(lowerOuter), sharedOuter: true }));
 
     // Pull-Rod Strut (Runs diagonally from upright upper clevis to lower tub rocker)
     const pullRodOuter = new THREE.Vector3(0.0, side * 6.4, 4.3);
-    const pullRodInner = new THREE.Vector3(1.8, side * 1.8, 2.2);
+    const pullRodInner = new THREE.Vector3(1.5, side * 1.8, 2.2);
     // (inner end on the chassis rocker, outer end on the upright)
     fsCorner.add(createAeroLink(pullRodInner, pullRodOuter, ...SS.front.pullRod, materials.carbonGloss, onUpright(pullRodOuter)));
 
