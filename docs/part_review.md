@@ -14,8 +14,8 @@ The scene has about 5,400 separate 3D pieces ("meshes"). Many of them are small 
 | Parts facing or lying the wrong way | 4 (nose camera pods, pitot mast, Camloc fastener heads, radio antenna) | 4 | none |
 | Parts in the wrong material | 3 big ones (helmet in car paint, engine all in titanium colours, radiator in bright titanium) | 3 | none |
 | Wrong design or shape | 8 (engine, helmet, nose join, rear wing, front wing, driveshafts, ride height in Drive mode, missing favicon) | 8 | the beam wing (see the note on the rules) |
-| Shape updates from Samuel's round 3 references | 4 (halo, mirrors, airbox, rear wing) | 4 | none |
-| Wasted parts (built, then thrown away) | 5 old decal panels | 0 | kept for now, they are cheap and the livery removes them (see below) |
+| Shape updates from Samuel's round 3 references | 5 (halo, mirrors, airbox, rear wing, front wing) | 5 | none |
+| Wasted parts (built, then thrown away) | 5 old decal panels | 1 (the front endplate panel) | the other 4 are kept for now, they are cheap and the livery removes them (see below) |
 
 After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, mostly because the old engine had about 560 tiny repeated parts that nobody could see. The surface-contact test went from 14 floating meshes to 1, and the outside-visibility test no longer shows any engine, camshaft or steering rack part through the bodywork. The car is 1,884 mm wide (the limit is 1,900 mm), nothing sits below the ground, and all 29 livery decals still land with none skipped.
 
@@ -275,15 +275,19 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
 - **Before:**
   - one thick mainplane and two simple flaps per side, built from straight extrusions
   - the flaps were navy-painted shapes that the livery had to find by size
-- **Now:** a real layered wing, built by a new reusable wing tool (`cad/aero_profiles.js`) from `FRONT_WING_SPEC`:
-  - a full-width mainplane
-  - a fixed second element
-  - two moving flaps per side, each tucked into the slot behind the one in front, curling up toward the endplate
-  - a plain centre section under the nose (as the 2026 rules ask)
-  - slot brackets tying the flaps together
-- **Movement:** the flaps pivot at the front of the first moving flap. Each flap group carries its own mode angles (`userData.modeAngles`), and the animation reads them.
-- **Materials:** carbon mainplane and second element, bare carbon flaps (flagged for the livery), and painted endplates.
-- **Decals:** the Red Bull, VISA and Mobil 1 decals all still land.
+- **Now:** a real layered wing, built by a reusable wing tool (`cad/aero_profiles.js`) from `FRONT_WING_SPEC`, reshaped to Samuel's round 3 outlines (R7 and R8):
+  - **Three elements**, stacked from front to back: the mainplane is lowest and furthest forward and runs the full width, the middle element sits in the middle, and the top element sits furthest back. Each one sweeps back and changes chord from the nose out to the endplate, and the upper two climb toward the endplate.
+  - **Centre section:** a plain mainplane under the nose, as the 2026 rules ask. The middle and top elements start at y ±1.15.
+  - **Risers:** three thin vertical risers per side tie the top and middle elements together over the slot.
+  - **Nose brackets (R8):** three short angled carbon brackets under the nose join the wing to the nose. One sits on the centre line under the nose tip, and one per side angles up and inward from the mainplane into each nose pillar. They are fixed parts, because the mainplane does not move.
+  - **Endplate (R7 and R8):** two moulded shells per side.
+    - A tall curved wall rises from the wing, curves inward toward the tyre, and flares back out at its top edge. It is lower at the front and full height at the back.
+    - A separate scrolled foot curls out, over and down at the base. It runs further forward than the wall and kicks forward and out like a fin, widest and tipped up at its front.
+    - The two references read differently at the top of the wall (R7 says it turns inward, R8 says it flares outward). The wall does both: it leans inward, then the top lip turns back out. The profile is the `endplate.wall` list in `FRONT_WING_SPEC`, so it is easy to change.
+  - **Width:** the outer edge of the foot is the widest point, inside y ±9.5, so the car stays inside the 1,900 mm limit.
+- **Movement:** the middle and top elements are the adjustable flaps. They pivot at the front of the middle element. Each flap group carries its own mode angles (`userData.modeAngles`), and the animation reads them. The risers move with the flaps.
+- **Materials:** carbon mainplane, bare carbon flaps (flagged for the livery), carbon risers and brackets, and painted endplates.
+- **Decals:** Red Bull lands on the mainplane, VISA on the top element and Mobil 1 on the endplate wall. The old flat Mobil 1 panel on the front endplate is no longer built, because the livery now places the decal on the wall itself.
 
 ### 9.2 Nose (`Nosecone_MainBody_Navy`)
 - **Problems:**
@@ -333,12 +337,11 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
   - It is flagged here for Samuel to decide.
 
 ### 9.6 Wasted decal panels (left alone)
-Five old flat decal panels are built and then removed straight away by the new livery at start-up:
+Four old flat decal panels are still built and then removed straight away by the new livery at start-up (the fifth, the front endplate panel, was removed in the front wing rebuild):
 - `EngineCover_LiveryDecal`
 - `RearWing_LiveryDecal`
 - `RearWing_InnerGradient`
 - the rear wing Oracle panel
-- the front endplate panel
 
 They cost very little, and removing them touches the livery code, so they are left for a later cleanup.
 

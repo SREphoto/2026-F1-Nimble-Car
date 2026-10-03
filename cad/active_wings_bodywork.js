@@ -78,22 +78,54 @@ export const AIRBOX_SPEC = {
   tCamZ: 9.95, // T-camera group origin (mast base on the blade top)
 };
 
+/**
+ * Front wing (refs round3 R7, Samuel's outline). Three elements: the mainplane is lowest and
+ * furthest forward, the middle element sits in the middle, and the top element sits furthest back.
+ * u = 0 at the car centre line, 1 at the element tip (which ends inside the endplate wall).
+ * Element 2 and 3 are the adjustable (active) flaps and pivot together on element 2's leading edge.
+ */
 export const FRONT_WING_SPEC = {
-  halfSpan: 8.75,          // element tips meet the endplates
-  innerY: 1.25,            // upper elements stop at the nose; the centre stays mainplane only (neutral section)
+  halfSpan: 7.85,          // endplate wall base; the scrolled foot reaches out to y 9.35 (car limit 9.5)
+  innerY: 1.15,            // upper elements stop at the nose pillars; the centre stays mainplane only
   slot: { overlap: 0.10, gap: 0.05 },
   pivotU: 0.57,
   flapModeAngles: { Z_MODE: 0.0, X_MODE: 0.28 },  // + = trailing edge down (low drag)
-  slotBracketsU: [0.42, 0.78],
+  risersU: [0.40, 0.62, 0.88],                     // thin vertical brackets tying the three elements
   elements: [
     { name: 'FrontWing_Mainplane', thickness: 0.09, camber: 0.05,
-      leX: (u) => -1.25 + 0.55 * u ** 1.5, leZ: (u) => 0.02 + 0.30 * u * u,
-      chord: (u) => 1.55 - 0.15 * u, aoa: (u) => 0.05 + 0.08 * u },
-    { name: 'FrontWing_Element2', thickness: 0.09, camber: 0.06, chord: (u) => 0.95 - 0.10 * u, aoa: (u) => 0.22 + 0.10 * u },
-    { name: 'FrontWing_Flap3', active: true, thickness: 0.09, camber: 0.06, chord: () => 0.80, aoa: (u) => 0.40 + 0.08 * u },
-    { name: 'FrontWing_Flap4', active: true, thickness: 0.10, camber: 0.07, chord: () => 0.68, aoa: (u) => 0.58 + 0.06 * u },
+      leX: (u) => -1.4 + 0.5 * u ** 1.6, leZ: (u) => 0.02 + 0.24 * u * u,
+      chord: (u) => 1.6 - 0.2 * u - 0.25 * u ** 4, aoa: (u) => 0.05 + 0.07 * u },
+    { name: 'FrontWing_MidElement', active: true, thickness: 0.08, camber: 0.06,
+      chord: (u) => 0.5 + 0.3 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.05 * u, aoa: (u) => 0.22 + 0.10 * u,
+      zLift: (u) => 0.18 * smooth01((u - 0.7) / 0.3) },
+    { name: 'FrontWing_TopElement', active: true, thickness: 0.10, camber: 0.07,
+      chord: (u) => 0.8 + 0.35 * Math.sin(Math.PI * Math.min(1, u * 1.05)) + 0.1 * u, aoa: (u) => 0.40 + 0.16 * u,
+      zLift: (u) => 0.55 * smooth01((u - 0.62) / 0.38) },  // outer end sweeps up into the endplate
+  ],
+  endplate: {
+    x0: -1.8, x1: 2.4,      // chord extent in the wing frame
+    z0: -0.05,              // profile origin height in the wing frame (wing frame z 0 = world 0.55)
+    thickness: 0.05,
+    // front-view profile for the left side, [outward from the wall base, up]. The foot scrolls out,
+    // over and down; the wall rises and turns inward toward the tyre at the top.
+    foot: [[1.5, -0.25], [1.54, -0.02], [1.42, 0.22], [1.15, 0.4], [0.84, 0.42], [0.54, 0.26], [0.26, 0.02], [0.06, -0.1], [0, -0.06]],
+    // wall turns inward toward the tyre (R7), then the top edge flares back out (R8)
+    wall: [[0, -0.06], [-0.03, 0.42], [-0.12, 0.95], [-0.3, 1.45], [-0.5, 1.82], [-0.56, 2.05], [-0.44, 2.27]],
+    heightScale: (sx) => 0.6 + 0.4 * (1 - (1 - sx) ** 2), // lower at the front, full height at the back
+    // the scrolled foot is its own swept fin (R8): it runs further forward than the wall and
+    // kicks forward and out, widest and tipped up at its front
+    footX0: -2.75, footX1: 2.1,
+    footOut: (fx) => 0.62 + 0.38 * (1 - fx) ** 0.8,  // fx 0 = foot front, 1 = foot rear
+    footKick: (fx) => 0.5 * (1 - fx) ** 3,           // front tip lifts like a fin
+    footRise: (fx) => 0.7 + 0.3 * (1 - fx),          // scroll is tallest at the front, lower at the back
+  },
+  // short brackets under the nose that join the wing to the nose (R8), car frame [x, y, z]
+  noseBrackets: [
+    { name: 'C', path: [[-9.35, 0, 0.62], [-9.3, 0, 0.85], [-9.25, 0, 1.12]], chord: 0.34, thickness: 0.05 },
+    { name: 'Side', path: [[-8.95, 1.12, 0.68], [-8.8, 0.85, 0.86], [-8.62, 0.6, 1.02]], chord: 0.4, thickness: 0.05 },
   ],
 };
+function smooth01(t) { const c = Math.min(1, Math.max(0, t)); return c * c * (3 - 2 * c); }
 
 /**
  * Helper: Create an explicit 3D quad decal with deterministic UVs
@@ -328,6 +360,22 @@ export function createActiveWingsBodywork(options = {}) {
     noseGroup.add(pillar);
   });
 
+  // Short angled brackets under the nose joining the wing to the nose and its pillars (R8).
+  // Fixed parts: they sit on the mainplane, which never moves.
+  (FRONT_WING_SPEC.noseBrackets || []).forEach((b) => {
+    const sides = b.path.some((p) => Math.abs(p[1]) > 1e-3) ? [1, -1] : [0];
+    sides.forEach((side) => {
+      const pts = b.path.map(([x, y, z]) => [x, side ? side * y : 0, z]);
+      const g = sweepGeometry(pts, () => b.chord, () => b.thickness, {
+        samples: 12, ring: 16, n: 2.2, lead: 0.3, widthHint: () => new THREE.Vector3(1, 0, 0),
+      });
+      const m = new THREE.Mesh(g, carbonMatte);
+      m.castShadow = true;
+      m.name = `FrontWing_NoseBracket_${b.name}${side > 0 ? '_LH' : side < 0 ? '_RH' : ''}`;
+      noseGroup.add(m);
+    });
+  });
+
   frontAeroGroup.add(noseGroup);
 
   // -------------------------------------------------------------------------
@@ -338,37 +386,61 @@ export function createActiveWingsBodywork(options = {}) {
   frontWingGroup.name = 'FrontWing_Aerofoil_Assembly';
   frontWingGroup.position.set(-8.6, 0.0, 0.55); // trailing edges close to the front tyres
 
-  // Layered front wing built from FRONT_WING_SPEC: a full-span mainplane, a fixed second
-  // element and two active flaps per side, each tucked into the slot behind the one before.
+  // Layered front wing built from FRONT_WING_SPEC (R7): a full-span mainplane, then the middle
+  // and top elements per side, each tucked into the slot behind the one before. The two upper
+  // elements are the adjustable flaps. Every element ends inside the S-shaped endplate wall.
   const FW = { ...FRONT_WING_SPEC, ...(options.frontWing || {}) };
-  const fwU = (y) => Math.min(1, Math.abs(y) / FW.halfSpan); // 0 at the centre, 1 at the endplate
+  const EPS = FW.endplate;
+  // endplate profile at a chord station (left side): [out, z] points in the wing frame (z)
+  const epProfilePts = (part, sx) => {
+    const k = EPS.heightScale(sx);
+    if (part === 'wall') return EPS.wall.map(([o, z]) => [o * k, EPS.z0 + z * k]);
+    // foot: sx runs over the foot's own x range; it widens and tips up toward its front
+    const fo = EPS.footOut(sx), fk = EPS.footKick(sx), oMax = Math.max(...EPS.foot.map((p) => p[0]));
+    const fr = EPS.footRise(sx);
+    return EPS.foot.map(([o, z]) => [o * fo, EPS.z0 + z * fr + fk * (o / oMax)]);
+  };
+  // outward offset of the wall at height z (wing frame), at a chord station
+  const wallOutAt = (z, sx = 0.6) => {
+    const c = new THREE.SplineCurve(epProfilePts('wall', sx).map(([o, zz]) => new THREE.Vector2(o, zz)));
+    const pts = c.getPoints(60);
+    if (z <= pts[0].y) return pts[0].x;
+    for (let i = 0; i < pts.length - 1; i++) if (z >= pts[i].y && z <= pts[i + 1].y) return pts[i].x + (pts[i + 1].x - pts[i].x) * (z - pts[i].y) / (pts[i + 1].y - pts[i].y);
+    return pts[pts.length - 1].x;
+  };
   const mpSpec = FW.elements[0];
+  const zl = (el) => el.zLift || (() => 0);
+  // element frame lines as functions of u: le, te
+  const mpLE = (u) => [mpSpec.leX(u), mpSpec.leZ(u)];
+  const teOf = (le, el) => (u) => { const [x, z] = le(u), c = el.chord(u), a = el.aoa(u); return [x + c * Math.cos(a), z + c * Math.sin(a)]; };
+  const chain = [{ el: mpSpec, le: mpLE }];
+  FW.elements.slice(1).forEach((el) => {
+    const prevTE = teOf(chain[chain.length - 1].le, chain[chain.length - 1].el);
+    chain.push({ el, le: (u) => { const [tx, tz] = prevTE(u); return [tx - FW.slot.overlap, tz + FW.slot.gap + zl(el)(u)]; } });
+  });
+  // each tip ends 0.03 inside the endplate wall at the height of its mid-chord
+  chain.forEach((c) => {
+    const [lx, lz] = c.le(1), [tx, tz] = teOf(c.le, c.el)(1);
+    const sx = THREE.MathUtils.clamp(((lx + tx) / 2 - EPS.x0) / (EPS.x1 - EPS.x0), 0, 1);
+    c.tipY = FW.halfSpan + wallOutAt((lz + tz) / 2, sx) - 0.03;
+  });
   const fwMainSpec = {
-    y0: -FW.halfSpan, y1: FW.halfSpan, ns: 40, nc: 20, thickness: mpSpec.thickness, camber: mpSpec.camber,
-    le: (yn) => { const u = Math.abs(2 * yn - 1); return [mpSpec.leX(u), mpSpec.leZ(u)]; },
+    y0: -chain[0].tipY, y1: chain[0].tipY, ns: 44, nc: 20, thickness: mpSpec.thickness, camber: mpSpec.camber,
+    le: (yn) => mpLE(Math.abs(2 * yn - 1)),
     chord: (yn) => mpSpec.chord(Math.abs(2 * yn - 1)),
     aoa: (yn) => mpSpec.aoa(Math.abs(2 * yn - 1)),
   };
   const fwMainMesh = createWingElement(fwMainSpec, carbonMat, 'FrontWing_Mainplane');
   frontWingGroup.add(fwMainMesh);
 
-  // stacked side elements: each leading edge sits just behind and above the previous trailing edge
-  const fwStackSpec = (side) => {
-    const out = [];
-    let prev = (u) => { const c = mpSpec.chord(u), a = mpSpec.aoa(u); return [mpSpec.leX(u) + c * Math.cos(a), mpSpec.leZ(u) + c * Math.sin(a)]; };
-    FW.elements.slice(1).forEach((el) => {
-      const prevTE = prev;
-      const le = (u) => { const [tx, tz] = prevTE(u); return [tx - FW.slot.overlap, tz + FW.slot.gap]; };
-      const yA = side * FW.innerY, yB = side * FW.halfSpan;
-      const uOf = (yn) => fwU(yA + (yB - yA) * yn);
-      out.push({ el, spec: {
-        y0: yA, y1: yB, ns: 28, nc: 16, thickness: el.thickness, camber: el.camber,
-        le: (yn) => le(uOf(yn)), chord: (yn) => el.chord(uOf(yn)), aoa: (yn) => el.aoa(uOf(yn)),
-      }, le });
-      prev = (u) => { const [lx, lz] = le(u), c = el.chord(u), a = el.aoa(u); return [lx + c * Math.cos(a), lz + c * Math.sin(a)]; };
-    });
-    return out;
-  };
+  const fwStackSpec = (side) => chain.slice(1).map((c) => {
+    const yA = side * FW.innerY, yB = side * c.tipY;
+    const uOf = (yn) => Math.abs(yA + (yB - yA) * yn) / c.tipY;
+    return { el: c.el, le: c.le, spec: {
+      y0: yA, y1: yB, ns: 32, nc: 16, thickness: c.el.thickness, camber: c.el.camber,
+      le: (yn) => c.le(uOf(yn)), chord: (yn) => c.el.chord(uOf(yn)), aoa: (yn) => c.el.aoa(uOf(yn)),
+    } };
+  });
 
   [-1, 1].forEach((side) => {
     const isLeft = side > 0;
@@ -377,7 +449,7 @@ export function createActiveWingsBodywork(options = {}) {
     flapAssembly.name = `FrontWing_ActiveFlap_${isLeft ? 'Left' : 'Right'}`;
     const stack = fwStackSpec(side);
     const firstActive = stack.find((s) => s.el.active);
-    // pivot on the leading edge of the first active flap (2026 rule: pivot at the flap's front)
+    // pivot on the leading edge of the first active element (2026 rule: pivot at the flap's front)
     const [pX, pZ] = firstActive.le(FW.pivotU);
     flapAssembly.position.set(pX, 0, pZ);
     flapAssembly.userData.modeAngles = { ...FW.flapModeAngles };
@@ -396,69 +468,59 @@ export function createActiveWingsBodywork(options = {}) {
         pivotNode.add(m); activeMeshes.push({ m, el, spec });
       } else frontWingGroup.add(m);
     });
-    // slot-gap brackets that tie the two moving flaps together
+    // thin vertical risers that tie the elements together (move with the flaps)
     if (activeMeshes.length > 1) {
-      const lower = activeMeshes[0].spec, upper = activeMeshes[1];
-      FW.slotBracketsU.forEach((u, k) => {
-        const yn = (u * FW.halfSpan - FW.innerY) / (FW.halfSpan - FW.innerY);
-        const e0 = elementEdges(lower, yn), [ux, uz] = upper.spec.le(yn);
-        const br = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.025, Math.max(0.08, uz - e0.te[1] + 0.12)), carbonMatte);
-        br.name = `FrontWing_SlotBracket_${tag}_${k}`;
-        br.position.set((e0.te[0] + ux) / 2 - pX, side * u * FW.halfSpan, (e0.te[1] + uz) / 2 - pZ);
-        br.rotation.y = -0.5;
-        pivotNode.add(br);
+      const mid = activeMeshes[0].spec, top = activeMeshes[1].spec;
+      FW.risersU.forEach((u, k) => {
+        const yAbs = FW.innerY + (stack[1] ? 0 : 0) + u * (Math.abs(top.y1) - FW.innerY);
+        const yn = (yAbs - FW.innerY) / (Math.abs(top.y1) - FW.innerY);
+        const eT = elementEdges(top, yn), eM = elementEdges(mid, (yAbs - FW.innerY) / (Math.abs(mid.y1) - FW.innerY));
+        const x = eT.le[0] + 0.12;
+        const zTop = eT.le[1] + 0.07 + (x - eT.le[0]) * Math.tan(top.aoa(yn));
+        const zBot = eM.le[1] - 0.18; // hangs below the middle element, into the slot over the mainplane
+        const h = zTop - zBot;
+        const r = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, h), carbonMatte);
+        r.name = `FrontWing_Riser_${tag}_${k}`;
+        r.position.set(x - pX, side * yAbs, zBot + h / 2 - pZ);
+        pivotNode.add(r);
       });
     }
     frontWingGroup.add(flapAssembly);
 
     // -----------------------------------------------------------------------
-    // 1D. FRONT WING ENDPLATE (FWEP) & FLARED SKI-RAMP FOOTPLATE
-    // Directly matching user red circle markup in media_1790507089454.png!
+    // 1D. S-SHAPED FRONT WING ENDPLATE (R7 + R8): a tall curved wall that turns inward toward
+    // the tyre and flares back out at its top lip, and a separate scrolled foot that runs ahead
+    // of the wall and kicks forward and out like a fin. Two thin shells.
     // -----------------------------------------------------------------------
     const fwepGroup = new THREE.Group();
-    fwepGroup.position.set(0.6, side * 8.8, 0.25);
-
-    // 1+2. Tall curved endplate that sweeps outward and down into a footplate at the bottom
-    // (Samuel's sketch / ref 07). One continuous thin shell: lip -> quarter-round -> wall.
-    const EP_R = 0.5, EP_LIP = 0.12, EP_T = 0.05, EP_ZB = -0.30;
-    const epTop = sx => -0.30 + 1.35 + 1.05 * (1 - Math.pow(1 - sx, 2)); // top edge rises to the rear
-    // profile point (out, z) for parameter v in [0,1] at chord station sx
-    const epProfile = (sx, v) => {
-      const arc = EP_R * Math.PI / 2, wall = Math.max(0.2, epTop(sx) - (EP_ZB + EP_R));
-      const L = EP_LIP + arc + wall, d = v * L;
-      if (d <= EP_LIP) return [EP_R + EP_LIP - d, EP_ZB];
-      if (d <= EP_LIP + arc) { const a = Math.PI / 2 - (d - EP_LIP) / EP_R; return [EP_R - EP_R * Math.cos(a), EP_ZB + EP_R - EP_R * Math.sin(a)]; }
-      return [0, EP_ZB + EP_R + (d - EP_LIP - arc)];
-    };
-    // Built as two shells sharing the same profile: the flat wall (thin, so the paint
-    // branch's endplate decal finder still recognises it) and the swept-out foot.
-    const epLen = sx => EP_LIP + EP_R * Math.PI / 2 + Math.max(0.2, epTop(sx) - (EP_ZB + EP_R));
-    const epSplit = sx => (EP_LIP + EP_R * Math.PI / 2) / epLen(sx); // v where the wall starts
-    const buildEpShell = (vFrom, vTo, epNv, name, mat) => {
-      const epNs = 18, epVerts = [], epIdx = [];
+    fwepGroup.name = `FrontWing_EndplateGroup_${tag}`;
+    fwepGroup.position.set(0, side * FW.halfSpan, 0);
+    const buildEpShell = (part, epNv, name, mat) => {
+      const epNs = 20, epVerts = [], epIdx = [];
+      const curves = [];
+      for (let i = 0; i <= epNs; i++) curves.push(new THREE.SplineCurve(epProfilePts(part, i / epNs).map(([o, z]) => new THREE.Vector2(o, z))));
       const epPt = (i, j, inner) => {
-        const sx = i / epNs, x = -2.4 + 4.2 * sx;
-        const v = vFrom(sx) + (vTo(sx) - vFrom(sx)) * (j / epNv);
-        const p0 = epProfile(sx, v), dv = 1e-3;
-        const pa = epProfile(sx, Math.max(0, v - dv)), pb = epProfile(sx, Math.min(1, v + dv));
-        const tx = pb[0] - pa[0], tz = pb[1] - pa[1], tl = Math.hypot(tx, tz) || 1;
-        const n = [tz / tl, -tx / tl]; // outward/up normal of the profile
-        const o = inner ? -EP_T : 0;
-        return [x, side * (p0[0] + n[0] * o), p0[1] + n[1] * o];
+        const sx = i / epNs;
+        const x = part === 'foot' ? EPS.footX0 + (EPS.footX1 - EPS.footX0) * sx : EPS.x0 + (EPS.x1 - EPS.x0) * sx;
+        const c = curves[i], v = j / epNv;
+        const p0 = c.getPointAt(v), t = c.getTangentAt(v);
+        const n = [t.y, -t.x]; // profile normal
+        const o = inner ? -EPS.thickness : 0;
+        return [x, side * (p0.x + n[0] * o), p0.y + n[1] * o];
       };
       for (const inner of [false, true]) for (let i = 0; i <= epNs; i++) for (let j = 0; j <= epNv; j++) epVerts.push(...epPt(i, j, inner));
       const ev = (inner, i, j) => (inner ? (epNs + 1) * (epNv + 1) : 0) + i * (epNv + 1) + j;
       const quad = (a, b, c, d, f) => { if (f) epIdx.push(a, c, b, a, d, c); else epIdx.push(a, b, c, a, c, d); };
-      const fl = isLeft; // mirrored side flips the winding
+      const fl = isLeft;
       for (let i = 0; i < epNs; i++) for (let j = 0; j < epNv; j++) {
         quad(ev(false, i, j), ev(false, i + 1, j), ev(false, i + 1, j + 1), ev(false, i, j + 1), fl);
         quad(ev(true, i, j), ev(true, i + 1, j), ev(true, i + 1, j + 1), ev(true, i, j + 1), !fl);
       }
-      for (let i = 0; i < epNs; i++) { // bottom and top edges
+      for (let i = 0; i < epNs; i++) {
         quad(ev(false, i, 0), ev(true, i, 0), ev(true, i + 1, 0), ev(false, i + 1, 0), fl);
         quad(ev(false, i, epNv), ev(false, i + 1, epNv), ev(true, i + 1, epNv), ev(true, i, epNv), fl);
       }
-      for (let j = 0; j < epNv; j++) { // leading and trailing edges
+      for (let j = 0; j < epNv; j++) {
         quad(ev(false, 0, j), ev(false, 0, j + 1), ev(true, 0, j + 1), ev(true, 0, j), fl);
         quad(ev(false, epNs, j), ev(true, epNs, j), ev(true, epNs, j + 1), ev(false, epNs, j + 1), fl);
       }
@@ -471,29 +533,11 @@ export function createActiveWingsBodywork(options = {}) {
       m.name = name;
       return m;
     };
-    const fwepWallMesh = buildEpShell(epSplit, () => 1, 10, `FrontWing_Endplate_${isLeft ? 'LH' : 'RH'}`, navyMat);
+    const fwepWallMesh = buildEpShell('wall', 16, `FrontWing_Endplate_${tag}`, navyMat);
+    fwepWallMesh.userData.fwEndplate = true; // the livery puts Mobil 1 on this face
     fwepGroup.add(fwepWallMesh);
-    const fwepFootMesh = buildEpShell(() => 0, epSplit, 14, `FrontWing_Endplate_Foot_${isLeft ? 'LH' : 'RH'}`, navyMat);
+    const fwepFootMesh = buildEpShell('foot', 28, `FrontWing_Endplate_Foot_${tag}`, navyMat);
     fwepGroup.add(fwepFootMesh);
-
-    // 3. Upright Mobil 1 Decal on Endplate Outer Face
-    const epTex = createEndplateTexture(isLeft);
-    const epDecalMat = new THREE.MeshStandardMaterial({
-      map: epTex,
-      transparent: true,
-      roughness: 0.28,
-      metalness: 0.35,
-      side: THREE.DoubleSide
-    });
-    const p00 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 0.25);
-    const p10 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 0.25);
-    const p11 = new THREE.Vector3(1.6, isLeft ? 0.035 : -0.035, 1.25);
-    const p01 = new THREE.Vector3(-1.8, isLeft ? 0.035 : -0.035, 1.25);
-    const epDecalMesh = isLeft // reads correctly from outside the car
-      ? createDecalQuad(p10, p00, p01, p11, epDecalMat)
-      : createDecalQuad(p00, p10, p11, p01, epDecalMat);
-    fwepGroup.add(epDecalMesh);
-
     frontWingGroup.add(fwepGroup);
   });
 
