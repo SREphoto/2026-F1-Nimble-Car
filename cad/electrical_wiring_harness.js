@@ -31,6 +31,8 @@
 
 import * as THREE from 'three';
 import { materials } from '../materials.js';
+import { PU_SPEC } from './powertrain_moving_internals.js';
+import { REAR_WING_SPEC } from './active_wings_bodywork.js';
 import { createSocketHeadBolt, createTorxScrew } from './fasteners.js';
 
 export function createElectricalHarness(options = {}) {
@@ -97,10 +99,10 @@ export function createElectricalHarness(options = {}) {
   // to Left Inverter (X = 28.2, Y = -1.2, Z = 3.6)
   const hvSpline1 = new THREE.CatmullRomCurve3([
     new THREE.Vector3(20.9, 0.4, 1.8),
-    new THREE.Vector3(21.6, 0.5, 1.9),
-    new THREE.Vector3(22.8, -0.6, 2.4),
-    new THREE.Vector3(25.0, -1.0, 3.0),
-    new THREE.Vector3(27.0, -1.15, 3.4),
+    new THREE.Vector3(21.6, 0.3, 2.1),
+    new THREE.Vector3(22.6, -0.17, 2.55), // through the bulkhead into the V under the plenum
+    new THREE.Vector3(26.3, -0.17, 2.6),
+    new THREE.Vector3(27.1, -0.6, 3.2),
     new THREE.Vector3(28.2, -1.2, 3.6)
   ]);
   const hvGeo1 = new THREE.TubeGeometry(hvSpline1, 32, 0.11, 12, false);
@@ -112,10 +114,10 @@ export function createElectricalHarness(options = {}) {
   // to Right Inverter (X = 28.2, Y = 1.2, Z = 3.6)
   const hvSpline2 = new THREE.CatmullRomCurve3([
     new THREE.Vector3(20.9, -0.4, 1.8),
-    new THREE.Vector3(21.6, -0.5, 1.9),
-    new THREE.Vector3(22.8, 0.6, 2.4),
-    new THREE.Vector3(25.0, 1.0, 3.0),
-    new THREE.Vector3(27.0, 1.15, 3.4),
+    new THREE.Vector3(21.6, -0.3, 2.1),
+    new THREE.Vector3(22.6, 0.17, 2.55),
+    new THREE.Vector3(26.3, 0.17, 2.6),
+    new THREE.Vector3(27.1, 0.6, 3.2),
     new THREE.Vector3(28.2, 1.2, 3.6)
   ]);
   const hvGeo2 = new THREE.TubeGeometry(hvSpline2, 32, 0.11, 12, false);
@@ -127,9 +129,11 @@ export function createElectricalHarness(options = {}) {
   [-0.12, 0.0, 0.12].forEach((offsetY, phaseIdx) => {
     const mgukSpline = new THREE.CatmullRomCurve3([
       new THREE.Vector3(28.0, -1.2 + offsetY, 3.5),
-      new THREE.Vector3(26.5, -1.35 + offsetY, 2.8),
-      new THREE.Vector3(25.0, -1.9 + offsetY, 2.0),
-      new THREE.Vector3(23.5, -2.25 + offsetY * 0.8, 1.4)
+      new THREE.Vector3(28.0, -1.3 + offsetY, 3.2),
+      new THREE.Vector3(27.3, -1.5 + offsetY, 2.4),
+      new THREE.Vector3(27.1, -2.05 + offsetY, 1.5),
+      new THREE.Vector3(25.6, -2.2 + offsetY, 1.05),
+      new THREE.Vector3(24.6, -2.1 + offsetY, 1.45)
     ]);
     const mgukCableGeo = new THREE.TubeGeometry(mgukSpline, 24, 0.075, 10, false);
     const mgukCableMesh = new THREE.Mesh(mgukCableGeo, materials.cableOrangeHV);
@@ -142,7 +146,7 @@ export function createElectricalHarness(options = {}) {
   hvGroup.add(createHVConnector(new THREE.Vector3(20.9, -0.4, 1.8), new THREE.Vector3(1, 0, 0)));
   hvGroup.add(createHVConnector(new THREE.Vector3(28.2, -1.2, 3.6), new THREE.Vector3(-1, 0, 0)));
   hvGroup.add(createHVConnector(new THREE.Vector3(28.2, 1.2, 3.6), new THREE.Vector3(-1, 0, 0)));
-  hvGroup.add(createHVConnector(new THREE.Vector3(23.5, -2.25, 1.4), new THREE.Vector3(1, 0, 0.5)));
+  hvGroup.add(createHVConnector(new THREE.Vector3(24.6, -2.1, 1.45), new THREE.Vector3(1, 0, 0))); // MGU-K terminal box
 
   group.add(hvGroup);
 
@@ -232,9 +236,9 @@ export function createElectricalHarness(options = {}) {
   // Left Cylinder Head Loom (Bank 1: Injectors, Coils, VVT, EGT)
   const bank1Spline = new THREE.CatmullRomCurve3([
     new THREE.Vector3(22.0, 0.4, 2.6),
-    new THREE.Vector3(23.2, 0.8, 3.2),
-    new THREE.Vector3(24.5, 0.9, 3.4),
-    new THREE.Vector3(26.0, 0.85, 3.4)
+    new THREE.Vector3(23.0, 0.42, 3.0),
+    new THREE.Vector3(24.5, 0.42, 3.02),
+    new THREE.Vector3(26.0, 0.42, 3.0)
   ]);
   const bank1Geo = new THREE.TubeGeometry(bank1Spline, 20, 0.05, 8, false);
   const bank1Mesh = new THREE.Mesh(bank1Geo, materials.harnessBlack);
@@ -244,9 +248,9 @@ export function createElectricalHarness(options = {}) {
   // Right Cylinder Head Loom (Bank 2: Injectors, Coils, VVT, EGT)
   const bank2Spline = new THREE.CatmullRomCurve3([
     new THREE.Vector3(22.0, -0.4, 2.6),
-    new THREE.Vector3(23.2, -0.8, 3.2),
-    new THREE.Vector3(24.5, -0.9, 3.4),
-    new THREE.Vector3(26.0, -0.85, 3.4)
+    new THREE.Vector3(23.0, -0.42, 3.0),
+    new THREE.Vector3(24.5, -0.42, 3.02),
+    new THREE.Vector3(26.0, -0.42, 3.0)
   ]);
   const bank2Geo = new THREE.TubeGeometry(bank2Spline, 20, 0.05, 8, false);
   const bank2Mesh = new THREE.Mesh(bank2Geo, materials.harnessBlack);
@@ -256,11 +260,14 @@ export function createElectricalHarness(options = {}) {
   // Injector & Coil Taps on Bank 1 & 2
   [1, -1].forEach(side => {
     for (let c = 0; c < 3; c++) {
-      const cylX = 23.5 + c * 1.1;
+      // to the ignition coil on the cam cover of each cylinder (positions from PU_SPEC)
+      const cyl = PU_SPEC.cylinders;
+      const cylX = cyl.firstX + c * cyl.pitch + (side < 0 ? cyl.bankStagger : 0);
+      const coil = new THREE.Vector3(0, side * 1.42, 2.95 + 0.0); // top of the cam cover, bank centre line
       const tapSpline = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(cylX, side * 0.85, 3.4),
-        new THREE.Vector3(cylX, side * 0.55, 3.2),
-        new THREE.Vector3(cylX, side * 0.35, 3.0) // Coil plug
+        new THREE.Vector3(cylX - 0.15, side * 0.42, 3.02),
+        new THREE.Vector3(cylX - 0.12, side * 0.85, 3.32),
+        new THREE.Vector3(cylX - 0.1, coil.y * 0.93, coil.z + 0.12) // coil plug
       ]);
       const tapGeo = new THREE.TubeGeometry(tapSpline, 10, 0.022, 6, false);
       const tapMesh = new THREE.Mesh(tapGeo, materials.harnessBlack);
@@ -272,10 +279,12 @@ export function createElectricalHarness(options = {}) {
   // Rear Sub-Harness (Runs from Engine to Gearbox, Differential, and Rear Active Wing)
   const rearSpline = new THREE.CatmullRomCurve3([
     new THREE.Vector3(22.0, 0.0, 2.6),
-    new THREE.Vector3(25.5, 0.0, 2.8),
-    new THREE.Vector3(28.5, 0.0, 3.8),
-    new THREE.Vector3(31.5, 0.0, 3.8),
-    new THREE.Vector3(34.0, 0.0, 3.8),
+    new THREE.Vector3(25.5, 0.0, 2.95),   // in the V, under the plenum
+    new THREE.Vector3(27.0, 0.9, 3.15),   // out behind the block, clear of the turbo
+    new THREE.Vector3(28.3, 0.65, 3.12),  // under the control electronics, beside the gearbox top
+    new THREE.Vector3(31.5, 0.9, 3.12),
+    new THREE.Vector3(34.0, 0.8, 3.12),
+    new THREE.Vector3(35.4, 0.3, 3.3),
     new THREE.Vector3(36.0, 0.0, 3.3) // Top of rear impact structure / rain light
   ]);
   const rearGeo = new THREE.TubeGeometry(rearSpline, 36, 0.055, 8, false);
@@ -287,15 +296,32 @@ export function createElectricalHarness(options = {}) {
   // Rain Light Connector at X = 36.0, Y = 0.0, Z = 3.3 (top of rear impact structure)
   lvGroup.add(createLVConnector(new THREE.Vector3(36.0, 0.0, 3.3), new THREE.Vector3(1, 0, 0)));
 
-  // Rear Active Wing Vertical Pylon Wiring (Running up the dual rear wing pylons to active flap & LED strips)
+  // Rear Active Wing Vertical Pylon Wiring (one cable up each twin pylon, or up the swan neck, to active flap & LED strips)
   [-1, 1].forEach(side => {
-    const rwPylonSpline = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(34.0, side * 1.5, 3.8),
-      new THREE.Vector3(35.5, side * 2.2, 4.6),
-      new THREE.Vector3(37.0, side * 3.5, 5.4),  // stays inboard of the rear tyres
-      new THREE.Vector3(37.9, side * 4.55, 6.0)  // rain LED strip on the endplate inner face
-    ]);
-    const rwPylonGeo = new THREE.TubeGeometry(rwPylonSpline, 24, 0.035, 8, false);
+    const epY = REAR_WING_SPEC.endplateOuterY - 0.45; // inside the mainplane tip, buried in the endplate
+    const P = REAR_WING_SPEC.pylon;
+    const rwX = 36.8, rwZ = 7.4; // rear-wing group origin
+    const route = P.style === 'swan_neck' ? [
+      new THREE.Vector3(36.0, side * 0.1, 3.33),
+      new THREE.Vector3(36.05, side * 0.6, 3.9),   // up the fork leg
+      new THREE.Vector3(35.75, side * 0.03, 4.9),  // inside the swan-neck blade
+      new THREE.Vector3(35.3, side * 0.03, 6.7),
+      new THREE.Vector3(35.4, side * 0.03, 7.75),
+      new THREE.Vector3(36.4, side * 0.03, 7.32),  // into the mainplane
+      new THREE.Vector3(36.8, side * 2.5, 7.3),
+      new THREE.Vector3(37.0, side * epY, 7.3)     // into the endplate, which carries it down to the rain LEDs
+    ] : [
+      new THREE.Vector3(36.0, side * 0.1, 3.33),
+      new THREE.Vector3(rwX + P.twin.path[0][0], side * Math.abs(P.twin.y[0]), 3.42), // into the foot of its own pylon
+      ...P.twin.path.slice(1, -1).map(([x, z]) => new THREE.Vector3(rwX + x, side * Math.abs(P.twin.y[0]), rwZ + z)),
+      new THREE.Vector3(rwX - 0.45, side * Math.abs(P.twin.y[0]), 7.14), // into the mainplane, mid-thickness
+      new THREE.Vector3(36.6, side * 1.5, 7.19),
+      new THREE.Vector3(36.75, side * 2.5, 7.23),
+      new THREE.Vector3(36.9, side * 4.0, 7.34),
+      new THREE.Vector3(37.0, side * epY, 7.4)     // into the endplate, which carries it down to the rain LEDs
+    ];
+    const rwPylonSpline = new THREE.CatmullRomCurve3(route);
+    const rwPylonGeo = new THREE.TubeGeometry(rwPylonSpline, 48, 0.03, 8, false);
     const rwPylonMesh = new THREE.Mesh(rwPylonGeo, materials.harnessBlack);
     rwPylonMesh.name = `Harness_RearWing_EndplateLED_${side > 0 ? 'L' : 'R'}`;
     lvGroup.add(rwPylonMesh);
@@ -319,7 +345,7 @@ export function createElectricalHarness(options = {}) {
     ecuGroup.add(hdrMesh);
 
     // Mating plug from harness
-    const plug = createLVConnector(new THREE.Vector3(19.64, 0.55 + yOff, 2.5), new THREE.Vector3(1, 0, 0), 0.1, 0.18);
+    const plug = createLVConnector(new THREE.Vector3(19.7, 0.55 + yOff, 5.4), new THREE.Vector3(1, 0, 0), 0.1, 0.18); // on the SECU header (was floating inside the fuel cell)
     lvGroup.add(plug);
   });
 

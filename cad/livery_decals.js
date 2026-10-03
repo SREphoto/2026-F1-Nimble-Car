@@ -103,7 +103,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (o.material === materials.liveryPaint) {
       // Front-wing flaps are bare carbon on the reference car; everything else painted
       const b = carBox(o);
-      const isFwFlap = b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3;
+      const isFwFlap = o.userData.liveryFinish === 'carbon' || (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3);
       o.material = isFwFlap ? materials.carbonGlossAero : carPaint;
       return;
     }
@@ -229,7 +229,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   carModel.traverse((o) => {
     if (!o.isMesh || o.material !== materials.carbonGlossAero) return;
     const b = carBox(o);
-    if (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3 && b.min.z > 0.55) fwFlaps.push({ o, b });
+    if (o.userData.fwFlap || (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3 && b.min.z > 0.55)) fwFlaps.push({ o, b });
   });
   sides.forEach((s) => {
     const mine = fwFlaps.filter(({ b }) => Math.sign(b.min.y + b.max.y) === s).sort((p, q) => q.b.max.z - p.b.max.z)[0];
@@ -245,12 +245,13 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   carModel.traverse((o) => {
     if (!o.isMesh || o.material !== carPaint) return;
     const b = carBox(o);
-    if (!(b.max.x < -6 && (b.max.y - b.min.y) < 0.4 && (b.max.z - b.min.z) > 1.5)) return;
+    const flagged = !!o.userData.fwEndplate; // S-shaped endplate wall leans, so its box is thick
+    if (!(flagged || (b.max.x < -6 && (b.max.y - b.min.y) < 0.4 && (b.max.z - b.min.z) > 1.5))) return;
     const s = (b.min.y + b.max.y) > 0 ? 1 : -1;
     const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
     project(`FrontEndplate_Mobil1_${sideName(s)}`, o, {
-      origin: [b.min.x + L * 0.5, s * (absMaxY(b) + 5), b.min.z + H * 0.6], dir: [0, -s, 0],
-      up: [0, 0, 1], size: [L * 0.62, L * 0.62 * 0.375, 0.3], texture: tex.mobilFront,
+      origin: [b.min.x + L * 0.5, s * (absMaxY(b) + 5), b.min.z + H * (flagged ? 0.42 : 0.6)], dir: [0, -s, 0],
+      up: [0, 0, 1], size: [L * 0.62, L * 0.62 * 0.375, flagged ? 0.7 : 0.3], texture: tex.mobilFront,
     });
   });
 
@@ -297,7 +298,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const b = carBox(flap); const W = b.max.y - b.min.y;
     // Seen from behind, the viewer's right is the car's right (+Y): up = +Z gives that.
     project('RearWing_Flap_ORACLE', flap, {
-      origin: [(b.min.x + b.max.x) / 2 + 3.6, 0, b.max.z + 4.8], dir: [-0.6, 0, -0.8],
+      origin: [(b.min.x + b.max.x) / 2 + 3.6, 0, b.max.z + 4.8 - (flap.userData.spoonDip || 0)], dir: [-0.6, 0, -0.8], // aim at the dipped centre
       up: [0, 0, 1], size: [W * 0.78, W * 0.78 / 8, 1.2], texture: tex.rwFlap,
     });
   }

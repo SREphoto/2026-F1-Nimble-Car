@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three';
 import { createRedBullRing, DM } from './red_bull_ring.js';
+import { createRideModel } from './ride_model.js';
 
 const WHEELBASE = 3.4;          // m (2026 regs)
 const MASS = 800;               // kg incl. driver
@@ -55,6 +56,7 @@ export function initTrackMode(ctx) {
 
   // ------------------------------------------------------------------ vehicle state (metres, rear-axle reference)
   const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0 };
+  const ride = createRideModel(ctx.rideSpec);   // body heave / pitch / roll + per-corner travel (data in ride_model.js)
   const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0 };
   const keys = new Set();
   const tmp = { f: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), m: new THREE.Matrix4(), front: new THREE.Vector3(), rear: new THREE.Vector3() };
@@ -86,6 +88,13 @@ export function initTrackMode(ctx) {
     carModel.quaternion.setFromRotationMatrix(tmp.m);
     carModel.position.set(frx * DM, Lf.y * DM, frz * DM);
     car.pitch = Math.asin(THREE.MathUtils.clamp(tmp.f.y, -1, 1));
+    // chassis rides on its springs: same plane fit as the tyre-state stance (dz = c0 + cx*x + cy*y)
+    const b = ride.body;
+    if (b.c0 || b.cx || b.cy) {
+      carModel.rotateX(Math.asin(THREE.MathUtils.clamp(b.cy, -1, 1)));
+      carModel.rotateY(Math.asin(THREE.MathUtils.clamp(-b.cx, -1, 1)));
+      carModel.translateZ(b.c0);
+    }
     car.lat = Lf.lat; car.Lf = Lf;
     return Lf;
   }
@@ -156,6 +165,7 @@ export function initTrackMode(ctx) {
     const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45) * tyreGrip;
     if (Math.abs(nv * yaw) > grip) yaw = Math.sign(yaw) * grip / Math.max(1, Math.abs(nv));
     car.h += yaw * dt;
+    ride.update(dt, { aLong: (nv - v) / dt, aLat: nv * yaw, speed: Math.abs(nv) });
     car.x += Math.cos(car.h) * nv * dt;
     car.z += Math.sin(car.h) * nv * dt;
     // barriers
@@ -453,7 +463,9 @@ export function initTrackMode(ctx) {
   applyCircuit(true);
   setCam('free');
   const api = {
-    circuit, car, mode,
+    circuit, car, mode, ride,
+    /** per-corner suspension travel from the ride model (dm, + = bump); zeros when not driving */
+    get suspensionTravel() { return mode.circuit && mode.driving ? ride.travel : null; },
     /** after the stock powertrain sim: replace speed/RPM with the on-track vehicle model while driving */
     update(dt) {
       wrapPresets();
@@ -471,6 +483,7 @@ export function initTrackMode(ctx) {
       } else if (car.v !== 0) {
         car.v = 0;
       }
+      if (!mode.driving) ride.reset();
       updateHud(dt);
     },
     beforeRender(dt) {

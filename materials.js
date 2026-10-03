@@ -213,10 +213,10 @@ export function createCarMaterials() {
     }),
 
     // LEDs & Emissives
-    ledRed: new THREE.MeshStandardMaterial({
-      color: 0xff1122,
-      emissive: 0xff1122,
-      emissiveIntensity: 3.5,
+    ledRed: new THREE.MeshStandardMaterial({ // deep red: high intensity tone-maps toward orange
+      color: 0xff0a14,
+      emissive: 0xff0814,
+      emissiveIntensity: 1.6,
       roughness: 0.2,
     }),
     ledGreen: new THREE.MeshStandardMaterial({

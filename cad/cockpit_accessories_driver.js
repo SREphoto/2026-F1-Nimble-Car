@@ -8,16 +8,14 @@
  *   * Narrow 10mm visor aperture, dark polycarbonate visor, ballistic forehead strip
  *   * Visor pivot mechanisms with anodized aluminum hardware, tear-off posts
  *   * HANS anchor posts (M6 FIA 8858-2010 specification)
- * - Confor Foam Headrest:
- *   * Viscoelastic U-shaped surround with quick-release locating pins
- * - Aerodynamic Rear-View Mirrors (Matching 2026 Reference Photos):
- *   * Dual-surface carbon fiber housing with contoured outer edge
- *   * Front-facing 14-LED amber marshal warning array (2x7 matrix) in recessed bezel
- *   * Rear-facing reflective mirror glass in recessed frame
- *   * L-shaped aerodynamic carbon mounting stalk with titanium mounting foot
- *   * Horizontal cockpit rim air deflector vane / mirror winglet
+ * - Confor Foam Headrest (HEADREST_SPEC, ref round3 R9):
+ *   * Two padded wings either side of the helmet and a lower rear pad, with quick-release pins
+ * - Rear-View Mirrors (MIRROR_SPEC, refs round3 R3 to R5):
+ *   * Wide rounded pod with a thick carbon lip around recessed planar-reflector glass
+ *   * Amber marshal LED block on the outboard front face, slim amber strip under the glass
+ *   * Two thin curved aerofoil stalks (sidepod top and tub top) tied by a small aero vane
  * - FIA T-Camera Roll Hoop Pod:
- *   * Aerodynamic T-bar housing on roll hoop peak
+ *   * Aerodynamic T-bar housing on the roll-hoop blade above the airbox
  *   * Forward and rear optical camera lenses with sapphire glass
  *   * Base pylon with M6 Torx mounting fasteners
  * - Chassis Top Instrumentation:
@@ -33,176 +31,42 @@
 import * as THREE from 'three';
 import { materials } from '../materials.js';
 import { createTorxScrew, createSocketHeadBolt } from './fasteners.js';
+import { createDriverHelmet } from './driver_helmet.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { sweepGeometry } from './sweep_section.js';
+import { AIRBOX_SPEC } from './active_wings_bodywork.js';
+
+/** Mirror layout (car frame, dm, left side; right is mirrored). */
+export const MIRROR_SPEC = {
+  pod: { center: [14.0, 4.1, 5.58], depth: 0.52, span: 1.9, height: 0.68, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
+  realReflection: true,           // planar Reflector glass; false falls back to an env-mapped chrome
+  reflectorRes: [256, 96],
+  leds: { rows: 2, cols: 6, blockSpan: 0.5 },
+  stalkChord: 0.22, stalkThickness: 0.07,
+  stalks: [
+    { path: [[14.15, 4.55, 3.55], [14.15, 4.6, 4.2], [14.05, 4.5, 4.9], [14.0, 4.45, 5.3]] }, // sidepod top -> pod outer half
+    { path: [[13.75, 3.0, 4.45], [13.85, 3.2, 4.85], [13.95, 3.5, 5.15], [14.0, 3.65, 5.32]] }, // tub top -> pod inner half
+  ],
+  vane: { path: [[13.95, 3.33, 5.0], [13.95, 3.9, 5.02], [13.95, 4.5, 5.02]], chord: 0.42, thickness: 0.04 }, // ties the two stalks together
+};
+
+/** Padded headrest around the helmet (R9), car frame dm. Origin is the cockpit rim at the head. */
+export const HEADREST_SPEC = {
+  origin: [0, 0, 4.15],
+  wing: { x: 14.55, y: 1.68, length: 2.3, width: 0.72, height: 1.2, radius: 0.3, frontDrop: 0.45 },
+  rear: { x: 15.75, length: 0.9, width: 4.05, height: 0.95, radius: 0.3 },
+};
 
 export function createCockpitAccessories(options = {}) {
   const group = new THREE.Group();
   group.name = 'Cockpit_Accessories_Assembly';
 
   // =========================================================================
-  // 1. DRIVER & HELMET (FIA 8860-2018-ABP Specification)
-  // Driver seated at X = 13.2 dm, Y = 0.0 dm, Z = 6.2 dm
+  // 1. DRIVER HELMET & HANS (data-driven, see cad/driver_helmet.js HELMET_SPEC)
+  // Visor, peak, ballistic strip, visor pivots, chin vents, rear spoiler, HANS posts + yoke.
   // =========================================================================
-  const driverGroup = new THREE.Group();
-  driverGroup.name = 'Assembly_Driver_Helmet';
-  driverGroup.position.set(13.2, 0, 6.2);
-
-  // Helmet Outer Shell (Contoured composite shell)
-  const helmetShellGeo = new THREE.SphereGeometry(1.35, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.78);
-  // Flatten sides slightly for authentic human/helmet profile
-  helmetShellGeo.scale(1.15, 0.95, 1.05);
-  const helmetShell = new THREE.Mesh(helmetShellGeo, materials.redBullNavy || materials.carbonSatin);
-  helmetShell.name = 'Helmet_OuterShell';
-  helmetShell.castShadow = true;
-  driverGroup.add(helmetShell);
-
-  // Chin Bar & Lower Jaw Structure
-  const chinShape = new THREE.Shape();
-  chinShape.moveTo(0.2, -0.6);
-  chinShape.lineTo(-1.3, -0.6);
-  chinShape.lineTo(-1.45, -0.2);
-  chinShape.lineTo(-1.35, 0.35);
-  chinShape.lineTo(0.1, 0.35);
-  chinShape.closePath();
-
-  const chinExtrudeSettings = {
-    steps: 2,
-    depth: 1.5,
-    bevelEnabled: true,
-    bevelThickness: 0.15,
-    bevelSize: 0.15,
-    bevelSegments: 4
-  };
-  const chinGeo = new THREE.ExtrudeGeometry(chinShape, chinExtrudeSettings);
-  chinGeo.center();
-  const chinMesh = new THREE.Mesh(chinGeo, materials.redBullNavy || materials.carbonSatin);
-  chinMesh.position.set(-0.35, 0, -0.35);
-  chinMesh.rotation.y = Math.PI / 2;
-  chinMesh.name = 'Helmet_ChinBar';
-  driverGroup.add(chinMesh);
-
-  // Chin Spoiler & Aero Gurney Lip
-  const chinSpoilerGeo = new THREE.CylinderGeometry(0.75, 0.8, 0.12, 24, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
-  const chinSpoiler = new THREE.Mesh(chinSpoilerGeo, materials.carbonGloss);
-  chinSpoiler.rotation.z = Math.PI / 2;
-  chinSpoiler.position.set(-1.4, 0, -0.7);
-  chinSpoiler.name = 'Helmet_ChinSpoiler';
-  driverGroup.add(chinSpoiler);
-
-  // Chin Cooling Vents (4 discrete intake slots)
-  for (let i = -1; i <= 1; i += 2) {
-    for (let j = 0; j < 2; j++) {
-      const ventGeo = new THREE.BoxGeometry(0.08, 0.22, 0.08);
-      const vent = new THREE.Mesh(ventGeo, materials.titaniumAnodized);
-      vent.position.set(-1.42, i * (0.2 + j * 0.25), -0.45 + j * 0.12);
-      vent.name = `Helmet_VentSlot_${i}_${j}`;
-      driverGroup.add(vent);
-    }
-  }
-
-  // Visor Eyeport Recess & Rubber Gasket
-  const gasketCurve = new THREE.EllipseCurve(
-    0, 0,
-    1.0, 0.45,
-    Math.PI * 0.18, Math.PI * 0.82,
-    false, 0
-  );
-  const gasketPoints = gasketCurve.getPoints(24).map(p => new THREE.Vector3(-p.y - 0.7, p.x, 0.05));
-  const gasketSpline = new THREE.CatmullRomCurve3(gasketPoints);
-  const gasketGeo = new THREE.TubeGeometry(gasketSpline, 24, 0.035, 8, false);
-  const gasketMesh = new THREE.Mesh(gasketGeo, materials.siliconeSeal);
-  gasketMesh.name = 'Helmet_VisorGasket';
-  driverGroup.add(gasketMesh);
-
-  // Polycarbonate Visor (Narrow 10mm ABP aperture, dark smoke tint)
-  const visorCurve = new THREE.EllipseCurve(
-    0, 0,
-    1.02, 0.48,
-    Math.PI * 0.20, Math.PI * 0.80,
-    false, 0
-  );
-  const visorPoints = visorCurve.getPoints(24).map(p => new THREE.Vector3(-p.y - 0.72, p.x, 0.05));
-  const visorSpline = new THREE.CatmullRomCurve3(visorPoints);
-  const visorGeo = new THREE.TubeGeometry(visorSpline, 24, 0.16, 6, false);
-  visorGeo.scale(1.0, 1.0, 1.8);
-  const visorMesh = new THREE.Mesh(visorGeo, materials.glassRefractive);
-  visorMesh.name = 'Helmet_Visor_Polycarbonate';
-  driverGroup.add(visorMesh);
-
-  // Ballistic Forehead Strip (Zylon / Aramid strip, FIA 8860-2018-ABP mandatory reinforcement)
-  const zylonStripGeo = new THREE.CylinderGeometry(1.08, 1.08, 0.22, 24, 1, true, Math.PI * 0.65, Math.PI * 0.7);
-  const zylonStrip = new THREE.Mesh(zylonStripGeo, materials.carbonGloss);
-  zylonStrip.rotation.x = Math.PI / 2;
-  zylonStrip.position.set(-0.35, 0, 0.38);
-  zylonStrip.name = 'Helmet_BallisticZylonStrip';
-  driverGroup.add(zylonStrip);
-
-  // Visor Pivot Hardware (Left & Right)
-  [-1, 1].forEach(side => {
-    const pivotGroup = new THREE.Group();
-    pivotGroup.position.set(-0.15, side * 1.02, 0.08);
-
-    // Aluminum mounting disc
-    const discGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.04, 16);
-    const discMesh = new THREE.Mesh(discGeo, materials.alLi2099);
-    discMesh.rotation.x = Math.PI / 2;
-    pivotGroup.add(discMesh);
-
-    // Pivot screw with hex recess
-    const pivotScrew = createSocketHeadBolt({
-      headRadius: 0.1,
-      headHeight: 0.05,
-      hexRadius: 0.055,
-      hexDepth: 0.035,
-      shankRadius: 0.045,
-      shankLength: 0.06,
-      material: materials.titaniumBright
-    });
-    pivotScrew.rotation.x = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    pivotGroup.add(pivotScrew);
-
-    // Tear-off post (clear plastic spool for visor tear-off sheets)
-    const postGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.12, 12);
-    const postMesh = new THREE.Mesh(postGeo, materials.alLi2099);
-    postMesh.rotation.x = Math.PI / 2;
-    postMesh.position.set(-0.45, 0, -0.05);
-    pivotGroup.add(postMesh);
-
-    // HANS Anchor Post (M6 FIA 8858-2010 spec anchor post on lower rear quarter)
-    const hansPostGroup = new THREE.Group();
-    hansPostGroup.position.set(0.65, side * 0.95, -0.45);
-    const hansFlange = new THREE.CylinderGeometry(0.12, 0.12, 0.03, 16);
-    const hansFlangeMesh = new THREE.Mesh(hansFlange, materials.titaniumAnodized);
-    hansFlangeMesh.rotation.x = Math.PI / 2;
-    hansPostGroup.add(hansFlangeMesh);
-
-    const hansSpool = new THREE.CylinderGeometry(0.07, 0.07, 0.1, 16);
-    const hansSpoolMesh = new THREE.Mesh(hansSpool, materials.titaniumBright);
-    hansSpoolMesh.rotation.x = Math.PI / 2;
-    hansSpoolMesh.position.set(0, side * 0.05, 0);
-    hansPostGroup.add(hansSpoolMesh);
-
-    hansPostGroup.name = `Helmet_HANSPost_${side > 0 ? 'Left' : 'Right'}`;
-    driverGroup.add(hansPostGroup);
-
-    driverGroup.add(pivotGroup);
-  });
-
-  // Helmet Top Ventilation Scoops (Aero chimney vents)
-  [-0.2, 0.2].forEach(yOffset => {
-    const chimneyShape = new THREE.Shape();
-    chimneyShape.moveTo(-0.15, -0.08);
-    chimneyShape.lineTo(0.35, -0.08);
-    chimneyShape.lineTo(0.25, 0.12);
-    chimneyShape.lineTo(-0.15, 0.04);
-    chimneyShape.closePath();
-    const chimneyExtrude = { steps: 1, depth: 0.1, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
-    const chimneyGeo = new THREE.ExtrudeGeometry(chimneyShape, chimneyExtrude);
-    const chimneyMesh = new THREE.Mesh(chimneyGeo, materials.carbonGloss);
-    chimneyMesh.rotation.x = Math.PI / 2;
-    chimneyMesh.position.set(0.1, yOffset - 0.05, 1.28);
-    driverGroup.add(chimneyMesh);
-  });
-
+  const driverGroup = createDriverHelmet(options.helmet);
   group.add(driverGroup);
 
   // =========================================================================
@@ -211,189 +75,141 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   const headrestGroup = new THREE.Group();
   headrestGroup.name = 'Cockpit_Headrest_Assembly';
-  headrestGroup.position.set(14.6, 0, 4.25); // lies flat on the cockpit rim
 
-  const headrestShape = new THREE.Shape();
-  // Outer perimeter of headrest
-  headrestShape.moveTo(-1.6, -2.2);
-  headrestShape.lineTo(1.8, -2.1);
-  headrestShape.lineTo(1.9, 0);
-  headrestShape.lineTo(1.8, 2.1);
-  headrestShape.lineTo(-1.6, 2.2);
-  // Inner cutout for driver helmet
-  const holePath = new THREE.Path();
-  holePath.moveTo(-1.6, -1.35);
-  holePath.lineTo(1.0, -1.35);
-  holePath.quadraticCurveTo(1.3, 0, 1.0, 1.35);
-  holePath.lineTo(-1.6, 1.35);
-  holePath.closePath();
-  headrestShape.holes.push(holePath);
-
-  const headrestExtrude = {
-    steps: 2,
-    depth: 0.95,
-    bevelEnabled: true,
-    bevelThickness: 0.15,
-    bevelSize: 0.15,
-    bevelSegments: 4
-  };
-  const headrestGeo = new THREE.ExtrudeGeometry(headrestShape, headrestExtrude);
-  const headrestMesh = new THREE.Mesh(headrestGeo, materials.carbonMatte);
-  headrestMesh.rotation.set(0, 0, 0); // U-shape in XY plane, extruded up +Z
-  headrestMesh.position.set(0, 0, 0);
-  headrestGroup.add(headrestMesh);
-
-  // Quick-Release Headrest Locating Pins (FIA requirement: removable in <5 sec)
-  [
-    { x: -1.2, y: -2.0 }, { x: -1.2, y: 2.0 },
-    { x: 1.5, y: -1.8 }, { x: 1.5, y: 1.8 }
-  ].forEach((pos, idx) => {
-    const pinGroup = new THREE.Group();
-    pinGroup.position.set(pos.x, pos.y, 0.45);
-    const pinRingGeo = new THREE.TorusGeometry(0.12, 0.03, 8, 16);
-    const pinRingMesh = new THREE.Mesh(pinRingGeo, materials.titaniumAnodized);
-    pinGroup.add(pinRingMesh);
-    const pinStemGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 12);
-    const pinStemMesh = new THREE.Mesh(pinStemGeo, materials.titaniumBright);
-    pinStemMesh.position.z = -0.15;
-    pinGroup.add(pinStemMesh);
-    pinGroup.name = `Headrest_QuickReleasePin_${idx}`;
-    headrestGroup.add(pinGroup);
+  // Padded headrest (R9): two tall rounded wings either side of the helmet and a lower pad
+  // behind it, all sitting down in the cockpit opening. No block sticks up around the neck.
+  const HR = HEADREST_SPEC;
+  headrestGroup.position.set(...HR.origin);
+  const hrMat = materials.liveryPaint || materials.carbonMatte;
+  const hrParts = [];
+  [1, -1].forEach((s) => {
+    const w = HR.wing;
+    const g = new RoundedBoxGeometry(w.length, w.width, w.height, 4, w.radius);
+    // lower at the front so the wing top runs down toward the driver's cheek
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      if (z > 0) pos.setZ(i, z - w.frontDrop * THREE.MathUtils.clamp((-x / (w.length / 2) + 1) / 2, 0, 1));
+    }
+    g.computeVertexNormals();
+    g.translate(w.x, s * w.y, w.height / 2);
+    hrParts.push(g);
   });
+  {
+    const r = HR.rear;
+    const g = new RoundedBoxGeometry(r.length, r.width, r.height, 4, r.radius);
+    g.translate(r.x, 0, r.height / 2);
+    hrParts.push(g);
+  }
+  hrParts.forEach((g, k) => {
+    const m = new THREE.Mesh(g, hrMat);
+    m.name = ['Cockpit_Headrest_Wing_L', 'Cockpit_Headrest_Wing_R', 'Cockpit_Headrest_RearPad'][k];
+    m.castShadow = true;
+    headrestGroup.add(m);
+  });
+
+  // Quick-release locating pins on top of the wings (FIA: removable in under 5 s)
+  [1, -1].forEach((s, si) => [HR.wing.x - 0.5, HR.wing.x + 0.6].forEach((px, k) => {
+    const pinGroup = new THREE.Group();
+    const top = HR.wing.height - HR.wing.frontDrop * THREE.MathUtils.clamp((-(px - HR.wing.x) / (HR.wing.length / 2) + 1) / 2, 0, 1);
+    pinGroup.position.set(px, s * HR.wing.y, top - 0.01);
+    const pinRingMesh = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 8, 16), materials.titaniumAnodized);
+    pinGroup.add(pinRingMesh);
+    pinGroup.name = `Headrest_QuickReleasePin_${si * 2 + k}`;
+    headrestGroup.add(pinGroup);
+  }));
 
   group.add(headrestGroup);
 
   // =========================================================================
-  // 3. AERODYNAMIC REAR-VIEW MIRRORS (Matching 2026 Reference Photos)
-  // Left: Y = -4.2 dm, Right: Y = +4.2 dm at X = 12.0 dm, Z = 5.2 dm
-  // Features:
-  // - Outer aerodynamic housing with rounded edges
-  // - Front-facing 14-LED marshal amber array (2x7 grid)
-  // - Rear-facing reflective mirror glass seated in recessed frame
-  // - L-shaped carbon aerodynamic mounting stalk
-  // - Horizontal cockpit rim flow conditioning winglet
+  // 3. REAR-VIEW MIRRORS (MIRROR_SPEC, refs round3 R3 to R5)
+  // Wide rounded pod, recessed reflective glass facing the driver, amber marshal LEDs,
+  // two thin curved stalks (sidepod top and tub top) and a small aero vane between them.
   // =========================================================================
+  const MS = MIRROR_SPEC;
   [-1, 1].forEach(side => {
+    const sn = side > 0 ? 'L' : 'R';
     const mirrorAssembly = new THREE.Group();
     mirrorAssembly.name = `Assembly_Mirror_${side > 0 ? 'Left' : 'Right'}`;
-    mirrorAssembly.position.set(9.5, side * 3.4, 5.3);
-    mirrorAssembly.scale.set(0.65, 0.65, 0.65);
+    const [px, py, pz] = MS.pod.center;
+    const pod = new THREE.Group();
+    pod.name = `Mirror_Pod_${sn}`;
+    pod.position.set(px, side * py, pz);
+    pod.rotation.z = -side * MS.pod.toeIn; // glass turned slightly toward the driver
+    mirrorAssembly.add(pod);
 
-    // Mirror Body Outer Shell (Aerodynamic pod)
-    const mirrorBodyShape = new THREE.Shape();
-    mirrorBodyShape.moveTo(-0.8, -0.35);
-    mirrorBodyShape.lineTo(0.8, -0.35);
-    mirrorBodyShape.quadraticCurveTo(1.1, 0, 0.8, 0.35);
-    mirrorBodyShape.lineTo(-0.8, 0.35);
-    mirrorBodyShape.quadraticCurveTo(-1.0, 0, -0.8, -0.35);
-    mirrorBodyShape.closePath();
-
-    const mirrorExtrude = {
-      steps: 2,
-      depth: 1.45,
-      bevelEnabled: true,
-      bevelThickness: 0.12,
-      bevelSize: 0.12,
-      bevelSegments: 4
-    };
-    const mirrorBodyGeo = new THREE.ExtrudeGeometry(mirrorBodyShape, mirrorExtrude);
-    mirrorBodyGeo.center();
-    const mirrorBodyMesh = new THREE.Mesh(mirrorBodyGeo, materials.redBullNavy || materials.carbonGloss);
-    mirrorBodyMesh.rotation.y = side > 0 ? 0.08 : -0.08;
-    mirrorBodyMesh.name = `Mirror_Shell_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(mirrorBodyMesh);
-
-    // Front-Facing 14-LED Marshal Warning Array (2 rows x 7 columns)
-    const ledMatrixGroup = new THREE.Group();
-    ledMatrixGroup.name = `Mirror_MarshalLEDArray_${side > 0 ? 'L' : 'R'}`;
-    // Position on front face (pointing forward: -X direction)
-    ledMatrixGroup.position.set(-0.82, 0, 0);
-
-    // Recessed dark bezel housing the LEDs
-    const ledBezelGeo = new THREE.BoxGeometry(0.06, 0.55, 1.15);
-    const ledBezelMesh = new THREE.Mesh(ledBezelGeo, materials.carbonMatte);
-    ledMatrixGroup.add(ledBezelMesh);
-
-    // 14 Discrete Amber LED Elements (7 across x 2 tall)
-    const ledRadius = 0.045;
-    const ledGeo = new THREE.CylinderGeometry(ledRadius, ledRadius, 0.04, 12);
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 7; col++) {
-        const ledMesh = new THREE.Mesh(ledGeo, materials.ledAmber);
-        ledMesh.rotation.z = Math.PI / 2;
-        const zPos = -0.45 + col * 0.15;
-        const yPos = -0.12 + row * 0.24;
-        ledMesh.position.set(-0.02, yPos, zPos);
-        ledMesh.name = `LED_${row}_${col}`;
-        ledMatrixGroup.add(ledMesh);
-      }
+    const { depth: D, span: S, height: Hh, radius: R } = MS.pod;
+    // Pod body: rounded box (x = depth, y = span, z = height)
+    const body = new THREE.Mesh(new RoundedBoxGeometry(D, S, Hh, 5, R), materials.liveryPaint || materials.carbonGloss);
+    body.name = `Mirror_Shell_${sn}`;
+    body.castShadow = true;
+    pod.add(body);
+    // Thick rear lip that frames the recessed glass
+    const rr = (w, h, r) => { const sh = new THREE.Shape(); const x0 = -w / 2, y0 = -h / 2;
+      sh.moveTo(x0 + r, y0); sh.lineTo(x0 + w - r, y0); sh.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + r);
+      sh.lineTo(x0 + w, y0 + h - r); sh.quadraticCurveTo(x0 + w, y0 + h, x0 + w - r, y0 + h);
+      sh.lineTo(x0 + r, y0 + h); sh.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+      sh.lineTo(x0, y0 + r); sh.quadraticCurveTo(x0, y0, x0 + r, y0); return sh; };
+    const lipShape = rr(S - 0.02, Hh - 0.02, R * 0.9);
+    lipShape.holes.push(rr(S - 2 * MS.pod.lip, Hh - 2 * MS.pod.lip, R * 0.6));
+    const lipGeo = new THREE.ExtrudeGeometry(lipShape, { depth: MS.pod.recess, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2, curveSegments: 6 });
+    lipGeo.rotateY(Math.PI / 2); // extrude -> +X (rearward)
+    lipGeo.rotateX(Math.PI / 2); // shape x -> Y (span), shape y -> Z (height)
+    const lip = new THREE.Mesh(lipGeo, materials.carbonGloss);
+    lip.name = `Mirror_GlassLip_${sn}`;
+    lip.position.x = D / 2 - 0.02;
+    pod.add(lip);
+    // Recessed glass on the rear face: real planar reflection when available
+    const gw = S - 2 * MS.pod.lip - 0.02, gh = Hh - 2 * MS.pod.lip - 0.02;
+    let glass;
+    if (MS.realReflection && Reflector) {
+      glass = new Reflector(new THREE.PlaneGeometry(gw, gh), { textureWidth: MS.reflectorRes[0], textureHeight: MS.reflectorRes[1], color: 0x9aa3ad, clipBias: 0.003 });
+    } else {
+      glass = new THREE.Mesh(new THREE.PlaneGeometry(gw, gh), materials.mirrorGlass);
     }
-    mirrorAssembly.add(ledMatrixGroup);
+    // plane normal +X (rearward), long side along Y, short side along Z
+    glass.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)));
+    glass.position.x = D / 2 + 0.005;
+    glass.name = `Mirror_Glass_${sn}`;
+    pod.add(glass);
+    // Amber marshal LED block on the outboard end of the front face (as on the reference cars)
+    const ledGroup = new THREE.Group();
+    ledGroup.name = `Mirror_MarshalLEDArray_${sn}`;
+    const bez = new THREE.Mesh(new THREE.BoxGeometry(0.02, MS.leds.blockSpan, Hh * 0.62), materials.carbonMatte);
+    ledGroup.add(bez);
+    const ledGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.02, 10);
+    for (let r = 0; r < MS.leds.rows; r++) for (let c = 0; c < MS.leds.cols; c++) {
+      const led = new THREE.Mesh(ledGeo, materials.ledAmber);
+      led.rotation.z = Math.PI / 2;
+      led.position.set(-0.012, (c - (MS.leds.cols - 1) / 2) * MS.leds.blockSpan / MS.leds.cols, (r - (MS.leds.rows - 1) / 2) * 0.08);
+      led.name = `LED_${r}_${c}`;
+      ledGroup.add(led);
+    }
+    ledGroup.position.set(-D / 2 - 0.005, side * (S / 2 - R - MS.leds.blockSpan / 2), 0);
+    pod.add(ledGroup);
+    // Slim amber strip along the bottom of the rear face, under the glass
+    const strip = new THREE.Mesh(new RoundedBoxGeometry(0.03, S * 0.7, 0.035, 2, 0.012), materials.ledAmber);
+    strip.name = `Mirror_RearLEDStrip_${sn}`;
+    strip.position.set(D / 2 + 0.02, 0, -Hh / 2 + MS.pod.lip * 0.5);
+    pod.add(strip);
 
-    // Rear-Facing Reflective Mirror Glass (Pointing rearward: +X direction)
-    const mirrorGlassGeo = new THREE.PlaneGeometry(0.65, 1.25);
-    const mirrorGlassMesh = new THREE.Mesh(mirrorGlassGeo, materials.mirrorGlass);
-    mirrorGlassMesh.rotation.y = Math.PI / 2;
-    // Driver viewing angle: angled slightly inward toward driver
-    mirrorGlassMesh.rotation.z = side > 0 ? -0.15 : 0.15;
-    mirrorGlassMesh.position.set(0.82, 0, 0);
-    mirrorGlassMesh.name = `Mirror_Glass_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(mirrorGlassMesh);
-
-    // L-Shaped Aerodynamic Carbon Mounting Stalk
-    // Stalk connects from cockpit chassis coaming (Y = side * 3.3, Z = 4.8) to mirror base
-    const stalkCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.1, -side * 1.05, -0.65), // Chassis mounting point
-      new THREE.Vector3(0.05, -side * 0.85, -0.45),
-      new THREE.Vector3(0.0, -side * 0.45, -0.15),
-      new THREE.Vector3(-0.05, 0.0, 0.0)             // Mirror underside attachment
-    ]);
-    const stalkGeo = new THREE.TubeGeometry(stalkCurve, 20, 0.09, 8, false);
-    // Flatten stalk into an aerodynamic teardrop chord
-    stalkGeo.scale(1.8, 0.8, 1.0);
-    const stalkMesh = new THREE.Mesh(stalkGeo, materials.carbonGloss);
-    stalkMesh.name = `Mirror_Stalk_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(stalkMesh);
-
-    // Stalk Chassis Mounting Foot with 3x Countersunk Torx Fasteners
-    const footGroup = new THREE.Group();
-    // stalkGeo.scale(1.8, 0.8, 1) also scales the stalk end point -> (0.18, -side*0.84, -0.65)
-    footGroup.position.set(0.18, -side * 0.84, -0.65);
-    const footPlateGeo = new THREE.BoxGeometry(0.5, 0.25, 0.06);
-    const footPlateMesh = new THREE.Mesh(footPlateGeo, materials.titaniumBright);
-    footPlateMesh.rotation.y = side > 0 ? 0.2 : -0.2;
-    footGroup.add(footPlateMesh);
-
-    [-0.15, 0.0, 0.15].forEach((xOff, fIdx) => {
-      const screw = createTorxScrew({
-        headRadius: 0.045,
-        headHeight: 0.025,
-        lobeRadius: 0.025,
-        shankRadius: 0.025,
-        shankLength: 0.05,
-        material: materials.titaniumAnodized
-      });
-      screw.position.set(xOff, 0, 0.03);
-      screw.rotation.x = Math.PI / 2;
-      screw.name = `MirrorFoot_Fastener_${fIdx}`;
-      footGroup.add(screw);
+    // Two thin curved aerofoil stalks: one from the sidepod top, one from the tub top
+    const toWorld = (p) => [p[0], side * p[1], p[2]];
+    MS.stalks.forEach((st, k) => {
+      const g = sweepGeometry(st.path.map(toWorld), () => MS.stalkChord, () => MS.stalkThickness,
+        { samples: 28, ring: 14, n: 2.2, lead: 0.3, widthHint: () => new THREE.Vector3(1, 0, 0) });
+      const m = new THREE.Mesh(g, materials.carbonGloss);
+      m.name = `Mirror_Stalk_${sn}_${k ? 'Tub' : 'Sidepod'}`;
+      m.castShadow = true;
+      mirrorAssembly.add(m);
     });
-    mirrorAssembly.add(footGroup);
-
-    // Horizontal Flow Conditioning Winglet (extends inboard from mirror / cockpit coaming)
-    const wingletShape = new THREE.Shape();
-    wingletShape.moveTo(-0.6, 0);
-    wingletShape.lineTo(0.6, 0);
-    wingletShape.lineTo(0.4, 0.04);
-    wingletShape.lineTo(-0.6, 0.02);
-    wingletShape.closePath();
-    const wingletExtrude = { steps: 1, depth: 0.75, bevelEnabled: false };
-    const wingletGeo = new THREE.ExtrudeGeometry(wingletShape, wingletExtrude);
-    const wingletMesh = new THREE.Mesh(wingletGeo, materials.carbonGloss);
-    wingletMesh.rotation.x = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    wingletMesh.position.set(-0.1, -side * 0.25, -0.15);
-    wingletMesh.name = `Mirror_AeroWinglet_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(wingletMesh);
+    // Small flat aero vane between the stalks, under the pod
+    const V = MS.vane;
+    const vg = sweepGeometry(V.path.map(toWorld), () => V.chord, () => V.thickness,
+      { samples: 12, ring: 14, n: 2.2, lead: 0.4, widthHint: () => new THREE.Vector3(-1, 0, -0.12) });
+    const vane = new THREE.Mesh(vg, materials.carbonGloss);
+    vane.name = `Mirror_AeroWinglet_${sn}`;
+    mirrorAssembly.add(vane);
 
     group.add(mirrorAssembly);
   });
@@ -405,7 +221,7 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   const tCamGroup = new THREE.Group();
   tCamGroup.name = 'Assembly_FIA_T_Camera';
-  tCamGroup.position.set(17.4, 0, 9.65); // sits on the airbox crown (Z 9.27) above the roll hoop
+  tCamGroup.position.set(17.3, 0, AIRBOX_SPEC.tCamZ); // on top of the roll-hoop blade above the airbox
 
   // Carbon Fiber Aerodynamic Mast
   const tMastGeo = new THREE.BoxGeometry(0.35, 0.22, 0.65);
@@ -551,7 +367,9 @@ export function createCockpitAccessories(options = {}) {
   const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, bladeExtrude);
   bladeGeo.center();
   const bladeMesh = new THREE.Mesh(bladeGeo, materials.carbonGloss);
+  bladeMesh.rotation.x = Math.PI / 2; // stand the blade up (it used to lie flat, floating over the tub)
   bladeMesh.position.z = 0.35;
+  bladeMesh.name = 'Antenna_UHF_Blade';
   bladeGroup.add(bladeMesh);
 
   sensorsGroup.add(bladeGroup);
@@ -581,6 +399,7 @@ export function createCockpitAccessories(options = {}) {
 
     const camlocHeadGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
     const camlocHeadMesh = new THREE.Mesh(camlocHeadGeo, materials.titaniumBright);
+    camlocHeadMesh.rotation.x = Math.PI / 2; // flat on the hatch (cylinder axis was sideways)
     camlocGroup.add(camlocHeadMesh);
 
     // Screwdriver slot recess
