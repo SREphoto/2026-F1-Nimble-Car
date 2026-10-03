@@ -12,6 +12,7 @@ Nothing here changes the current track or the car.
   where known, track width.
 - `../raw/tumftm/`: the original TUMFTM track files (16 circuits), with `SOURCE.md` for the licence.
 - `../raw/bacinger/`: one extra track line for Madrid, with `SOURCE.md`.
+- `build_report.txt`: what the last build had to drop or work around.
 - `tools/track/research/`: the scripts that made all of this.
 
 ## The 2026 calendar
