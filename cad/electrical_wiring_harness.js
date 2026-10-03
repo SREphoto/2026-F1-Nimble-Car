@@ -296,10 +296,12 @@ export function createElectricalHarness(options = {}) {
   // Rain Light Connector at X = 36.0, Y = 0.0, Z = 3.3 (top of rear impact structure)
   lvGroup.add(createLVConnector(new THREE.Vector3(36.0, 0.0, 3.3), new THREE.Vector3(1, 0, 0)));
 
-  // Rear Active Wing Vertical Pylon Wiring (Running up the dual rear wing pylons to active flap & LED strips)
+  // Rear Active Wing Vertical Pylon Wiring (one cable up each twin pylon, or up the swan neck, to active flap & LED strips)
   [-1, 1].forEach(side => {
     const epY = REAR_WING_SPEC.endplateOuterY - 0.45; // inside the mainplane tip, buried in the endplate
-    const rwPylonSpline = new THREE.CatmullRomCurve3([
+    const P = REAR_WING_SPEC.pylon;
+    const rwX = 36.8, rwZ = 7.4; // rear-wing group origin
+    const route = P.style === 'swan_neck' ? [
       new THREE.Vector3(36.0, side * 0.1, 3.33),
       new THREE.Vector3(36.05, side * 0.6, 3.9),   // up the fork leg
       new THREE.Vector3(35.75, side * 0.03, 4.9),  // inside the swan-neck blade
@@ -308,7 +310,17 @@ export function createElectricalHarness(options = {}) {
       new THREE.Vector3(36.4, side * 0.03, 7.32),  // into the mainplane
       new THREE.Vector3(36.8, side * 2.5, 7.3),
       new THREE.Vector3(37.0, side * epY, 7.3)     // into the endplate, which carries it down to the rain LEDs
-    ]);
+    ] : [
+      new THREE.Vector3(36.0, side * 0.1, 3.33),
+      new THREE.Vector3(rwX + P.twin.path[0][0], side * Math.abs(P.twin.y[0]), 3.42), // into the foot of its own pylon
+      ...P.twin.path.slice(1, -1).map(([x, z]) => new THREE.Vector3(rwX + x, side * Math.abs(P.twin.y[0]), rwZ + z)),
+      new THREE.Vector3(rwX - 0.45, side * Math.abs(P.twin.y[0]), 7.14), // into the mainplane, mid-thickness
+      new THREE.Vector3(36.6, side * 1.5, 7.19),
+      new THREE.Vector3(36.75, side * 2.5, 7.23),
+      new THREE.Vector3(36.9, side * 4.0, 7.34),
+      new THREE.Vector3(37.0, side * epY, 7.4)     // into the endplate, which carries it down to the rain LEDs
+    ];
+    const rwPylonSpline = new THREE.CatmullRomCurve3(route);
     const rwPylonGeo = new THREE.TubeGeometry(rwPylonSpline, 48, 0.03, 8, false);
     const rwPylonMesh = new THREE.Mesh(rwPylonGeo, materials.harnessBlack);
     rwPylonMesh.name = `Harness_RearWing_EndplateLED_${side > 0 ? 'L' : 'R'}`;

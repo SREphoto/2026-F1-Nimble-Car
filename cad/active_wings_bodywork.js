@@ -26,14 +26,14 @@ import { createWingElement, elementEdges } from './aero_profiles.js';
  */
 /**
  * Rear wing layout (rear-wing group frame: origin at x 36.8, z 7.4).
- * NOTE: the 2026 technical rules mount the wing on twin pylons under the mainplane; the single
- * swan-neck is kept as the default because it matches Samuel's reference car. Flip pylon.style.
+ * The 2026 technical rules mount the wing on twin pylons under the mainplane, which is the default
+ * (Samuel's choice). The single swan neck from his reference car is kept as pylon.style 'swan_neck'.
  */
 export const REAR_WING_SPEC = {
   endplateOuterY: 5.2,  // rear tyre inner face is at +-5.42
   flapModeAngles: { Z_MODE: -0.45, X_MODE: -0.05 },
   pylon: {
-    style: 'swan_neck',               // 'swan_neck' | 'underslung_twin'
+    style: 'underslung_twin',         // 'underslung_twin' (2026 rules, Samuel's choice) | 'swan_neck'
     // centre line of the blade in (x, z): rises ahead of the leading edge then hooks over the top
     path: [[-0.75, -3.0], [-1.25, -1.9], [-1.55, -0.7], [-1.5, 0.35], [-1.05, 0.78], [-0.5, 0.62], [-0.25, -0.05]],
     depth: (t) => 0.62 - 0.22 * t,    // blade chord along its length
@@ -41,7 +41,13 @@ export const REAR_WING_SPEC = {
     footZ: -4.05,                      // top of the crash structure
     forkY: 0.6, legChord: 0.5, legThickness: 0.12,
     pod: { at: [-0.75, 0, 0.98], length: 0.8, radius: 0.12, rodTo: [0.55, 0, 0.62] },
-    twinY: [-0.55, 0.55],
+    twin: {
+      y: [-0.62, 0.62],                // inner faces 0.55 from the centre line: tailpipe radius is 0.44
+      path: [[-0.55, -4.05], [-0.72, -2.7], [-0.74, -1.3], [-0.55, -0.27]], // RIS top -> into the mainplane underside
+      depth: (t) => 0.55 - 0.15 * t,
+      thickness: 0.14,
+      pod: { at: [-0.35, 0, -0.15], length: 0.55, radius: 0.075, rodTo: [0.5, 0, 0.5] }, // sits on the mainplane top
+    },
   },
 };
 
@@ -1105,31 +1111,56 @@ export function createActiveWingsBodywork(options = {}) {
   //                      forked at the base so the tailpipe passes through it (Samuel's refs)
   //   'underslung_twin': two slim pylons under the mainplane (what the 2026 rules actually ask for)
   // -------------------------------------------------------------------------
-  if (RW.pylon.style === 'swan_neck') {
-    const P = RW.pylon;
-    const curve = new THREE.CatmullRomCurve3(P.path.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+  // thin carbon blade lofted along a (x, z) centre line at lateral offset y, lens-shaped section
+  const pylonBlade = (path, depthFn, thickness, y, name) => {
+    const curve = new THREE.CatmullRomCurve3(path.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
     const N = 48, M = 16, verts = [], idx = [];
     for (let i = 0; i <= N; i++) {
       const t = i / N, c = curve.getPoint(t), tg = curve.getTangent(t);
       const n = new THREE.Vector3(tg.z, 0, -tg.x).normalize(); // in-plane normal (the blade's chord direction)
-      const depth = P.depth(t), half = P.thickness / 2;
+      const depth = depthFn(t), half = thickness / 2;
       for (let j = 0; j < M; j++) {
         const a = (j / M) * Math.PI * 2;
         const u = Math.cos(a), w = Math.sin(a);
         const thick = half * Math.sign(w) * Math.pow(Math.abs(w), 0.7) * (0.55 + 0.45 * (1 - Math.abs(u))); // lens section
-        verts.push(c.x + n.x * u * depth / 2, thick, c.z + n.z * u * depth / 2);
+        verts.push(c.x + n.x * u * depth / 2, y + thick, c.z + n.z * u * depth / 2);
       }
     }
     for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) {
       const a = i * M + j, b2 = i * M + (j + 1) % M, c2 = (i + 1) * M + (j + 1) % M, d = (i + 1) * M + j;
       idx.push(a, c2, b2, a, d, c2);
     }
+    // close both ends with a fan so the foot and the top are not open tubes
+    [0, N].forEach((i) => {
+      const cIdx = verts.length / 3, c = curve.getPoint(i / N);
+      verts.push(c.x, y, c.z);
+      for (let j = 0; j < M; j++) { const a = i * M + j, b2 = i * M + (j + 1) % M; if (i === 0) idx.push(cIdx, a, b2); else idx.push(cIdx, b2, a); }
+    });
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
     g.setIndex(idx); g.computeVertexNormals();
-    const blade = new THREE.Mesh(g, carbonMat);
-    blade.name = 'RearWing_SwanNeck_Pylon'; blade.castShadow = true;
-    rearWingGroup.add(blade);
+    const m = new THREE.Mesh(g, carbonMat);
+    m.name = name; m.castShadow = true;
+    rearWingGroup.add(m);
+    return m;
+  };
+  const addActuator = (pd) => {
+    const pod = new THREE.Mesh(new THREE.CapsuleGeometry(pd.radius, pd.length, 6, 14), carbonMat);
+    pod.name = 'RearWing_Actuator_Pod';
+    pod.rotation.set(0, 0, Math.PI / 2); // capsule axis along X
+    pod.position.set(...pd.at);
+    rearWingGroup.add(pod);
+    const rodA = new THREE.Vector3(pd.at[0] + pd.length / 2, 0, pd.at[2]);
+    const rodB = new THREE.Vector3(...pd.rodTo);
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, rodA.distanceTo(rodB), 8), materials.titaniumAnodized || carbonMatte);
+    rod.name = 'RearWing_Actuator_Rod';
+    rod.position.copy(rodA).add(rodB).multiplyScalar(0.5);
+    rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), rodB.clone().sub(rodA).normalize());
+    rearWingGroup.add(rod);
+  };
+  if (RW.pylon.style === 'swan_neck') {
+    const P = RW.pylon;
+    pylonBlade(P.path, P.depth, P.thickness, 0, 'RearWing_SwanNeck_Pylon');
     // forked foot: two legs on the crash structure straddle the tailpipe and join under the blade
     const [bx, bz] = P.path[0];
     [-1, 1].forEach((sd) => {
@@ -1144,36 +1175,13 @@ export function createActiveWingsBodywork(options = {}) {
     bridge.name = 'RearWing_Pylon_Fork_Bridge';
     bridge.position.set(bx, 0, bz - 0.04);
     rearWingGroup.add(bridge);
-    // flap actuator pod on top of the hook, with its push rod to the flap
-    const pod = new THREE.Mesh(new THREE.CapsuleGeometry(P.pod.radius, P.pod.length, 6, 14), carbonMat);
-    pod.name = 'RearWing_Actuator_Pod';
-    pod.rotation.set(0, 0, Math.PI / 2); // capsule axis along X
-    pod.position.set(...P.pod.at);
-    rearWingGroup.add(pod);
-    const rodA = new THREE.Vector3(P.pod.at[0] + P.pod.length / 2, 0, P.pod.at[2]);
-    const rodB = new THREE.Vector3(...P.pod.rodTo);
-    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, rodA.distanceTo(rodB), 8), materials.titaniumAnodized || carbonMatte);
-    rod.name = 'RearWing_Actuator_Rod';
-    rod.position.copy(rodA).add(rodB).multiplyScalar(0.5);
-    rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), rodB.clone().sub(rodA).normalize());
-    rearWingGroup.add(rod);
+    addActuator(P.pod); // on top of the hook
   } else {
-    RW.pylon.twinY.forEach((pylonY, k) => {
-      // The cross-section is flattened with geometry.scale(1.8, 0.6, 1), which also scales
-      // the path, so pre-divide by the same factors to land the pylon where intended.
-      const yp = pylonY / 0.6;
-      const pylonCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-0.6 / 1.8, yp, -4.05), // Foot on top of the RIS (world X 36.2, Z 3.35)
-        new THREE.Vector3(-0.8 / 1.8, yp, -2.6),  // Passes beside the exhaust
-        new THREE.Vector3(-0.9 / 1.8, yp, -1.0),
-        new THREE.Vector3(-0.6 / 1.8, yp, 0.0)    // Under mainplane
-      ]);
-      const pylonGeo = new THREE.TubeGeometry(pylonCurve, 16, 0.08, 8, false);
-      pylonGeo.scale(1.8, 0.6, 1.0);
-      const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
-      pylonMesh.name = `RearWing_Pylon_Twin_${k}`;
-      rearWingGroup.add(pylonMesh);
-    });
+    // 2026 rules: two slim blades from the crash structure up to the mainplane underside,
+    // either side of the tailpipe; the flap actuator sits in a small fairing on the mainplane
+    const T = RW.pylon.twin;
+    T.y.forEach((py) => pylonBlade(T.path, T.depth, T.thickness, py, `RearWing_Pylon_Twin_${py > 0 ? 'L' : 'R'}`));
+    addActuator(T.pod);
   }
 
   group.add(rearWingGroup);
