@@ -13,30 +13,32 @@
  *   compound: soft (red band) · medium (yellow) · hard (white)   -> slick P ZERO, only the band colour differs
  *             inter (green, shallow-grooved CINTURATO intermediate tread)
  *             wet   (blue,  deep-grooved CINTURATO full-wet tread)
+ *             (inter/wet grooves are real geometry: a finer lathe displaced from the groove mask)
  *   wear:     new · laps · medium · heavy · blown
  * plus one global weather flag: dry | wet (wet glistening rubber with water droplets,
  * wet track sheen and spray behind the car while driving).
  *
  * The six UI "Tyre state" presets map onto those axes:
  *   new / laps / medium / heavy -> wear on the selected corner(s), dry
- *   blown  -> one corner (default rear left) blown, the others medium wear
+ *   blown  -> corner 'all': rear left blown, others medium wear; a single corner: add it to the flats
  *   rainy  -> wet compound (or inter, if inter is fitted) + wet surface, a few laps old
  *
  * Performance: every texture is painted once and cached by (compound, level) /
  * (pattern, wear); materials are cached by (compound, wear, weather) and shared by all
- * corners in the same state. Only the single blown corner gets its own material
- * instances (a small vertex-shader patch that deflates the tyre at the contact patch in
- * the non-spinning frame and flutters the torn flaps). No per-frame CPU geometry work.
+ * corners in the same state. Only blown corners get their own material instances (a small
+ * vertex-shader patch that deflates the tyre at the contact patch in the non-spinning frame
+ * and flutters the torn flaps). No per-frame CPU geometry work.
  *
  * API (window.tyreStates, also returned by initTyreStates):
  *   setTyreState(state, corner = 'all')     state: new|laps|medium|heavy|blown|rainy
  *   setTyreCompound(corner, compound)       corner: FL|FR|RL|RR|all; compound: soft|medium|hard|inter|wet
  *   setTyreWear(corner, wear)               wear: new|laps|medium|heavy|blown
- *   setBlownCorner(corner)                  moves the blown tyre (only one corner can be blown)
+ *   setBlown(corner, on = true)             blow / repair any combination of corners (car settles on the flats)
+ *   setBlownCorner(corner)                  legacy: makes `corner` the only blown tyre
  *   setWeather('dry' | 'wet')
  *   setOptions({ flap, spray, wetTrack })   blown-flap animation, rain spray, wet track sheen
  *   get()                                   current per-corner state
- * URL: ?tyre=<state>&compound=<compound>&blown=<corner>&weather=<dry|wet>
+ * URL: ?tyre=<state>&compound=<compound>&blown=<corner[,corner]>&weather=<dry|wet>
  */
 
 import * as THREE from 'three';
@@ -75,7 +77,10 @@ const WEAR_MAT = {
   heavy:  { swRough: 0.82, swCoat: 0,    swCoatR: 0,    trCoat: 0,   trCoatR: 0,    sheen: 0,   bump: 1.25 },
 };
 WEAR_MAT.blown = WEAR_MAT.heavy;
-const PATTERN_BUMP = { slick: 1, inter: 2.0, wet: 2.6 };
+const PATTERN_BUMP = { slick: 1, inter: 1.3, wet: 1.5 };       // grooves are real geometry now; bump adds edge detail
+// Grooved treads (inter / wet) are real geometry: a finer lathe displaced inward from the groove mask.
+const GROOVE_SEGMENTS = 768;                                   // around the tyre (6 texture tiles × 128)
+const GROOVE_DEPTH = { inter: 0.03, wet: 0.05 };                // dm: 3 mm intermediate, 5 mm full wet (new)
 
 // simple grip model used by Drive mode (cad/track/track_mode.js reads state.tyreGrip)
 const GRIP_COMPOUND = { dry: { soft: 1.03, medium: 1.0, hard: 0.97, inter: 0.84, wet: 0.74 }, wet: { soft: 0.52, medium: 0.5, hard: 0.48, inter: 0.8, wet: 0.76 } };
@@ -311,7 +316,9 @@ function treadTextures(pattern, wear, base) {
     }
     cx.putImageData(ci, 0, 0); dx.putImageData(di, 0, 0);
     const detailTex = canvasTexture(detail, { repeatU: 6, aniso: ANISO });
-    return { map: canvasTexture(color, { srgb: true, repeatU: 6, aniso: ANISO }), detail: detailTex, rough: detailTex };
+    let mask = null;
+    if (pattern !== 'slick') { mask = { W, H, data: new Uint8Array(W * H) }; for (let i = 0; i < W * H; i++) mask.data[i] = gd[i * 4]; }
+    return { map: canvasTexture(color, { srgb: true, repeatU: 6, aniso: ANISO }), detail: detailTex, rough: detailTex, mask };
   });
 }
 
@@ -413,7 +420,7 @@ function flapTex() {
 // ---------------------------------------------------------------------------------------------
 const GLSL_COMMON = /* glsl */`
 uniform vec3 uTyreDown; uniform float uTyreGround; uniform float uTyreRim; uniform float uTyreR; uniform float uTyreHalfW; uniform float uTyreFlat;
-uniform float uTyreTime; uniform float uTyreFlap;
+uniform float uTyreTime; uniform float uTyreFlap; uniform float uTyreDmgMirror;
 #ifdef TYRE_FLAP
 attribute vec2 aFlap;
 #endif
@@ -458,7 +465,7 @@ function patchBlown(mat, U, { flap = false, damage = null } = {}) {
         transformed.xz += d * fl * 0.9; transformed.y += fl * 0.25; }
       #endif
       { float tfw; transformed = tyreDeform(transformed, tfw); }
-      ${damage ? 'vTyreDmgUv = uv;' : ''}`);
+      ${damage ? 'vTyreDmgUv = vec2(uTyreDmgMirror > 0.5 ? 1.0 - uv.x : uv.x, uv.y);' : ''}`);
     sh.vertexShader = vs;
     if (damage) {
       sh.fragmentShader = sh.fragmentShader
@@ -473,7 +480,7 @@ function patchBlown(mat, U, { flap = false, damage = null } = {}) {
 }
 
 /** Torn tread flaps for one tyre (merged, aFlap = [along 0..1, phase]). Lathe angle convention: (x, z) = r (sin φ, cos φ). */
-function buildFlapGeometry(hw, patches) {
+function buildFlapGeometry(hw, patches, mirror = false) {
   const geos = [];
   const defs = [
     { u: patches[1].u + patches[1].w * 0.46, dir: 1, span: 0.85, vc: 0.55, half: 0.5, lift: 1.05, ph: 0.0 },
@@ -488,7 +495,7 @@ function buildFlapGeometry(hw, patches) {
       const t = i / nT;
       for (let j = 0; j <= nQ; j++) {
         const q = (j / nQ) * 2 - 1;
-        const phi = d.u * Math.PI * 2 + d.dir * d.span * t;
+        const phi = (mirror ? 1 - d.u : d.u) * Math.PI * 2 + (mirror ? -d.dir : d.dir) * d.span * t;   // right-hand wheels: mirrored like the damage map
         const r = R + 0.012 + d.lift * Math.pow(t, 1.7) + 0.05 * q * q * t;      // peeled away, edges curl
         const y = (d.vc - 0.5) * 2 * hw * 0.92 + q * d.half * hw * (1 - 0.35 * t) + 0.15 * t * t * hw * d.dir * 0.4;
         pos.push(r * Math.sin(phi), y, r * Math.cos(phi));
@@ -588,7 +595,7 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
   const wornGeo = () => (geo.worn ||= { front: buildTyreGeometries(TYRE_SPEC.width.front, { worn: true }), rear: buildTyreGeometries(TYRE_SPEC.width.rear, { worn: true }) });
 
   const cs = Object.fromEntries(CORNERS.map((k) => [k, { compound: 'medium', wear: 'medium', lastSlick: 'medium' }]));
-  const opts = { weather: 'dry', flap: true, spray: true, wetTrack: true, blown: null };
+  const opts = { weather: 'dry', flap: true, spray: true, wetTrack: true, blown: [] };
   const matCache = new Map();
   const envOf = () => base.sidewall.envMap || base.tread.envMap || null;
   const withEnv = (m, intensity = 1.0) => { const e = envOf(); if (e) { m.envMap = e; m.envMapIntensity = intensity; } return m; };
@@ -631,42 +638,103 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     return out;
   }
 
-  // shared uniforms for the (single) blown corner
-  const U = {
-    uTyreDown: { value: new THREE.Vector3(0, 0, -1) }, uTyreGround: { value: R - BLOWN_DROP }, uTyreRim: { value: RIM_FLANGE - 0.02 },
-    uTyreR: { value: R }, uTyreHalfW: { value: 1.875 }, uTyreFlat: { value: 1 }, uTyreTime: { value: 0 }, uTyreFlap: { value: 0 },
-  };
-  const blownCache = new Map();
-  function getBlownMaterials(compound, wet) {
+  // ---- grooved tread geometry (inter / wet): real cut grooves, displaced from the groove mask ----
+  const grooveCache = new Map();
+  function groovedTread(pattern, wear, size, worn) {
+    const depthF = TREAD_WEAR[wear === 'blown' ? 'heavy' : wear].depth;
+    const key = `${pattern}|${size}|${worn ? 1 : 0}|${depthF}`;
+    if (grooveCache.has(key)) return grooveCache.get(key);
+    const mask = treadTextures(pattern, wear === 'blown' ? 'heavy' : wear, base.tread).mask;
+    const src = (worn ? wornGeo() : geo.base)[size].tread.parameters.points;
+    // resample the tread profile evenly by arc length (fine enough across for the groove walls)
+    const lens = [0];
+    for (let i = 1; i < src.length; i++) lens.push(lens[i - 1] + src[i].distanceTo(src[i - 1]));
+    const L = lens[lens.length - 1], N = 84;
+    const pts = [], vs = [];
+    for (let j = 0; j < N; j++) {
+      const t = (j / (N - 1)) * L;
+      let i = 1; while (i < lens.length - 1 && lens[i] < t) i++;
+      const f = (t - lens[i - 1]) / Math.max(1e-6, lens[i] - lens[i - 1]);
+      pts.push(src[i - 1].clone().lerp(src[i], f)); vs.push(t / L);
+    }
+    const SEG = GROOVE_SEGMENTS;
+    const g = new THREE.LatheGeometry(pts, SEG);
+    const pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
+    const depth = GROOVE_DEPTH[pattern] * depthF;
+    const sample = (u, v) => {        // bilinear, u wraps (6 tiles around), canvas top row = v 1
+      const x = ((u * 6) % 1) * mask.W - 0.5, y = (1 - v) * (mask.H - 1);
+      const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+      const at = (xx, yy) => mask.data[THREE.MathUtils.clamp(yy, 0, mask.H - 1) * mask.W + (((xx % mask.W) + mask.W) % mask.W)];
+      return ((at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx) * (1 - fy) + (at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx) * fy) / 255;
+    };
+    for (let i = 0; i < pos.count; i++) {
+      const col = Math.floor(i / N), j = i % N;
+      const u = col / SEG, v = vs[j];
+      uv.setY(i, v);
+      const fade = THREE.MathUtils.smoothstep(v, 0.015, 0.06) * (1 - THREE.MathUtils.smoothstep(v, 0.94, 0.985));
+      const d = depth * Math.pow(sample(u, v), 0.8) * fade;
+      if (d > 0) pos.setXYZ(i, pos.getX(i) - nor.getX(i) * d, pos.getY(i) - nor.getY(i) * d, pos.getZ(i) - nor.getZ(i) * d);
+    }
+    g.computeVertexNormals();
+    grooveCache.set(key, g);
+    return g;
+  }
+
+  // ---- blown tyres: per-corner uniforms / materials / flaps (any combination of corners) ----
+  const TIME = { value: 0 };
+  const blown = {};                  // key -> { U, mats: Map, depth, flapMat, flapDepth, flapMesh }
+  function blownRig(k) {
+    if (blown[k]) return blown[k];
+    const c = corners[k];
+    const U = {
+      uTyreDown: { value: new THREE.Vector3(0, 0, -1) }, uTyreGround: { value: R - BLOWN_DROP }, uTyreRim: { value: RIM_FLANGE - 0.02 },
+      uTyreR: { value: R }, uTyreHalfW: { value: c.hw }, uTyreFlat: { value: 1 }, uTyreTime: TIME, uTyreFlap: { value: 0 },
+      uTyreDmgMirror: { value: c.key[1] === 'R' ? 1 : 0 },        // right-hand wheels see the lathe u mirrored
+    };
+    const mirror = U.uTyreDmgMirror.value === 1;
+    const flapMat = patchBlown(withEnv(new THREE.MeshStandardMaterial({ name: `Tyre_Blown_Flaps_${k}`, map: flapTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 }), 0.4), U, { flap: true });
+    const flapDepth = patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: flapTex(), alphaTest: 0.5 }), U, { flap: true });
+    const fkey = `${c.size}|${mirror ? 1 : 0}`;
+    flapGeoCache[fkey] ||= buildFlapGeometry(c.hw, blownDamageTex().userData.patches, mirror);
+    const flapMesh = new THREE.Mesh(flapGeoCache[fkey], flapMat);
+    flapMesh.name = 'Tyre_Blown_Flaps'; flapMesh.customDepthMaterial = flapDepth; flapMesh.castShadow = c.tread.castShadow; flapMesh.frustumCulled = false;
+    blown[k] = { U, mats: new Map(), depth: patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), U), flapMat, flapMesh };
+    return blown[k];
+  }
+  const flapGeoCache = {};
+  function getBlownMaterials(k, compound, wet) {
+    const rig = blownRig(k);
     const key = `${compound}|${wet ? 1 : 0}`;
-    if (blownCache.has(key)) return blownCache.get(key);
+    if (rig.mats.has(key)) return rig.mats.get(key);
     const src = getMaterials(compound, 'blown', wet);
-    const dmg = blownDamageTex();
-    const tread = patchBlown(src.tread.clone(), U, { damage: dmg });
-    tread.name = src.tread.name + '_Blown';
+    const tread = patchBlown(src.tread.clone(), rig.U, { damage: blownDamageTex() });
+    tread.name = `${src.tread.name}_Blown_${k}`;
     withEnv(tread, src.tread.envMapIntensity);
-    const sidewall = patchBlown(src.sidewall.clone(), U);
-    sidewall.name = src.sidewall.name + '_Blown';
+    const sidewall = patchBlown(src.sidewall.clone(), rig.U);
+    sidewall.name = `${src.sidewall.name}_Blown_${k}`;
     withEnv(sidewall, src.sidewall.envMapIntensity);
     const out = { tread, sidewall };
-    blownCache.set(key, out);
+    rig.mats.set(key, out);
     return out;
   }
-  const depthMat = patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), U);
-  const flapMat = patchBlown(withEnv(new THREE.MeshStandardMaterial({ name: 'Tyre_Blown_Flaps', map: flapTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 }), 0.4), U, { flap: true });
-  const flapDepth = patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: flapTex(), alphaTest: 0.5 }), U, { flap: true });
-  const flapGeo = {};
-  let flapMesh = null;
 
-  // stance group: tilts the whole car so the blown corner sits low
+  // stance group: tilts / lowers the whole car onto the flat tyre(s)
   let stance = carModel.getObjectByName('TyreState_Stance');
   const carInv = new THREE.Matrix4();
   carModel.updateMatrixWorld(true);
   carInv.copy(carModel.matrixWorld).invert();
   const cornerXY = Object.fromEntries(CORNERS.filter((k) => corners[k]).map((k) => { const p = corners[k].spindle.getWorldPosition(new THREE.Vector3()).applyMatrix4(carInv); return [k, [p.x, p.y]]; }));
   const travel = { fl: 0, fr: 0, rl: 0, rr: 0 };
-  function applyStance(blownKey) {
-    if (!stance && !blownKey) return;
+  /**
+   * Rigid chassis plane dz = c0 + cx·x + cy·y, least-squares fit to the target axle drops
+   * (BLOWN_DROP on a flat corner, 0 elsewhere), then lowered so no corner rises above its static
+   * height (springs only compress under a lost corner). Each wheel's suspension travel takes up
+   * the rest: travel = target − plane (bump +, rebound −), so every tyre still meets the ground.
+   * 1 flat: car rolls/pitches onto it (diagonal corner stays put). 2 flats on one side / axle:
+   * exact roll / pitch. 2 diagonal flats: car sits ½·drop lower, suspension takes the twist. 4: all down.
+   */
+  function applyStance(blownKeys) {
+    if (!stance && !blownKeys.length) return;
     if (!stance) {
       stance = new THREE.Group(); stance.name = 'TyreState_Stance';
       [...carModel.children].forEach((ch) => stance.add(ch));
@@ -675,71 +743,90 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     }
     Object.keys(travel).forEach((k) => (travel[k] = 0));
     stance.position.set(0, 0, 0); stance.rotation.set(0, 0, 0);
-    if (!blownKey || !cornerXY[blownKey]) return;
-    const diag = { FL: 'RR', RR: 'FL', FR: 'RL', RL: 'FR' }[blownKey];
-    const adj = CORNERS.filter((k) => k !== blownKey && k !== diag);
-    const d = BLOWN_DROP;
-    // plane dz = c0 + cx·x + cy·y through blown (-d), diagonal (0) and one adjacent corner (-d/2)
-    const P3 = [[...cornerXY[blownKey], -d], [...cornerXY[diag], 0], [...cornerXY[adj[0]], -d / 2]];
+    stance.userData.solve = null;
+    const ks = CORNERS.filter((k) => cornerXY[k]);
+    if (!blownKeys.length || ks.length < 3) return;
+    const target = (k) => (blownKeys.includes(k) ? -BLOWN_DROP : 0);
+    // normal equations (3x3) for least squares
+    const M = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], bv = [0, 0, 0];
+    ks.forEach((k) => { const r = [1, cornerXY[k][0], cornerXY[k][1]]; for (let i = 0; i < 3; i++) { bv[i] += r[i] * target(k); for (let j = 0; j < 3; j++) M[i][j] += r[i] * r[j]; } });
     const det3 = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-    const A = P3.map(([x, y]) => [1, x, y]), b = P3.map((p) => p[2]);
-    const D = det3(A);
-    const sol = [0, 1, 2].map((c) => det3(A.map((row, i) => row.map((v, j) => (j === c ? b[i] : v)))) / D);
-    const [c0, cx, cy] = sol;
+    const D = det3(M);
+    let [c0, cx, cy] = [0, 1, 2].map((c) => det3(M.map((row, i) => row.map((v, j) => (j === c ? bv[i] : v)))) / D);
+    const plane = (k) => c0 + cx * cornerXY[k][0] + cy * cornerXY[k][1];
+    const rise = Math.max(...ks.map(plane));
+    if (rise > 0) c0 -= rise;
     stance.rotation.set(Math.asin(cy), Math.asin(-cx), 0);
     stance.position.z = c0;
-    // wheels whose chassis corner dropped push up into bump so the tyre stays on the ground
-    CORNERS.forEach((k) => { if (k === blownKey || !cornerXY[k]) return; const [x, y] = cornerXY[k]; travel[corners[k].kinKey] = -(c0 + cx * x + cy * y); });
+    ks.forEach((k) => { travel[corners[k].kinKey] = target(k) - plane(k); });
+    stance.userData.solve = { c0, cx, cy, travel: { ...travel } };
   }
 
   function applyCorner(k) {
     const c = corners[k]; if (!c) return;
     const st = cs[k];
     const wet = opts.weather === 'wet';
-    const blown = st.wear === 'blown';
-    const g = (st.wear === 'heavy' || blown) ? wornGeo()[c.size] : geo.base[c.size];
-    c.tread.geometry = g.tread; c.swOut.geometry = g.swOut; c.swIn.geometry = g.swIn;
-    const m = blown ? getBlownMaterials(st.compound, wet) : getMaterials(st.compound, st.wear, wet);
+    const isBlown = st.wear === 'blown';
+    const worn = st.wear === 'heavy' || isBlown;
+    const g = worn ? wornGeo()[c.size] : geo.base[c.size];
+    const pattern = COMPOUNDS[st.compound].pattern;
+    c.tread.geometry = pattern === 'slick' ? g.tread : groovedTread(pattern, st.wear, c.size, worn);
+    c.swOut.geometry = g.swOut; c.swIn.geometry = g.swIn;
+    const m = isBlown ? getBlownMaterials(k, st.compound, wet) : getMaterials(st.compound, st.wear, wet);
+    // wireframe mode (app state) also applies to freshly swapped tyre materials
+    [m.tread, m.sidewall].forEach((mm) => { if (mm.wireframe !== !!state.wireframe) mm.wireframe = !!state.wireframe; });
     c.tread.material = m.tread; c.swOut.material = m.sidewall; c.swIn.material = m.sidewall;
-    [c.tread, c.swOut, c.swIn].forEach((mesh) => { mesh.customDepthMaterial = blown ? depthMat : undefined; });
-    if (blown) {
-      U.uTyreHalfW.value = c.hw;
-      flapGeo[c.size] ||= buildFlapGeometry(c.hw, blownDamageTex().userData.patches);
-      if (!flapMesh) { flapMesh = new THREE.Mesh(flapGeo[c.size], flapMat); flapMesh.name = 'Tyre_Blown_Flaps'; flapMesh.customDepthMaterial = flapDepth; flapMesh.castShadow = c.tread.castShadow; flapMesh.frustumCulled = false; }
-      flapMesh.geometry = flapGeo[c.size];
-      c.vis.add(flapMesh);
+    const rig = isBlown ? blownRig(k) : blown[k];
+    [c.tread, c.swOut, c.swIn].forEach((mesh) => { mesh.customDepthMaterial = isBlown ? rig.depth : undefined; });
+    if (rig) {
+      if (isBlown) { rig.flapMat.wireframe = !!state.wireframe; c.vis.add(rig.flapMesh); }
+      else if (rig.flapMesh.parent) rig.flapMesh.parent.remove(rig.flapMesh);
     }
   }
 
   function refresh() {
-    const blownKey = CORNERS.find((k) => cs[k].wear === 'blown') || null;
-    opts.blown = blownKey;
-    if (!blownKey && flapMesh?.parent) flapMesh.parent.remove(flapMesh);
+    const blownKeys = CORNERS.filter((k) => cs[k].wear === 'blown');
+    opts.blown = blownKeys;
     CORNERS.forEach(applyCorner);
-    applyStance(blownKey);
+    applyStance(blownKeys);
     wetTrack(opts.weather === 'wet' && opts.wetTrack);
     // Drive-mode grip (read by cad/track/track_mode.js)
     const wx = opts.weather === 'wet' ? 'wet' : 'dry';
     let g = CORNERS.reduce((a, k) => a + GRIP_COMPOUND[wx][cs[k].compound] * GRIP_WEAR[cs[k].wear], 0) / 4;
-    if (blownKey) g = Math.min(g, 0.62);
+    if (blownKeys.length) g = Math.min(g, 0.62 - 0.1 * (blownKeys.length - 1));
     state.tyreGrip = +g.toFixed(3);
     syncUi();
     window.dispatchEvent(new CustomEvent('tyrestatechange', { detail: api.get() }));
   }
 
-  // ---- wet track sheen (Red Bull Ring surfaces) ----
+  // ---- wet track sheen (Red Bull Ring + classic set) ----
+  // Darker, glossier surfaces with a soft env reflection; the direct (sun) specular is clamped in
+  // the shader so the low roughness gives a wet sheen instead of a blown-out white streak.
   const trackMats = [];
+  const WET_SPEC_MAX = { value: 0.06 };
+  function wetPatch(m) {
+    const prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => {
+      prev?.call(m, sh, r);
+      sh.uniforms.uWetSpecMax = WET_SPEC_MAX;
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\n#ifdef WET_TRACK\nuniform float uWetSpecMax;\n#endif')
+        .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n#ifdef WET_TRACK\n reflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(uWetSpecMax));\n#endif');
+    };
+    const prevKey = m.customProgramCacheKey?.bind(m);
+    m.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|wetTrack';
+  }
   function collectTrackMats() {
     if (trackMats.length) return;
-    const root = trackMode?.circuit?.group || window.__RBR__?.group;
-    if (!root) return;
+    const roots = [trackMode?.circuit?.group || window.__RBR__?.group, scene?.getObjectByName('F1_GrandPrix_FinishLine_Environment')].filter(Boolean);
     const seen = new Set();
-    root.traverse((o) => {
-      if (!o.isMesh || !/^RBR_(Asphalt|PitLane|Runoff|Kerbs|StartFinish|White_Lines|Pit_Boxes)/.test(o.name)) return;
+    roots.forEach((root) => root.traverse((o) => {
+      if (!o.isMesh || !/^(RBR_(Asphalt|PitLane|Runoff|Kerbs|StartFinish|White_Lines|Pit_Boxes)|Classic_Track_)/.test(o.name)) return;
       const m = o.material; if (!m || seen.has(m) || !m.isMeshStandardMaterial) return;
       seen.add(m);
-      trackMats.push({ m, rough: m.roughness, color: m.color.clone(), env: m.envMap, envI: m.envMapIntensity });
-    });
+      wetPatch(m);
+      trackMats.push({ m, rough: m.roughness, metal: m.metalness, color: m.color.clone(), env: m.envMap, envI: m.envMapIntensity });
+    }));
   }
   let trackWet = false;
   function wetTrack(on) {
@@ -747,8 +834,14 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     if (on === trackWet) return;
     trackWet = on;
     trackMats.forEach((t) => {
-      if (on) { t.m.roughness = Math.max(0.3, t.rough * 0.45); t.m.color.copy(t.color).multiplyScalar(0.58); if (envOf()) { t.m.envMap = envOf(); t.m.envMapIntensity = 0.35; } }
-      else { t.m.roughness = t.rough; t.m.color.copy(t.color); t.m.envMap = t.env; t.m.envMapIntensity = t.envI; }
+      if (on) {
+        t.m.roughness = Math.max(0.26, t.rough * 0.42); t.m.metalness = 0; t.m.color.copy(t.color).multiplyScalar(0.55);
+        if (envOf()) { t.m.envMap = envOf(); t.m.envMapIntensity = 0.3; }
+        t.m.defines = { ...(t.m.defines || {}), WET_TRACK: '' };
+      } else {
+        t.m.roughness = t.rough; t.m.metalness = t.metal; t.m.color.copy(t.color); t.m.envMap = t.env; t.m.envMapIntensity = t.envI;
+        if (t.m.defines) delete t.m.defines.WET_TRACK;
+      }
       t.m.needsUpdate = true;
     });
   }
@@ -761,7 +854,7 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
   // ---- public API ----
   const api = {
     COMPOUNDS, WEAR_STATES, TYRE_STATES,
-    get() { return { corners: JSON.parse(JSON.stringify(cs)), weather: opts.weather, blown: opts.blown, options: { flap: opts.flap, spray: opts.spray, wetTrack: opts.wetTrack }, grip: state.tyreGrip }; },
+    get() { return { corners: JSON.parse(JSON.stringify(cs)), weather: opts.weather, blown: [...opts.blown], stance: stance?.userData?.solve || null, options: { flap: opts.flap, spray: opts.spray, wetTrack: opts.wetTrack }, grip: state.tyreGrip }; },
     setTyreCompound(corner, compound) {
       if (!COMPOUNDS[compound]) throw new Error(`[tyres] unknown compound "${compound}"`);
       normCorner(corner).forEach((k) => { cs[k].compound = compound; if (COMPOUNDS[compound].pattern === 'slick') cs[k].lastSlick = compound; });
@@ -769,15 +862,23 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     },
     setTyreWear(corner, wear) {
       if (!WEAR_STATES[wear]) throw new Error(`[tyres] unknown wear state "${wear}"`);
-      let keys = normCorner(corner);
-      if (wear === 'blown') {
-        keys = keys.length === 4 ? ['RL'] : [keys[0]];           // only one blown tyre at a time
-        CORNERS.forEach((k) => { if (cs[k].wear === 'blown' && k !== keys[0]) cs[k].wear = 'heavy'; });
-      }
-      keys.forEach((k) => (cs[k].wear = wear));
+      normCorner(corner).forEach((k) => { if (wear === 'blown' && cs[k].wear !== 'blown') cs[k].preBlown = cs[k].wear; cs[k].wear = wear; });
       refresh();
     },
-    setBlownCorner(corner) { api.setTyreWear(normCorner(corner)[0], 'blown'); },
+    /** blow (true) or repair (false, back to the wear it had before) one or more corners; any combination */
+    setBlown(corner, on = true) {
+      normCorner(corner).forEach((k) => {
+        if (on && cs[k].wear !== 'blown') { cs[k].preBlown = cs[k].wear; cs[k].wear = 'blown'; }
+        else if (!on && cs[k].wear === 'blown') cs[k].wear = cs[k].preBlown && cs[k].preBlown !== 'blown' ? cs[k].preBlown : 'medium';
+      });
+      refresh();
+    },
+    /** legacy (single flat): makes `corner` the only blown tyre */
+    setBlownCorner(corner) {
+      const k = normCorner(corner)[0];
+      CORNERS.forEach((c) => { if (c !== k && cs[c].wear === 'blown') cs[c].wear = cs[c].preBlown && cs[c].preBlown !== 'blown' ? cs[c].preBlown : 'medium'; });
+      api.setBlown(k, true);
+    },
     setWeather(w) { opts.weather = w === 'wet' ? 'wet' : 'dry'; refresh(); },
     setOptions(o = {}) { ['flap', 'spray', 'wetTrack'].forEach((k) => { if (k in o) opts[k] = !!o[k]; }); refresh(); },
     /** UI preset: new|laps|medium|heavy|blown|rainy on corner(s) */
@@ -794,25 +895,32 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
         CORNERS.forEach((k) => { if (COMPOUNDS[cs[k].compound].pattern !== 'slick') cs[k].compound = cs[k].lastSlick || 'medium'; });
       }
       if (name === 'blown') {
-        CORNERS.forEach((k) => { if (cs[k].wear === 'blown') cs[k].wear = 'medium'; });
-        CORNERS.forEach((k) => { if (cs[k].wear === 'new' || cs[k].wear === 'laps') cs[k].wear = 'medium'; });
-        api.setTyreWear(keys.length === 4 ? 'RL' : keys[0], 'blown'); return;
+        // 'all' = the race-scenario preset: only the rear left goes flat, the rest are medium-worn.
+        // A single corner ADDS that corner to the flats (pick several corners one after another).
+        if (keys.length === 4) {
+          CORNERS.forEach((k) => { if (cs[k].wear === 'blown' || cs[k].wear === 'new' || cs[k].wear === 'laps') cs[k].wear = 'medium'; });
+          api.setBlown('RL', true);
+        } else api.setBlown(keys, true);
+        return;
       }
       keys.forEach((k) => (cs[k].wear = name));
       refresh();
     },
     /** call once per frame right before rendering */
     update(dt = 1 / 60) {
-      U.uTyreTime.value += dt;
+      TIME.value += dt;
       const speed = state.speedKmH || 0;
-      if (opts.blown && corners[opts.blown]) {
-        const c = corners[opts.blown];
-        c.tread.updateWorldMatrix(true, false);
-        tmpV.set(0, 0, -1).transformDirection(carModel.matrixWorld);
-        tmpI.copy(c.tread.matrixWorld).invert();
-        U.uTyreDown.value.copy(tmpV).transformDirection(tmpI);
+      if (opts.blown.length) {
+        carModel.updateWorldMatrix(true, false);
+        tmpV.set(0, 0, -1).transformDirection(carModel.matrixWorld);       // ground normal (car frame -Z)
         const target = opts.flap ? THREE.MathUtils.clamp(speed / 140, 0, 1) : 0;
-        U.uTyreFlap.value += (target - U.uTyreFlap.value) * Math.min(1, dt * 4);
+        opts.blown.forEach((k) => {
+          const c = corners[k], rig = blown[k]; if (!c || !rig) return;
+          c.tread.updateWorldMatrix(true, false);
+          tmpI.copy(c.tread.matrixWorld).invert();
+          rig.U.uTyreDown.value.copy(tmpV).transformDirection(tmpI);
+          rig.U.uTyreFlap.value += (target - rig.U.uTyreFlap.value) * Math.min(1, dt * 4);
+        });
       }
       if (spray) {
         const on = opts.weather === 'wet' && opts.spray && speed > 25;
@@ -846,11 +954,11 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
   const ui = {};
   function syncUi() {
     if (!ui.state) return;
-    const k = ui.corner.value === 'all' ? (opts.blown || 'RL') : ui.corner.value;
+    const k = ui.corner.value === 'all' ? (opts.blown[0] || 'RL') : ui.corner.value;
     const st = cs[k];
     ui.state.value = opts.weather === 'wet' && COMPOUNDS[st.compound].pattern !== 'slick' ? 'rainy' : st.wear;
     ui.compound.value = st.compound;
-    ui.flapRow.style.display = opts.blown ? '' : 'none';
+    ui.flapRow.style.display = opts.blown.length ? '' : 'none';
     ui.wetRow.style.display = opts.weather === 'wet' ? '' : 'none';
     ui.flap.checked = opts.flap; ui.spray.checked = opts.spray && opts.wetTrack;
     if (ui.hud) ui.hud.value = ui.state.value;
@@ -912,7 +1020,7 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     if (!COMPOUNDS[cs.FL.compound]) CORNERS.forEach((k) => (cs[k].compound = 'medium'));
     const t = q.get('tyre');
     if (q.get('weather') === 'wet') opts.weather = 'wet';
-    if (t === 'blown') { CORNERS.forEach((k) => (cs[k].wear = 'medium')); cs[normCorner(q.get('blown') || 'RL')[0]].wear = 'blown'; refresh(); }
+    if (t === 'blown') { CORNERS.forEach((k) => (cs[k].wear = 'medium')); normCorner((q.get('blown') || 'RL').split(',')).forEach((k) => (cs[k].wear = 'blown')); refresh(); }
     else if (t && TYRE_STATES[t]) api.setTyreState(t);
     else refresh();
   } catch (e) { console.warn('[tyres] bad URL tyre params', e.message); refresh(); }

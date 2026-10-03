@@ -53,10 +53,10 @@ An interactive 3D WebGL application built to inspect and experience the 2026 For
     9. **Active Wings & Bodywork:** Front wing with active flaps, nosecone, sidepod radiator ducts, shark fin, active rear wing.
 
 - **Tyre compounds, wear states & weather** (`cad/tyre_states.js`, see [docs/TYRE_STATES.md](docs/TYRE_STATES.md)):
-  - Compounds per corner: Soft (red), Medium (yellow), Hard (white) P ZERO slicks, Intermediate (green, shallow grooves) and Full wet (blue, deep grooves) CINTURATO.
-  - Wear per corner: Brand new, A few laps, Medium wear, Heavy wear, Blown (one tyre, deflated, car sits low on that corner, flapping rubber).
+  - Compounds per corner: Soft (red), Medium (yellow), Hard (white) P ZERO slicks, Intermediate (green, shallow grooves) and Full wet (blue, deep grooves) CINTURATO, with the grooves cut into the geometry.
+  - Wear per corner: Brand new, A few laps, Medium wear, Heavy wear, Blown (any combination of tyres, deflated, car settles onto the flat corner(s), flapping rubber).
   - Rainy weather: wet/inter tyres with a water film and droplets, wet track sheen and spray in Drive mode.
-  - "Tyre state" / Compound / Corner selectors in the Telemetry panel, a Tyre state selector in the Red Bull Ring HUD, and `window.tyreStates` (`setTyreState`, `setTyreCompound(corner, compound)`, `setTyreWear`, `setBlownCorner`, `setWeather`).
+  - "Tyre state" / Compound / Corner selectors in the Telemetry panel, a Tyre state selector in the Red Bull Ring HUD, and `window.tyreStates` (`setTyreState`, `setTyreCompound(corner, compound)`, `setTyreWear`, `setBlown(corner, on)`, `setWeather`).
 
 - **Lighting & Environment Controls:**
   - Adjustable light intensity slider (0.2× to 2.5×).
