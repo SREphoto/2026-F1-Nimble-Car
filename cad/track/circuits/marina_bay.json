@@ -1,0 +1,847 @@
+{
+  "schema_version": 1,
+  "id": "marina_bay",
+  "status": "confirmed",
+  "event": {
+    "round": 17,
+    "grand_prix": "Singapore Grand Prix",
+    "weekend": "2026-10-09/2026-10-11",
+    "race_date": "2026-10-11",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Marina Bay Street Circuit",
+    "common_name": "Marina Bay Street Circuit",
+    "location": "Downtown Core and Kallang, Marina Bay, Singapore",
+    "lat": 1.291531,
+    "lon": 103.86385,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2025–present)",
+    "opened": "2008-08-31",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4927.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4927.0,
+      "wikipedia_m": 4927.0,
+      "osm_loop_m": 4967.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 4967.0
+    }
+  },
+  "corners": {
+    "count": 19,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "10",
+        "name": "Singapore Sling",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:33.808",
+    "driver": "Lewis Hamilton",
+    "car": "Ferrari SF-25",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "csv": "cad/track/raw/centreline/marina_bay.csv",
+    "spacing_m": 5.0,
+    "samples": 993,
+    "length_m": 4966.5,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "relation",
+      "id": 421263,
+      "name": "Marina Bay Street Circuit",
+      "url": "https://www.openstreetmap.org/relation/421263"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 497,
+    "spacing_m": 9.99,
+    "min_m": -4.6,
+    "max_m": 36.9,
+    "total_change_m": 41.5,
+    "total_climb_per_lap_m": 187.8,
+    "raw_change_m": 53.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 3021,
+        "concrete": 35174,
+        "grass": 47984
+      },
+      "barrier_length_m_within_30m": null,
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "21.1 In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines\ndefine the track edges. During Qualifying and the Race, each time a driver fails to negotiate\nwith the track limits, this will result in that lap time being invalidated by the Stewards.\nAdditionally, each time a driver fails to negotiate the turns 18 or and 19, will result in that lap\ntime and the immediately following lap time may be invalidated by the Stewards.\n21.2 Run-off in Turn 1-2-3\nAny driver who fails to negotiate Turn 2 by using the track, and who passes completely to the\nright of the orange kerb/line element, must keep to the right of the red and white polystyrene\nblock, and re-join the track on the outside of Turn 3.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 825.0,
+    "length_all_pit_ways_m": 825.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 4221.0,
+      "lat_lon": [
+        1.288701,
+        103.862841
+      ]
+    },
+    "exit": {
+      "s_m": 115.0,
+      "lat_lon": [
+        1.294522,
+        103.863046
+      ]
+    },
+    "osm_ways": [
+      100484287
+    ],
+    "fia_entry_exit_rules": "16.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n16.2 Pertaining to Chapter IV Article 6c of Appendix L to the ISC, the “line painted on the track for\nthe purpose of separating cars leaving the pit lane from those on the track” is the line\nhighlighted in the image below using blue arrows. Thus, except during reconnaissance laps\nas described in Point 13.2 of these notes, no part of a tyre of a car exiting the pit lane may\ncross this line.\nFurthermore, except when passing a car which has stopped to perform a practice start during\na Free Practice Session as described in Point 13.1 of these notes, for the safety and orderly\nconduct of the event no part of a tyre of a car exiting the pit lane may cross the white line\npainted on the right-hand side of the Pit Exit Road as highlighted in the image below using\nred arrows. (new picture added).\nFor the avoidance of doubt, crossing means that the outside of any tyre should not go beyond\nthe outside, with respect to the Pit Exit Road, of these lines.\n16.3 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing on the left\nhand side of the junction of the dashed white line to the solid white line (as the image bellow)\nat the pit entry road will be considered as entering the pit lane",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "150m before T7"
+      },
+      {
+        "point": "S2",
+        "location": "140m before T14"
+      }
+    ],
+    "speed_trap": "150m before T1",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "T4"
+        },
+        {
+          "label": "Detection 2",
+          "location": "102m before T13"
+        },
+        {
+          "label": "Detection 3",
+          "location": "105m after apex T17"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "48m after T5"
+        },
+        {
+          "label": "Activation 2",
+          "location": "78m after T13"
+        },
+        {
+          "label": "Activation 3",
+          "location": "100m after T14"
+        },
+        {
+          "label": "Activation 4",
+          "location": "Exit T19"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 741164882,
+        "lat_lon": [
+          1.294303,
+          103.862771
+        ],
+        "s_m": 250.0
+      },
+      {
+        "kind": "motorway_link bridge over track",
+        "name": null,
+        "osm_way": 121906574,
+        "lat_lon": [
+          1.294241,
+          103.86321
+        ],
+        "s_m": 260.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 122067629,
+        "lat_lon": [
+          1.292499,
+          103.862353
+        ],
+        "s_m": 385.0
+      },
+      {
+        "kind": "trunk_link bridge over track",
+        "name": null,
+        "osm_way": 21786033,
+        "lat_lon": [
+          1.291101,
+          103.862275
+        ],
+        "s_m": 635.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 122067630,
+        "lat_lon": [
+          1.292541,
+          103.862232
+        ],
+        "s_m": 710.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 740112303,
+        "lat_lon": [
+          1.289085,
+          103.861306
+        ],
+        "s_m": 755.0
+      },
+      {
+        "kind": "track on bridge",
+        "name": "Fullerton Road",
+        "osm_way": 29377119,
+        "length_m": 70.0,
+        "s_m": 2531.0,
+        "side": "right",
+        "distance_m": 1.6
+      },
+      {
+        "kind": "track on bridge",
+        "name": "Esplanade Drive",
+        "osm_way": 35037538,
+        "length_m": 290.0,
+        "s_m": 2701.0,
+        "side": "right",
+        "distance_m": 1.2
+      },
+      {
+        "kind": "trunk_link bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 21697558,
+        "lat_lon": [
+          1.29056,
+          103.861338
+        ],
+        "s_m": 4056.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 39961203,
+        "lat_lon": [
+          1.289502,
+          103.861542
+        ],
+        "s_m": 4066.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 122067631,
+        "lat_lon": [
+          1.2891,
+          103.861666
+        ],
+        "s_m": 4086.0
+      },
+      {
+        "kind": "trunk_link bridge over track",
+        "name": null,
+        "osm_way": 635253783,
+        "lat_lon": [
+          1.288164,
+          103.861699
+        ],
+        "s_m": 4096.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 740112301,
+        "lat_lon": [
+          1.289111,
+          103.861988
+        ],
+        "s_m": 4101.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1314036589,
+        "lat_lon": [
+          1.293045,
+          103.863337
+        ],
+        "s_m": 4896.0
+      },
+      {
+        "kind": "motorway_link bridge over track",
+        "name": null,
+        "osm_way": 99007260,
+        "lat_lon": [
+          1.293089,
+          103.863271
+        ],
+        "s_m": 4906.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 74722808,
+        "lat_lon": [
+          1.293804,
+          103.864223
+        ],
+        "s_m": 4927.0
+      },
+      {
+        "kind": "motorway bridge over track",
+        "name": "East Coast Parkway",
+        "osm_way": 122067627,
+        "lat_lon": [
+          1.293938,
+          103.864279
+        ],
+        "s_m": 4942.0
+      }
+    ],
+    "tunnels": [
+      {
+        "name": "Raffles Boulevard",
+        "osm_way": 479745478,
+        "length_m": 23.0,
+        "s_m": 990.0,
+        "side": "right",
+        "distance_m": 0.2
+      },
+      {
+        "name": "Raffles Boulevard",
+        "osm_way": 545362402,
+        "length_m": 45.0,
+        "s_m": 1100.0,
+        "side": "left",
+        "distance_m": 0.4
+      },
+      {
+        "name": "Raffles Boulevard",
+        "osm_way": 545362403,
+        "length_m": 2.0,
+        "s_m": 1100.0,
+        "side": "left",
+        "distance_m": 0.4
+      }
+    ],
+    "buildings": [
+      {
+        "name": "Marina Square",
+        "kind": "retail",
+        "osm_way": 303311927,
+        "lat_lon": [
+          1.29173,
+          103.85747
+        ],
+        "footprint_m": [
+          364.0,
+          314.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 1100.0,
+        "side": "right",
+        "distance_m": 1.8
+      },
+      {
+        "name": "Millenia Walk",
+        "kind": "yes;retail",
+        "osm_way": 747734200,
+        "lat_lon": [
+          1.29267,
+          103.859452
+        ],
+        "footprint_m": [
+          264.0,
+          240.0
+        ],
+        "height_m": "46.5",
+        "levels": "3",
+        "s_m": 930.0,
+        "side": "right",
+        "distance_m": 16.4
+      },
+      {
+        "name": "NS Square",
+        "kind": "construction",
+        "osm_way": 1492514975,
+        "lat_lon": [
+          1.288753,
+          103.859333
+        ],
+        "footprint_m": [
+          279.0,
+          214.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3731.0,
+        "side": "right",
+        "distance_m": 5.2
+      },
+      {
+        "name": "South Beach Avenue",
+        "kind": "roof",
+        "osm_way": 380512075,
+        "lat_lon": [
+          1.294885,
+          103.856052
+        ],
+        "footprint_m": [
+          277.0,
+          213.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 1410.0,
+        "side": "right",
+        "distance_m": 39.7
+      },
+      {
+        "name": "Suntec Singapore Convention & Exhibition Centre",
+        "kind": "retail",
+        "osm_way": 393090489,
+        "lat_lon": [
+          1.293589,
+          103.857261
+        ],
+        "footprint_m": [
+          214.0,
+          203.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 1320.0,
+        "side": "right",
+        "distance_m": 19.7
+      },
+      {
+        "name": "Raffles City Shopping Centre",
+        "kind": "building",
+        "osm_way": 39487263,
+        "lat_lon": [
+          1.29383,
+          103.853507
+        ],
+        "footprint_m": [
+          197.0,
+          196.0
+        ],
+        "height_m": "30",
+        "levels": "4",
+        "s_m": 1826.0,
+        "side": "right",
+        "distance_m": 48.7
+      },
+      {
+        "name": "F1 Pit Building",
+        "kind": "building",
+        "osm_way": 49890775,
+        "lat_lon": [
+          1.29099,
+          103.863974
+        ],
+        "footprint_m": [
+          330.0,
+          72.0
+        ],
+        "height_m": "15",
+        "levels": null,
+        "s_m": 4496.0,
+        "side": "left",
+        "distance_m": 18.0
+      },
+      {
+        "name": "Esplanade Theatres on the Bay",
+        "kind": "building",
+        "osm_way": 97582570,
+        "lat_lon": [
+          1.28953,
+          103.855824
+        ],
+        "footprint_m": [
+          165.0,
+          143.0
+        ],
+        "height_m": "13",
+        "levels": "4",
+        "s_m": 3436.0,
+        "side": "right",
+        "distance_m": 11.8
+      },
+      {
+        "name": "Parkroyal Collection Marina Bay",
+        "kind": "hotel",
+        "osm_way": 742205653,
+        "lat_lon": [
+          1.291463,
+          103.856864
+        ],
+        "footprint_m": [
+          147.0,
+          133.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 1240.0,
+        "side": "left",
+        "distance_m": 63.4
+      },
+      {
+        "name": "Old City Hall",
+        "kind": "building",
+        "osm_way": 46595597,
+        "lat_lon": [
+          1.290554,
+          103.85176
+        ],
+        "footprint_m": [
+          144.0,
+          119.0
+        ],
+        "height_m": "25",
+        "levels": null,
+        "s_m": 2061.0,
+        "side": "right",
+        "distance_m": 23.7
+      },
+      {
+        "name": "Supreme Court of Singapore",
+        "kind": "building",
+        "osm_way": 46594825,
+        "lat_lon": [
+          1.290603,
+          103.850797
+        ],
+        "footprint_m": [
+          139.0,
+          118.0
+        ],
+        "height_m": null,
+        "levels": "5",
+        "s_m": 2256.0,
+        "side": "right",
+        "distance_m": 103.4
+      },
+      {
+        "name": "One Raffles Link",
+        "kind": "building",
+        "osm_way": 46594821,
+        "lat_lon": [
+          1.292158,
+          103.855871
+        ],
+        "footprint_m": [
+          161.0,
+          96.0
+        ],
+        "height_m": "40",
+        "levels": "7",
+        "s_m": 1345.0,
+        "side": "left",
+        "distance_m": 19.7
+      },
+      {
+        "name": "Asian Civilisations Museum",
+        "kind": "building",
+        "osm_way": 46595390,
+        "lat_lon": [
+          1.287439,
+          103.851392
+        ],
+        "footprint_m": [
+          125.0,
+          118.0
+        ],
+        "height_m": "15",
+        "levels": "3",
+        "s_m": 2481.0,
+        "side": "right",
+        "distance_m": 85.2
+      },
+      {
+        "name": "Singapore Flyer",
+        "kind": "retail",
+        "osm_way": 51761904,
+        "lat_lon": [
+          1.289405,
+          103.863202
+        ],
+        "footprint_m": [
+          123.0,
+          104.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 4236.0,
+        "side": "left",
+        "distance_m": 28.9
+      },
+      {
+        "name": "One Fullerton",
+        "kind": "commercial",
+        "osm_way": 46595394,
+        "lat_lon": [
+          1.285758,
+          103.853956
+        ],
+        "footprint_m": [
+          165.0,
+          77.0
+        ],
+        "height_m": "12",
+        "levels": "2",
+        "s_m": 2691.0,
+        "side": "right",
+        "distance_m": 39.0
+      },
+      {
+        "name": "Singapore Flyer",
+        "kind": "building",
+        "osm_way": 230082125,
+        "lat_lon": [
+          1.289334,
+          103.863017
+        ],
+        "footprint_m": [
+          121.0,
+          97.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 4191.0,
+        "side": "left",
+        "distance_m": 28.1
+      },
+      {
+        "name": "Singapore Flyer Car Park",
+        "kind": "parking",
+        "osm_way": 172474137,
+        "lat_lon": [
+          1.290006,
+          103.86229
+        ],
+        "footprint_m": [
+          144.0,
+          81.0
+        ],
+        "height_m": "10",
+        "levels": null,
+        "s_m": 630.0,
+        "side": "left",
+        "distance_m": 31.5
+      },
+      {
+        "name": "The Fullerton Hotel",
+        "kind": "building",
+        "osm_way": 46595395,
+        "lat_lon": [
+          1.286184,
+          103.853093
+        ],
+        "footprint_m": [
+          129.0,
+          79.0
+        ],
+        "height_m": "25",
+        "levels": null,
+        "s_m": 2631.0,
+        "side": "right",
+        "distance_m": 27.4
+      },
+      {
+        "name": "Mandarin Oriental Hotel",
+        "kind": "hotel",
+        "osm_way": 46594816,
+        "lat_lon": [
+          1.290667,
+          103.858342
+        ],
+        "footprint_m": [
+          100.0,
+          99.0
+        ],
+        "height_m": "0",
+        "levels": null,
+        "s_m": 3671.0,
+        "side": "left",
+        "distance_m": 56.9
+      },
+      {
+        "name": "Old Supreme Court",
+        "kind": "building",
+        "osm_way": 170960936,
+        "lat_lon": [
+          1.289739,
+          103.851368
+        ],
+        "footprint_m": [
+          102.0,
+          93.0
+        ],
+        "height_m": "25",
+        "levels": null,
+        "s_m": 2216.0,
+        "side": "right",
+        "distance_m": 20.3
+      }
+    ],
+    "named": [
+      {
+        "name": "Marina Bay Sands",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Singapore Flyer",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Anderson Bridge",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Esplanade",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Padang",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Raffles",
+        "source": "wikipedia"
+      },
+      {
+        "name": "float@Marina Bay",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Fullerton",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Marina Bay Street Circuit\" (infobox, layout \"Grand Prix Circuit (2025–present\")",
+      "url": "https://en.wikipedia.org/wiki/Marina_Bay_Street_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_singapore_grand_prix_-_event_notes_-_circuit_map_pit_lane_emergency_exits_map_and_quarantine_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_singapore_grand_prix_-_race_directors_event_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/421263",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 421263,
+        "name": "Marina Bay Street Circuit",
+        "url": "https://www.openstreetmap.org/relation/421263"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

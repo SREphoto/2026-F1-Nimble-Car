@@ -1,0 +1,594 @@
+{
+  "schema_version": 1,
+  "id": "montreal",
+  "status": "confirmed",
+  "event": {
+    "round": 5,
+    "grand_prix": "Canadian Grand Prix",
+    "weekend": "2026-05-22/2026-05-24",
+    "race_date": "2026-05-24",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit Gilles Villeneuve",
+    "common_name": "Circuit Gilles Villeneuve",
+    "location": "Parc Jean-Drapeau, Montreal, Quebec, Canada",
+    "lat": 45.500556,
+    "lon": -73.5225,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2002–present)",
+    "opened": "1978-10-06",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4361.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4361.0,
+      "wikipedia_m": 4361.0,
+      "osm_loop_m": 4362.0,
+      "tumftm_m": 4357.5,
+      "pack_centreline_m": 4358.0
+    }
+  },
+  "corners": {
+    "count": 14,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "8-9",
+        "name": "L'Epingle",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10",
+        "name": "Hairpin",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "13-14",
+        "name": "Wall of Champions",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:13.078",
+    "driver": "Valtteri Bottas",
+    "car": "Mercedes W10",
+    "year": 2019,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": null
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/montreal.csv",
+    "spacing_m": 5.0,
+    "samples": 872,
+    "length_m": 4357.5,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Montreal.csv",
+      "raceline": "cad/track/raw/tumftm/Montreal_raceline.csv",
+      "length_m": 4357.5,
+      "points": 872,
+      "georef_median_m": 0.65,
+      "georef_p95_m": 1.29,
+      "rotation_deg": -1.0621,
+      "origin_lat": 45.5001067,
+      "origin_lon": -73.5227147,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284595,
+      "name": "Circuit Gilles Villeneuve",
+      "url": "https://www.openstreetmap.org/relation/284595"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 436,
+    "spacing_m": 9.99,
+    "min_m": 4.4,
+    "max_m": 13.9,
+    "total_change_m": 9.4,
+    "total_climb_per_lap_m": 39.7,
+    "raw_change_m": 12.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 8.2,
+    "max_m": 14.5,
+    "median_m": 9.0,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Smoother kerb at Turn 1 apex.",
+      "Drainage grooves cut in the kerb at Turn 2 apex."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Realignment of the wall at Turn 6 on the right-hand side.",
+      "Realignment of the wall at Turn 13 runoff on the right-hand side and at Turn 14 when rejoining the track.",
+      "Openings in pit wall debris fencing now fitted with gates."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 13430,
+        "concrete": 2058,
+        "grass": 29125,
+        "sand": 35388
+      },
+      "barrier_length_m_within_30m": {
+        "chain": 28,
+        "fence": 1435,
+        "guard_rail": 314,
+        "jersey_barrier": 5296,
+        "kerb": 694,
+        "wall": 115,
+        "yes": 1276
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "31.1 Any driver who fails to negotiate Turn 1, and goes straight into the runoff, must rejoin the track as\nshown in the drawing below.\n31.2 Any driver who fails to negotiate Turn 9 and passes completely to the left of the orange apex kerb\nmust keep completely to the left and re-join the track at the far end of the asphalt run-off.\n31.3 Any driver who fails to negotiate Turn 13 and passes completely to the left of the orange apex\nkerb must keep completely to the left of the orange line on the exit of the corner and re-join the\ntrack at the far end of the asphalt run-off, as shown in the image below.\n31.4 Each time a driver fails to respect track limits at Turn 13/Turn 14 during any LTCS, this will result\nin that lap time and the immediately following lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 826.0,
+    "length_all_pit_ways_m": 826.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 3893.0,
+      "lat_lon": [
+        45.504096,
+        -73.523468
+      ]
+    },
+    "exit": {
+      "s_m": 400.0,
+      "lat_lon": [
+        45.497065,
+        -73.522466
+      ]
+    },
+    "osm_ways": [
+      413000959
+    ],
+    "fia_entry_exit_rules": "17.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n17.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver crossing the blue highlighted\nwhite line in the pit entry road will be considered as entering the pit lane.\n17.3 Drivers travelling in the pit entry road must stay to the left of the solid white line on the right-\nhand side.\n17.4 Drivers travelling in the pit exit road must stay to the left of the solid white line on the right-\nhand side.\n17.5 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to cross the\nwhite line separating the Pit Exit Road from the circuit.\n17.6 For the safe and orderly conduct of the event, during any live session, team personnel are not\nallowed in the pit lane beyond the white line crossing the pit lane near pit entry, as indicated in\nthe picture below.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.092
+      },
+      {
+        "sector": 2,
+        "length_km": 1.396
+      },
+      {
+        "sector": 3,
+        "length_km": 1.873
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "150m before T6"
+      },
+      {
+        "point": "S2",
+        "location": "190m before T10"
+      }
+    ],
+    "speed_trap": "250m before T13",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "100m after T14",
+        "low_grip_activation": "160m after T14"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "50m after T7",
+        "low_grip_activation": "110m after T7"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "60m after T9",
+        "low_grip_activation": null
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "30m after T11",
+        "low_grip_activation": "120m after T11"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T13",
+      "activation": "70m after T14"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "unclassified bridge over track",
+        "name": null,
+        "osm_way": 135527655,
+        "lat_lon": [
+          45.507817,
+          -73.529714
+        ],
+        "s_m": 1919.0
+      },
+      {
+        "kind": "tertiary bridge over track",
+        "name": "Avenue Pierre-Dupuy",
+        "osm_way": 1427698141,
+        "lat_lon": [
+          45.507892,
+          -73.529346
+        ],
+        "s_m": 1924.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 814256358,
+        "lat_lon": [
+          45.50762,
+          -73.526921
+        ],
+        "s_m": 1929.0
+      },
+      {
+        "kind": "unclassified bridge over track",
+        "name": null,
+        "osm_way": 413000974,
+        "lat_lon": [
+          45.508007,
+          -73.528935
+        ],
+        "s_m": 1934.0
+      },
+      {
+        "kind": "cycleway bridge over track",
+        "name": "Pont des Iles",
+        "osm_way": 164863796,
+        "lat_lon": [
+          45.508129,
+          -73.529602
+        ],
+        "s_m": 1939.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Paddocks",
+        "kind": "hangar",
+        "osm_way": 42229671,
+        "lat_lon": [
+          45.500803,
+          -73.522446
+        ],
+        "footprint_m": [
+          327.0,
+          93.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4058.0,
+        "side": "left",
+        "distance_m": 21.7
+      },
+      {
+        "name": "Pavillon du Canada",
+        "kind": "building",
+        "osm_way": 46866695,
+        "lat_lon": [
+          45.503645,
+          -73.529249
+        ],
+        "footprint_m": [
+          85.0,
+          79.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1434.0,
+        "side": "right",
+        "distance_m": 9.9
+      },
+      {
+        "name": "Chalet de la Plage",
+        "kind": "pavilion",
+        "osm_way": 433148457,
+        "lat_lon": [
+          45.498022,
+          -73.523726
+        ],
+        "footprint_m": [
+          38.0,
+          34.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 545.0,
+        "side": "right",
+        "distance_m": 52.2
+      },
+      {
+        "name": "Pavillon de la Tunisie",
+        "kind": "building",
+        "osm_way": 46866700,
+        "lat_lon": [
+          45.512143,
+          -73.527554
+        ],
+        "footprint_m": [
+          42.0,
+          26.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2474.0,
+        "side": "left",
+        "distance_m": 10.0
+      },
+      {
+        "name": "Pavillon des activités nautiques",
+        "kind": "pavilion",
+        "osm_way": 433151283,
+        "lat_lon": [
+          45.500965,
+          -73.526407
+        ],
+        "footprint_m": [
+          42.0,
+          25.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 939.0,
+        "side": "right",
+        "distance_m": 86.0
+      },
+      {
+        "name": "Pavillon 76",
+        "kind": "building",
+        "osm_way": 46866698,
+        "lat_lon": [
+          45.515552,
+          -73.527054
+        ],
+        "footprint_m": [
+          37.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2713.0,
+        "side": "left",
+        "distance_m": 131.7
+      },
+      {
+        "name": "Terrace du Lac",
+        "kind": "public",
+        "osm_way": 433148456,
+        "lat_lon": [
+          45.50129,
+          -73.52362
+        ],
+        "footprint_m": [
+          21.0,
+          17.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4213.0,
+        "side": "right",
+        "distance_m": 32.4
+      },
+      {
+        "name": "Tour Pirelli",
+        "kind": "building",
+        "osm_way": 1074327625,
+        "lat_lon": [
+          45.511317,
+          -73.525526
+        ],
+        "footprint_m": [
+          26.0,
+          13.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3088.0,
+        "side": "left",
+        "distance_m": 21.1
+      },
+      {
+        "name": "Pavilion de la Jamaïque",
+        "kind": "public",
+        "osm_way": 433151288,
+        "lat_lon": [
+          45.505333,
+          -73.528433
+        ],
+        "footprint_m": [
+          20.0,
+          13.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 1619.0,
+        "side": "right",
+        "distance_m": 111.3
+      },
+      {
+        "name": "Concession alimentaire",
+        "kind": "building",
+        "osm_way": 1243745160,
+        "lat_lon": [
+          45.49785,
+          -73.524216
+        ],
+        "footprint_m": [
+          11.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 570.0,
+        "side": "right",
+        "distance_m": 30.8
+      },
+      {
+        "name": "Maison d'antan",
+        "kind": "building",
+        "osm_way": 1243707174,
+        "lat_lon": [
+          45.5032,
+          -73.526441
+        ],
+        "footprint_m": [
+          7.0,
+          6.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 1249.0,
+        "side": "right",
+        "distance_m": 140.4
+      },
+      {
+        "name": "Phare de l'Île Notre-Dame",
+        "kind": "lighthouse",
+        "osm_way": 697865988,
+        "lat_lon": [
+          45.507847,
+          -73.526457
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3438.0,
+        "side": "right",
+        "distance_m": 141.4
+      },
+      {
+        "name": null,
+        "kind": "tower",
+        "osm_way": 1244170828,
+        "lat_lon": [
+          45.500124,
+          -73.52263
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 0.0,
+        "side": "left",
+        "distance_m": 5.4
+      }
+    ],
+    "named": [
+      {
+        "name": "Wall of Champions",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Olympic Basin",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Île Notre-Dame",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit Gilles Villeneuve\" (infobox, layout \"Grand Prix Circuit (2002–present\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_Gilles_Villeneuve",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_canadian_grand_prix_-_competition_notes_-_circuit_map_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_canadian_grand_prix_-_race_directors_competition_notes_.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284595",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284595,
+        "name": "Circuit Gilles Villeneuve",
+        "url": "https://www.openstreetmap.org/relation/284595"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

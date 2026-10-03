@@ -1,0 +1,570 @@
+{
+  "schema_version": 1,
+  "id": "madring",
+  "status": "confirmed",
+  "event": {
+    "round": 14,
+    "grand_prix": "Spanish Grand Prix",
+    "weekend": "2026-09-11/2026-09-13",
+    "race_date": "2026-09-13",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Madring",
+    "common_name": "Madring",
+    "location": "Barajas, Madrid, Spain",
+    "lat": 40.465278,
+    "lon": -3.615278,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2026)",
+    "opened": "2026-08",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5414.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5414.0,
+      "wikipedia_m": 5414.0,
+      "osm_loop_m": 5414.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 5414.0
+    }
+  },
+  "corners": {
+    "count": 22,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "12",
+        "name": "La Monumental",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": null,
+    "basis": null,
+    "stated_by_source": null,
+    "note": "Not verified: no oneway data and no written source found."
+  },
+  "lap_record": {
+    "time": "1:35.587",
+    "driver": "George Russell",
+    "car": "Mercedes-AMG F1 W17",
+    "year": 2026,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "Formula One"
+  },
+  "centreline": {
+    "source": "osm",
+    "csv": "cad/track/raw/centreline/madring.csv",
+    "spacing_m": 5.0,
+    "samples": 1083,
+    "length_m": 5414.0,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "ways",
+      "ids": [
+        1366550166,
+        1366550168,
+        1366550171,
+        1366550176,
+        1366550177,
+        1378267450,
+        1378267452
+      ],
+      "name_pattern": "(?i)^mad ?ring"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 541,
+    "spacing_m": 10.01,
+    "min_m": 665.6,
+    "max_m": 697.8,
+    "total_change_m": 32.2,
+    "total_climb_per_lap_m": 60.9,
+    "raw_change_m": 33.1,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 94320,
+        "grass": 12617
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 1091,
+        "guard_rail": 69,
+        "kerb": 1709,
+        "wall": 3584
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "25.1 During any LTCS, each time a driver fails to negotiate Turn 22, will result in that lap time and the\nimmediately following lap time may be invalidated by the Stewards.\n7",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 903.0,
+    "length_all_pit_ways_m": 903.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5369.0,
+      "lat_lon": [
+        40.464971,
+        -3.621438
+      ]
+    },
+    "exit": {
+      "s_m": 500.0,
+      "lat_lon": [
+        40.466801,
+        -3.612117
+      ]
+    },
+    "osm_ways": [
+      1552567031
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Appendix L, Chapter IV, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n15.2 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right-hand side of\nthe intersection of the dashed line with the continuous line (as indicated in the image below) will be\nconsidered as entering the pit lane.\n15.3 For the safe and orderly conduct of the event, during any live session, team personnel are not allowed\nto cross the area signal at the picture below at the pit exit.\n15.4 If there is a yellow light displayed on LHS in the pit entry road it will be a warning of an incident at the\npit entry road. This signal is not intended for drivers staying on track.\n15.5 If there is a yellow light displayed on LHS in the pit exit road (after the pit exit lights) it will be a warning\nof an incident at the pit entry exit road. This signal is not intended for drivers staying on track.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.839
+      },
+      {
+        "sector": 2,
+        "length_km": 2.049
+      },
+      {
+        "sector": 3,
+        "length_km": 1.526
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "85m before T7"
+      },
+      {
+        "point": "S2",
+        "location": "40m before T16"
+      }
+    ],
+    "speed_trap": "160m before T5",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "100m after T22",
+        "low_grip_activation": "130m after T22"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "40m after T3",
+        "low_grip_activation": "90m after T3"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T22",
+      "activation": "20m after T22"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 516431587,
+        "lat_lon": [
+          40.47164,
+          -3.618058
+        ],
+        "s_m": 1500.0
+      },
+      {
+        "kind": "trunk_link bridge over track",
+        "name": null,
+        "osm_way": 34049818,
+        "lat_lon": [
+          40.472329,
+          -3.618656
+        ],
+        "s_m": 1605.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Pabellón 10",
+        "kind": "public",
+        "osm_way": 79851587,
+        "lat_lon": [
+          40.470111,
+          -3.616102
+        ],
+        "footprint_m": [
+          213.0,
+          167.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1510.0,
+        "side": "right",
+        "distance_m": 113.0
+      },
+      {
+        "name": "Pabellón 9",
+        "kind": "public",
+        "osm_way": 79851589,
+        "lat_lon": [
+          40.469635,
+          -3.619216
+        ],
+        "footprint_m": [
+          215.0,
+          161.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1095.0,
+        "side": "right",
+        "distance_m": 13.9
+      },
+      {
+        "name": "Pabellón 3",
+        "kind": "public",
+        "osm_way": 79851588,
+        "lat_lon": [
+          40.466537,
+          -3.618139
+        ],
+        "footprint_m": [
+          212.0,
+          137.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 730.0,
+        "side": "right",
+        "distance_m": 14.9
+      },
+      {
+        "name": "Pabellón 7",
+        "kind": "public",
+        "osm_way": 79851599,
+        "lat_lon": [
+          40.468821,
+          -3.618713
+        ],
+        "footprint_m": [
+          215.0,
+          135.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 970.0,
+        "side": "right",
+        "distance_m": 14.6
+      },
+      {
+        "name": "Pabellón 5",
+        "kind": "public",
+        "osm_way": 79851601,
+        "lat_lon": [
+          40.467654,
+          -3.618146
+        ],
+        "footprint_m": [
+          156.0,
+          126.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 915.0,
+        "side": "right",
+        "distance_m": 74.3
+      },
+      {
+        "name": "Centro de Convenciones Norte",
+        "kind": "public",
+        "osm_way": 79851593,
+        "lat_lon": [
+          40.470807,
+          -3.61791
+        ],
+        "footprint_m": [
+          157.0,
+          86.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1420.0,
+        "side": "right",
+        "distance_m": 40.8
+      },
+      {
+        "name": "Pabellón 1",
+        "kind": "public",
+        "osm_way": 4681838,
+        "lat_lon": [
+          40.465728,
+          -3.617944
+        ],
+        "footprint_m": [
+          111.0,
+          88.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 510.0,
+        "side": "right",
+        "distance_m": 36.7
+      },
+      {
+        "name": "Espacio 5.1",
+        "kind": "building",
+        "osm_way": 1003443531,
+        "lat_lon": [
+          40.467563,
+          -3.619449
+        ],
+        "footprint_m": [
+          95.0,
+          70.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 925.0,
+        "side": "right",
+        "distance_m": 14.0
+      },
+      {
+        "name": "Edificio Apot",
+        "kind": "commercial",
+        "osm_way": 34049792,
+        "lat_lon": [
+          40.462291,
+          -3.617828
+        ],
+        "footprint_m": [
+          82.0,
+          77.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 250.0,
+        "side": "right",
+        "distance_m": 138.7
+      },
+      {
+        "name": "Edificio Egeo",
+        "kind": "commercial",
+        "osm_way": 313631935,
+        "lat_lon": [
+          40.462934,
+          -3.618262
+        ],
+        "footprint_m": [
+          81.0,
+          63.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 250.0,
+        "side": "right",
+        "distance_m": 68.0
+      },
+      {
+        "name": "Espacio Raro",
+        "kind": "building",
+        "osm_way": 1003443532,
+        "lat_lon": [
+          40.466839,
+          -3.622545
+        ],
+        "footprint_m": [
+          69.0,
+          58.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5184.0,
+        "side": "left",
+        "distance_m": 14.8
+      },
+      {
+        "name": "Dell EMC",
+        "kind": "commercial",
+        "osm_way": 234975219,
+        "lat_lon": [
+          40.467003,
+          -3.625704
+        ],
+        "footprint_m": [
+          70.0,
+          57.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4974.0,
+        "side": "right",
+        "distance_m": 148.8
+      },
+      {
+        "name": "Cámaras de Comercio",
+        "kind": "commercial",
+        "osm_way": 234975235,
+        "lat_lon": [
+          40.466489,
+          -3.625415
+        ],
+        "footprint_m": [
+          61.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5004.0,
+        "side": "right",
+        "distance_m": 148.5
+      },
+      {
+        "name": "Ahorramás",
+        "kind": "building",
+        "osm_way": 1464348938,
+        "lat_lon": [
+          40.4813,
+          -3.621355
+        ],
+        "footprint_m": [
+          68.0,
+          40.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3024.0,
+        "side": "right",
+        "distance_m": 128.1
+      },
+      {
+        "name": "SET Campo de las Naciones",
+        "kind": "service",
+        "osm_way": 309090493,
+        "lat_lon": [
+          40.464503,
+          -3.621604
+        ],
+        "footprint_m": [
+          55.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 20.0,
+        "side": "right",
+        "distance_m": 24.6
+      }
+    ],
+    "named": [
+      {
+        "name": "IFEMA",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Valdebebas",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Madring\" (infobox, layout \"Grand Prix Circuit (2026\")",
+      "url": "https://en.wikipedia.org/wiki/Madring",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_spanish_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_and_emergency_exits_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_spanish_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "ways",
+        "ids": [
+          1366550166,
+          1366550168,
+          1366550171,
+          1366550176,
+          1366550177,
+          1378267450,
+          1378267452
+        ],
+        "name_pattern": "(?i)^mad ?ring"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Race direction not verified.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

@@ -1,0 +1,429 @@
+{
+  "schema_version": 1,
+  "id": "miami",
+  "status": "confirmed",
+  "event": {
+    "round": 4,
+    "grand_prix": "Miami Grand Prix",
+    "weekend": "2026-05-01/2026-05-03",
+    "race_date": "2026-05-03",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Miami International Autodrome",
+    "common_name": "Miami International Autodrome",
+    "location": "Hard Rock Stadium, Miami Gardens, Florida, U.S.",
+    "lat": 25.958056,
+    "lon": -80.238889,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2022–present)",
+    "opened": "2022-05-07",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5412.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5412.0,
+      "wikipedia_m": 5412.0,
+      "osm_loop_m": 5410.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 5410.0
+    }
+  },
+  "corners": {
+    "count": 19,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:29.708",
+    "driver": "Max Verstappen",
+    "car": "Red Bull Racing RB19",
+    "year": 2023,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "csv": "cad/track/raw/centreline/miami.csv",
+    "spacing_m": 5.0,
+    "samples": 1082,
+    "length_m": 5409.8,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "ways",
+      "ids": [
+        1233165737,
+        1472684485,
+        1472686141,
+        1485453197,
+        1485453200,
+        1485453201,
+        1485453202,
+        1485453204,
+        1485454063
+      ],
+      "name_pattern": "^Miami International Autodrome$",
+      "note": "Circuit relation 20204222 (child 20204221) holds untagged geometry only, so the named raceway ways are used"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 541,
+    "spacing_m": 10.0,
+    "min_m": 2.0,
+    "max_m": 13.5,
+    "total_change_m": 11.5,
+    "total_climb_per_lap_m": 79.0,
+    "raw_change_m": 16.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Realigned tecpro at pit entry"
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 10609
+      },
+      "barrier_length_m_within_30m": {
+        "hedge": 316
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "Each time a driver fails to respect track limits at Turn 19, will result in that lap time and the\nimmediately following lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 741.0,
+    "length_all_pit_ways_m": 741.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5140.0,
+      "lat_lon": [
+        25.959764,
+        -80.241519
+      ]
+    },
+    "exit": {
+      "s_m": 535.0,
+      "lat_lon": [
+        25.95724,
+        -80.235915
+      ]
+    },
+    "osm_ways": [
+      1017340352
+    ],
+    "fia_entry_exit_rules": "16.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n16.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right-hand side\nof the bollard at pit entry will be considered as entering the pit lane.\n16.3 Additionally, drivers must keep to the driver’s right of the 1st bollard and to the driver’s left of the\n2nd bollard in the Pit Entry Road as highlighted in the image below.\n16.4 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to cross the\nwhite line separating the Pit Exit Road from the circuit.\n16.5 For the safe and orderly conduct of the event, during any live session, team personnel are not\nallowed in the pit lane beyond the white line crossing the pit lane near pit entry, as indicated in\nthe picture below.\n16.6 The pit exit white line was realigned as per the image bellow.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.866
+      },
+      {
+        "sector": 2,
+        "length_km": 1.73
+      },
+      {
+        "sector": 3,
+        "length_km": 1.816
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "110m after T8"
+      },
+      {
+        "point": "S2",
+        "location": "70m after T16"
+      }
+    ],
+    "speed_trap": "150m before T17",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "Exit T19",
+        "low_grip_activation": "70m after T19"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "165m after T8",
+        "low_grip_activation": null
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "90m after T16",
+        "low_grip_activation": "150m after T16"
+      }
+    ],
+    "overtake": {
+      "detection": "20m after T17",
+      "activation": "10m after T18"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Grandstand Stadium",
+        "osm_way": 1368495807,
+        "lat_lon": [
+          25.955392,
+          -80.24034
+        ],
+        "approx_length_m": 88.0,
+        "s_m": 2100.0,
+        "side": "right",
+        "distance_m": 24.2
+      },
+      {
+        "name": "Grandstand",
+        "osm_way": 972670165,
+        "lat_lon": [
+          25.955352,
+          -80.240423
+        ],
+        "approx_length_m": 45.0,
+        "s_m": 2125.0,
+        "side": "right",
+        "distance_m": 45.0
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1525113996,
+        "lat_lon": [
+          25.957417,
+          -80.243497
+        ],
+        "s_m": 1480.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1525113997,
+        "lat_lon": [
+          25.956166,
+          -80.243892
+        ],
+        "s_m": 1775.0
+      },
+      {
+        "kind": "motorway_link bridge over track",
+        "name": null,
+        "osm_way": 39361952,
+        "lat_lon": [
+          25.95994,
+          -80.229274
+        ],
+        "s_m": 3550.0
+      },
+      {
+        "kind": "motorway_link bridge over track",
+        "name": null,
+        "osm_way": 39361975,
+        "lat_lon": [
+          25.959453,
+          -80.22962
+        ],
+        "s_m": 3605.0
+      },
+      {
+        "kind": "motorway_link bridge over track",
+        "name": null,
+        "osm_way": 39362012,
+        "lat_lon": [
+          25.96012,
+          -80.230375
+        ],
+        "s_m": 3685.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Hard Rock Stadium",
+        "kind": "stadium",
+        "osm_way": 171419981,
+        "lat_lon": [
+          25.957566,
+          -80.238651
+        ],
+        "footprint_m": [
+          362.0,
+          354.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1050.0,
+        "side": "right",
+        "distance_m": 33.7
+      },
+      {
+        "name": "Paddock/Garage",
+        "kind": "building",
+        "osm_way": 1017340353,
+        "lat_lon": [
+          25.959399,
+          -80.238538
+        ],
+        "footprint_m": [
+          250.0,
+          168.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 15.0,
+        "side": "right",
+        "distance_m": 20.3
+      },
+      {
+        "name": "Baptist Health Training Complex",
+        "kind": "sports_centre",
+        "osm_way": 1017340356,
+        "lat_lon": [
+          25.959561,
+          -80.245009
+        ],
+        "footprint_m": [
+          206.0,
+          160.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4970.0,
+        "side": "right",
+        "distance_m": 52.7
+      },
+      {
+        "name": "Butch Buchholz",
+        "kind": "stadium",
+        "osm_way": 1368495808,
+        "lat_lon": [
+          25.95682,
+          -80.241159
+        ],
+        "footprint_m": [
+          77.0,
+          42.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1240.0,
+        "side": "left",
+        "distance_m": 9.7
+      }
+    ],
+    "named": [
+      {
+        "name": "Hard Rock Stadium",
+        "source": "wikipedia"
+      },
+      {
+        "name": "marina",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Miami International Autodrome\" (infobox, layout \"Grand Prix Circuit (2022–present\")",
+      "url": "https://en.wikipedia.org/wiki/Miami_International_Autodrome",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_miami_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_miami_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "ways",
+        "ids": [
+          1233165737,
+          1472684485,
+          1472686141,
+          1485453197,
+          1485453200,
+          1485453201,
+          1485453202,
+          1485453204,
+          1485454063
+        ],
+        "name_pattern": "^Miami International Autodrome$",
+        "note": "Circuit relation 20204222 (child 20204221) holds untagged geometry only, so the named raceway ways are used"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified."
+  ]
+}

@@ -1,0 +1,817 @@
+{
+  "schema_version": 1,
+  "id": "spa",
+  "status": "confirmed",
+  "event": {
+    "round": 10,
+    "grand_prix": "Belgian Grand Prix",
+    "weekend": "2026-07-17/2026-07-19",
+    "race_date": "2026-07-19",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit de Spa-Francorchamps",
+    "common_name": "Circuit de Spa-Francorchamps",
+    "location": "Stavelot, Belgium",
+    "lat": 50.437222,
+    "lon": 5.971389,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2007–present)",
+    "opened": "1921-08",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 7004.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 7004.0,
+      "wikipedia_m": 7004.0,
+      "osm_loop_m": 6995.0,
+      "tumftm_m": 7000.1,
+      "pack_centreline_m": 7000.0
+    }
+  },
+  "corners": {
+    "count": 19,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "La Source",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "2-4",
+        "name": "Eau Rouge",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3-4",
+        "name": "Raidillon",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "5-7",
+        "name": "Les Combes",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "9",
+        "name": "Speakers Corner",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10-11",
+        "name": "Pouhon",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "14",
+        "name": "Stavelot",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "15-17",
+        "name": "Blanchimont",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "18-19",
+        "name": "Bus Stop",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:44.701",
+    "driver": "Sergio Pérez",
+    "car": "Red Bull RB20",
+    "year": 2024,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/spa.csv",
+    "spacing_m": 5.0,
+    "samples": 1400,
+    "length_m": 7000.1,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Spa.csv",
+      "raceline": "cad/track/raw/tumftm/Spa_raceline.csv",
+      "length_m": 7000.1,
+      "points": 1401,
+      "georef_median_m": 0.81,
+      "georef_p95_m": 2.65,
+      "rotation_deg": -2.3358,
+      "origin_lat": 50.4430879,
+      "origin_lon": 5.9660167,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284560,
+      "name": "Circuit de Spa Francorchamps",
+      "url": "https://www.openstreetmap.org/relation/284560"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 700,
+    "spacing_m": 10.0,
+    "min_m": 365.3,
+    "max_m": 471.3,
+    "total_change_m": 106.0,
+    "total_climb_per_lap_m": 181.9,
+    "raw_change_m": 107.2,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 7.9,
+    "max_m": 16.4,
+    "median_m": 9.2,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "At the apex of Turn 5 the grasscrete behind the kerb has been removed and replaced with",
+      "Smother beginning of the kerb at the apex Turn 19."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "The wall has been extended on the right-hand side approaching turn 2.",
+      "The Kemmel straight (between turns 4 and 5) has had rain grooves cut into the asphalt.",
+      "At the apex of Turn 5 the grasscrete behind the kerb has been removed and replaced with",
+      "asphalt.",
+      "Asphalt repairs approaching Turn 1, Turn 14 and Turn 17."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 160545,
+        "gravel": 33627
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 13066,
+        "gate": 31,
+        "guard_rail": 699,
+        "hedge": 43,
+        "wall": 12585
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "Each time a driver fails to negotiate the exit of turn 19, will result in that lap time and the immediately\nfollowing lap time may be invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 720.0,
+    "length_all_pit_ways_m": 720.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 6775.0,
+      "lat_lon": [
+        50.441551,
+        5.966795
+      ]
+    },
+    "exit": {
+      "s_m": 550.0,
+      "lat_lon": [
+        50.445682,
+        5.965409
+      ]
+    },
+    "osm_ways": [
+      323851541
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n15.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right-hand side of\nthe bollard at safety car line 1 will be considered as entering the pit lane.\n15.3 For the safe and orderly conduct of the event, during any live session, team personnel are not allowed\nto cross the finish line at the pit lane, as indicated in the picture below.\n15.4 If there is a yellow flag displayed on LHS in the pit entry road it will be a warning of an incident at the\npit entry road. This flag is not intended for drivers staying on track.\n15.5 If there is a white flag displayed on the LHS in the pit exit road it will be a warning of a car stationary for\na practice start in the pit exit road. This flag is not intended for drivers staying on track.\n5",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 2.254
+      },
+      {
+        "sector": 2,
+        "length_km": 2.82
+      },
+      {
+        "sector": 3,
+        "length_km": 1.93
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "150m before T5"
+      },
+      {
+        "point": "S2",
+        "location": "50m before T15"
+      }
+    ],
+    "speed_trap": "30m after T4",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "190m after T19",
+        "low_grip_activation": "240m after T19"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "140m after T1",
+        "low_grip_activation": "195m after T1"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "60m after T4",
+        "low_grip_activation": "360m after T4"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "140m after T15",
+        "low_grip_activation": "190m after T15"
+      },
+      {
+        "zone": "A5",
+        "normal_grip_activation": "80m after T17",
+        "low_grip_activation": "110m after T17"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T19",
+      "activation": "130m after T19"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Tribune F1",
+        "osm_way": 174882363,
+        "lat_lon": [
+          50.44335,
+          5.965306
+        ],
+        "approx_length_m": 89.0,
+        "s_m": 100.0,
+        "side": "left",
+        "distance_m": 21.2
+      },
+      {
+        "name": null,
+        "osm_way": 1366085152,
+        "lat_lon": [
+          50.446811,
+          5.962971
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 405.0,
+        "side": "left",
+        "distance_m": 62.3
+      },
+      {
+        "name": null,
+        "osm_way": 1366085154,
+        "lat_lon": [
+          50.446814,
+          5.963463
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 405.0,
+        "side": "left",
+        "distance_m": 53.4
+      },
+      {
+        "name": null,
+        "osm_way": 1366085153,
+        "lat_lon": [
+          50.446799,
+          5.963706
+        ],
+        "approx_length_m": 25.0,
+        "s_m": 410.0,
+        "side": "left",
+        "distance_m": 46.3
+      },
+      {
+        "name": "Grandstand Silver 1",
+        "osm_way": 1353159437,
+        "lat_lon": [
+          50.445469,
+          5.96707
+        ],
+        "approx_length_m": 102.0,
+        "s_m": 695.0,
+        "side": "left",
+        "distance_m": 34.6
+      },
+      {
+        "name": "Tribune Endurance",
+        "osm_way": 1353159436,
+        "lat_lon": [
+          50.444768,
+          5.968235
+        ],
+        "approx_length_m": 96.0,
+        "s_m": 710.0,
+        "side": "left",
+        "distance_m": 27.3
+      },
+      {
+        "name": "Tribune RX",
+        "osm_way": 868882525,
+        "lat_lon": [
+          50.444654,
+          5.970904
+        ],
+        "approx_length_m": 205.0,
+        "s_m": 885.0,
+        "side": "left",
+        "distance_m": 62.5
+      },
+      {
+        "name": "Tribune Raidillon",
+        "osm_way": 1134053908,
+        "lat_lon": [
+          50.441247,
+          5.972764
+        ],
+        "approx_length_m": 130.0,
+        "s_m": 1350.0,
+        "side": "left",
+        "distance_m": 34.9
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 1353164215,
+        "lat_lon": [
+          50.443984,
+          5.968386
+        ],
+        "s_m": 835.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Stand Endurance",
+        "kind": "building",
+        "osm_way": 77352249,
+        "lat_lon": [
+          50.443691,
+          5.968448
+        ],
+        "footprint_m": [
+          233.0,
+          208.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 690.0,
+        "side": "right",
+        "distance_m": 12.9
+      },
+      {
+        "name": "Stand F1",
+        "kind": "building",
+        "osm_way": 77352246,
+        "lat_lon": [
+          50.444518,
+          5.965449
+        ],
+        "footprint_m": [
+          281.0,
+          166.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 145.0,
+        "side": "right",
+        "distance_m": 22.7
+      },
+      {
+        "name": "RSR Spa",
+        "kind": "building",
+        "osm_way": 700256585,
+        "lat_lon": [
+          50.429485,
+          5.957669
+        ],
+        "footprint_m": [
+          106.0,
+          85.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5170.0,
+        "side": "left",
+        "distance_m": 101.5
+      },
+      {
+        "name": "Campus Automobile (Forem)",
+        "kind": "building",
+        "osm_way": 175535503,
+        "lat_lon": [
+          50.429624,
+          5.96146
+        ],
+        "footprint_m": [
+          74.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5055.0,
+        "side": "right",
+        "distance_m": 38.5
+      },
+      {
+        "name": "Salons de l'Eau Rouge",
+        "kind": "building",
+        "osm_way": 176136366,
+        "lat_lon": [
+          50.442305,
+          5.970024
+        ],
+        "footprint_m": [
+          56.0,
+          43.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1055.0,
+        "side": "right",
+        "distance_m": 26.6
+      },
+      {
+        "name": "Karting de Spa-Francorchamps",
+        "kind": "house",
+        "osm_way": 173937052,
+        "lat_lon": [
+          50.431772,
+          5.961206
+        ],
+        "footprint_m": [
+          40.0,
+          33.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5435.0,
+        "side": "right",
+        "distance_m": 18.4
+      },
+      {
+        "name": "Conciergerie",
+        "kind": "building",
+        "osm_way": 176136371,
+        "lat_lon": [
+          50.442206,
+          5.969143
+        ],
+        "footprint_m": [
+          22.0,
+          21.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1030.0,
+        "side": "right",
+        "distance_m": 85.7
+      },
+      {
+        "name": "Ancienne douane",
+        "kind": "building",
+        "osm_way": 77352241,
+        "lat_lon": [
+          50.442787,
+          5.973044
+        ],
+        "footprint_m": [
+          25.0,
+          16.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1150.0,
+        "side": "left",
+        "distance_m": 121.4
+      },
+      {
+        "name": "Virtex Simulation",
+        "kind": "retail",
+        "osm_way": 1512205232,
+        "lat_lon": [
+          50.443178,
+          5.971051
+        ],
+        "footprint_m": [
+          19.0,
+          17.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1025.0,
+        "side": "left",
+        "distance_m": 69.2
+      },
+      {
+        "name": "Hotel de l'Eau Rouge",
+        "kind": "building",
+        "osm_way": 1509741652,
+        "lat_lon": [
+          50.44237,
+          5.969889
+        ],
+        "footprint_m": [
+          19.0,
+          14.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1045.0,
+        "side": "right",
+        "distance_m": 31.7
+      },
+      {
+        "name": "Fan Shop",
+        "kind": "retail",
+        "osm_way": 1512205228,
+        "lat_lon": [
+          50.442971,
+          5.968735
+        ],
+        "footprint_m": [
+          17.0,
+          13.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 940.0,
+        "side": "right",
+        "distance_m": 53.5
+      },
+      {
+        "name": "Fan Shop",
+        "kind": "retail",
+        "osm_way": 1517218010,
+        "lat_lon": [
+          50.444028,
+          5.969386
+        ],
+        "footprint_m": [
+          15.0,
+          14.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 885.0,
+        "side": "left",
+        "distance_m": 46.9
+      },
+      {
+        "name": "P7B",
+        "kind": "building",
+        "osm_way": 175371358,
+        "lat_lon": [
+          50.428828,
+          5.975285
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2805.0,
+        "side": "right",
+        "distance_m": 19.2
+      },
+      {
+        "name": "P11",
+        "kind": "building",
+        "osm_way": 175387820,
+        "lat_lon": [
+          50.434164,
+          5.968799
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4085.0,
+        "side": "right",
+        "distance_m": 49.0
+      },
+      {
+        "name": "P13",
+        "kind": "building",
+        "osm_way": 175398611,
+        "lat_lon": [
+          50.430552,
+          5.96363
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4725.0,
+        "side": "right",
+        "distance_m": 23.0
+      },
+      {
+        "name": "P2",
+        "kind": "building",
+        "osm_way": 176136370,
+        "lat_lon": [
+          50.442439,
+          5.970294
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1055.0,
+        "side": "right",
+        "distance_m": 13.7
+      },
+      {
+        "name": "P14",
+        "kind": "building",
+        "osm_way": 700401607,
+        "lat_lon": [
+          50.428596,
+          5.96228
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4945.0,
+        "side": "left",
+        "distance_m": 22.5
+      },
+      {
+        "name": "P12B",
+        "kind": "building",
+        "osm_way": 700401608,
+        "lat_lon": [
+          50.430146,
+          5.965639
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4575.0,
+        "side": "left",
+        "distance_m": 33.2
+      },
+      {
+        "name": "P12",
+        "kind": "building",
+        "osm_way": 700401609,
+        "lat_lon": [
+          50.430977,
+          5.966946
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4445.0,
+        "side": "right",
+        "distance_m": 21.6
+      },
+      {
+        "name": "P9",
+        "kind": "building",
+        "osm_way": 700401611,
+        "lat_lon": [
+          50.429041,
+          5.974363
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3285.0,
+        "side": "right",
+        "distance_m": 17.4
+      }
+    ],
+    "named": [
+      {
+        "name": "Kemmel Straight",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Raidillon",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Francorchamps",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Stavelot",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Malmedy",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit de Spa-Francorchamps\" (infobox, layout \"Grand Prix Circuit (2007–present\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_belgian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_belgian_grand_prix_-_race_directors_competition_notes.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284560",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284560,
+        "name": "Circuit de Spa Francorchamps",
+        "url": "https://www.openstreetmap.org/relation/284560"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ]
+}

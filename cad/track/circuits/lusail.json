@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "id": "lusail",
+  "status": "confirmed",
+  "event": {
+    "round": 22,
+    "grand_prix": "Qatar Grand Prix",
+    "weekend": "2026-11-27/2026-11-29",
+    "race_date": "2026-11-29",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Lusail International Circuit",
+    "common_name": "Lusail International Circuit",
+    "location": "Lusail, Al Daayen, Qatar",
+    "lat": 25.49,
+    "lon": 51.454167,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2023–present)",
+    "opened": "2004-09-30",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5419.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5419.0,
+      "wikipedia_m": 5419.0,
+      "osm_loop_m": 5426.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 5426.0
+    }
+  },
+  "corners": {
+    "count": 16,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:22.384",
+    "driver": "Lando Norris",
+    "car": "McLaren MCL38",
+    "year": 2024,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "csv": "cad/track/raw/centreline/lusail.csv",
+    "spacing_m": 5.0,
+    "samples": 1085,
+    "length_m": 5425.7,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "relation",
+      "id": 21297662,
+      "name": "Lusail Grand Prix Circuit",
+      "url": "https://www.openstreetmap.org/relation/21297662"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 543,
+    "spacing_m": 9.99,
+    "min_m": 9.0,
+    "max_m": 17.8,
+    "total_change_m": 8.8,
+    "total_climb_per_lap_m": 47.0,
+    "raw_change_m": 11.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Additional gravel strip at the exit of Turn 6.",
+      "Additional gravel strip at Turn 10 on the right-hand side.",
+      "Gravel strip at the exit of Turn 14 starts earlier.",
+      "Additional gravel strip at the exit of Turn 16.",
+      "Gravel beds have been painted."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 7440,
+        "sand": 219223
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 5035,
+        "wall": 46
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "20.1 In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines\ndefine the track edges. During Sprint Qualifying, Qualifying Session, the Sprint and the Race,\neach time a driver fails to negotiate the lap within the track limits, this will result in that lap\ntime being invalidated by the Stewards.\n20.2 Additionally, each time a driver fails to respect track limits at Turn 16, will result in that lap\ntime and the immediately following lap time being invalidated by the Stewards.\n20.3 The dotted white line intersecting the pit exit road marks the track edge.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 890.0,
+    "length_all_pit_ways_m": 1235.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 4681.0,
+      "lat_lon": [
+        25.485002,
+        51.452321
+      ]
+    },
+    "exit": {
+      "s_m": 140.0,
+      "lat_lon": [
+        25.49195,
+        51.447966
+      ]
+    },
+    "osm_ways": [
+      1037707300,
+      196193732
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n15.2 At pit entry drivers must keep to the right of the bollard when are entering the pits.\n15.3 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right\nhand side of the bollard at pit entry will be considered as entering the pit lane.\n15.4 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to cross\nthe white line separating the pit exit road from the circuit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "80m Before Turn 6"
+      },
+      {
+        "point": "S2",
+        "location": "75m Before Turn 12"
+      }
+    ],
+    "speed_trap": "205m Before Turn 1",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection",
+          "location": "40m After Turn 15"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation",
+          "location": "305m After Turn 16"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": null,
+        "osm_way": 152483596,
+        "lat_lon": [
+          25.488342,
+          51.449731
+        ],
+        "approx_length_m": 373.0,
+        "s_m": 4906.0,
+        "side": "left",
+        "distance_m": 27.6
+      }
+    ],
+    "bridges": [],
+    "tunnels": [],
+    "buildings": [],
+    "named": [],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Lusail International Circuit\" (infobox, layout \"Grand Prix Circuit (2023–present\")",
+      "url": "https://en.wikipedia.org/wiki/Lusail_International_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_qatar_grand_prix_-_event_notes_-_circuit_map._pit_lane_drawing_emergency_exits_map_ers_battery_containment_area_red_zones_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_qatar_grand_prix_-_race_directors_event_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/21297662",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 21297662,
+        "name": "Lusail Grand Prix Circuit",
+        "url": "https://www.openstreetmap.org/relation/21297662"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data."
+  ]
+}

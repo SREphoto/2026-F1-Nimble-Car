@@ -1,0 +1,999 @@
+{
+  "schema_version": 1,
+  "id": "monza",
+  "status": "confirmed",
+  "event": {
+    "round": 13,
+    "grand_prix": "Italian Grand Prix",
+    "weekend": "2026-09-04/2026-09-06",
+    "race_date": "2026-09-06",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Monza Circuit",
+    "common_name": "Monza Circuit",
+    "location": "Monza, Italy",
+    "lat": 45.620556,
+    "lon": 9.289444,
+    "coordinate_source": "wikipedia",
+    "layout": "Modern Grand Prix Circuit (2000–present)",
+    "opened": "1922-09-03",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5793.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5793.0,
+      "wikipedia_m": 5793.0,
+      "osm_loop_m": 5794.0,
+      "tumftm_m": 5790.2,
+      "pack_centreline_m": 5790.0
+    }
+  },
+  "corners": {
+    "count": 11,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1-2",
+        "name": "Variante del Rettifilo",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4-5",
+        "name": "Variante della Roggia",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "6",
+        "name": "Lesmo",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "8-10",
+        "name": "Variante Ascari",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "11",
+        "name": "Parabolica",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "11",
+        "name": "Curva Alboreto",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:20.901",
+    "driver": "Lando Norris",
+    "car": "McLaren MCL39",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/monza.csv",
+    "spacing_m": 5.0,
+    "samples": 1158,
+    "length_m": 5790.2,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Monza.csv",
+      "raceline": "cad/track/raw/tumftm/Monza_raceline.csv",
+      "length_m": 5790.2,
+      "points": 1159,
+      "georef_median_m": 0.71,
+      "georef_p95_m": 1.41,
+      "rotation_deg": -0.1488,
+      "origin_lat": 45.6161874,
+      "origin_lon": 9.2807755,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284565,
+      "name": "Autodromo Nazionale di Monza",
+      "url": "https://www.openstreetmap.org/relation/284565"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 579,
+    "spacing_m": 10.0,
+    "min_m": 181.2,
+    "max_m": 199.2,
+    "total_change_m": 18.0,
+    "total_climb_per_lap_m": 45.3,
+    "raw_change_m": 18.7,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 7.5,
+    "max_m": 12.4,
+    "median_m": 9.0,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "New negative kerb left hand side before Turn 1 from the 100 meter brake marker.",
+      "New negative kerb right hand side before Turn 4 from the 100 meter brake marker.",
+      "New negative kerb right hand side before Turn 8 from the 100 meter brake marker."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "New asphalt patch at Turn 2.",
+      "New wall and debris fence on the left-hand side of the main straight.",
+      "First part of the gravel bed at Turn 5 LHS was replaced by asphalt.",
+      "New natural grass installed at the right-hand side of Turn 9 (apex).",
+      "New fences on the left-hand side between Turn 10 and Turn 11."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 4385,
+        "grass": 39584,
+        "sand": 36956
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 2055,
+        "guard_rail": 779,
+        "wall": 2613
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "24.1 During any LTCS, each time a driver fails to negotiate Turn 11, will result in that lap time and the\nimmediately following lap time may be invalidated by the Stewards.\n24.2 The dotted white line intersecting the pit exit road marks the track edge.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 742.0,
+    "length_all_pit_ways_m": 742.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5540.0,
+      "lat_lon": [
+        45.613965,
+        9.280718
+      ]
+    },
+    "exit": {
+      "s_m": 495.0,
+      "lat_lon": [
+        45.620611,
+        9.281409
+      ]
+    },
+    "osm_ways": [
+      38168747
+    ],
+    "fia_entry_exit_rules": "14.1 In accordance with Appendix L, Chapter IV, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n14.2 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right-hand side of\nthe bollard at Safety Car Line 1 will be considered as entering the pit lane.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.909
+      },
+      {
+        "sector": 2,
+        "length_km": 1.823
+      },
+      {
+        "sector": 3,
+        "length_km": 2.061
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "230m before T4"
+      },
+      {
+        "point": "S2",
+        "location": "210m before T8"
+      }
+    ],
+    "speed_trap": "190m before T1",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "30m after T11 / Pit Exit",
+        "low_grip_activation": "100m after T11 / Pit Exit"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "70m after T3",
+        "low_grip_activation": "110m after T3"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "170m after T7",
+        "low_grip_activation": "230m after T7"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "130m after T10",
+        "low_grip_activation": "180m after T10"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T11",
+      "activation": "T11"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Tribuna Laterale Destra",
+        "osm_way": 34404645,
+        "lat_lon": [
+          45.617372,
+          9.280488
+        ],
+        "approx_length_m": 221.0,
+        "s_m": 40.0,
+        "side": "left",
+        "distance_m": 19.0
+      },
+      {
+        "name": "Tribuna Centrale",
+        "osm_way": 193647796,
+        "lat_lon": [
+          45.619066,
+          9.280678
+        ],
+        "approx_length_m": 70.0,
+        "s_m": 345.0,
+        "side": "left",
+        "distance_m": 24.9
+      },
+      {
+        "name": "tribune",
+        "osm_way": 194742580,
+        "lat_lon": [
+          45.619839,
+          9.281623
+        ],
+        "approx_length_m": 73.0,
+        "s_m": 365.0,
+        "side": "right",
+        "distance_m": 20.7
+      },
+      {
+        "name": "Tribuna Laterale Sinistra",
+        "osm_way": 193647795,
+        "lat_lon": [
+          45.619823,
+          9.280853
+        ],
+        "approx_length_m": 76.0,
+        "s_m": 430.0,
+        "side": "left",
+        "distance_m": 20.8
+      },
+      {
+        "name": "Tribuna Piscina",
+        "osm_way": 231257063,
+        "lat_lon": [
+          45.620704,
+          9.281085
+        ],
+        "approx_length_m": 83.0,
+        "s_m": 470.0,
+        "side": "left",
+        "distance_m": 18.5
+      },
+      {
+        "name": "Tribuna Alta Velocità",
+        "osm_way": 231026018,
+        "lat_lon": [
+          45.622544,
+          9.281984
+        ],
+        "approx_length_m": 92.0,
+        "s_m": 655.0,
+        "side": "right",
+        "distance_m": 20.9
+      },
+      {
+        "name": null,
+        "osm_way": 1529562455,
+        "lat_lon": [
+          45.622551,
+          9.281314
+        ],
+        "approx_length_m": 50.0,
+        "s_m": 680.0,
+        "side": "left",
+        "distance_m": 19.0
+      },
+      {
+        "name": "Tribuna Alta Velocità",
+        "osm_way": 231026024,
+        "lat_lon": [
+          45.623392,
+          9.282229
+        ],
+        "approx_length_m": 90.0,
+        "s_m": 755.0,
+        "side": "right",
+        "distance_m": 23.4
+      },
+      {
+        "name": "Tribuna Alta Velocità",
+        "osm_way": 231026025,
+        "lat_lon": [
+          45.623914,
+          9.282474
+        ],
+        "approx_length_m": 52.0,
+        "s_m": 850.0,
+        "side": "right",
+        "distance_m": 40.3
+      },
+      {
+        "name": null,
+        "osm_way": 561721691,
+        "lat_lon": [
+          45.624858,
+          9.282811
+        ],
+        "approx_length_m": 15.0,
+        "s_m": 1000.0,
+        "side": "right",
+        "distance_m": 26.3
+      },
+      {
+        "name": "Tribuna Prima Variante Esterna",
+        "osm_way": 231026019,
+        "lat_lon": [
+          45.625134,
+          9.281491
+        ],
+        "approx_length_m": 148.0,
+        "s_m": 1125.0,
+        "side": "left",
+        "distance_m": 20.3
+      },
+      {
+        "name": null,
+        "osm_way": 338984712,
+        "lat_lon": [
+          45.632421,
+          9.284994
+        ],
+        "approx_length_m": 17.0,
+        "s_m": 1710.0,
+        "side": "left",
+        "distance_m": 285.1
+      },
+      {
+        "name": null,
+        "osm_way": 338984705,
+        "lat_lon": [
+          45.63141,
+          9.286137
+        ],
+        "approx_length_m": 40.0,
+        "s_m": 1755.0,
+        "side": "left",
+        "distance_m": 143.1
+      },
+      {
+        "name": "Tribuna Seconda Variante",
+        "osm_way": 231265139,
+        "lat_lon": [
+          45.630218,
+          9.292652
+        ],
+        "approx_length_m": 30.0,
+        "s_m": 2265.0,
+        "side": "right",
+        "distance_m": 36.1
+      },
+      {
+        "name": "Tribuna Roggia",
+        "osm_way": 231265140,
+        "lat_lon": [
+          45.630445,
+          9.292922
+        ],
+        "approx_length_m": 28.0,
+        "s_m": 2300.0,
+        "side": "right",
+        "distance_m": 27.0
+      },
+      {
+        "name": "Tribuna Ascari Tre",
+        "osm_way": 231026027,
+        "lat_lon": [
+          45.622886,
+          9.285716
+        ],
+        "approx_length_m": 30.0,
+        "s_m": 3930.0,
+        "side": "right",
+        "distance_m": 17.8
+      },
+      {
+        "name": "Tribuna Ascari Due",
+        "osm_way": 194457674,
+        "lat_lon": [
+          45.62207,
+          9.284874
+        ],
+        "approx_length_m": 32.0,
+        "s_m": 4100.0,
+        "side": "right",
+        "distance_m": 70.0
+      },
+      {
+        "name": "Tribuna Amici Autodromo",
+        "osm_way": 194457677,
+        "lat_lon": [
+          45.621767,
+          9.284723
+        ],
+        "approx_length_m": 22.0,
+        "s_m": 4130.0,
+        "side": "right",
+        "distance_m": 52.5
+      },
+      {
+        "name": "Tribuna Ascari Uno",
+        "osm_way": 194457685,
+        "lat_lon": [
+          45.621532,
+          9.284668
+        ],
+        "approx_length_m": 21.0,
+        "s_m": 4140.0,
+        "side": "right",
+        "distance_m": 37.6
+      },
+      {
+        "name": "Tribuna Ascari",
+        "osm_way": 231260684,
+        "lat_lon": [
+          45.621199,
+          9.284617
+        ],
+        "approx_length_m": 61.0,
+        "s_m": 4185.0,
+        "side": "right",
+        "distance_m": 25.1
+      },
+      {
+        "name": "Tribuna Uscita Ascari A",
+        "osm_way": 194457688,
+        "lat_lon": [
+          45.619851,
+          9.284339
+        ],
+        "approx_length_m": 49.0,
+        "s_m": 4330.0,
+        "side": "right",
+        "distance_m": 28.9
+      },
+      {
+        "name": "Tribuna Uscita Ascari B",
+        "osm_way": 194457680,
+        "lat_lon": [
+          45.619392,
+          9.284305
+        ],
+        "approx_length_m": 31.0,
+        "s_m": 4370.0,
+        "side": "right",
+        "distance_m": 25.7
+      },
+      {
+        "name": "Tribuna Museo",
+        "osm_way": 194457686,
+        "lat_lon": [
+          45.619099,
+          9.284267
+        ],
+        "approx_length_m": 22.0,
+        "s_m": 4375.0,
+        "side": "right",
+        "distance_m": 25.5
+      },
+      {
+        "name": "Tribuna Laterale Parabolica",
+        "osm_way": 194457679,
+        "lat_lon": [
+          45.614447,
+          9.284274
+        ],
+        "approx_length_m": 72.0,
+        "s_m": 4940.0,
+        "side": "left",
+        "distance_m": 17.3
+      },
+      {
+        "name": "Tribuna Laterale Parabolica",
+        "osm_way": 194457667,
+        "lat_lon": [
+          45.613826,
+          9.284189
+        ],
+        "approx_length_m": 53.0,
+        "s_m": 4945.0,
+        "side": "left",
+        "distance_m": 18.2
+      },
+      {
+        "name": "Tribuna Laterale Parabolica",
+        "osm_way": 194457675,
+        "lat_lon": [
+          45.613386,
+          9.284126
+        ],
+        "approx_length_m": 36.0,
+        "s_m": 5035.0,
+        "side": "left",
+        "distance_m": 18.0
+      },
+      {
+        "name": "Tribuna Laterale Parabolica",
+        "osm_way": 194457672,
+        "lat_lon": [
+          45.613023,
+          9.284073
+        ],
+        "approx_length_m": 35.0,
+        "s_m": 5040.0,
+        "side": "left",
+        "distance_m": 18.4
+      },
+      {
+        "name": "Tribuna Laterale Parabolica",
+        "osm_way": 194457692,
+        "lat_lon": [
+          45.612658,
+          9.284018
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 5080.0,
+        "side": "left",
+        "distance_m": 17.9
+      },
+      {
+        "name": "Tribuna Parabolica",
+        "osm_way": 179794158,
+        "lat_lon": [
+          45.612065,
+          9.283908
+        ],
+        "approx_length_m": 83.0,
+        "s_m": 5130.0,
+        "side": "left",
+        "distance_m": 14.5
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457687,
+        "lat_lon": [
+          45.612995,
+          9.281108
+        ],
+        "approx_length_m": 18.0,
+        "s_m": 5415.0,
+        "side": "right",
+        "distance_m": 13.9
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457664,
+        "lat_lon": [
+          45.613019,
+          9.281197
+        ],
+        "approx_length_m": 15.0,
+        "s_m": 5420.0,
+        "side": "right",
+        "distance_m": 21.5
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457670,
+        "lat_lon": [
+          45.613172,
+          9.281043
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 5435.0,
+        "side": "right",
+        "distance_m": 14.8
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457684,
+        "lat_lon": [
+          45.613189,
+          9.281132
+        ],
+        "approx_length_m": 18.0,
+        "s_m": 5455.0,
+        "side": "right",
+        "distance_m": 21.7
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457668,
+        "lat_lon": [
+          45.613353,
+          9.28099
+        ],
+        "approx_length_m": 18.0,
+        "s_m": 5460.0,
+        "side": "right",
+        "distance_m": 14.4
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457682,
+        "lat_lon": [
+          45.613369,
+          9.281081
+        ],
+        "approx_length_m": 17.0,
+        "s_m": 5480.0,
+        "side": "right",
+        "distance_m": 21.7
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457689,
+        "lat_lon": [
+          45.613548,
+          9.281051
+        ],
+        "approx_length_m": 18.0,
+        "s_m": 5480.0,
+        "side": "right",
+        "distance_m": 22.0
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457690,
+        "lat_lon": [
+          45.61354,
+          9.280952
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 5480.0,
+        "side": "right",
+        "distance_m": 14.6
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457671,
+        "lat_lon": [
+          45.613722,
+          9.280941
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 5500.0,
+        "side": "right",
+        "distance_m": 14.8
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457666,
+        "lat_lon": [
+          45.613908,
+          9.280923
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 5525.0,
+        "side": "right",
+        "distance_m": 15.3
+      },
+      {
+        "name": "Tribune",
+        "osm_way": 194457693,
+        "lat_lon": [
+          45.613921,
+          9.280982
+        ],
+        "approx_length_m": 13.0,
+        "s_m": 5540.0,
+        "side": "right",
+        "distance_m": 19.7
+      },
+      {
+        "name": "Tribuna Parabolica interna",
+        "osm_way": 194457681,
+        "lat_lon": [
+          45.614322,
+          9.280974
+        ],
+        "approx_length_m": 59.0,
+        "s_m": 5545.0,
+        "side": "right",
+        "distance_m": 14.4
+      },
+      {
+        "name": "Tribuna Parabolica interna",
+        "osm_way": 194457691,
+        "lat_lon": [
+          45.614781,
+          9.281028
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 5610.0,
+        "side": "right",
+        "distance_m": 19.9
+      },
+      {
+        "name": "Tribuna Vedano",
+        "osm_way": 231026020,
+        "lat_lon": [
+          45.614936,
+          9.280169
+        ],
+        "approx_length_m": 146.0,
+        "s_m": 5735.0,
+        "side": "left",
+        "distance_m": 23.4
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "path bridge over track",
+        "name": null,
+        "osm_way": 51791412,
+        "lat_lon": [
+          45.624839,
+          9.289293
+        ],
+        "s_m": 3595.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 194458113,
+        "lat_lon": [
+          45.618583,
+          9.284594
+        ],
+        "s_m": 4435.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 194458112,
+        "lat_lon": [
+          45.615961,
+          9.284213
+        ],
+        "s_m": 4725.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Palazzina Box",
+        "kind": "commercial",
+        "osm_way": 34404652,
+        "lat_lon": [
+          45.616969,
+          9.28134
+        ],
+        "footprint_m": [
+          232.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 10.0,
+        "side": "right",
+        "distance_m": 26.5
+      },
+      {
+        "name": "Hospitality Building",
+        "kind": "commercial",
+        "osm_way": 194458105,
+        "lat_lon": [
+          45.618966,
+          9.281614
+        ],
+        "footprint_m": [
+          93.0,
+          38.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 345.0,
+        "side": "right",
+        "distance_m": 22.7
+      },
+      {
+        "name": "PalaRovagnati",
+        "kind": "stadium",
+        "osm_way": 193503304,
+        "lat_lon": [
+          45.630873,
+          9.287699
+        ],
+        "footprint_m": [
+          59.0,
+          43.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 1885.0,
+        "side": "left",
+        "distance_m": 60.4
+      },
+      {
+        "name": "Padiglione Esposizioni",
+        "kind": "public",
+        "osm_way": 193647798,
+        "lat_lon": [
+          45.619097,
+          9.283886
+        ],
+        "footprint_m": [
+          56.0,
+          34.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4385.0,
+        "side": "right",
+        "distance_m": 40.2
+      },
+      {
+        "name": "Vecchie rimesse",
+        "kind": "service",
+        "osm_way": 193647797,
+        "lat_lon": [
+          45.619394,
+          9.282416
+        ],
+        "footprint_m": [
+          66.0,
+          19.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 360.0,
+        "side": "right",
+        "distance_m": 65.4
+      },
+      {
+        "name": "Centro Medico",
+        "kind": "hospital",
+        "osm_way": 194458108,
+        "lat_lon": [
+          45.615959,
+          9.281644
+        ],
+        "footprint_m": [
+          39.0,
+          16.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5780.0,
+        "side": "right",
+        "distance_m": 55.1
+      },
+      {
+        "name": "Serraglio dei cervi",
+        "kind": "farm",
+        "osm_way": 193475026,
+        "lat_lon": [
+          45.626342,
+          9.290998
+        ],
+        "footprint_m": [
+          14.0,
+          12.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3390.0,
+        "side": "right",
+        "distance_m": 32.5
+      }
+    ],
+    "named": [
+      {
+        "name": "banking",
+        "source": "wikipedia"
+      },
+      {
+        "name": "oval",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Royal Villa",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Monza Park",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Monza Circuit\" (infobox, layout \"Modern Grand Prix Circuit (2000–present\")",
+      "url": "https://en.wikipedia.org/wiki/Monza_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_italian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_italian_grand_prix_-_race_directors_competition_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284565",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284565,
+        "name": "Autodromo Nazionale di Monza",
+        "url": "https://www.openstreetmap.org/relation/284565"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ]
+}

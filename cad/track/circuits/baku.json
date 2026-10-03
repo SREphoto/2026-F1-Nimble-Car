@@ -1,0 +1,652 @@
+{
+  "schema_version": 1,
+  "id": "baku",
+  "status": "confirmed",
+  "event": {
+    "round": 15,
+    "grand_prix": "Azerbaijan Grand Prix",
+    "weekend": "2026-09-24/2026-09-26",
+    "race_date": "2026-09-26",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Baku City Circuit",
+    "common_name": "Baku City Circuit",
+    "location": "Azadliq Square, Baku, Azerbaijan",
+    "lat": 40.3725,
+    "lon": 49.853333,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2016–present)",
+    "opened": "2016-06-17",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 6003.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 6003.0,
+      "wikipedia_m": 6003.0,
+      "osm_loop_m": 5968.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 5968.0
+    }
+  },
+  "corners": {
+    "count": 20,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "OSM oneway tags / backward roles on the circuit ways",
+    "stated_by_source": "anti-clockwise",
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:43.009",
+    "driver": "Charles Leclerc",
+    "car": "Ferrari SF90",
+    "year": 2019,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "csv": "cad/track/raw/centreline/baku.csv",
+    "spacing_m": 5.0,
+    "samples": 1194,
+    "length_m": 5968.4,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "relation",
+      "id": 11266687,
+      "name": "Baku City Circuit",
+      "url": "https://www.openstreetmap.org/relation/11266687"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 597,
+    "spacing_m": 10.0,
+    "min_m": -23.8,
+    "max_m": 12.8,
+    "total_change_m": 36.6,
+    "total_climb_per_lap_m": 104.8,
+    "raw_change_m": 39.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Removal of apex painted kerbs.",
+      "Removal of painted kerbs."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 1195,
+        "grass": 87849
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 176,
+        "hedge": 47,
+        "kerb": 162,
+        "wall": 81,
+        "yes": 18
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": null,
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 737.0,
+    "length_all_pit_ways_m": 737.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5678.0,
+      "lat_lon": [
+        40.371076,
+        49.848265
+      ]
+    },
+    "exit": {
+      "s_m": 460.0,
+      "lat_lon": [
+        40.374294,
+        49.854708
+      ]
+    },
+    "osm_ways": [
+      1513267145
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Appendix L, Chapter IV, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n15.2 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right left-hand side\nof the intersection of the dashed line with the continuous line (as indicated in the image below) will be\nconsidered as entering the pit lane.\n15.3 For the safety and ordely conduct of the event, no part of a tyre of a car exiting the pit lane may cross\nthe line painted in the pit exit road for the purpose of separating cars leaving the pit lane from those\non the track. For the avoidance of doubt, crossing means that the outside of any tyre should not go\nbeyond the outside, with respect to the pit exit road, of this line.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 2.033
+      },
+      {
+        "sector": 2,
+        "length_km": 2.025
+      },
+      {
+        "sector": 3,
+        "length_km": 1.945
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "45m before T5"
+      },
+      {
+        "point": "S2",
+        "location": "55m before T16"
+      }
+    ],
+    "speed_trap": "210m after T20",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "45m after T19",
+        "low_grip_activation": "45m after T20"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "110m after T2",
+        "low_grip_activation": "160m after T2"
+      }
+    ],
+    "overtake": {
+      "detection": "90m after T16",
+      "activation": "20m before T17"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1425935015,
+        "lat_lon": [
+          40.373851,
+          49.854861
+        ],
+        "s_m": 410.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 715443013,
+        "lat_lon": [
+          40.371143,
+          49.848701
+        ],
+        "s_m": 5713.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Baku City Circuit",
+        "kind": "carport",
+        "osm_way": 822375068,
+        "lat_lon": [
+          40.372915,
+          49.852979
+        ],
+        "footprint_m": [
+          260.0,
+          133.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 50.0,
+        "side": "left",
+        "distance_m": 18.9
+      },
+      {
+        "name": "Park Bulvar",
+        "kind": "building",
+        "osm_way": 152192493,
+        "lat_lon": [
+          40.370839,
+          49.85004
+        ],
+        "footprint_m": [
+          168.0,
+          113.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 5868.0,
+        "side": "right",
+        "distance_m": 48.3
+      },
+      {
+        "name": "Azərbaycan Dövlət İqtisad Universiteti",
+        "kind": "university",
+        "osm_way": 152110144,
+        "lat_lon": [
+          40.367587,
+          49.832247
+        ],
+        "footprint_m": [
+          118.0,
+          109.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3294.0,
+        "side": "left",
+        "distance_m": 15.7
+      },
+      {
+        "name": "Hökumət Evi",
+        "kind": "government",
+        "osm_way": 152809510,
+        "lat_lon": [
+          40.373811,
+          49.852603
+        ],
+        "footprint_m": [
+          122.0,
+          102.0
+        ],
+        "height_m": null,
+        "levels": "10",
+        "s_m": 120.0,
+        "side": "left",
+        "distance_m": 98.7
+      },
+      {
+        "name": "134 saylı Məktəb",
+        "kind": "building",
+        "osm_way": 217364414,
+        "lat_lon": [
+          40.366783,
+          49.830489
+        ],
+        "footprint_m": [
+          114.0,
+          77.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3519.0,
+        "side": "right",
+        "distance_m": 13.0
+      },
+      {
+        "name": "189 nömrəli məktəb",
+        "kind": "building",
+        "osm_way": 253081011,
+        "lat_lon": [
+          40.369718,
+          49.831817
+        ],
+        "footprint_m": [
+          98.0,
+          88.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3179.0,
+        "side": "right",
+        "distance_m": 119.6
+      },
+      {
+        "name": "Four Seasons",
+        "kind": "hotel",
+        "osm_way": 152190583,
+        "lat_lon": [
+          40.363506,
+          49.835055
+        ],
+        "footprint_m": [
+          103.0,
+          81.0
+        ],
+        "height_m": null,
+        "levels": "9",
+        "s_m": 4194.0,
+        "side": "left",
+        "distance_m": 15.4
+      },
+      {
+        "name": "Dövlət İdarəçilik Akademiyası",
+        "kind": "building",
+        "osm_way": 221060414,
+        "lat_lon": [
+          40.365904,
+          49.82962
+        ],
+        "footprint_m": [
+          110.0,
+          72.0
+        ],
+        "height_m": null,
+        "levels": "5",
+        "s_m": 3559.0,
+        "side": "right",
+        "distance_m": 77.3
+      },
+      {
+        "name": "Azərbaycan Dövlət Filarmoniyası",
+        "kind": "building",
+        "osm_way": 152190848,
+        "lat_lon": [
+          40.364291,
+          49.831325
+        ],
+        "footprint_m": [
+          91.0,
+          80.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 3789.0,
+        "side": "left",
+        "distance_m": 6.3
+      },
+      {
+        "name": "City Center / Monolit",
+        "kind": "retail",
+        "osm_way": 211461712,
+        "lat_lon": [
+          40.369351,
+          49.833994
+        ],
+        "footprint_m": [
+          89.0,
+          81.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 3119.0,
+        "side": "right",
+        "distance_m": 9.5
+      },
+      {
+        "name": "Bakı Şəhəri İcra Hakimiyyəti",
+        "kind": "government",
+        "osm_way": 153876698,
+        "lat_lon": [
+          40.366813,
+          49.831795
+        ],
+        "footprint_m": [
+          90.0,
+          78.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 3424.0,
+        "side": "left",
+        "distance_m": 18.0
+      },
+      {
+        "name": "BEGOC Business Center",
+        "kind": "office",
+        "osm_way": 222091547,
+        "lat_lon": [
+          40.373105,
+          49.849463
+        ],
+        "footprint_m": [
+          83.0,
+          82.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 5823.0,
+        "side": "left",
+        "distance_m": 140.7
+      },
+      {
+        "name": "Socar Nəqliyyat idarəsi",
+        "kind": "commercial",
+        "osm_way": 133160749,
+        "lat_lon": [
+          40.362123,
+          49.83448
+        ],
+        "footprint_m": [
+          90.0,
+          75.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 4099.0,
+        "side": "right",
+        "distance_m": 11.4
+      },
+      {
+        "name": "Bakı Dəniz Vağzalı",
+        "kind": "building",
+        "osm_way": 25402557,
+        "lat_lon": [
+          40.373191,
+          49.85684
+        ],
+        "footprint_m": [
+          93.0,
+          66.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 350.0,
+        "side": "right",
+        "distance_m": 105.4
+      },
+      {
+        "name": "Marriott Abşeron Otel",
+        "kind": "hotel",
+        "osm_way": 153128834,
+        "lat_lon": [
+          40.37446,
+          49.856512
+        ],
+        "footprint_m": [
+          86.0,
+          71.0
+        ],
+        "height_m": null,
+        "levels": "20",
+        "s_m": 395.0,
+        "side": "right",
+        "distance_m": 120.7
+      },
+      {
+        "name": "Bakı Biznes Mərkəzi",
+        "kind": "office",
+        "osm_way": 152192304,
+        "lat_lon": [
+          40.368991,
+          49.844757
+        ],
+        "footprint_m": [
+          92.0,
+          57.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 5314.0,
+        "side": "right",
+        "distance_m": 62.4
+      },
+      {
+        "name": "Muzey Mərkəzi",
+        "kind": "building",
+        "osm_way": 25359715,
+        "lat_lon": [
+          40.369751,
+          49.842477
+        ],
+        "footprint_m": [
+          73.0,
+          68.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 2009.0,
+        "side": "left",
+        "distance_m": 18.0
+      },
+      {
+        "name": "Məhəmməd Füzuli adına Əlyazmalar İnstitutu",
+        "kind": "building",
+        "osm_way": 153876684,
+        "lat_lon": [
+          40.368149,
+          49.833187
+        ],
+        "footprint_m": [
+          72.0,
+          68.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 3194.0,
+        "side": "left",
+        "distance_m": 18.7
+      },
+      {
+        "name": "Prezident Aparatı",
+        "kind": "building",
+        "osm_way": 152302601,
+        "lat_lon": [
+          40.363806,
+          49.830089
+        ],
+        "footprint_m": [
+          90.0,
+          47.0
+        ],
+        "height_m": null,
+        "levels": "9",
+        "s_m": 3764.0,
+        "side": "right",
+        "distance_m": 52.2
+      },
+      {
+        "name": "Hilton",
+        "kind": "hotel",
+        "osm_way": 152192792,
+        "lat_lon": [
+          40.372078,
+          49.849601
+        ],
+        "footprint_m": [
+          91.0,
+          46.0
+        ],
+        "height_m": null,
+        "levels": "25",
+        "s_m": 5833.0,
+        "side": "left",
+        "distance_m": 19.9
+      }
+    ],
+    "named": [
+      {
+        "name": "Maiden Tower",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Old City",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Azadliq Square",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Government House",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Baku City Circuit\" (infobox, layout \"Grand Prix Circuit (2016–present\")",
+      "url": "https://en.wikipedia.org/wiki/Baku_City_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_azerbaijan_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_azerbaijan_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/11266687",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 11266687,
+        "name": "Baku City Circuit",
+        "url": "https://www.openstreetmap.org/relation/11266687"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

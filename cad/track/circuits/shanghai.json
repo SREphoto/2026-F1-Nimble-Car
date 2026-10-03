@@ -1,0 +1,533 @@
+{
+  "schema_version": 1,
+  "id": "shanghai",
+  "status": "confirmed",
+  "event": {
+    "round": 2,
+    "grand_prix": "Chinese Grand Prix",
+    "weekend": "2026-03-13/2026-03-15",
+    "race_date": "2026-03-15",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Shanghai International Circuit",
+    "common_name": "Shanghai International Circuit",
+    "location": "Jiading, Shanghai, China",
+    "lat": 31.338889,
+    "lon": 121.219722,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2004–present)",
+    "opened": "2004-06-06",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5451.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5451.0,
+      "wikipedia_m": 5451.0,
+      "osm_loop_m": 5459.0,
+      "tumftm_m": 5445.2,
+      "pack_centreline_m": 5445.0
+    }
+  },
+  "corners": {
+    "count": 16,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:32.238",
+    "driver": "Michael Schumacher",
+    "car": "Ferrari F2004",
+    "year": 2004,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/shanghai.csv",
+    "spacing_m": 5.0,
+    "samples": 1089,
+    "length_m": 5445.2,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Shanghai.csv",
+      "raceline": "cad/track/raw/tumftm/Shanghai_raceline.csv",
+      "length_m": 5445.2,
+      "points": 1090,
+      "georef_median_m": 0.9,
+      "georef_p95_m": 3.79,
+      "rotation_deg": 0.8639,
+      "origin_lat": 31.3377088,
+      "origin_lon": 121.2225459,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 2094941,
+      "name": "Shanghai International Circuit",
+      "url": "https://www.openstreetmap.org/relation/2094941"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 545,
+    "spacing_m": 9.99,
+    "min_m": 1.1,
+    "max_m": 6.9,
+    "total_change_m": 5.8,
+    "total_climb_per_lap_m": 42.0,
+    "raw_change_m": 8.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 10.1,
+    "max_m": 17.8,
+    "median_m": 12.7,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Reduced the height of the back of the kerb at the apex of Turn 3."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Realignment of the tyre barrier at Turn 7 on the left-hand side."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "gravel": 17478
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 961
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "The white line (continuous and dotted) across pit exit marks the track edge line.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 755.0,
+    "length_all_pit_ways_m": 839.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5205.0,
+      "lat_lon": [
+        31.338797,
+        121.224839
+      ]
+    },
+    "exit": {
+      "s_m": 500.0,
+      "lat_lon": [
+        31.336679,
+        121.217408
+      ]
+    },
+    "osm_ways": [
+      107371138,
+      107371147
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n15.2 For safety reasons, the line that is at pit exit, includes the line painted on the track at pit exit and\ncontinuing after SC2 line.\n15.3 If there is a yellow flag displayed at MP16.2 on RHS at the pit entry road it will be a warning of an\nincident around the corner of the pit entry. This flag is not intended for drivers staying on track.\n15.4 Drivers entering the pit entry road must stay to the right of the solid white line. Drivers are allowed\nto cross the dotted white line on the left. In the area of the dotted white line drivers are not\nallowed to overtake.\n15.5 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver crossing the dotted line after\nthe safety car line 1 on the right hand side of the solid white line separating the pit entry road\nfrom the track, as indicated in the image bellow, will be considered as entering the pit lane.\n15.6 For the safe and orderly conduct of the event, during any live session, team personnel are\nnot allowed in the pit lane beyond the finish line crossing the pit lane, as indicated in the\npicture below.\n15.7 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to cross the\nwhite line separating the pit exit road from the circuit.\n15.8 At the pit entry road, the exit of the left-hand side turn area (with the Qatar advertisement) will be\nmonitor as a track limit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.43
+      },
+      {
+        "sector": 2,
+        "length_km": 1.569
+      },
+      {
+        "sector": 3,
+        "length_km": 2.452
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "150m before T6"
+      },
+      {
+        "point": "S2",
+        "location": "145m before T11"
+      }
+    ],
+    "speed_trap": "240m before T14",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "100m after T16",
+        "low_grip_activation": "150m after T16"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "60m after T4",
+        "low_grip_activation": "100m after T4"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "100m after T10",
+        "low_grip_activation": "140m after T10"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "60m after T13",
+        "low_grip_activation": "130m after T13"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T16",
+      "activation": "100m after T16"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "A看台",
+        "osm_way": 107371135,
+        "lat_lon": [
+          31.337391,
+          121.220683
+        ],
+        "approx_length_m": 412.0,
+        "s_m": 335.0,
+        "side": "left",
+        "distance_m": 16.9
+      },
+      {
+        "name": "B1看台",
+        "osm_way": 156341844,
+        "lat_lon": [
+          31.336267,
+          121.21734
+        ],
+        "approx_length_m": 164.0,
+        "s_m": 455.0,
+        "side": "left",
+        "distance_m": 23.2
+      },
+      {
+        "name": "B2看台",
+        "osm_way": 156341848,
+        "lat_lon": [
+          31.335993,
+          121.215749
+        ],
+        "approx_length_m": 103.0,
+        "s_m": 570.0,
+        "side": "left",
+        "distance_m": 88.3
+      },
+      {
+        "name": "B3看台",
+        "osm_way": 156341851,
+        "lat_lon": [
+          31.337,
+          121.215084
+        ],
+        "approx_length_m": 194.0,
+        "s_m": 690.0,
+        "side": "left",
+        "distance_m": 103.7
+      },
+      {
+        "name": null,
+        "osm_way": 156974489,
+        "lat_lon": [
+          31.34377,
+          121.21877
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3250.0,
+        "side": "left",
+        "distance_m": 50.1
+      },
+      {
+        "name": null,
+        "osm_way": 156974496,
+        "lat_lon": [
+          31.344048,
+          121.218388
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 3270.0,
+        "side": "left",
+        "distance_m": 58.5
+      },
+      {
+        "name": null,
+        "osm_way": 156974483,
+        "lat_lon": [
+          31.344365,
+          121.218185
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3295.0,
+        "side": "left",
+        "distance_m": 65.1
+      },
+      {
+        "name": null,
+        "osm_way": 156974497,
+        "lat_lon": [
+          31.34472,
+          121.218106
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 3315.0,
+        "side": "left",
+        "distance_m": 68.9
+      },
+      {
+        "name": null,
+        "osm_way": 156974491,
+        "lat_lon": [
+          31.345078,
+          121.21814
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3335.0,
+        "side": "left",
+        "distance_m": 69.7
+      },
+      {
+        "name": null,
+        "osm_way": 156974506,
+        "lat_lon": [
+          31.345417,
+          121.218271
+        ],
+        "approx_length_m": 40.0,
+        "s_m": 3355.0,
+        "side": "left",
+        "distance_m": 71.1
+      },
+      {
+        "name": null,
+        "osm_way": 156974493,
+        "lat_lon": [
+          31.345719,
+          121.218497
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3375.0,
+        "side": "left",
+        "distance_m": 73.0
+      },
+      {
+        "name": null,
+        "osm_way": 156974485,
+        "lat_lon": [
+          31.345964,
+          121.218807
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3400.0,
+        "side": "left",
+        "distance_m": 75.2
+      },
+      {
+        "name": null,
+        "osm_way": 156974499,
+        "lat_lon": [
+          31.346128,
+          121.219181
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3420.0,
+        "side": "left",
+        "distance_m": 76.2
+      },
+      {
+        "name": null,
+        "osm_way": 156974487,
+        "lat_lon": [
+          31.346206,
+          121.219593
+        ],
+        "approx_length_m": 38.0,
+        "s_m": 3460.0,
+        "side": "left",
+        "distance_m": 74.2
+      },
+      {
+        "name": null,
+        "osm_way": 156974500,
+        "lat_lon": [
+          31.346217,
+          121.220001
+        ],
+        "approx_length_m": 36.0,
+        "s_m": 3465.0,
+        "side": "left",
+        "distance_m": 73.9
+      },
+      {
+        "name": "无坐席看台F",
+        "osm_way": 485553716,
+        "lat_lon": [
+          31.340317,
+          121.224938
+        ],
+        "approx_length_m": 414.0,
+        "s_m": 3940.0,
+        "side": "left",
+        "distance_m": 24.2
+      },
+      {
+        "name": "H看台",
+        "osm_way": 1372223261,
+        "lat_lon": [
+          31.337106,
+          121.227348
+        ],
+        "approx_length_m": 272.0,
+        "s_m": 4675.0,
+        "side": "left",
+        "distance_m": 7.6
+      },
+      {
+        "name": "无坐席看台J",
+        "osm_way": 485553709,
+        "lat_lon": [
+          31.33496,
+          121.228554
+        ],
+        "approx_length_m": 150.0,
+        "s_m": 4800.0,
+        "side": "left",
+        "distance_m": 72.7
+      },
+      {
+        "name": "K看台",
+        "osm_way": 1372223262,
+        "lat_lon": [
+          31.336456,
+          121.226254
+        ],
+        "approx_length_m": 265.0,
+        "s_m": 4915.0,
+        "side": "left",
+        "distance_m": 26.7
+      },
+      {
+        "name": "无坐席看台L",
+        "osm_way": 485553713,
+        "lat_lon": [
+          31.33766,
+          121.223954
+        ],
+        "approx_length_m": 145.0,
+        "s_m": 5375.0,
+        "side": "left",
+        "distance_m": 27.4
+      }
+    ],
+    "bridges": [],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "F1 Accreditation Centre",
+        "kind": "building",
+        "osm_way": 410741464,
+        "lat_lon": [
+          31.336845,
+          121.228956
+        ],
+        "footprint_m": [
+          34.0,
+          26.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 4760.0,
+        "side": "left",
+        "distance_m": 125.0
+      }
+    ],
+    "named": [
+      {
+        "name": "grandstand",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Shanghai International Circuit\" (infobox, layout \"Grand Prix Circuit (2004–present\")",
+      "url": "https://en.wikipedia.org/wiki/Shanghai_International_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_battery_containment_area_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/2094941",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 2094941,
+        "name": "Shanghai International Circuit",
+        "url": "https://www.openstreetmap.org/relation/2094941"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified."
+  ]
+}

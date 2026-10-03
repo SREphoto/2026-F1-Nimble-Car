@@ -1,0 +1,240 @@
+{
+  "season": 2026,
+  "retrieved": "2026-10-03",
+  "sources": [
+    "https://www.formula1.com/en/racing/2026",
+    "https://en.wikipedia.org/wiki/2026_Formula_One_World_Championship",
+    "https://www.formula1.com/en/latest/article/formula-1-and-fia-confirm-formula-1-and-fia-confirm-malaysia-will-join-2026-calendar-as-host-venue-for-the-bahrain-grand-prix.6lL7vjFEM2VVynRHvg1TCf",
+    "https://www.skysports.com/f1/news/13519453/f1-confirms-cancellation-of-bahrain-and-saudi-arabian-grands-prix-due-to-war-in-middle-east-as-2026-calendar-reduced-to-22-races"
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "grand_prix": "Australian Grand Prix",
+      "circuit_id": "albert_park",
+      "weekend": "2026-03-06/2026-03-08",
+      "race_date": "2026-03-08",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 2,
+      "grand_prix": "Chinese Grand Prix",
+      "circuit_id": "shanghai",
+      "weekend": "2026-03-13/2026-03-15",
+      "race_date": "2026-03-15",
+      "sprint": true,
+      "tumftm": true
+    },
+    {
+      "round": 3,
+      "grand_prix": "Japanese Grand Prix",
+      "circuit_id": "suzuka",
+      "weekend": "2026-03-27/2026-03-29",
+      "race_date": "2026-03-29",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 4,
+      "grand_prix": "Miami Grand Prix",
+      "circuit_id": "miami",
+      "weekend": "2026-05-01/2026-05-03",
+      "race_date": "2026-05-03",
+      "sprint": true,
+      "tumftm": false
+    },
+    {
+      "round": 5,
+      "grand_prix": "Canadian Grand Prix",
+      "circuit_id": "montreal",
+      "weekend": "2026-05-22/2026-05-24",
+      "race_date": "2026-05-24",
+      "sprint": true,
+      "tumftm": true
+    },
+    {
+      "round": 6,
+      "grand_prix": "Monaco Grand Prix",
+      "circuit_id": "monaco",
+      "weekend": "2026-06-05/2026-06-07",
+      "race_date": "2026-06-07",
+      "sprint": false,
+      "tumftm": false
+    },
+    {
+      "round": 7,
+      "grand_prix": "Barcelona-Catalunya Grand Prix",
+      "circuit_id": "barcelona",
+      "weekend": "2026-06-12/2026-06-14",
+      "race_date": "2026-06-14",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 8,
+      "grand_prix": "Austrian Grand Prix",
+      "circuit_id": "red_bull_ring",
+      "weekend": "2026-06-26/2026-06-28",
+      "race_date": "2026-06-28",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 9,
+      "grand_prix": "British Grand Prix",
+      "circuit_id": "silverstone",
+      "weekend": "2026-07-03/2026-07-05",
+      "race_date": "2026-07-05",
+      "sprint": true,
+      "tumftm": true
+    },
+    {
+      "round": 10,
+      "grand_prix": "Belgian Grand Prix",
+      "circuit_id": "spa",
+      "weekend": "2026-07-17/2026-07-19",
+      "race_date": "2026-07-19",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 11,
+      "grand_prix": "Hungarian Grand Prix",
+      "circuit_id": "hungaroring",
+      "weekend": "2026-07-24/2026-07-26",
+      "race_date": "2026-07-26",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 12,
+      "grand_prix": "Dutch Grand Prix",
+      "circuit_id": "zandvoort",
+      "weekend": "2026-08-21/2026-08-23",
+      "race_date": "2026-08-23",
+      "sprint": true,
+      "tumftm": true
+    },
+    {
+      "round": 13,
+      "grand_prix": "Italian Grand Prix",
+      "circuit_id": "monza",
+      "weekend": "2026-09-04/2026-09-06",
+      "race_date": "2026-09-06",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 14,
+      "grand_prix": "Spanish Grand Prix",
+      "circuit_id": "madring",
+      "weekend": "2026-09-11/2026-09-13",
+      "race_date": "2026-09-13",
+      "sprint": false,
+      "tumftm": false
+    },
+    {
+      "round": 15,
+      "grand_prix": "Azerbaijan Grand Prix",
+      "circuit_id": "baku",
+      "weekend": "2026-09-24/2026-09-26",
+      "race_date": "2026-09-26",
+      "sprint": false,
+      "tumftm": false
+    },
+    {
+      "round": 16,
+      "grand_prix": "Bahrain Grand Prix (held in Malaysia)",
+      "circuit_id": "sepang",
+      "weekend": "2026-10-02/2026-10-04",
+      "race_date": "2026-10-04",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 17,
+      "grand_prix": "Singapore Grand Prix",
+      "circuit_id": "marina_bay",
+      "weekend": "2026-10-09/2026-10-11",
+      "race_date": "2026-10-11",
+      "sprint": true,
+      "tumftm": false
+    },
+    {
+      "round": 18,
+      "grand_prix": "United States Grand Prix",
+      "circuit_id": "cota",
+      "weekend": "2026-10-23/2026-10-25",
+      "race_date": "2026-10-25",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 19,
+      "grand_prix": "Mexico City Grand Prix",
+      "circuit_id": "mexico_city",
+      "weekend": "2026-10-30/2026-11-01",
+      "race_date": "2026-11-01",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 20,
+      "grand_prix": "São Paulo Grand Prix",
+      "circuit_id": "interlagos",
+      "weekend": "2026-11-06/2026-11-08",
+      "race_date": "2026-11-08",
+      "sprint": false,
+      "tumftm": true
+    },
+    {
+      "round": 21,
+      "grand_prix": "Las Vegas Grand Prix",
+      "circuit_id": "las_vegas",
+      "weekend": "2026-11-19/2026-11-21",
+      "race_date": "2026-11-21",
+      "sprint": false,
+      "tumftm": false
+    },
+    {
+      "round": 22,
+      "grand_prix": "Qatar Grand Prix",
+      "circuit_id": "lusail",
+      "weekend": "2026-11-27/2026-11-29",
+      "race_date": "2026-11-29",
+      "sprint": false,
+      "tumftm": false
+    },
+    {
+      "round": 23,
+      "grand_prix": "Abu Dhabi Grand Prix",
+      "circuit_id": "yas_marina",
+      "weekend": "2026-12-04/2026-12-06",
+      "race_date": "2026-12-06",
+      "sprint": false,
+      "tumftm": true
+    }
+  ],
+  "removed": [
+    {
+      "gp": "Bahrain Grand Prix",
+      "circuit": "Bahrain International Circuit (Sakhir)",
+      "original_date": "2026-04-12",
+      "status": "Moved to Sepang International Circuit, Malaysia, 2-4 October 2026",
+      "tumftm": "Sakhir"
+    },
+    {
+      "gp": "Saudi Arabian Grand Prix",
+      "circuit": "Jeddah Corniche Circuit",
+      "original_date": "2026-04-19",
+      "status": "Cancelled, not replaced",
+      "tumftm": null
+    }
+  ],
+  "notes": [
+    "Madrid (Madring) hosts the Spanish Grand Prix from 2026; Barcelona keeps a race as the Barcelona-Catalunya Grand Prix.",
+    "Imola (Emilia Romagna Grand Prix) is no longer on the calendar.",
+    "Qatar and Abu Dhabi were still scheduled on 2026-10-03, but news reports (Reuters, AP, July 2026) said they could be cancelled because of the Middle East conflict."
+  ]
+}

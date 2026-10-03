@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "id": "hungaroring",
+  "status": "confirmed",
+  "event": {
+    "round": 11,
+    "grand_prix": "Hungarian Grand Prix",
+    "weekend": "2026-07-24/2026-07-26",
+    "race_date": "2026-07-26",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Hungaroring",
+    "common_name": "Hungaroring",
+    "location": "Mogyoród, Pest County, Hungary",
+    "lat": 47.582222,
+    "lon": 19.251111,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2003–present)",
+    "opened": "1986-03-24",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4381.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4381.0,
+      "wikipedia_m": 4381.0,
+      "osm_loop_m": 4367.0,
+      "tumftm_m": 4376.9,
+      "pack_centreline_m": 4377.0
+    }
+  },
+  "corners": {
+    "count": 14,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels (the 2026 Hungaroring map adds a turn \"1A\").",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:16.627",
+    "driver": "Lewis Hamilton",
+    "car": "Mercedes W11",
+    "year": 2020,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/hungaroring.csv",
+    "spacing_m": 5.0,
+    "samples": 875,
+    "length_m": 4376.9,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Budapest.csv",
+      "raceline": "cad/track/raw/tumftm/Budapest_raceline.csv",
+      "length_m": 4376.9,
+      "points": 876,
+      "georef_median_m": 0.79,
+      "georef_p95_m": 2.21,
+      "rotation_deg": 1.1957,
+      "origin_lat": 47.5787088,
+      "origin_lon": 19.2487402,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284557,
+      "name": "Hungaroring",
+      "url": "https://www.openstreetmap.org/relation/284557"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 438,
+    "spacing_m": 9.99,
+    "min_m": 205.4,
+    "max_m": 244.8,
+    "total_change_m": 39.4,
+    "total_climb_per_lap_m": 57.4,
+    "raw_change_m": 40.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 7.7,
+    "max_m": 16.1,
+    "median_m": 10.0,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Asphalt repairs approaching Turn 1 and Turn 12."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 37096,
+        "grass": 13842
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 934,
+        "gate": 5,
+        "guard_rail": 276
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "24.1 During any LTCS, each time a driver fails to negotiate the exit of turn 14, will result in that lap time and\nthe immediately following lap time may be invalidated by the Stewards.\n24.2 The dotted white line intersecting the pit exit road marks the track edge.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 1067.0,
+    "length_all_pit_ways_m": 1067.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 3867.0,
+      "lat_lon": [
+        47.579276,
+        19.250339
+      ]
+    },
+    "exit": {
+      "s_m": 600.0,
+      "lat_lon": [
+        47.582052,
+        19.242442
+      ]
+    },
+    "osm_ways": [
+      231417580
+    ],
+    "fia_entry_exit_rules": "14.1 In accordance with Appendix L Chapter 4, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n14.2 For safety reasons, the line that is at pit exit, includes the line painted on the track at pit exit and\ncontinuing after SC2 line.\n14.3 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right-hand side of\nthe bollard at safety car line 1 will be considered as entering the pit lane.\n14.4 For the safe and orderly conduct of the event, during any live session and while the pit exit is open prior\nto the start of the race, team personnel are not allowed to cross the pit entry line at the pit lane, as\nindicated in the picture below.\n14.5 If there is a yellow flag displayed on RHS in the pit entry road it will be a warning of an incident at the\npit entry road. This flag is not intended for drivers staying on track.\n5",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.736
+      },
+      {
+        "sector": 2,
+        "length_km": 1.542
+      },
+      {
+        "sector": 3,
+        "length_km": 1.103
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "85m before T4"
+      },
+      {
+        "point": "S2",
+        "location": "100m after T11"
+      }
+    ],
+    "speed_trap": "310m before T1",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "40m after T14",
+        "low_grip_activation": "100m after T14"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "30m after T1A-entry",
+        "low_grip_activation": "100m after T1A-entry"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "50m after T3",
+        "low_grip_activation": "80m after T3"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "60m after T11",
+        "low_grip_activation": "90m after T11"
+      }
+    ],
+    "overtake": {
+      "detection": "Entry T14",
+      "activation": "30m before T14-exit"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Hungaroring",
+        "osm_way": 230979479,
+        "lat_lon": [
+          47.579157,
+          19.247382
+        ],
+        "approx_length_m": 234.0,
+        "s_m": 0.0,
+        "side": "left",
+        "distance_m": 8.2
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 493519980,
+        "lat_lon": [
+          47.580269,
+          19.245891
+        ],
+        "s_m": 270.0
+      },
+      {
+        "kind": "service bridge over track",
+        "name": null,
+        "osm_way": 54843543,
+        "lat_lon": [
+          47.581517,
+          19.246233
+        ],
+        "s_m": 970.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Silver 5",
+        "kind": "building",
+        "osm_way": 230979485,
+        "lat_lon": [
+          47.579548,
+          19.255139
+        ],
+        "footprint_m": [
+          45.0,
+          40.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3331.0,
+        "side": "left",
+        "distance_m": 38.8
+      },
+      {
+        "name": "Groupama Tanpálya",
+        "kind": "building",
+        "osm_way": 231414067,
+        "lat_lon": [
+          47.586084,
+          19.252839
+        ],
+        "footprint_m": [
+          22.0,
+          20.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2461.0,
+        "side": "right",
+        "distance_m": 29.3
+      },
+      {
+        "name": "Hungaroring Kart Center",
+        "kind": "container",
+        "osm_way": 481768604,
+        "lat_lon": [
+          47.580827,
+          19.249534
+        ],
+        "footprint_m": [
+          20.0,
+          20.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 1170.0,
+        "side": "right",
+        "distance_m": 86.2
+      },
+      {
+        "name": "MOL",
+        "kind": "roof",
+        "osm_way": 295484975,
+        "lat_lon": [
+          47.583329,
+          19.241081
+        ],
+        "footprint_m": [
+          10.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 645.0,
+        "side": "left",
+        "distance_m": 130.0
+      }
+    ],
+    "named": [],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Hungaroring\" (infobox, layout \"Grand Prix Circuit (2003–present\")",
+      "url": "https://en.wikipedia.org/wiki/Hungaroring",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_hungarian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_hungarian_grand_prix_-_race_directors_competition_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284557",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284557,
+        "name": "Hungaroring",
+        "url": "https://www.openstreetmap.org/relation/284557"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified."
+  ]
+}

@@ -1,0 +1,1051 @@
+{
+  "schema_version": 1,
+  "id": "silverstone",
+  "status": "confirmed",
+  "event": {
+    "round": 9,
+    "grand_prix": "British Grand Prix",
+    "weekend": "2026-07-03/2026-07-05",
+    "race_date": "2026-07-05",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Silverstone Circuit",
+    "common_name": "Silverstone Circuit",
+    "location": "Silverstone, Northamptonshire, United Kingdom",
+    "lat": 52.071,
+    "lon": -1.016,
+    "coordinate_source": "wikipedia",
+    "layout": "Arena Grand Prix Circuit (2011–present)",
+    "opened": "1948",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5891.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5891.0,
+      "wikipedia_m": 5891.0,
+      "osm_loop_m": 5881.0,
+      "tumftm_m": 5886.8,
+      "pack_centreline_m": 5887.0
+    }
+  },
+  "corners": {
+    "count": 18,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "Abbey",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "2",
+        "name": "Farm",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3",
+        "name": "Village",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4",
+        "name": "The Loop",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "5",
+        "name": "Aintree",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "6",
+        "name": "Brooklands",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "7",
+        "name": "Luffield",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "8",
+        "name": "Woodcote",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "9",
+        "name": "Copse",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10-11",
+        "name": "Maggotts",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "12-13",
+        "name": "Becketts",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "14",
+        "name": "Chapel",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "15",
+        "name": "Stowe",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "16",
+        "name": "Vale",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "17-18",
+        "name": "Club",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:27.097",
+    "driver": "Max Verstappen",
+    "car": "Red Bull RB16",
+    "year": 2020,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/silverstone.csv",
+    "spacing_m": 5.0,
+    "samples": 1177,
+    "length_m": 5886.8,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Silverstone.csv",
+      "raceline": "cad/track/raw/tumftm/Silverstone_raceline.csv",
+      "length_m": 5886.8,
+      "points": 1178,
+      "georef_median_m": 1.12,
+      "georef_p95_m": 3.26,
+      "rotation_deg": -1.4617,
+      "origin_lat": 52.0683775,
+      "origin_lon": -1.0234335,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 51160,
+      "name": "Silverstone Grand Prix",
+      "url": "https://www.openstreetmap.org/relation/51160"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 589,
+    "spacing_m": 9.99,
+    "min_m": 133.5,
+    "max_m": 165.2,
+    "total_change_m": 31.7,
+    "total_climb_per_lap_m": 52.9,
+    "raw_change_m": 32.4,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 11.3,
+    "max_m": 17.8,
+    "median_m": 13.8,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "At the entrance of Turn 15 left hand side was added a strip of tarmac behind the kerb",
+      "Removal of the red sausage behind the kerb at the apex of Turn 17 and 18."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Various repairs/improvements to barriers, fencing, track edges, run-off areas, access points, marshal posts.",
+      "Exit of Turn 3 grass was replaced by tarmac.",
+      "The barrier at Turn 4 left hand side was extended.",
+      "At the entrance of Turn 15 left hand side was added a strip of tarmac behind the kerb"
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 8212,
+        "grass": 267510,
+        "sand": 83308
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 9119,
+        "guard_rail": 691,
+        "kerb": 132,
+        "wall": 4721
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "Each time a driver fails to respect track limits at turn 18, will result in that lap time and the immediately\nfollowing lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 1127.0,
+    "length_all_pit_ways_m": 1127.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5267.0,
+      "lat_lon": [
+        52.064841,
+        -1.019693
+      ]
+    },
+    "exit": {
+      "s_m": 690.0,
+      "lat_lon": [
+        52.071467,
+        -1.015706
+      ]
+    },
+    "osm_ways": [
+      227902927
+    ],
+    "fia_entry_exit_rules": "16.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n16.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right hand\nside of the bollard at safety car line 1 will be considered as entering the pit lane.\n16.3 For the safe and orderly conduct of the event, during any live session, team personnel are not\nallowed to cross the finish line at the pit lane, as indicated in the picture below.\n16.4 If there is a yellow traffic light displayed on LHS in the pit entry road it will be a warning of an\nincident at the pit entry road. This signal is not intended for drivers staying on track.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.823
+      },
+      {
+        "sector": 2,
+        "length_km": 2.464
+      },
+      {
+        "sector": 3,
+        "length_km": 1.604
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "110m before T6"
+      },
+      {
+        "point": "S2",
+        "location": "50m after T14"
+      }
+    ],
+    "speed_trap": "140m before T15",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "65m after T18",
+        "low_grip_activation": "115m after T18"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "55m after T5",
+        "low_grip_activation": "115m after T5"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "155m after T7",
+        "low_grip_activation": null
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "65m after T14",
+        "low_grip_activation": "125m after T14"
+      }
+    ],
+    "overtake": {
+      "detection": "Exit of T17",
+      "activation": "95m after T17"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Hamilton Straight A",
+        "osm_way": 1387956625,
+        "lat_lon": [
+          52.068686,
+          -1.023763
+        ],
+        "approx_length_m": 84.0,
+        "s_m": 50.0,
+        "side": "left",
+        "distance_m": 29.3
+      },
+      {
+        "name": "Abbey",
+        "osm_way": 227342458,
+        "lat_lon": [
+          52.071112,
+          -1.020688
+        ],
+        "approx_length_m": 117.0,
+        "s_m": 280.0,
+        "side": "left",
+        "distance_m": 31.1
+      },
+      {
+        "name": "The View",
+        "osm_way": 227342454,
+        "lat_lon": [
+          52.072198,
+          -1.018431
+        ],
+        "approx_length_m": 61.0,
+        "s_m": 510.0,
+        "side": "left",
+        "distance_m": 72.4
+      },
+      {
+        "name": "International Paddock",
+        "osm_way": 227342495,
+        "lat_lon": [
+          52.070686,
+          -1.017443
+        ],
+        "approx_length_m": 101.0,
+        "s_m": 510.0,
+        "side": "right",
+        "distance_m": 49.4
+      },
+      {
+        "name": "Farm Curve",
+        "osm_way": 227342449,
+        "lat_lon": [
+          52.072303,
+          -1.015619
+        ],
+        "approx_length_m": 160.0,
+        "s_m": 795.0,
+        "side": "left",
+        "distance_m": 42.2
+      },
+      {
+        "name": "Village B",
+        "osm_way": 227342447,
+        "lat_lon": [
+          52.073137,
+          -1.013408
+        ],
+        "approx_length_m": 67.0,
+        "s_m": 1355.0,
+        "side": "left",
+        "distance_m": 41.1
+      },
+      {
+        "name": "Wellington",
+        "osm_way": 804928143,
+        "lat_lon": [
+          52.076036,
+          -1.016021
+        ],
+        "approx_length_m": 40.0,
+        "s_m": 1681.0,
+        "side": "right",
+        "distance_m": 23.1
+      },
+      {
+        "name": "Jim Clark",
+        "osm_way": 360603859,
+        "lat_lon": [
+          52.077477,
+          -1.018581
+        ],
+        "approx_length_m": 32.0,
+        "s_m": 1916.0,
+        "side": "right",
+        "distance_m": 32.6
+      },
+      {
+        "name": "Luffield Corner",
+        "osm_way": 1560504709,
+        "lat_lon": [
+          52.075364,
+          -1.021935
+        ],
+        "approx_length_m": 111.0,
+        "s_m": 2246.0,
+        "side": "left",
+        "distance_m": 55.6
+      },
+      {
+        "name": "Luffield",
+        "osm_way": 227342456,
+        "lat_lon": [
+          52.07681,
+          -1.02209
+        ],
+        "approx_length_m": 161.0,
+        "s_m": 2391.0,
+        "side": "left",
+        "distance_m": 34.3
+      },
+      {
+        "name": "Woodcote A",
+        "osm_way": 227342450,
+        "lat_lon": [
+          52.078041,
+          -1.020957
+        ],
+        "approx_length_m": 117.0,
+        "s_m": 2436.0,
+        "side": "left",
+        "distance_m": 28.1
+      },
+      {
+        "name": "Woodcote B",
+        "osm_way": 227342459,
+        "lat_lon": [
+          52.078852,
+          -1.019772
+        ],
+        "approx_length_m": 81.0,
+        "s_m": 2511.0,
+        "side": "left",
+        "distance_m": 39.4
+      },
+      {
+        "name": "National Pit Straight",
+        "osm_way": 227342452,
+        "lat_lon": [
+          52.079274,
+          -1.01769
+        ],
+        "approx_length_m": 95.0,
+        "s_m": 2746.0,
+        "side": "left",
+        "distance_m": 59.3
+      },
+      {
+        "name": "Stirling A",
+        "osm_way": 1560504712,
+        "lat_lon": [
+          52.079363,
+          -1.013403
+        ],
+        "approx_length_m": 29.0,
+        "s_m": 2991.0,
+        "side": "left",
+        "distance_m": 47.1
+      },
+      {
+        "name": "Stirling B",
+        "osm_way": 1560504711,
+        "lat_lon": [
+          52.079374,
+          -1.012815
+        ],
+        "approx_length_m": 61.0,
+        "s_m": 2996.0,
+        "side": "left",
+        "distance_m": 47.4
+      },
+      {
+        "name": "Copse A",
+        "osm_way": 227342440,
+        "lat_lon": [
+          52.079371,
+          -1.011655
+        ],
+        "approx_length_m": 72.0,
+        "s_m": 3056.0,
+        "side": "left",
+        "distance_m": 52.6
+      },
+      {
+        "name": "Copse B",
+        "osm_way": 227342441,
+        "lat_lon": [
+          52.079178,
+          -1.01045
+        ],
+        "approx_length_m": 48.0,
+        "s_m": 3111.0,
+        "side": "left",
+        "distance_m": 85.6
+      },
+      {
+        "name": "Copse C",
+        "osm_way": 227342444,
+        "lat_lon": [
+          52.07857,
+          -1.009824
+        ],
+        "approx_length_m": 69.0,
+        "s_m": 3201.0,
+        "side": "left",
+        "distance_m": 83.4
+      },
+      {
+        "name": "Copse D",
+        "osm_way": 1560504713,
+        "lat_lon": [
+          52.077794,
+          -1.009703
+        ],
+        "approx_length_m": 39.0,
+        "s_m": 3261.0,
+        "side": "left",
+        "distance_m": 59.8
+      },
+      {
+        "name": "Silverstone Six",
+        "osm_way": 360605368,
+        "lat_lon": [
+          52.074329,
+          -1.011203
+        ],
+        "approx_length_m": 38.0,
+        "s_m": 3611.0,
+        "side": "right",
+        "distance_m": 49.1
+      },
+      {
+        "name": "Becketts",
+        "osm_way": 227342446,
+        "lat_lon": [
+          52.071851,
+          -1.008462
+        ],
+        "approx_length_m": 208.0,
+        "s_m": 4026.0,
+        "side": "left",
+        "distance_m": 65.9
+      },
+      {
+        "name": "Chapel",
+        "osm_way": 1430486596,
+        "lat_lon": [
+          52.069717,
+          -1.009694
+        ],
+        "approx_length_m": 86.0,
+        "s_m": 4151.0,
+        "side": "left",
+        "distance_m": 54.8
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1412628538,
+        "lat_lon": [
+          52.069262,
+          -1.022335
+        ],
+        "s_m": 120.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 360077715,
+        "lat_lon": [
+          52.075206,
+          -1.015311
+        ],
+        "s_m": 1600.0
+      },
+      {
+        "kind": "service bridge over track",
+        "name": null,
+        "osm_way": 126446852,
+        "lat_lon": [
+          52.075234,
+          -1.015368
+        ],
+        "s_m": 1605.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 360074746,
+        "lat_lon": [
+          52.075261,
+          -1.01542
+        ],
+        "s_m": 1610.0
+      },
+      {
+        "kind": "service bridge over track",
+        "name": null,
+        "osm_way": 4851856,
+        "lat_lon": [
+          52.067471,
+          -1.013245
+        ],
+        "s_m": 4501.0
+      },
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 605922107,
+        "lat_lon": [
+          52.067471,
+          -1.0132
+        ],
+        "s_m": 4501.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Silverstone Wing",
+        "kind": "building",
+        "osm_way": 227332429,
+        "lat_lon": [
+          52.069088,
+          -1.02173
+        ],
+        "footprint_m": [
+          311.0,
+          236.0
+        ],
+        "height_m": "30",
+        "levels": "3",
+        "s_m": 345.0,
+        "side": "right",
+        "distance_m": 24.4
+      },
+      {
+        "name": "Vale",
+        "kind": "building",
+        "osm_way": 227342453,
+        "lat_lon": [
+          52.06518,
+          -1.022379
+        ],
+        "footprint_m": [
+          120.0,
+          114.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5587.0,
+        "side": "left",
+        "distance_m": 82.1
+      },
+      {
+        "name": "Club B",
+        "kind": "building",
+        "osm_way": 227342448,
+        "lat_lon": [
+          52.067004,
+          -1.024945
+        ],
+        "footprint_m": [
+          160.0,
+          77.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5647.0,
+        "side": "left",
+        "distance_m": 41.6
+      },
+      {
+        "name": "Hilton Garden Inn Silverstone",
+        "kind": "hotel",
+        "osm_way": 227342443,
+        "lat_lon": [
+          52.06943,
+          -1.022916
+        ],
+        "footprint_m": [
+          107.0,
+          92.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 185.0,
+        "side": "left",
+        "distance_m": 35.9
+      },
+      {
+        "name": "Stowe A",
+        "kind": "building",
+        "osm_way": 227342460,
+        "lat_lon": [
+          52.063246,
+          -1.016477
+        ],
+        "footprint_m": [
+          86.0,
+          72.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4982.0,
+        "side": "left",
+        "distance_m": 47.8
+      },
+      {
+        "name": "Silverstone Museum",
+        "kind": "building",
+        "osm_way": 437429280,
+        "lat_lon": [
+          52.074439,
+          -1.021846
+        ],
+        "footprint_m": [
+          104.0,
+          47.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2191.0,
+        "side": "left",
+        "distance_m": 124.0
+      },
+      {
+        "name": "Workshop",
+        "kind": "building",
+        "osm_way": 169852620,
+        "lat_lon": [
+          52.06875,
+          -1.013545
+        ],
+        "footprint_m": [
+          76.0,
+          52.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4421.0,
+        "side": "right",
+        "distance_m": 53.6
+      },
+      {
+        "name": "Village A",
+        "kind": "building",
+        "osm_way": 227342451,
+        "lat_lon": [
+          52.072728,
+          -1.01423
+        ],
+        "footprint_m": [
+          68.0,
+          58.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 810.0,
+        "side": "left",
+        "distance_m": 38.4
+      },
+      {
+        "name": "Silverstone UTC",
+        "kind": "school",
+        "osm_way": 437429286,
+        "lat_lon": [
+          52.079721,
+          -1.015482
+        ],
+        "footprint_m": [
+          96.0,
+          38.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2821.0,
+        "side": "left",
+        "distance_m": 83.6
+      },
+      {
+        "name": "Stowe C",
+        "kind": "building",
+        "osm_way": 227342461,
+        "lat_lon": [
+          52.062988,
+          -1.018934
+        ],
+        "footprint_m": [
+          66.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5117.0,
+        "side": "left",
+        "distance_m": 69.8
+      },
+      {
+        "name": "Delta Motorsport",
+        "kind": "commercial",
+        "osm_way": 606749100,
+        "lat_lon": [
+          52.077389,
+          -1.023226
+        ],
+        "footprint_m": [
+          59.0,
+          36.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2301.0,
+        "side": "left",
+        "distance_m": 114.4
+      },
+      {
+        "name": "Pit Stop Cafe",
+        "kind": "building",
+        "osm_way": 169922678,
+        "lat_lon": [
+          52.077879,
+          -1.01587
+        ],
+        "footprint_m": [
+          87.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2766.0,
+        "side": "right",
+        "distance_m": 88.9
+      },
+      {
+        "name": "Club A",
+        "kind": "building",
+        "osm_way": 227342445,
+        "lat_lon": [
+          52.065987,
+          -1.023919
+        ],
+        "footprint_m": [
+          39.0,
+          39.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5637.0,
+        "side": "left",
+        "distance_m": 41.3
+      },
+      {
+        "name": "Medical Centre",
+        "kind": "building",
+        "osm_way": 169848883,
+        "lat_lon": [
+          52.076492,
+          -1.016151
+        ],
+        "footprint_m": [
+          39.0,
+          38.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1731.0,
+        "side": "right",
+        "distance_m": 51.1
+      },
+      {
+        "name": "Stowe B",
+        "kind": "building",
+        "osm_way": 227342442,
+        "lat_lon": [
+          52.062773,
+          -1.017859
+        ],
+        "footprint_m": [
+          73.0,
+          19.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5077.0,
+        "side": "left",
+        "distance_m": 76.5
+      },
+      {
+        "name": "Porsche Experience Centre",
+        "kind": "building",
+        "osm_way": 359423684,
+        "lat_lon": [
+          52.066538,
+          -1.012837
+        ],
+        "footprint_m": [
+          42.0,
+          32.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4576.0,
+        "side": "left",
+        "distance_m": 55.9
+      },
+      {
+        "name": "Woodcote Media Suite",
+        "kind": "building",
+        "osm_way": 1563730888,
+        "lat_lon": [
+          52.078403,
+          -1.017911
+        ],
+        "footprint_m": [
+          61.0,
+          21.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2661.0,
+        "side": "right",
+        "distance_m": 16.1
+      },
+      {
+        "name": "Silverstone Experience Centre",
+        "kind": "commercial",
+        "osm_way": 169852619,
+        "lat_lon": [
+          52.068256,
+          -1.013728
+        ],
+        "footprint_m": [
+          36.0,
+          32.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4456.0,
+        "side": "right",
+        "distance_m": 56.9
+      },
+      {
+        "name": "Escapade Silverstone",
+        "kind": "building",
+        "osm_way": 1412625066,
+        "lat_lon": [
+          52.073157,
+          -1.008451
+        ],
+        "footprint_m": [
+          34.0,
+          30.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3731.0,
+        "side": "left",
+        "distance_m": 61.9
+      },
+      {
+        "name": "BRDC Clubhouse",
+        "kind": "building",
+        "osm_way": 360603862,
+        "lat_lon": [
+          52.077826,
+          -1.019145
+        ],
+        "footprint_m": [
+          32.0,
+          31.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2531.0,
+        "side": "right",
+        "distance_m": 46.9
+      }
+    ],
+    "named": [
+      {
+        "name": "Hangar Straight",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Wellington Straight",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Hamilton Straight",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Silverstone Circuit\" (infobox, layout \"Arena Grand Prix Circuit (2011–present\")",
+      "url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_british_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_british_grand_prix_-_race_directors_competition_notes.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/51160",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 51160,
+        "name": "Silverstone Grand Prix",
+        "url": "https://www.openstreetmap.org/relation/51160"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ]
+}

@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "id": "cota",
+  "status": "confirmed",
+  "event": {
+    "round": 18,
+    "grand_prix": "United States Grand Prix",
+    "weekend": "2026-10-23/2026-10-25",
+    "race_date": "2026-10-25",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit of the Americas",
+    "common_name": "Circuit of the Americas",
+    "location": "Austin, Texas, United States",
+    "lat": 30.132778,
+    "lon": -97.641111,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2012–present)",
+    "opened": "2012-10-21",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5513.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5513.0,
+      "wikipedia_m": 5513.0,
+      "osm_loop_m": 5502.0,
+      "tumftm_m": 5507.5,
+      "pack_centreline_m": 5508.0
+    }
+  },
+  "corners": {
+    "count": 20,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": "counter-clockwise",
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:36.169",
+    "driver": "Charles Leclerc",
+    "car": "Ferrari SF90",
+    "year": 2019,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "csv": "cad/track/raw/centreline/cota.csv",
+    "spacing_m": 5.0,
+    "samples": 1102,
+    "length_m": 5507.5,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Austin.csv",
+      "raceline": "cad/track/raw/tumftm/Austin_raceline.csv",
+      "length_m": 5507.5,
+      "points": 1102,
+      "georef_median_m": 0.88,
+      "georef_p95_m": 2.79,
+      "rotation_deg": -0.6205,
+      "origin_lat": 30.1335298,
+      "origin_lon": -97.6423341,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 6537729,
+      "name": "Circuit of the Americas",
+      "url": "https://www.openstreetmap.org/relation/6537729"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 551,
+    "spacing_m": 10.0,
+    "min_m": 150.0,
+    "max_m": 183.8,
+    "total_change_m": 33.8,
+    "total_climb_per_lap_m": 83.8,
+    "raw_change_m": 36.0,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 11.1,
+    "max_m": 27.6,
+    "median_m": 13.0,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 48515,
+        "gravel": 40791
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 725,
+        "guard_rail": 10160,
+        "wall": 429
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines define\nthe track edges. During Sprint Qualifying, Qualifying, the Sprint and the Race, each time a driver\nfails to negotiate the lap within the track limits, this will result in that lap time being invalidated by\nthe Stewards. Additionally, if a driver fails to negotiate turn 20, this may result in that lap time and\nthe immediately following lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 949.0,
+    "length_all_pit_ways_m": 949.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5128.0,
+      "lat_lon": [
+        30.135338,
+        -97.641393
+      ]
+    },
+    "exit": {
+      "s_m": 635.0,
+      "lat_lon": [
+        30.130087,
+        -97.637061
+      ]
+    },
+    "osm_ways": [
+      514836373
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n15.2 Pertaining to Chapter 4, Article 4 of Appendix L to the International Sporting Code any\ndriver passing to the left hand side of the bollard at pit entry will be considered as entering\nthe pit lane.\n15.3 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to\ncross the white line separating the pit exit road from the circuit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "55m before turn 7"
+      },
+      {
+        "point": "S2",
+        "location": "65m before turn 13"
+      }
+    ],
+    "speed_trap": "180m before turn 12",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "150m after turn 10"
+        },
+        {
+          "label": "Detection 2",
+          "location": "65m after turn 18"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "345m after turn 11"
+        },
+        {
+          "label": "Activation 2",
+          "location": "80m after turn 20"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": null,
+        "osm_way": 460658889,
+        "lat_lon": [
+          30.132818,
+          -97.641643
+        ],
+        "approx_length_m": 253.0,
+        "s_m": 0.0,
+        "side": "right",
+        "distance_m": 18.7
+      },
+      {
+        "name": null,
+        "osm_way": 460658890,
+        "lat_lon": [
+          30.129348,
+          -97.637168
+        ],
+        "approx_length_m": 80.0,
+        "s_m": 630.0,
+        "side": "right",
+        "distance_m": 75.5
+      },
+      {
+        "name": null,
+        "osm_way": 460683347,
+        "lat_lon": [
+          30.137879,
+          -97.635759
+        ],
+        "approx_length_m": 132.0,
+        "s_m": 3638.0,
+        "side": "right",
+        "distance_m": 30.9
+      },
+      {
+        "name": null,
+        "osm_way": 1183793500,
+        "lat_lon": [
+          30.13769,
+          -97.637808
+        ],
+        "approx_length_m": 42.0,
+        "s_m": 3788.0,
+        "side": "right",
+        "distance_m": 99.0
+      },
+      {
+        "name": null,
+        "osm_way": 460658891,
+        "lat_lon": [
+          30.13673,
+          -97.638379
+        ],
+        "approx_length_m": 63.0,
+        "s_m": 4308.0,
+        "side": "right",
+        "distance_m": 40.5
+      },
+      {
+        "name": "Turn 15 Grandstands",
+        "osm_way": 460658892,
+        "lat_lon": [
+          30.135763,
+          -97.637904
+        ],
+        "approx_length_m": 160.0,
+        "s_m": 4473.0,
+        "side": "right",
+        "distance_m": 25.4
+      },
+      {
+        "name": null,
+        "osm_way": 998801549,
+        "lat_lon": [
+          30.135562,
+          -97.638873
+        ],
+        "approx_length_m": 51.0,
+        "s_m": 4953.0,
+        "side": "right",
+        "distance_m": 96.4
+      },
+      {
+        "name": null,
+        "osm_way": 998801547,
+        "lat_lon": [
+          30.136202,
+          -97.63963
+        ],
+        "approx_length_m": 88.0,
+        "s_m": 5038.0,
+        "side": "right",
+        "distance_m": 81.3
+      },
+      {
+        "name": null,
+        "osm_way": 1183793497,
+        "lat_lon": [
+          30.136132,
+          -97.641778
+        ],
+        "approx_length_m": 79.0,
+        "s_m": 5173.0,
+        "side": "right",
+        "distance_m": 70.4
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1285657865,
+        "lat_lon": [
+          30.136482,
+          -97.627195
+        ],
+        "s_m": 2159.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Pit Garages",
+        "kind": "building",
+        "osm_way": 376713391,
+        "lat_lon": [
+          30.133254,
+          -97.641093
+        ],
+        "footprint_m": [
+          301.0,
+          249.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 365.0,
+        "side": "left",
+        "distance_m": 28.3
+      },
+      {
+        "name": "Germania Insurance Amphiteater",
+        "kind": "building",
+        "osm_way": 847781223,
+        "lat_lon": [
+          30.134663,
+          -97.638274
+        ],
+        "footprint_m": [
+          37.0,
+          31.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4773.0,
+        "side": "right",
+        "distance_m": 96.3
+      }
+    ],
+    "named": [
+      {
+        "name": "observation tower",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Germania Insurance Amphitheater",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Austin",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit of the Americas\" (infobox, layout \"Grand Prix Circuit (2012–present\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_of_the_Americas",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_united_states_grand_prix_-_event_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_quarantine_zone_map_red_zones_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_united_states_grand_prix_-_race_directors_event_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/6537729",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 6537729,
+        "name": "Circuit of the Americas",
+        "url": "https://www.openstreetmap.org/relation/6537729"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data."
+  ]
+}
