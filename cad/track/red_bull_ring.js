@@ -411,7 +411,7 @@ export function createRedBullRing() {
     if (Math.abs(along) < PB.len / 2) { pbS0 = Math.min(pbS0, pit.s[j]); pbS1 = Math.max(pbS1, pit.s[j]); }
   }
   if (!isFinite(pbS0)) { pbS0 = pitLen * 0.3; pbS1 = pitLen * 0.7; }
-  const boxes = 11;
+  const boxes = 16; // boxes * 2 = 32 garage positions, as on the FIA pit lane drawing
   for (let b = 0; b < boxes * 2; b++) {
     const s = pbS0 + 8 + (b + 0.5) * ((pbS1 - pbS0 - 16) / (boxes * 2));
     const F = pitAt(s);

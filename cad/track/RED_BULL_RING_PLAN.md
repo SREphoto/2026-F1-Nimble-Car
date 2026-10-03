@@ -28,6 +28,7 @@ and writes `cad/track/red_bull_ring_data.js`. `cad/track/red_bull_ring.js` turns
 | Walls and tyre walls | Real positions | Guessed from how sharp each bend is | Taken from OpenStreetMap for 98 to 100 % of the lap |
 | Run-off | Mostly asphalt, gravel at a few corners | Gravel guessed on the outside of most corners | Asphalt out to the mapped grass, gravel only where the FIA notes say |
 | Timing lines | Sector 1, sector 2, speed trap, 3 DRS zones | None | All painted and signed, sector times in the panel |
+| Painted pit boxes | 32 garage positions (FIA pit lane drawing) | 22 | 32 |
 | Bull sculpture | 17.2 m steel bull on the hill above Turns 7 and 8 | Missing | Added at its mapped position |
 
 ## Ranked list
@@ -85,8 +86,8 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
     straight, Turns 1 to 3, Turns 3 to 4, Turns 8 to 9) and an Overtake detection line just before Turn 10 with
     activation on its exit. The exact distances need the 2026 FIA event notes. Linking them to the Z-MODE / X-MODE
     button needs a change in the car and app code, so it is left for the car side.
-15. **Pit building and paddock.** The FIA pit lane drawing shows 32 garage positions; the model has 22 painted boxes.
-    Add the race control tower and the Red Bull Wing building (labelled on the FIA map next to the paddock) from
+15. **Pit building and paddock.** The FIA pit lane drawing shows 32 garage positions. The painted pit boxes now
+    match that (32, up from 22), but the garage doors on the building are still one repeated picture. Add the race control tower and the Red Bull Wing building (labelled on the FIA map next to the paddock) from
     their OpenStreetMap outlines.
 16. **Lap pace.** Autopilot lap is about 1:18.6. The 2025 pole was 1:03.971. Most of the gap is grip and power in
     the simple driving model. The grip numbers live in `track_mode.js`; car mass, power and downforce belong to the
