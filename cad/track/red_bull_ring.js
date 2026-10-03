@@ -19,6 +19,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RED_BULL_RING as D } from './red_bull_ring_data.js';
 import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
+import { buildBullSculpture } from './rbr_bull.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -237,7 +238,6 @@ export function createRedBullRing() {
     kerbBlack: new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     blue: new THREE.MeshStandardMaterial({ color: 0x5ab4e6, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
     sausage: new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.55 }),
-    bull: new THREE.MeshStandardMaterial({ color: 0xb4bac2, roughness: 0.4, metalness: 0.35 }),
     chequer: new THREE.MeshStandardMaterial({ map: tex.chequer, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
     concrete: new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.85 }),
     concreteDark: new THREE.MeshStandardMaterial({ color: 0x8d9197, roughness: 0.9 }),
@@ -412,17 +412,49 @@ export function createRedBullRing() {
   }
   if (!isFinite(pbS0)) { pbS0 = pitLen * 0.3; pbS1 = pitLen * 0.7; }
   const boxes = 16; // boxes * 2 = 32 garage positions, as on the FIA pit lane drawing
+  const boxS = [];
   for (let b = 0; b < boxes * 2; b++) {
     const s = pbS0 + 8 + (b + 0.5) * ((pbS1 - pbS0 - 16) / (boxes * 2));
+    boxS.push(s);
     const F = pitAt(s);
     const l0 = bSide * (PW / 2 - 0.3), l1 = bSide * (PW / 2 - 5.2);
     quadOn(yellowPaint, F, Math.min(l0, l1), Math.min(l0, l1) + 0.15 + 0 * l1, -2.4, 2.4);
     quadOn(yellowPaint, F, Math.max(l0, l1) - 0.15, Math.max(l0, l1), -2.4, 2.4);
     quadOn(yellowPaint, F, Math.min(l0, l1), Math.max(l0, l1), 2.25, 2.4);
   }
-  for (const s of [Math.max(5, pbS0 - 60), Math.min(pitLen - 5, pbS1 + 60)]) {
+  const pitLineIn = Math.max(5, pbS0 - 60), pitLineOut = Math.min(pitLen - 5, pbS1 + 60);
+  for (const s of [pitLineIn, pitLineOut]) {
     const F = pitAt(s); quadOn(paint, F, -PW / 2, PW / 2, -0.3, 0.3);
   }
+  // pit wall on the track side of the pit lane, wherever it does not stand on the track (open at the entry and exit)
+  const pitWallJ = new Uint8Array(pit.n);
+  {
+    const wl = -bSide * (PW / 2 + 0.25);
+    for (let j = 0; j < pit.n; j++) {
+      const L = track.locate(pit.x[j] + pit.rx(j) * wl, pit.z[j] + pit.rz(j) * wl, -1);
+      pitWallJ[j] = Math.abs(L.lat) > (L.lat > 0 ? L.wr : L.wl) + 1.2 ? 1 : 0;
+    }
+    // no short wall pieces: drop runs shorter than 20 m
+    for (let j = 0; j < pit.n;) {
+      if (!pitWallJ[j]) { j++; continue; }
+      let k = j; while (k < pit.n && pitWallJ[k]) k++;
+      if (pit.s[k - 1] - pit.s[j] < 20) for (let q = j; q < k; q++) pitWallJ[q] = 0;
+      j = k;
+    }
+    const pm = j => pitWallJ[j];
+    const lo = wl - 0.25, hi = wl + 0.25;
+    add(mergeGeometries([
+      wallStrip(pit, c(lo), c(-0.3), c(1.05), { mask: pm }),
+      strip(pit, c(lo), c(hi), c(1.05), c(1.05), { mask: pm }),
+      wallStrip(pit, c(hi), c(1.05), c(-0.3), { mask: pm }),
+      wallStrip(pit, c(hi), c(-0.3), c(1.05), { mask: pm }),
+      wallStrip(pit, c(lo), c(1.05), c(-0.3), { mask: pm }),
+    ].map(g => { g.deleteAttribute('uv'); return g; })), M.concrete, 'RBR_Pit_Wall', { cast: true });
+    add(mergeGeometries([
+      wallStrip(pit, c(wl), c(1.05), c(3.6), { mask: pm, vLen: 1.6, uFixed: [0, 2.55 / 1.6] }),
+    ]), M.fence, 'RBR_Pit_Wall_Fence', { receive: false });
+  }
+  root.userData.pitInfo = { PW, bSide, pbS0, pbS1, lineIn: pitLineIn, lineOut: pitLineOut, boxS, boxLat: bSide * (PW / 2 - 2.75), wallJ: pitWallJ, wallLat: -bSide * (PW / 2 + 0.25) };
   lines.push(paint.geometry());
   add(mergeGeometries(lines.map(g => { g.deleteAttribute('uv'); return g; })), M.line, 'RBR_White_Lines');
   add(yellowPaint.geometry(), M.yellow, 'RBR_Pit_Boxes');
@@ -769,41 +801,18 @@ export function createRedBullRing() {
   if (posts.length) add(merge(posts), M.steel, 'RBR_Sign_Structures', { cast: false });
 
   // ---------------------------------------------------------------- 9b. landmark: "Der Bulle vom Spielberg" (OSM position)
-  // Steel bull sculpture on the hill (Neugebauer / Kolldorfer, 2012): 14.6 m bull, 17.2 m including the arch.
-  // Built from simple shapes in brushed steel, no logo.
+  // Corten steel bull under its aluminium arch (Neugebauer / Kölldorfer, 2012): 14.6 m bull, 17.2 m with the arch.
+  // Lofted sculpted mesh with see-through plate skin and gold horns, built in rbr_bull.js. No logo.
   for (const lm of (D.landmarks || [])) {
     if (lm.kind !== 'bull') continue;
-    const [cx, cz] = lm.c, gy = terrain.height(lm.c[0], lm.c[1]) - 0.3, sc = (lm.total || 17.2) / 13.4; // horn tips = total height
+    const [cx, cz] = lm.c, gy = terrain.height(lm.c[0], lm.c[1]) - 0.3;
     const fl = Math.hypot(lm.face[0], lm.face[1]) || 1, fx = lm.face[0] / fl, fz = lm.face[1] / fl; // side-on to the track
-    const parts = [];
-    const ell = (rx, ry, rz, ox, oy, oz, rot = 0) => {
-      const g = new THREE.SphereGeometry(1, 14, 10); g.scale(rx * sc, ry * sc, rz * sc);
-      if (rot) g.rotateZ(rot);
-      g.translate(ox * sc, oy * sc, oz * sc); return g;
-    };
-    const leg = (ox, oz, len, tilt) => {
-      const g = new THREE.CylinderGeometry(0.45 * sc, 0.32 * sc, len * sc, 8); g.translate(0, -len * sc / 2, 0); g.rotateZ(tilt);
-      g.translate(ox * sc, 8.2 * sc, oz * sc); return g;
-    };
-    // local frame: +X = the way the bull faces, Y up. Body leaps with the front up (charging pose).
-    parts.push(ell(5.2, 2.6, 2.3, 0, 9.4, 0, 0.18));          // body
-    parts.push(ell(2.4, 2.4, 2.2, 3.6, 10.6, 0, 0.3));       // shoulders / hump
-    parts.push(ell(1.7, 1.3, 1.25, 6.2, 10.9, 0, -0.5));     // head, lowered
-    for (const sz of [-1, 1]) {
-      const h = new THREE.ConeGeometry(0.32 * sc, 2.6 * sc, 8); h.rotateX(sz * 1.15); h.rotateZ(-0.6);
-      h.translate(6.8 * sc, 12.0 * sc, sz * 1.3 * sc); parts.push(h);             // horns
-    }
-    parts.push(leg(3.4, 1.0, 4.6, -0.9), leg(3.4, -1.0, 4.6, -0.75));             // front legs, reaching forward
-    parts.push(leg(-3.9, 1.0, 5.6, 0.45), leg(-3.9, -1.0, 5.6, 0.35));            // back legs, pushing off
-    { const t = new THREE.CylinderGeometry(0.12 * sc, 0.2 * sc, 4.0 * sc, 6); t.rotateZ(1.2); t.translate(-6.6 * sc, 10.6 * sc, 0); parts.push(t); } // tail
-    // arch the bull leaps over (to 17.2 m total) and a plinth
-    { const a = new THREE.TorusGeometry(6.0 * sc, 0.7 * sc, 8, 28, Math.PI); parts.push(a); }
-    parts.push(new THREE.BoxGeometry(17 * sc, 0.8 * sc, 4 * sc).translate(0, 0.4 * sc - 0.5, 0));
-    const geo = merge(parts.map(g => { if (g.attributes.uv) g.deleteAttribute('uv'); return g; }));
-    const m4 = new THREE.Matrix4().makeRotationY(Math.atan2(-fz, fx)); m4.scale(new THREE.Vector3(DM, DM, DM)); m4.setPosition(cx * DM, gy * DM, cz * DM);
-    geo.applyMatrix4(m4);
-    const mesh = add(geo, M.bull, 'RBR_Landmark_Bull', { cast: true });
-    root.userData.bull = { x: cx, y: gy, z: cz, mesh };
+    const g = buildBullSculpture();
+    g.scale.setScalar(DM * (lm.total || 17.2) / 17.2);
+    g.rotation.y = Math.atan2(-fz, fx);
+    g.position.set(cx * DM, gy * DM, cz * DM);
+    root.add(g);
+    root.userData.bull = { x: cx, y: gy, z: cz, mesh: g };
   }
 
   // ---------------------------------------------------------------- 10. trees (instanced, LOD per 400 m cell)
