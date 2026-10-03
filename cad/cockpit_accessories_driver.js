@@ -10,14 +10,12 @@
  *   * HANS anchor posts (M6 FIA 8858-2010 specification)
  * - Confor Foam Headrest:
  *   * Viscoelastic U-shaped surround with quick-release locating pins
- * - Aerodynamic Rear-View Mirrors (Matching 2026 Reference Photos):
- *   * Dual-surface carbon fiber housing with contoured outer edge
- *   * Front-facing 14-LED amber marshal warning array (2x7 matrix) in recessed bezel
- *   * Rear-facing reflective mirror glass in recessed frame
- *   * L-shaped aerodynamic carbon mounting stalk with titanium mounting foot
- *   * Horizontal cockpit rim air deflector vane / mirror winglet
+ * - Rear-View Mirrors (MIRROR_SPEC, refs round3 R3 to R5):
+ *   * Wide rounded pod with a thick carbon lip around recessed planar-reflector glass
+ *   * Amber marshal LED block on the outboard front face, slim amber strip under the glass
+ *   * Two thin curved aerofoil stalks (sidepod top and tub top) tied by a small aero vane
  * - FIA T-Camera Roll Hoop Pod:
- *   * Aerodynamic T-bar housing on roll hoop peak
+ *   * Aerodynamic T-bar housing on the roll-hoop blade above the airbox
  *   * Forward and rear optical camera lenses with sapphire glass
  *   * Base pylon with M6 Torx mounting fasteners
  * - Chassis Top Instrumentation:

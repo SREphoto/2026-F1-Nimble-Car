@@ -14,16 +14,18 @@ The scene has about 5,400 separate 3D pieces ("meshes"). Many of them are small 
 | Parts facing or lying the wrong way | 4 (nose camera pods, pitot mast, Camloc fastener heads, radio antenna) | 4 | none |
 | Parts in the wrong material | 3 big ones (helmet in car paint, engine all in titanium colours, radiator in bright titanium) | 3 | none |
 | Wrong design or shape | 8 (engine, helmet, nose join, rear wing, front wing, driveshafts, ride height in Drive mode, missing favicon) | 8 | the beam wing (see the note on the rules) |
+| Shape updates from Samuel's round 3 references | 4 (halo, mirrors, airbox, rear wing) | 4 | none |
 | Wasted parts (built, then thrown away) | 5 old decal panels | 0 | kept for now, they are cheap and the livery removes them (see below) |
 
-After the fixes the scene has 4,814 meshes, down from 5,405. That is 591 fewer, mostly because the old engine had about 560 tiny repeated parts that nobody could see. The surface-contact test went from 14 floating meshes to 1, and the outside-visibility test no longer shows any engine, camshaft or steering rack part through the bodywork. The car is 1,884 mm wide (the limit is 1,900 mm), nothing sits below the ground, and all 29 livery decals still land with none skipped.
+After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, mostly because the old engine had about 560 tiny repeated parts that nobody could see. The surface-contact test went from 14 floating meshes to 1, and the outside-visibility test no longer shows any engine, camshaft or steering rack part through the bodywork. The car is 1,884 mm wide (the limit is 1,900 mm), nothing sits below the ground, and all 29 livery decals still land with none skipped.
 
 **The biggest issues were:**
 1. **The engine.** It was a flat box with bare camshafts on top, a turbo floating above the gearbox, no air intake, no exhaust pipes and no coolers. Most of it was coloured like titanium, which is not what an engine block is made of.
 2. **The helmet.** It used the car's matte camouflage paint, and it had loose carbon fins on top, a tear-off post sticking out, vent boxes poking through the shell and a chin piece hanging off it.
 3. **Stray parts.** Four tiny fins floated above the halo, the side crash tubes floated off the tub wall, the radio antenna and the nose air-speed probe were lying on their sides in mid-air, and sixteen suspension ball joints were doubled.
 4. **The steering rack.** Its tube stuck about 110 mm out of each side of the chassis.
-5. **The rear wing.** It was too narrow and stood on two thin posts.
+5. **The rear wing.** It was too narrow and stood on two thin round posts.
+6. **The cockpit area (round 3 references).** The halo was two thin poles, the mirrors were plain boxes on one stalk, and the airbox was a flat-fronted yellow box.
 
 ---
 
@@ -42,20 +44,26 @@ After the fixes the scene has 4,814 meshes, down from 5,405. That is 591 fewer, 
   - The front wall is now an oval that matches the tub, and the nose skin now runs back over the tub and blends in smoothly (see 9.2).
   - The crash tubes now sit on the tub wall.
 
-### 1.2 Halo (`Body_Halo_Titanium_Assembly`, 23 meshes before, 17 after)
-- **What it is:** the titanium hoop over the driver's head, with a carbon cover.
+### 1.2 Halo (`Body_Halo_Titanium_Assembly`, 23 meshes before, 5 after)
+- **What it is:** the titanium hoop over the driver's head, with a moulded carbon cover.
 - **Real job:** it stops wheels and debris from hitting the driver's head.
-- **Where it should sit:** from the front pillar at about x 7 to the two rear mounts at about x 16.7.
-- **Now:** x 7.1 to 16.7, z 4.5 to 7.4, which is correct.
-- **Material:** it should be a titanium tube under a gloss carbon cover. Now it has a titanium structure, and the livery switches the cover to gloss carbon, which is correct.
-- **Problems:** four small "micro-vane" fins floated in the air inboard of the hoop. They also grabbed the AT&T decal, so that decal was printed tiny.
-- **Fix:** removed the fins. The decal now lands on the hoop.
+- **Where it should sit:** a front centre post on the tub top at about x 7.3, a wide wishbone hoop around the helmet, and two rear feet on the chassis shoulders behind the headrest.
+- **Before:** two 30 mm round tubes and a thin front post, with separate box brackets and bolts at the back. From the front it read as thin poles. Four "micro-vane" fins floated inboard of the hoop and grabbed the AT&T decal.
+- **Now:** one smooth moulded mesh (`Halo_Moulded_Shell`), built from `HALO_SPEC` in `cad/monocoque_cockpit.js` with the new reusable sweep builder `cad/sweep_section.js`:
+  - a flattened oval section, about 100 mm wide and 50 mm tall, with a fuller front edge
+  - the hoop is widest beside the helmet (y ±2.5) and narrows to the apex over the front post
+  - the rear legs grow deeper as they drop and blend into the chassis shoulders at x 16.4 to 17.2
+  - the front post widens into a broad foot on the tub top
+  - x 6.9 to 17.2, y ±3.0, z 4.8 to 7.6
+- **Clearance:** 89 mm from the helmet at the closest point, beside the driver's head.
+- **Material:** gloss carbon cover (the livery switches it from the titanium placeholder), which is correct.
+- **Decals:** TAG Heuer, 1Password, ORACLE and AT&T are projected straight onto the top of the hoop. The old flat decal quads on the halo were removed.
 
 ### 1.3 Roll hoop (3 meshes)
 - **What it is:** the strong loop above and behind the driver's head, which also holds the air intake.
 - **Real job:** it protects the driver if the car turns over.
-- **Where it should sit:** x 16.2 to 17.7, z 5.8 to 9.3.
-- **Now:** in that position, which is correct.
+- **Where it should sit:** x 16.6 to 17.7, z 5.8 to 9.4, inside the airbox, with a carbon blade on top that carries the FIA camera (see 9.4).
+- **Now:** in that position, which is correct. The marshal status lights moved onto the new airbox crown at x 16.6.
 - **Material:** carbon, which is correct.
 - **Problems:** none.
 
@@ -101,7 +109,7 @@ After the fixes the scene has 4,814 meshes, down from 5,405. That is 591 fewer, 
 
   | To | Clearance |
   |---|---|
-  | halo | 109 mm |
+  | halo | 89 mm (the new halo is wider and deeper) |
   | engine cover | 32 mm |
   | headrest | 35 mm |
   | tub | 38 mm |
@@ -132,13 +140,21 @@ After the fixes the scene has 4,814 meshes, down from 5,405. That is 591 fewer, 
 - **Now:** x 12.8 to 16.6, z 4.1 to 5.3, which is correct.
 - **Problems:** none.
 
-### 2.3 Mirrors (35 meshes each)
-- **Now:** x 8.8 to 10.2, y ±2.8 to 3.8, z 4.7 to 5.9, which is correct.
-- **Material:** painted housing with a glass face, which is correct.
-- **Problems:** none.
+### 2.3 Mirrors (35 meshes each before, 20 after)
+- **What they are:** the two rear-view mirrors.
+- **Real job:** they let the driver see behind. They also carry amber marshal lights.
+- **Where they should sit:** just outboard of the cockpit and ahead of the halo's rear feet, on thin stalks from the sidepod and the tub top.
+- **Before:** a narrow box on one L-shaped stalk at x 8.8 to 10.2, too far forward, with flat chrome glass.
+- **Now:** built from `MIRROR_SPEC` in `cad/cockpit_accessories_driver.js`:
+  - a wide rounded pod (190 mm wide, 68 mm tall) at x 14.0, y ±4.1, z 5.6, turned slightly toward the driver
+  - the glass is recessed behind a thick carbon lip and is a real planar mirror (it reflects the car and the track live). Set `realReflection: false` for a cheaper chrome look.
+  - an amber LED block on the outboard end of the front face (as in R3 and R4), plus a slim amber strip under the glass on the rear face
+  - two thin curved aerofoil stalks, one from the sidepod top and one from the tub top, tied together by a small flat vane
+  - x 13.6 to 14.4, y ±3.0 to 5.1, z 3.6 to 5.9
+- **Material:** painted pod, gloss carbon lip, stalks and vane, which is correct.
 
 ### 2.4 FIA camera on the air intake (28 meshes)
-- **Now:** x 16.7 to 18.1, z 9.3 to 10.3, on top of the roll hoop, which is correct.
+- **Now:** x 16.6 to 18.0, z 9.6 to 10.7. It now sits on the new roll-hoop blade above the airbox, which is correct.
 
 ### 2.5 Instruments on top of the chassis (29 meshes)
 - **What they are:** the radio antenna, the GPS, the light panel and the fasteners on top of the tub.
@@ -171,7 +187,7 @@ After the fixes the scene has 4,814 meshes, down from 5,405. That is 591 fewer, 
 - **Low-voltage harness (58 meshes):**
   - **Engine looms:** they ran through the space where an intake plenum belongs. They now run in the engine valley and branch to each ignition coil, using the cylinder positions from `PU_SPEC`.
   - **Rear spine loom:** it ran inside where the exhaust downpipe now is. It is now beside the gearbox.
-  - **Rear wing light cables:** they hung in the open air between the diffuser and the wing. They now run up inside the new pylon and along the wing.
+  - **Rear wing light cables:** they hung in the open air between the diffuser and the wing. They now run up inside each twin pylon, along the inside of the mainplane and into the endplates (the swan-neck route is kept for that setting).
   - **Engine computer (SECU) plugs:** three plugs floated inside the fuel tank, about 290 mm below the computer. They now sit on its sockets.
 - **Battery (energy store, 83 meshes):** x 17.5 to 20.9, under the fuel tank, inside the tub. This is correct and has no problems.
 - **Fuel cell (3 meshes):** x 16.9 to 21.6, behind the seat, which is correct.
@@ -284,27 +300,36 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
 - **Real job:** they hold the radiators and guide air along the car.
 - **Now:** x 8.5 to 29.6. The two unnamed bright titanium "radiator" boxes inside them were removed. The real coolers are now in the power unit cooling system (5.3).
 
-### 9.4 Engine cover (12 meshes)
-- **Now:** x 15.6 to 34.6. Its rear end was raised slightly so the new single downpipe fits inside it.
-- **Material:** painted carbon, which is correct.
+### 9.4 Engine cover (12 meshes) and airbox (`Airbox_RollHoop_Intake`, 2 meshes before, 5 after)
+- **Engine cover now:** x 15.6 to 34.6. Its rear end was raised slightly so the new single downpipe fits inside it.
+- **Airbox, what it is:** the air intake above the driver's head that feeds the engine.
+- **Airbox before:** a flat-fronted yellow box with a black panel painted on the front.
+- **Airbox now:** rebuilt from `AIRBOX_SPEC` (refs R3 to R5):
+  - a big rounded mouth with a thick rolled lip
+  - a vertical carbon divider inside the mouth, and a dark duct behind it
+  - a broad pillar behind the halo that blends down into the engine cover and tapers back along the spine
+  - a carbon roll-hoop blade on top, carrying the FIA T-camera
+  - x 15.85 to 20.4, y ±1.08, z 6.4 to 9.9 (the lower part is hidden inside the cover)
+- **Material:** painted carbon (yellow livery), with a dark duct and carbon divider and blade, which is correct.
 
-### 9.5 Rear wing (`Assembly_Active_Rear_Wing`, 36 meshes before, 40 after)
+### 9.5 Rear wing (`Assembly_Active_Rear_Wing`, 36 meshes before, 48 after)
 - **Real job:** it makes downforce at the back. Its top flap opens on straights in X-mode.
 - **Before:**
   - only y ±4.9 wide (the mainplane was y ±4.5)
   - it stood on two thin round posts
   - the light cables hung in the air beside it
-- **Now:** it is wider and stands on a single pylon, all from `REAR_WING_SPEC`:
-  - **Width:** the endplates reach y ±5.2 and the mainplane y ±4.8. There is 26 mm of room to the rear tyres.
-  - **Pylon:** a single central swan-neck pylon. It is a carbon blade that rises in front of the wing and hooks over the top of the mainplane. Its foot is forked, so the tailpipe passes through it, as on Samuel's reference car.
-  - **Actuator:** the flap actuator pod sits on top of the hook, with a push rod to the flap.
-- **Rules note:**
-  - The 2026 technical rules actually ask for twin pylons fixed under the mainplane, and the press coverage says swan necks are effectively ruled out.
-  - The single swan neck is kept because Samuel asked for it and his reference pictures show it.
-  - The other layout is one setting away: `pylon.style: 'underslung_twin'`.
+- **Now:** all from `REAR_WING_SPEC` (refs round 3, R6):
+  - **Width:** the endplates reach y ±5.2 at the wing and the mainplane y ±4.8. There is 26 mm of room to the rear tyres. The car stays 1,884 mm wide (limit 1,900 mm).
+  - **Pylons (Samuel's choice, the 2026 rules layout):** two slim carbon blades with a lens-shaped section, from the top of the crash structure up into the underside of the mainplane at y ±0.62. Their inner faces are 11 mm clear of the tailpipe on each side, and they are about 4.7 dm inboard of the tyres.
+  - **Endplates:** full height at the wing, then they sweep down and inboard to land on the diffuser side walls at y ±4.1, z 2.2, ending at the diffuser's trailing edge.
+  - **Lights:** a red LED strip (16 LEDs in a dark bar) runs down the upper trailing edge of each endplate.
+  - **Flap:** 25% deeper chord for a bigger sponsor area seen from behind, and the ORACLE panel is taller to match.
+  - **Actuator:** the flap actuator sits in a small fairing on top of the mainplane, between the pylons, with a push rod to the flap.
+  - **Exhaust and rain light:** the single tailpipe sits above the crash structure, between the pylons, with the rain light below it.
+- **Setting:** `pylon.style` is now `'underslung_twin'`. The single swan neck from Samuel's first reference car is still there as `'swan_neck'`.
 - **Beam wing:**
   - The 2026 rules remove the lower "beam wing" element (only a plain stay is allowed).
-  - It is left in place because removing it changes the look of the car, and that was not asked for.
+  - It is left in place because removing it changes the look of the car, and that was not asked for. It was moved 25 mm forward and its span now follows the swept endplates, so its tips end inside them.
   - It is flagged here for Samuel to decide.
 
 ### 9.6 Wasted decal panels (left alone)
@@ -325,4 +350,4 @@ They cost very little, and removing them touches the livery code, so they are le
 - **Favicon:** added `favicon.svg`. The browser console now shows no errors and no 404s.
 
 ## 11. Image sheets
-All the before and after sheets are in `/workspace/f1-audit/review2/`. The raw single views are in `before_raw/` and `after_raw/`.
+All the before and after sheets are in `/workspace/f1-audit/review2/`. The raw single views are in `before_raw/` and `after_raw/`. Round 3 added `sheet_08_halo.png`, `sheet_09_mirrors.png` and `sheet_10_airbox.png`, and updated `sheet_01_whole_car.png` and `sheet_06_rear_wing.png`.
