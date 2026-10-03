@@ -103,7 +103,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (o.material === materials.liveryPaint) {
       // Front-wing flaps are bare carbon on the reference car; everything else painted
       const b = carBox(o);
-      const isFwFlap = b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3;
+      const isFwFlap = o.userData.liveryFinish === 'carbon' || (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3);
       o.material = isFwFlap ? materials.carbonGlossAero : carPaint;
       return;
     }
@@ -229,7 +229,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   carModel.traverse((o) => {
     if (!o.isMesh || o.material !== materials.carbonGlossAero) return;
     const b = carBox(o);
-    if (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3 && b.min.z > 0.55) fwFlaps.push({ o, b });
+    if (o.userData.fwFlap || (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3 && b.min.z > 0.55)) fwFlaps.push({ o, b });
   });
   sides.forEach((s) => {
     const mine = fwFlaps.filter(({ b }) => Math.sign(b.min.y + b.max.y) === s).sort((p, q) => q.b.max.z - p.b.max.z)[0];

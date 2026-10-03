@@ -78,8 +78,9 @@ export function createFullCarAssembly(options = {}) {
   const kinematics = {
     crankshaft: subassemblies.powertrain.getObjectByName('Kinematic_Crankshaft_Assembly'),
     valvetrain: subassemblies.powertrain.getObjectByName('Kinematic_DOHC_Valvetrain_Assembly'),
-    turbocharger: subassemblies.powertrain.getObjectByName('Turbocharger_Assembly_2026'),
-    mguk: subassemblies.powertrain.getObjectByName('Assembly_350kW_MGUK_Motor'),
+    // only the rotating parts spin (housings stay bolted to the engine)
+    turbocharger: subassemblies.powertrain.getObjectByName('Kinematic_Turbo_Rotor') || subassemblies.powertrain.getObjectByName('Turbocharger_Assembly_2026'),
+    mguk: subassemblies.powertrain.getObjectByName('Kinematic_MGUK_Rotor') || subassemblies.powertrain.getObjectByName('Assembly_350kW_MGUK_Motor'),
     gears: subassemblies.transmission.getObjectByName('Kinematic_8Speed_GearTrain_Assembly'),
     driveshafts: subassemblies.transmission.getObjectByName('Kinematic_Driveshafts_Assembly'),
     steeringRack: subassemblies.suspension.getObjectByName('Steering_Rack_Bar'), // only the bar slides
@@ -155,6 +156,9 @@ export function createFullCarAssembly(options = {}) {
       const crankAngularVelocity = (rpm * 2 * Math.PI) / 60;
       if (kinematics.crankshaft) {
         kinematics.crankshaft.rotation.x += crankAngularVelocity * dt;
+        // pistons and rods follow the crank
+        const setCrank = subassemblies.powertrain.userData.setCrankAngle;
+        if (setCrank) setCrank(kinematics.crankshaft.rotation.x);
       }
       // Camshafts turn at half crankshaft speed (4-stroke cycle), each about its own axis
       kinematics.camSpins.forEach(c => { c.rotation.x += (crankAngularVelocity * 0.5) * dt; });
@@ -209,6 +213,15 @@ export function createFullCarAssembly(options = {}) {
     setCorner(kinematics.rearLeftUpright, kinematics.rearLeftBrake, travel.rl, null);
     setCorner(kinematics.rearRightUpright, kinematics.rearRightBrake, travel.rr, null);
     if (subassemblies.suspension.userData.updateLinks) subassemblies.suspension.userData.updateLinks();
+    // Driveshafts: outer CV joint rides up and down with the rear hub, inner joint stays at the diff
+    if (kinematics.driveshafts) {
+      kinematics.driveshafts.children.forEach(ds => {
+        const d = ds.userData.driveshaft;
+        if (!d) return;
+        const t = travel[d.corner] || 0;
+        ds.rotation.x = d.side * Math.atan(Math.tan(d.baseTilt) + t / d.reach);
+      });
+    }
 
     // 4. Dynamic Carbon Brake Disc Glowing (Red-hot under heavy braking)
     const brakeEffort = (brakeKgf || 0) / 180;
@@ -236,14 +249,17 @@ export function createFullCarAssembly(options = {}) {
     const targetFrontAngle = isXMode ? -0.07 : -0.38; // radians
     const targetRearAngle = isXMode ? -0.05 : -0.45;  // radians
 
+    // Each flap may carry its own data-driven mode angles (userData.modeAngles)
+    const modeTarget = (o, fallback) => (o.userData.modeAngles && o.userData.modeAngles[isXMode ? 'X_MODE' : 'Z_MODE']) ?? fallback;
     kinematics.frontWingFlaps.forEach(flap => {
       if (flap) {
-        flap.rotation.y = THREE.MathUtils.lerp(flap.rotation.y, targetFrontAngle, 0.15);
+        flap.rotation.y = THREE.MathUtils.lerp(flap.rotation.y, modeTarget(flap, targetFrontAngle), 0.15);
       }
     });
 
     if (kinematics.rearWingFlap) {
-      kinematics.rearWingFlap.rotation.y = THREE.MathUtils.lerp(kinematics.rearWingFlap.rotation.y, targetRearAngle, 0.15);
+      const rw = kinematics.rearWingFlap;
+      rw.rotation.y = THREE.MathUtils.lerp(rw.rotation.y, modeTarget(rw, targetRearAngle), 0.15);
     }
 
     // 6. Dramatic Exploded View Offsets (Exhaustive Mechanical Exposure)

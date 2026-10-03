@@ -106,8 +106,12 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   tubGroup.add(tubMesh);
 
   // Bulkhead A-A (Front chassis bulkhead at X = 0) with 4x M14 Titanium FIS Nose Studs
-  const bulkAGeo = new THREE.BoxGeometry(0.18, 2.8, 2.5); // inside the nose root section
+  // Elliptical, 3% inside the tub section here (Y ±1.6, Z 1.2-4.2). The old square plate's corners
+  // stuck out of the round tub/nose join and read as a "square front" behind the nose.
+  const bulkAGeo = new THREE.CylinderGeometry(1, 1, 0.18, 40);
   const bulkA = new THREE.Mesh(bulkAGeo, mats.carbonMatteStructural || mats.carbonGloss);
+  bulkA.rotation.z = Math.PI / 2;      // disc faces along X
+  bulkA.scale.set(1.55, 1, 1.45);      // local X -> car Y half-width, local Z -> car Z half-height
   bulkA.position.set(0.0, 0, 2.7);
   bulkA.name = "Body_Chassis_Bulkhead_AA";
   tubGroup.add(bulkA);
@@ -155,7 +159,10 @@ export function buildMonocoqueAndCockpit(scene, mats) {
       const sipsGeo = new THREE.CylinderGeometry(0.22, 0.22, 4.2, 24);
       const sips = new THREE.Mesh(sipsGeo, mats.carbonMatteStructural);
       sips.rotation.z = Math.PI / 2;
-      sips.position.set(13.5, sy, sz);
+      // on the tub wall: the tub is an ellipse (Y = w cos t, Z = mid + h sin t), so the wall is
+      // further inboard low down; the lower tubes used to float 0.4 dm off the side
+      const wT = 3.18, midT = 2.55, hT = 1.95, cosT = Math.sqrt(Math.max(0, 1 - ((sz - midT) / hT) ** 2));
+      sips.position.set(13.5, Math.sign(sy) * (wT * cosT + 0.12), sz);
       sips.name = `Body_SIPS_CrushTube_${sz > 2 ? "Upper" : "Lower"}_${sy > 0 ? "LH" : "RH"}`;
       tubGroup.add(sips);
     }
@@ -203,18 +210,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   hoopRH.castShadow = true;
   haloGroup.add(hoopRH);
 
-  // Aerodynamic composite fairing micro-vanes on Halo top
-  for (let v = 0; v < 3; v++) {
-    const vx = 9.8 + v * 1.2;
-    const vaneGeo = new THREE.BoxGeometry(0.35, 0.08, 0.02);
-    const vaneLH = new THREE.Mesh(vaneGeo, mats.carbonGlossAero);
-    vaneLH.position.set(vx, 1.2 + v * 0.4, 7.35);
-    haloGroup.add(vaneLH);
-
-    const vaneRH = new THREE.Mesh(vaneGeo, mats.carbonGlossAero);
-    vaneRH.position.set(vx, -(1.2 + v * 0.4), 7.35);
-    haloGroup.add(vaneRH);
-  }
+  // (The six 'micro-vanes' that used to sit here floated in the air inboard of and above the
+  //  hoop at a fixed Z 7.35, and caught the AT&T halo decal. Removed; see part_review.md.)
 
   // Halo Rear Mount Brackets & M14 High-Strength Fasteners
   for (const hy of [-2.0, 2.0]) {
@@ -494,7 +491,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // -------------------------------------------------------------
   const pedalGroup = new THREE.Group();
   pedalGroup.name = "Body_PedalSled_Assembly";
-  pedalGroup.position.set(2.5, 0, 1.25); // rails on tub floor
+  pedalGroup.position.set(2.5, 0, 1.36); // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
 
   // Dual Aluminum Slider Guide Rails
   for (const ry of [-1.2, 1.2]) {

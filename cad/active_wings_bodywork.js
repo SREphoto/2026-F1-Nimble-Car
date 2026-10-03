@@ -17,6 +17,50 @@ import {
   createEndplateTexture,
   createRearWingEndplateInnerTexture
 } from './procedural_livery.js';
+import { createWingElement, elementEdges } from './aero_profiles.js';
+
+/**
+ * Front wing layout (front-wing group frame: origin 0.55 dm above the ground at x = -8.6).
+ * u = 0 at the car centre line, 1 at the endplate. Each element after the first starts in the
+ * slot behind the previous trailing edge. Active flaps rotate about the first active leading edge.
+ */
+/**
+ * Rear wing layout (rear-wing group frame: origin at x 36.8, z 7.4).
+ * NOTE: the 2026 technical rules mount the wing on twin pylons under the mainplane; the single
+ * swan-neck is kept as the default because it matches Samuel's reference car. Flip pylon.style.
+ */
+export const REAR_WING_SPEC = {
+  endplateOuterY: 5.2,  // rear tyre inner face is at +-5.42
+  flapModeAngles: { Z_MODE: -0.45, X_MODE: -0.05 },
+  pylon: {
+    style: 'swan_neck',               // 'swan_neck' | 'underslung_twin'
+    // centre line of the blade in (x, z): rises ahead of the leading edge then hooks over the top
+    path: [[-0.75, -3.0], [-1.25, -1.9], [-1.55, -0.7], [-1.5, 0.35], [-1.05, 0.78], [-0.5, 0.62], [-0.25, -0.05]],
+    depth: (t) => 0.62 - 0.22 * t,    // blade chord along its length
+    thickness: 0.14,
+    footZ: -4.05,                      // top of the crash structure
+    forkY: 0.6, legChord: 0.5, legThickness: 0.12,
+    pod: { at: [-0.75, 0, 0.98], length: 0.8, radius: 0.12, rodTo: [0.55, 0, 0.62] },
+    twinY: [-0.55, 0.55],
+  },
+};
+
+export const FRONT_WING_SPEC = {
+  halfSpan: 8.75,          // element tips meet the endplates
+  innerY: 1.25,            // upper elements stop at the nose; the centre stays mainplane only (neutral section)
+  slot: { overlap: 0.10, gap: 0.05 },
+  pivotU: 0.57,
+  flapModeAngles: { Z_MODE: 0.0, X_MODE: 0.28 },  // + = trailing edge down (low drag)
+  slotBracketsU: [0.42, 0.78],
+  elements: [
+    { name: 'FrontWing_Mainplane', thickness: 0.09, camber: 0.05,
+      leX: (u) => -1.25 + 0.55 * u ** 1.5, leZ: (u) => 0.02 + 0.30 * u * u,
+      chord: (u) => 1.55 - 0.15 * u, aoa: (u) => 0.05 + 0.08 * u },
+    { name: 'FrontWing_Element2', thickness: 0.09, camber: 0.06, chord: (u) => 0.95 - 0.10 * u, aoa: (u) => 0.22 + 0.10 * u },
+    { name: 'FrontWing_Flap3', active: true, thickness: 0.09, camber: 0.06, chord: () => 0.80, aoa: (u) => 0.40 + 0.08 * u },
+    { name: 'FrontWing_Flap4', active: true, thickness: 0.10, camber: 0.07, chord: () => 0.68, aoa: (u) => 0.58 + 0.06 * u },
+  ],
+};
 
 /**
  * Helper: Create an explicit 3D quad decal with deterministic UVs
@@ -161,16 +205,37 @@ export function createActiveWingsBodywork(options = {}) {
   const noseZc = u => 2.70 - 1.25 * Math.pow(u, 1.5);          // centreline 2.70 -> 1.45 dm
   const noseRy = u => 1.75 - 0.63 * Math.pow(u, 1.0);          // half-width 1.75 -> 1.12 dm (wide)
   const noseRz = u => 1.50 - 1.12 * Math.pow(u, 0.75);         // half-height 1.50 -> 0.38 dm (flat)
-  const noseRing = (st, v) => {
+  const noseShapeRing = (u, k, v) => {
     const th = v * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
-    const { x, u, k } = st; // k = tip rounding factor (1 on the body)
     const ry = noseRy(u) * Math.sqrt(k), rz = noseRz(u) * Math.sqrt(k);
     // boxy at the root so it fully encloses Bulkhead A-A and the FIS studs, rounder/flatter forward
     const b = Math.min(1, u / 0.3), under = 1 - 0.3 * Math.min(1, u / 0.4);
-    return [x, ry * spow(c, 0.4 + 0.22 * b), noseZc(u) + rz * spow(sn, 0.6 + 0.2 * b) * (sn < 0 ? under : 1.0)];
+    return [ry * spow(c, 0.4 + 0.22 * b), noseZc(u) + rz * spow(sn, 0.6 + 0.2 * b) * (sn < 0 ? under : 1.0)];
+  };
+  // Survival-cell section (same ellipse as monocoque_cockpit.js stations X 0 and 3.5), 1.2% proud,
+  // so the nose can wrap over the tub front and blend into it with no step or square edge.
+  const TUB_A = { x: 0.0, w: 1.60, zb: 1.2, zt: 4.2 }, TUB_B = { x: 3.5, w: 1.85, zb: 1.15, zt: 4.4 };
+  const tubRing = (x, v) => {
+    const f = THREE.MathUtils.clamp((x - TUB_A.x) / (TUB_B.x - TUB_A.x), 0, 1);
+    const w = THREE.MathUtils.lerp(TUB_A.w, TUB_B.w, f) * 1.012;
+    const zb = THREE.MathUtils.lerp(TUB_A.zb, TUB_B.zb, f), zt = THREE.MathUtils.lerp(TUB_A.zt, TUB_B.zt, f);
+    const th = v * Math.PI * 2, h = (zt - zb) / 2 * 1.012;
+    return [w * Math.cos(th), (zb + zt) / 2 + h * Math.sin(th)];
+  };
+  const BLEND_BACK = 1.2;   // nose skin runs back over the tub to X = +1.2
+  const BLEND_FWD = 1.8;    // and becomes the full wide nose section by X = -1.8
+  const noseRing = (st, v) => {
+    const { x, u, k } = st; // k = tip rounding factor (1 on the body)
+    if (x >= 0) { const p = tubRing(x, v); return [x, p[0], p[1]]; }
+    const n = noseShapeRing(u, k, v);
+    if (-x >= BLEND_FWD) return [x, n[0], n[1]];
+    const t0 = -x / BLEND_FWD, t = t0 * t0 * (3 - 2 * t0); // smoothstep
+    const p = tubRing(0, v);
+    return [x, p[0] + (n[0] - p[0]) * t, p[1] + (n[1] - p[1]) * t];
   };
   const bodyStations = [], tipStations = [];
-  for (let i = 0; i <= 40; i++) { const u = i / 40; bodyStations.push({ x: -u * NOSE_L, u, k: 1 }); }
+  for (let i = 0; i <= 6; i++) bodyStations.push({ x: BLEND_BACK * (1 - i / 6), u: 0, k: 1 });
+  for (let i = 1; i <= 40; i++) { const u = i / 40; bodyStations.push({ x: -u * NOSE_L, u, k: 1 }); }
   for (let i = 0; i <= 12; i++) {
     const t = i / 12; // quarter-ellipse closing of the tip
     tipStations.push({ x: -NOSE_L - TIP_L * Math.sin(t * Math.PI / 2), u: 1, k: Math.max(0, Math.cos(t * Math.PI / 2)) });
@@ -193,7 +258,8 @@ export function createActiveWingsBodywork(options = {}) {
   [-1, 1].forEach((side, cIdx) => {
     const camGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 12);
     const camMesh = new THREE.Mesh(camGeo, carbonMatte);
-    camMesh.rotation.x = Math.PI / 2;
+    camMesh.rotation.z = Math.PI / 2; // lies along X (pointing forward), it stood upright before
+    camMesh.name = `Nosecone_CameraPod_${side > 0 ? 'LH' : 'RH'}`;
     camMesh.position.set(-6.5, side * (noseRy(0.65) + 0.06), noseZc(0.65)); // on the nose flank
     noseGroup.add(camMesh);
   });
@@ -201,12 +267,15 @@ export function createActiveWingsBodywork(options = {}) {
   // Vertical Pitot Mast on Upper Nose Bridge (Matching wireframe markup)
   const pitotMastGeo = new THREE.CylinderGeometry(0.02, 0.03, 0.75, 12);
   const pitotMast = new THREE.Mesh(pitotMastGeo, materials.titaniumBright);
+  pitotMast.rotation.x = Math.PI / 2; // Cylinder axis is Y (sideways in the CAD frame): stand it up on the nose
+  pitotMast.name = 'Nosecone_PitotMast';
   pitotMast.position.set(-2.0, 0, noseZc(0.2) + noseRz(0.2) + 0.36); // standing on the nose top
   noseGroup.add(pitotMast);
 
   const pitotProbeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.45, 8);
   const pitotProbe = new THREE.Mesh(pitotProbeGeo, materials.titaniumBright);
   pitotProbe.rotation.z = Math.PI / 2;
+  pitotProbe.name = 'Nosecone_PitotProbe';
   pitotProbe.position.set(-2.2, 0, noseZc(0.2) + noseRz(0.2) + 0.72);
   noseGroup.add(pitotProbe);
 
@@ -236,97 +305,77 @@ export function createActiveWingsBodywork(options = {}) {
   frontWingGroup.name = 'FrontWing_Aerofoil_Assembly';
   frontWingGroup.position.set(-8.6, 0.0, 0.55); // trailing edges close to the front tyres
 
-  // Front Wing Mainplane Mesh (Contoured continuous carbon spoon mainplane)
-  const mainplaneWidth = 17.6; // 1760 mm span
-  const mainplaneChord = 2.4;  // 240 mm chord
-  const mainplaneShape = new THREE.Shape();
-  mainplaneShape.moveTo(-1.2, 0.0);
-  mainplaneShape.quadraticCurveTo(0.0, 0.16, 1.2, 0.06);
-  mainplaneShape.lineTo(1.15, -0.02);
-  mainplaneShape.quadraticCurveTo(0.0, 0.04, -1.2, -0.04);
-  mainplaneShape.closePath();
-
-  const fwMainGeo = new THREE.ExtrudeGeometry(mainplaneShape, { steps: 24, depth: mainplaneWidth, bevelEnabled: false });
-  fwMainGeo.center();
-
-  // Apply subtle sweep-back and center spoon droop across vertices
-  const fwPos = fwMainGeo.attributes.position;
-  for (let p = 0; p < fwPos.count; p++) {
-    // Before the mesh's Rx(90deg): local Z = span, local Y = thickness (becomes world up)
-    const zSpan = fwPos.getZ(p);
-    const normSpan = Math.abs(zSpan) / (mainplaneWidth / 2);
-    // Sweep-back: tips move rearward by 1.2 dm
-    fwPos.setX(p, fwPos.getX(p) + Math.pow(normSpan, 1.5) * 1.2);
-    // Center droop (spoon): tips rise by 0.35 dm
-    fwPos.setY(p, fwPos.getY(p) + Math.pow(normSpan, 2.0) * 0.35);
-  }
-  fwMainGeo.computeVertexNormals();
-
-  const fwMainMesh = new THREE.Mesh(fwMainGeo, carbonMat);
-  fwMainMesh.rotation.x = Math.PI / 2; // Span along Y
-  fwMainMesh.castShadow = true;
-  fwMainMesh.name = 'FrontWing_Mainplane';
+  // Layered front wing built from FRONT_WING_SPEC: a full-span mainplane, a fixed second
+  // element and two active flaps per side, each tucked into the slot behind the one before.
+  const FW = { ...FRONT_WING_SPEC, ...(options.frontWing || {}) };
+  const fwU = (y) => Math.min(1, Math.abs(y) / FW.halfSpan); // 0 at the centre, 1 at the endplate
+  const mpSpec = FW.elements[0];
+  const fwMainSpec = {
+    y0: -FW.halfSpan, y1: FW.halfSpan, ns: 40, nc: 20, thickness: mpSpec.thickness, camber: mpSpec.camber,
+    le: (yn) => { const u = Math.abs(2 * yn - 1); return [mpSpec.leX(u), mpSpec.leZ(u)]; },
+    chord: (yn) => mpSpec.chord(Math.abs(2 * yn - 1)),
+    aoa: (yn) => mpSpec.aoa(Math.abs(2 * yn - 1)),
+  };
+  const fwMainMesh = createWingElement(fwMainSpec, carbonMat, 'FrontWing_Mainplane');
   frontWingGroup.add(fwMainMesh);
 
-  // -------------------------------------------------------------------------
-  // 1C. 2-STAGE ACTIVE UPPER FLAPS (Left & Right)
-  // Articulating between Z-Mode (+22°) and X-Mode (+4°)
-  // -------------------------------------------------------------------------
-  const activeFlapAngle = options.frontFlapAngle || 0.38;
+  // stacked side elements: each leading edge sits just behind and above the previous trailing edge
+  const fwStackSpec = (side) => {
+    const out = [];
+    let prev = (u) => { const c = mpSpec.chord(u), a = mpSpec.aoa(u); return [mpSpec.leX(u) + c * Math.cos(a), mpSpec.leZ(u) + c * Math.sin(a)]; };
+    FW.elements.slice(1).forEach((el) => {
+      const prevTE = prev;
+      const le = (u) => { const [tx, tz] = prevTE(u); return [tx - FW.slot.overlap, tz + FW.slot.gap]; };
+      const yA = side * FW.innerY, yB = side * FW.halfSpan;
+      const uOf = (yn) => fwU(yA + (yB - yA) * yn);
+      out.push({ el, spec: {
+        y0: yA, y1: yB, ns: 28, nc: 16, thickness: el.thickness, camber: el.camber,
+        le: (yn) => le(uOf(yn)), chord: (yn) => el.chord(uOf(yn)), aoa: (yn) => el.aoa(uOf(yn)),
+      }, le });
+      prev = (u) => { const [lx, lz] = le(u), c = el.chord(u), a = el.aoa(u); return [lx + c * Math.cos(a), lz + c * Math.sin(a)]; };
+    });
+    return out;
+  };
 
-  [-1, 1].forEach((side, sIdx) => {
+  [-1, 1].forEach((side) => {
     const isLeft = side > 0;
+    const tag = isLeft ? 'LH' : 'RH';
     const flapAssembly = new THREE.Group();
     flapAssembly.name = `FrontWing_ActiveFlap_${isLeft ? 'Left' : 'Right'}`;
-    flapAssembly.position.set(0.25, side * 5.0, 0.22);
-
+    const stack = fwStackSpec(side);
+    const firstActive = stack.find((s) => s.el.active);
+    // pivot on the leading edge of the first active flap (2026 rule: pivot at the flap's front)
+    const [pX, pZ] = firstActive.le(FW.pivotU);
+    flapAssembly.position.set(pX, 0, pZ);
+    flapAssembly.userData.modeAngles = { ...FW.flapModeAngles };
+    flapAssembly.rotation.y = FW.flapModeAngles.Z_MODE;
     const pivotNode = new THREE.Group();
-    // Same sign on both sides; negative rotation about +Y raises the trailing edge.
-    // full_car3d.js animates this toward -0.38 (Z-mode) / -0.07 (X-mode).
-    pivotNode.rotation.y = 0;
-    flapAssembly.rotation.y = -Math.abs(activeFlapAngle);
-
-    // Flap 1 (Lower Active Element)
-    const flap1Shape = new THREE.Shape();
-    flap1Shape.moveTo(-0.55, 0.0);
-    flap1Shape.quadraticCurveTo(0.0, 0.12, 0.65, 0.05);
-    flap1Shape.lineTo(0.60, 0.01);
-    flap1Shape.quadraticCurveTo(0.0, 0.04, -0.55, -0.02);
-    flap1Shape.closePath();
-
-    const flap1Geo = new THREE.ExtrudeGeometry(flap1Shape, { steps: 4, depth: 7.2, bevelEnabled: false });
-    flap1Geo.center();
-    flap1Geo.scale(1.5, 1, 1); // longer chord so the flap stack reaches toward the tyres
-    const flap1Mesh = new THREE.Mesh(flap1Geo, navyMat);
-    flap1Mesh.rotation.x = Math.PI / 2;
-    pivotNode.add(flap1Mesh);
-
-    // Flap 2 (Upper Gurney Element with 12mm slot gap)
-    const flap2Shape = new THREE.Shape();
-    flap2Shape.moveTo(-0.40, 0.0);
-    flap2Shape.quadraticCurveTo(0.0, 0.10, 0.45, 0.04);
-    flap2Shape.lineTo(0.42, 0.01);
-    flap2Shape.quadraticCurveTo(0.0, 0.03, -0.40, -0.02);
-    flap2Shape.closePath();
-
-    const flap2Geo = new THREE.ExtrudeGeometry(flap2Shape, { steps: 4, depth: 6.8, bevelEnabled: false });
-    flap2Geo.center();
-    flap2Geo.scale(1.5, 1, 1);
-    const flap2Mesh = new THREE.Mesh(flap2Geo, navyMat);
-    flap2Mesh.rotation.x = Math.PI / 2;
-    flap2Mesh.position.set(0.55, 0, 0.18); // Elevated slot gap
-    pivotNode.add(flap2Mesh);
-
-    // 4x Slot Gap Separators (connecting Flap 1 and Flap 2)
-    for (let s = 0; s < 4; s++) {
-      const sepY = -2.7 + s * 1.8;
-      const sepGeo = new THREE.BoxGeometry(0.35, 0.03, 0.22);
-      const sepMesh = new THREE.Mesh(sepGeo, carbonMatte);
-      sepMesh.position.set(0.3, sepY, 0.09);
-      pivotNode.add(sepMesh);
-    }
-
+    pivotNode.name = `FrontWing_FlapPivot_${tag}`;
     flapAssembly.add(pivotNode);
+    const activeMeshes = [];
+    stack.forEach(({ el, spec }) => {
+      const mat = el.active ? navyMat : carbonMat;
+      const m = createWingElement(spec, mat, `${el.name}_${tag}`);
+      if (el.active) {
+        m.geometry.translate(-pX, 0, -pZ);
+        m.userData.liveryFinish = 'carbon'; // bare carbon flaps on the reference car
+        m.userData.fwFlap = true;
+        pivotNode.add(m); activeMeshes.push({ m, el, spec });
+      } else frontWingGroup.add(m);
+    });
+    // slot-gap brackets that tie the two moving flaps together
+    if (activeMeshes.length > 1) {
+      const lower = activeMeshes[0].spec, upper = activeMeshes[1];
+      FW.slotBracketsU.forEach((u, k) => {
+        const yn = (u * FW.halfSpan - FW.innerY) / (FW.halfSpan - FW.innerY);
+        const e0 = elementEdges(lower, yn), [ux, uz] = upper.spec.le(yn);
+        const br = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.025, Math.max(0.08, uz - e0.te[1] + 0.12)), carbonMatte);
+        br.name = `FrontWing_SlotBracket_${tag}_${k}`;
+        br.position.set((e0.te[0] + ux) / 2 - pX, side * u * FW.halfSpan, (e0.te[1] + uz) / 2 - pZ);
+        br.rotation.y = -0.5;
+        pivotNode.add(br);
+      });
+    }
     frontWingGroup.add(flapAssembly);
 
     // -----------------------------------------------------------------------
@@ -505,12 +554,7 @@ export function createActiveWingsBodywork(options = {}) {
     inletMouth.name = `Sidepod_InletMouth_${isLeft ? 'LH' : 'RH'}`;
     pod.add(inletMouth);
 
-    // Internal Radiator Core (Angled at 42°)
-    const radCoreGeo = new THREE.BoxGeometry(0.18, 2.5, 1.9);
-    const radCore = new THREE.Mesh(radCoreGeo, materials.titaniumBright);
-    radCore.rotation.y = -0.55;
-    radCore.position.set(10.6, side * 4.3, 2.4);
-    pod.add(radCore);
+    // (Radiators, charge-air and oil coolers live in the power unit's PU_Cooling_System, from COOLING_SPEC.)
 
     sidepodGroup.add(pod);
   });
@@ -584,9 +628,10 @@ export function createActiveWingsBodywork(options = {}) {
     { x: 21.5, hw: 3.0, zb: 2.6, zt: 7.6, k: 2.6 },
     { x: 24.5, hw: 2.3, zb: 2.3, zt: 6.3, k: 2.0 },
     { x: 27.5, hw: 1.95, zb: 2.2, zt: 5.45, k: 2.2 },
-    { x: 30.5, hw: 1.6, zb: 2.2, zt: 4.5, k: 2.4 },
-    { x: 33.2, hw: 1.4, zb: 2.3, zt: 4.05, k: 2.6 },
-    { x: 34.6, hw: 1.1, zb: 2.5, zt: 3.75, k: 2.6 }
+    // tail raised a little so the single exhaust downpipe stays inside the cover
+    { x: 30.5, hw: 1.6, zb: 2.2, zt: 4.8, k: 2.4 },
+    { x: 33.2, hw: 1.4, zb: 2.3, zt: 4.6, k: 2.6 },
+    { x: 34.6, hw: 1.1, zb: 2.5, zt: 4.35, k: 2.6 }
   ], 8);
   const ecRing = (st, v, off = 0) => {
     // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
@@ -693,13 +738,14 @@ export function createActiveWingsBodywork(options = {}) {
   rearWingGroup.name = 'Assembly_Active_Rear_Wing';
   rearWingGroup.position.set(36.8, 0.0, 7.4);
 
-  const rwFlapAngle = options.rearFlapAngle ?? -0.45; // Default Z-Mode angle (negative = trailing edge up)
+  const RW = { ...REAR_WING_SPEC, ...(options.rearWing || {}), pylon: { ...REAR_WING_SPEC.pylon, ...((options.rearWing || {}).pylon || {}) } };
+  const rwFlapAngle = options.rearFlapAngle ?? RW.flapModeAngles.Z_MODE; // negative = trailing edge up
 
   // -------------------------------------------------------------------------
   // 4A. REAR WING SPOON MAINPLANE (Genuine Horizontal Aerofoil)
   // -------------------------------------------------------------------------
   // Wing sits inboard of the rear tyres (tyre inner face Y = ±5.34 dm, ±5.525 with the PR #3 tyres)
-  const RW_OUT = 4.9;   // endplate outer face at its widest (Y = ±490 mm)
+  const RW_OUT = RW.endplateOuterY; // endplate outer face at its widest
   const RW_T = 0.2;     // endplate thickness
   const rwSpan = 2 * (RW_OUT - 0.27 - RW_T / 2) * 1.0;  // mainplane ends buried mid-endplate
   const rwChord = 2.4;  // 240 mm chord along X
@@ -737,6 +783,7 @@ export function createActiveWingsBodywork(options = {}) {
   rwFlapPivot.name = 'RearWing_Active_UpperFlap';
   rwFlapPivot.position.set(1.05, 0, 0.5); // behind and above the mainplane trailing edge (slot gap)
   rwFlapPivot.rotation.y = rwFlapAngle; // DRS / X-Mode pitch articulation around lateral Y axis
+  rwFlapPivot.userData.modeAngles = { ...RW.flapModeAngles };
 
   const rwFlapShape = new THREE.Shape();
   rwFlapShape.moveTo(-0.6, 0.0);
@@ -1053,23 +1100,81 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
 
   // -------------------------------------------------------------------------
-  // 4F. DUAL SWAN-NECK MOUNTING PYLONS
+  // 4F. MOUNTING PYLON(S), chosen by RW.pylon.style
+  //   'swan_neck'      : one central blade that rises ahead of the wing and hooks over the top,
+  //                      forked at the base so the tailpipe passes through it (Samuel's refs)
+  //   'underslung_twin': two slim pylons under the mainplane (what the 2026 rules actually ask for)
   // -------------------------------------------------------------------------
-  [-0.55, 0.55].forEach(pylonY => {
-    // The cross-section is flattened with geometry.scale(1.8, 0.6, 1), which also scales
-    // the path, so pre-divide by the same factors to land the pylon where intended.
-    const yp = pylonY / 0.6;
-    const pylonCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.6 / 1.8, yp, -4.05), // Foot on top of the RIS (world X 36.2, Z 3.35)
-      new THREE.Vector3(-0.8 / 1.8, yp, -2.6),  // Passes beside the exhaust
-      new THREE.Vector3(-0.9 / 1.8, yp, -1.0),
-      new THREE.Vector3(-0.6 / 1.8, yp, 0.0)    // Under mainplane
-    ]);
-    const pylonGeo = new THREE.TubeGeometry(pylonCurve, 16, 0.08, 8, false);
-    pylonGeo.scale(1.8, 0.6, 1.0);
-    const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
-    rearWingGroup.add(pylonMesh);
-  });
+  if (RW.pylon.style === 'swan_neck') {
+    const P = RW.pylon;
+    const curve = new THREE.CatmullRomCurve3(P.path.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+    const N = 48, M = 16, verts = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, c = curve.getPoint(t), tg = curve.getTangent(t);
+      const n = new THREE.Vector3(tg.z, 0, -tg.x).normalize(); // in-plane normal (the blade's chord direction)
+      const depth = P.depth(t), half = P.thickness / 2;
+      for (let j = 0; j < M; j++) {
+        const a = (j / M) * Math.PI * 2;
+        const u = Math.cos(a), w = Math.sin(a);
+        const thick = half * Math.sign(w) * Math.pow(Math.abs(w), 0.7) * (0.55 + 0.45 * (1 - Math.abs(u))); // lens section
+        verts.push(c.x + n.x * u * depth / 2, thick, c.z + n.z * u * depth / 2);
+      }
+    }
+    for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) {
+      const a = i * M + j, b2 = i * M + (j + 1) % M, c2 = (i + 1) * M + (j + 1) % M, d = (i + 1) * M + j;
+      idx.push(a, c2, b2, a, d, c2);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    g.setIndex(idx); g.computeVertexNormals();
+    const blade = new THREE.Mesh(g, carbonMat);
+    blade.name = 'RearWing_SwanNeck_Pylon'; blade.castShadow = true;
+    rearWingGroup.add(blade);
+    // forked foot: two legs on the crash structure straddle the tailpipe and join under the blade
+    const [bx, bz] = P.path[0];
+    [-1, 1].forEach((sd) => {
+      const legH = bz - P.footZ;
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(P.legChord, P.legThickness, legH + 0.1), carbonMat);
+      leg.name = `RearWing_Pylon_Fork_${sd > 0 ? 'L' : 'R'}`;
+      leg.position.set(bx, sd * P.forkY, P.footZ + legH / 2);
+      leg.castShadow = true;
+      rearWingGroup.add(leg);
+    });
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(P.legChord, 2 * P.forkY + P.legThickness, 0.18), carbonMat);
+    bridge.name = 'RearWing_Pylon_Fork_Bridge';
+    bridge.position.set(bx, 0, bz - 0.04);
+    rearWingGroup.add(bridge);
+    // flap actuator pod on top of the hook, with its push rod to the flap
+    const pod = new THREE.Mesh(new THREE.CapsuleGeometry(P.pod.radius, P.pod.length, 6, 14), carbonMat);
+    pod.name = 'RearWing_Actuator_Pod';
+    pod.rotation.set(0, 0, Math.PI / 2); // capsule axis along X
+    pod.position.set(...P.pod.at);
+    rearWingGroup.add(pod);
+    const rodA = new THREE.Vector3(P.pod.at[0] + P.pod.length / 2, 0, P.pod.at[2]);
+    const rodB = new THREE.Vector3(...P.pod.rodTo);
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, rodA.distanceTo(rodB), 8), materials.titaniumAnodized || carbonMatte);
+    rod.name = 'RearWing_Actuator_Rod';
+    rod.position.copy(rodA).add(rodB).multiplyScalar(0.5);
+    rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), rodB.clone().sub(rodA).normalize());
+    rearWingGroup.add(rod);
+  } else {
+    RW.pylon.twinY.forEach((pylonY, k) => {
+      // The cross-section is flattened with geometry.scale(1.8, 0.6, 1), which also scales
+      // the path, so pre-divide by the same factors to land the pylon where intended.
+      const yp = pylonY / 0.6;
+      const pylonCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.6 / 1.8, yp, -4.05), // Foot on top of the RIS (world X 36.2, Z 3.35)
+        new THREE.Vector3(-0.8 / 1.8, yp, -2.6),  // Passes beside the exhaust
+        new THREE.Vector3(-0.9 / 1.8, yp, -1.0),
+        new THREE.Vector3(-0.6 / 1.8, yp, 0.0)    // Under mainplane
+      ]);
+      const pylonGeo = new THREE.TubeGeometry(pylonCurve, 16, 0.08, 8, false);
+      pylonGeo.scale(1.8, 0.6, 1.0);
+      const pylonMesh = new THREE.Mesh(pylonGeo, carbonMat);
+      pylonMesh.name = `RearWing_Pylon_Twin_${k}`;
+      rearWingGroup.add(pylonMesh);
+    });
+  }
 
   group.add(rearWingGroup);
 
