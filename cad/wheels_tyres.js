@@ -43,8 +43,8 @@ const R = TYRE_SPEC.radius;
 const RIM = TYRE_SPEC.rimRadius;
 const SEGMENTS = 128;         // around the wheel (smooth silhouette in close-ups)
 
-const YELLOW = '#f5c400';     // Pirelli medium yellow
-const RUBBER = '#141416';
+export const YELLOW = '#f5c400';     // Pirelli medium yellow
+export const RUBBER = '#141416';
 const HEAVY = '900 {px}px "Arial Black", "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif';
 const BOLD = '700 {px}px "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif';
 const font = (tpl, px) => tpl.replace('{px}', Math.round(px));
@@ -52,18 +52,18 @@ const font = (tpl, px) => tpl.replace('{px}', Math.round(px));
 // ---------------------------------------------------------------------------
 // Deterministic RNG so every load looks identical
 // ---------------------------------------------------------------------------
-function rng(seed) {
+export function rng(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
-function makeCanvas(w, h) {
+export function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   return c;
 }
 
-function canvasTexture(canvas, { srgb = false, repeatU = 1, aniso = 8 } = {}) {
+export function canvasTexture(canvas, { srgb = false, repeatU = 1, aniso = 8 } = {}) {
   const t = new THREE.CanvasTexture(canvas);
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = repeatU > 1 ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
@@ -110,11 +110,13 @@ function arcText(ctx, text, cx, cy, r, mode, { centre = mode === 'top' ? -Math.P
 // `paint(ctx, kind)` draws once into the colour canvas (kind 'color') and once
 // into the height canvas (kind 'height': white = raised).
 // ---------------------------------------------------------------------------
-function paintSidewall(ctx, S, kind) {
+// opts (used by cad/tyre_states.js for compounds): ink colour, main 6 o'clock wordmark,
+// small compound text. Defaults = the 2026 medium slick.
+export function paintSidewall(ctx, S, kind, { ink: inkColor = YELLOW, mainText = 'P ZERO', compoundText = 'F1  ·  MEDIUM  ·  C3' } = {}) {
   const C = S / 2;
   const px = S / (2 * R);                 // pixels per dm
   const isH = kind === 'height';
-  const ink = isH ? '#ffffff' : YELLOW;
+  const ink = isH ? '#ffffff' : inkColor;
   const mould = isH ? '#9a9a9a' : '#1d1d20';   // moulded (unpainted) rubber detail
   const rand = rng(isH ? 7 : 7);
 
@@ -172,11 +174,12 @@ function paintSidewall(ctx, S, kind) {
 
   // P ZERO at 6 o'clock (upright, tops toward the hub)
   ctx.fillStyle = ink;
-  ctx.font = font(HEAVY, 0.34 * px);
-  arcText(ctx, 'P ZERO', C, C, 3.22 * px, 'bottom', { spacing: 0.03 * px });
+  const long = mainText.length > 6;
+  ctx.font = font(HEAVY, (long ? 0.27 : 0.34) * px);
+  const mw = arcText(ctx, mainText, C, C, 3.22 * px, 'bottom', { spacing: (long ? 0.022 : 0.03) * px });
   // small "TM"
   ctx.font = font(BOLD, 0.06 * px);
-  arcText(ctx, 'TM', C, C, 3.22 * px, 'bottom', { centre: Math.PI / 2 + 0.49, spacing: 0 });
+  arcText(ctx, 'TM', C, C, 3.22 * px, 'bottom', { centre: Math.PI / 2 + (long ? mw.span / 2 + 0.05 : 0.49), spacing: 0 });
 
   // Pirelli compound band (left side, ~11 o'clock down to ~7 o'clock), as on the 2026 tyre:
   // starts next to the wordmark as a 2-row chequer, then the outer row closes into a
@@ -234,7 +237,7 @@ function paintSidewall(ctx, S, kind) {
   // small compound / sizing text, right side (moulded, painted yellow like the real tyre)
   ctx.fillStyle = ink;
   ctx.font = font(BOLD, 0.07 * px);
-  arcText(ctx, 'F1  ·  MEDIUM  ·  C3', C, C, 3.38 * px, 'top', { centre: -Math.PI * 0.02, spacing: 0.01 * px });
+  arcText(ctx, compoundText, C, C, 3.38 * px, 'top', { centre: -Math.PI * 0.02, spacing: 0.01 * px });
   // FIA-style small emblem dot near the top-left of the wordmark
   ctx.beginPath(); ctx.arc(C + 3.12 * px * Math.cos(-Math.PI * 0.68), C + 3.12 * px * Math.sin(-Math.PI * 0.68), 0.05 * px, 0, Math.PI * 2); ctx.fill();
 }
@@ -243,7 +246,7 @@ function paintSidewall(ctx, S, kind) {
 // Tread: graining + scuffs. Returns {color, detail} canvases.
 // detail: R = height (bump), G = roughness. u = around the tyre, v = across.
 // ---------------------------------------------------------------------------
-function paintTread(W, H) {
+export function paintTread(W, H) {
   const rand = rng(1234);
   const hC = makeCanvas(W, H), hx = hC.getContext('2d');     // height
   const sC = makeCanvas(W, H), sx = sC.getContext('2d');     // scuff (lighter + rougher)
@@ -326,12 +329,13 @@ function paintTread(W, H) {
 // ---------------------------------------------------------------------------
 // Tyre profile (r, y) for one half; mirrored for the other.
 // ---------------------------------------------------------------------------
-function tyreProfile(width) {
+function tyreProfile(width, worn = false) {
   const hw = width / 2;
   const crownEnd = hw - 0.30;
   const half = [];
-  // crown (gentle drop toward the shoulders)
-  for (let i = 0; i <= 10; i++) { const y = (crownEnd * i) / 10; half.push([R - 0.045 * Math.pow(y / crownEnd, 2), y]); }
+  // crown (gentle drop toward the shoulders; a heavily worn tyre has a flat-ish crown)
+  const crownDrop = worn ? 0.012 : 0.045;
+  for (let i = 0; i <= 10; i++) { const y = (crownEnd * i) / 10; half.push([R - crownDrop * Math.pow(y / crownEnd, 2), y]); }
   // rounded shoulder
   for (let i = 1; i <= 10; i++) { const t = (i / 10) * Math.PI / 2; half.push([(R - 0.42) + 0.375 * Math.pow(Math.cos(t), 0.85), crownEnd + 0.30 * Math.pow(Math.sin(t), 0.85)]); }
   const treadCount = half.length;  // index where the sidewall starts (shoulder end inside the tread)
@@ -353,13 +357,22 @@ function lathe(points, segments = SEGMENTS) {
   return new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), segments);
 }
 
-function buildTyreGeometries(width) {
-  const { half, treadCount, hw } = tyreProfile(width);
+/**
+ * worn = true: flat-ish crown and a scrubbed-down outboard (+Y) shoulder (heavy wear / blown).
+ */
+export function buildTyreGeometries(width, { worn = false } = {}) {
+  const { half, treadCount, hw } = tyreProfile(width, worn);
+  // heavy outer-shoulder wear: pull the outboard shoulder in by up to 6 mm
+  const wearOut = ([r, y]) => {
+    if (!worn || y <= 0) return [r, y];
+    const t = THREE.MathUtils.smoothstep(y, hw * 0.55, hw) * THREE.MathUtils.clamp((r - (R - 0.5)) / 0.5, 0, 1);
+    return [r - 0.06 * t, y - 0.03 * t * t];
+  };
   // tread: shoulder (-) -> crown -> shoulder (+), split a few points into the shoulder
   const split = treadCount - 4;
   const treadPts = [];
   for (let i = split; i > 0; i--) treadPts.push([half[i][0], -half[i][1]]);
-  for (let i = 0; i <= split; i++) treadPts.push(half[i]);
+  for (let i = 0; i <= split; i++) treadPts.push(wearOut(half[i]));
   const tread = lathe(treadPts);
   // UVs: u = around (repeats via texture.repeat), v = arc length across the tread
   {
@@ -376,7 +389,7 @@ function buildTyreGeometries(width) {
   }
   // Sidewalls. Lathe normal = profile tangent rotated (dy, -dr), so running
   // shoulder->bead faces +Y (outboard) and bead->shoulder faces -Y (inboard).
-  const swOutPts = half.slice(split);
+  const swOutPts = half.slice(split).map(wearOut);
   const swInPts = swOutPts.map(([r, y]) => [r, -y]).reverse();
   const swOut = lathe(swOutPts);
   const swIn = lathe(swInPts);
@@ -392,7 +405,7 @@ function buildTyreGeometries(width) {
   };
   planar(swOut, true);
   planar(swIn, false);
-  return { tread, swOut, swIn, hw };
+  return { tread, swOut, swIn, hw, width };
 }
 
 // ---------------------------------------------------------------------------
@@ -531,6 +544,7 @@ export function buildWheelsTyres(carModel, renderer, { verbose = false } = {}) {
   const mats = buildMaterials(maxAniso);
   const wheelGeo = buildWheelGeometries();
   const tyreGeo = { front: buildTyreGeometries(TYRE_SPEC.width.front), rear: buildTyreGeometries(TYRE_SPEC.width.rear) };
+  const corners = [];
   const carInv = new THREE.Matrix4().copy(carModel.matrixWorld).invert();
 
   spindles.forEach((sp) => {
@@ -557,9 +571,9 @@ export function buildWheelsTyres(carModel, renderer, { verbose = false } = {}) {
       vis.add(mesh);
       return mesh;
     };
-    add(tread, mats.tread, 'Tyre_Tread_Slick');
-    add(swOut, mats.sidewall, 'Tyre_Sidewall_Outboard');
-    add(swIn, mats.sidewall, 'Tyre_Sidewall_Inboard');
+    const mTread = add(tread, mats.tread, 'Tyre_Tread_Slick');
+    const mSwOut = add(swOut, mats.sidewall, 'Tyre_Sidewall_Outboard');
+    const mSwIn = add(swIn, mats.sidewall, 'Tyre_Sidewall_Inboard');
     const P = hw - 0.10;                           // outboard rim face plane
     add(wheelGeo.lip, mats.rimBlue, 'Rim_Lip_Outboard', P);
     add(wheelGeo.lip, mats.rimBlue, 'Rim_Lip_Inboard', -P, (m) => { m.rotation.z = Math.PI; });
@@ -573,6 +587,15 @@ export function buildWheelsTyres(carModel, renderer, { verbose = false } = {}) {
     add(wheelGeo.cap, mats.cap, 'Hub_Cap', P);
     add(wheelGeo.pin, mats.pin, 'Hub_RetainingPin', P);
     sp.add(vis);
+    // per-corner handles for cad/tyre_states.js (compound / wear / blown swaps).
+    // `key` is the PHYSICAL corner as seen by the driver: the CAD frame is x back, y = driver's
+    // RIGHT, z up (track_mode poses the car with CAD +Y = heading-right), so the legacy group
+    // names (Left = +Y) are mirrored. Names are kept as-is; kinKey is the name-based key that
+    // updateKinematics' suspensionTravel {fl, fr, rl, rr} uses.
+    const axle = sp.name.includes('_Front_') ? 'F' : 'R';
+    const key = axle + (posCar.y > 0 ? 'R' : 'L');
+    const kinKey = (axle + (sp.name.endsWith('_Left') ? 'L' : 'R')).toLowerCase();
+    corners.push({ key, kinKey, spindle: sp, vis, size, outSign, hw, tread: mTread, swOut: mSwOut, swIn: mSwIn });
     report.wheels.push(`${sp.name}:${outSign > 0 ? '+Y' : '-Y'}`);
   });
 
@@ -601,6 +624,6 @@ export function buildWheelsTyres(carModel, renderer, { verbose = false } = {}) {
 
   report.ms = Math.round(((typeof performance !== 'undefined') ? performance.now() : 0) - t0);
   if (verbose || (typeof location !== 'undefined' && /[?&]liveryDebug/.test(location.search))) console.info('[wheels]', JSON.stringify(report));
-  carModel.userData.wheels = { report, materials: mats };
+  carModel.userData.wheels = { report, materials: mats, corners, tyreGeo };
   return report;
 }

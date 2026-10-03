@@ -17,6 +17,7 @@ import { createTrackEnvironment } from './cad/track_environment.js';
 import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
 import { initTrackMode } from './cad/track/track_mode.js';
+import { initTyreStates } from './cad/tyre_states.js';
 import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 
@@ -429,11 +430,13 @@ window.setCameraView = function(viewName) {
       aeroMode: state.aeroMode,
       gear: state.gear,
       brakeKgf: state.brakeKgf,
-      explodedProgress: state.explodedProgress
+      explodedProgress: state.explodedProgress,
+      suspensionTravel: tyreStates?.suspensionTravel
     });
   }
   updateLcdDisplay();
   carModel?.userData?.livery?.syncFrame?.();
+  tyreStates?.update(0);
   renderer.render(scene, camera);
 };
 
@@ -621,7 +624,8 @@ function animate() {
       aeroMode: state.aeroMode,
       gear: state.gear,
       brakeKgf: state.brakeKgf,
-      explodedProgress: state.explodedProgress
+      explodedProgress: state.explodedProgress,
+      suspensionTravel: tyreStates?.suspensionTravel
     });
   }
 
@@ -632,16 +636,26 @@ function animate() {
     controls.update();
   }
   trackMode?.beforeRender(dt);
+  tyreStates?.update(dt);
   carModel?.userData?.livery?.syncFrame?.(); // paint split follows the car on the circuit
   renderer.render(scene, camera);
 }
 
 // Full-scale Red Bull Ring circuit, driving + chase cameras (cad/track/*)
 let trackMode = null;
+let tyreStates = null;
 try {
   trackMode = initTrackMode({ scene, camera, controls, renderer, carModel, state, sunLight, ambientLight, legacyEnv: trackEnv });
 } catch (err) {
   console.error('Red Bull Ring circuit failed to build:', err);
+}
+
+// Tyre compounds × wear states × weather (cad/tyre_states.js): UI in the Telemetry panel + Drive HUD,
+// API on window.tyreStates (setTyreState / setTyreCompound / setTyreWear / setBlownCorner / setWeather)
+try {
+  if (carModel) tyreStates = initTyreStates({ carModel, renderer, scene, state, trackMode });
+} catch (err) {
+  console.error('Tyre states failed to initialise:', err);
 }
 
 animate();

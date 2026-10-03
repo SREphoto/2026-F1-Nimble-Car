@@ -382,7 +382,9 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   const _inv = new THREE.Matrix4();
   const syncFrame = () => {
     carModel.updateMatrixWorld();
-    splitUniforms.uSpFrame.value.multiplyMatrices(loadPose, _inv.copy(carModel.matrixWorld).invert());
+    // the body frame is the tyre-state stance group when one exists (blown tyre tilts the car)
+    const body = carModel.userData.stanceFrame || carModel;
+    splitUniforms.uSpFrame.value.multiplyMatrices(loadPose, _inv.copy(body.matrixWorld).invert());
   };
   carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame };
   return report;
