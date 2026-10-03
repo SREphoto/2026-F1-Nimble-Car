@@ -21,7 +21,9 @@ import { RED_BULL_RING as D } from './red_bull_ring_data.js';
 import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
 
 export const DM = 10; // scene units per metre
-const KERB_W = 1.4;
+const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
+const POLE_SIDE = D.meta.pole_side === 'left' ? -1 : 1; // pole slot side of the grid (FIA: left)
+const GRID_HALF = D.meta.grid_half_m ?? 2.6;
 
 // ------------------------------------------------------------------------------------------------ helpers
 function hash2(x, z) {
@@ -227,11 +229,15 @@ export function createRedBullRing() {
   const M = {
     asphalt: new THREE.MeshStandardMaterial({ map: tex.asphalt, color: 0xffffff, roughness: 0.92, metalness: 0.0 }),
     runoff: new THREE.MeshStandardMaterial({ map: tex.runoff, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
-    gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 1.0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }),
+    gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 1.0, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 }),
     grass: new THREE.MeshLambertMaterial({ map: tex.grass, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 3 }),
     line: new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     kerb: new THREE.MeshStandardMaterial({ map: tex.kerb, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
+    kerbBlack: new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
+    blue: new THREE.MeshStandardMaterial({ color: 0x5ab4e6, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
+    sausage: new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.55 }),
+    bull: new THREE.MeshStandardMaterial({ color: 0xb4bac2, roughness: 0.4, metalness: 0.35 }),
     chequer: new THREE.MeshStandardMaterial({ map: tex.chequer, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
     concrete: new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.85 }),
     concreteDark: new THREE.MeshStandardMaterial({ color: 0x8d9197, roughness: 0.9 }),
@@ -255,34 +261,76 @@ export function createRedBullRing() {
 
   // ---------------------------------------------------------------- 1. track surface, lines, kerbs, run-off
   const kerb = D.kerb;
+  const kerbR = D.kerbR || kerb, kerbL = D.kerbL || kerb;
+  // painted details from the FIA notes: white line moved onto the kerb with a light-blue line behind it, sausage kerbs
+  const feats = D.features || [];
+  const inFeat = (type, side) => {
+    const m = new Int8Array(n), on = new Float32Array(n);
+    for (const f of feats) {
+      if (f.type !== type || f.side !== side) continue;
+      for (let sp = f.sp0; sp <= f.sp1; sp += track.ds * 0.5) { const i = Math.floor(track.fIndex(sp)); m[i] = 1; on[i] = f.onKerb || 0; }
+    }
+    return { m, on };
+  };
+  const blueR = inFeat('blueline', 'R'), blueL = inFeat('blueline', 'L');
+  const sausR = inFeat('sausage', 'R'), sausL = inFeat('sausage', 'L');
   add(strip(track, i => -wl(i), wr, c(0), c(0), { vLen: 12, uLen: 12 }), M.asphalt, 'RBR_Asphalt');
-  // white track-limit lines (inside the asphalt edge)
+  // white track-limit lines (inside the asphalt edge); where the FIA moved the line onto the kerb it is drawn there instead
   const LW = 0.2;
+  const kerbY = u => 0.006 + (0.04 - 0.006) * Math.max(0, Math.min(1, u / KERB_W)); // kerb surface height u m beyond the edge
   const lines = [
-    strip(track, i => -wl(i), i => -wl(i) + LW, c(0.004), c(0.004)),
-    strip(track, i => wr(i) - LW, wr, c(0.004), c(0.004)),
+    strip(track, i => -wl(i), i => -wl(i) + LW, c(0.004), c(0.004), { mask: i => !blueL.m[i] }),
+    strip(track, i => wr(i) - LW, wr, c(0.004), c(0.004), { mask: i => !blueR.m[i] }),
+    // moved white lines, on the kerb
+    strip(track, i => wr(i) + blueR.on[i] - LW / 2, i => wr(i) + blueR.on[i] + LW / 2, i => kerbY(blueR.on[i]) + 0.004, i => kerbY(blueR.on[i]) + 0.004, { mask: i => blueR.m[i] }),
+    strip(track, i => -wl(i) - blueL.on[i] - LW / 2, i => -wl(i) - blueL.on[i] + LW / 2, i => kerbY(blueL.on[i]) + 0.004, i => kerbY(blueL.on[i]) + 0.004, { mask: i => blueL.m[i] }),
   ];
-  // kerbs (raised 4 cm at their outer edge)
+  const blueGeo = [
+    strip(track, i => wr(i) + blueR.on[i] + LW / 2, i => wr(i) + blueR.on[i] + LW / 2 + 0.15, i => kerbY(blueR.on[i] + 0.2) + 0.004, i => kerbY(blueR.on[i] + 0.3) + 0.004, { mask: i => blueR.m[i] }),
+    strip(track, i => -wl(i) - blueL.on[i] - LW / 2 - 0.15, i => -wl(i) - blueL.on[i] - LW / 2, i => kerbY(blueL.on[i] + 0.3) + 0.004, i => kerbY(blueL.on[i] + 0.2) + 0.004, { mask: i => blueL.m[i] }),
+  ];
+  // the part of the kerb inside a moved white line is painted black (T9 / T10)
+  const blackGeo = [
+    strip(track, wr, i => wr(i) + blueR.on[i] - LW / 2, c(0.008), i => kerbY(blueR.on[i]) + 0.003, { mask: i => blueR.m[i] && blueR.on[i] > 0.3 }),
+    strip(track, i => -wl(i) - blueL.on[i] + LW / 2, i => -wl(i), i => kerbY(blueL.on[i]) + 0.003, c(0.008), { mask: i => blueL.m[i] && blueL.on[i] > 0.3 }),
+  ];
+  // kerbs (raised 4 cm at their outer edge), 2 m wide, inside of each corner + exit on the outside
   const kerbGeo = [
-    strip(track, wr, i => wr(i) + KERB_W, c(0.006), c(0.04), { mask: i => kerb[i], vLen: 2.0, uFixed: [0, 1] }),
-    strip(track, i => -wl(i) - KERB_W, i => -wl(i), c(0.04), c(0.006), { mask: i => kerb[i], vLen: 2.0, uFixed: [0, 1] }),
+    strip(track, wr, i => wr(i) + KERB_W, c(0.006), c(0.04), { mask: i => kerbR[i], vLen: 2.0, uFixed: [0, 1] }),
+    strip(track, i => -wl(i) - KERB_W, i => -wl(i), c(0.04), c(0.006), { mask: i => kerbL[i], vLen: 2.0, uFixed: [0, 1] }),
   ];
   add(mergeGeometries(kerbGeo), M.kerb, 'RBR_Kerbs');
-  // asphalt run-off (starts at the asphalt edge, under the kerbs)
-  const runR = i => wr(i) + KERB_W + D.runR[i], runL = i => -wl(i) - KERB_W - D.runL[i];
-  const gravR = i => runR(i) + D.gravR[i], gravL = i => runL(i) - D.gravL[i];
+  // yellow sausage kerbs just behind the T1 / T3 exit kerbs (ridge 0.5 m wide, 12 cm high)
+  {
+    const SA = KERB_W + 0.35, SB = SA + 0.25, SC = SB + 0.25, SH = 0.12;
+    const g = [
+      strip(track, i => wr(i) + SA, i => wr(i) + SB, c(0.03), c(SH), { mask: i => sausR.m[i] }),
+      strip(track, i => wr(i) + SB, i => wr(i) + SC, c(SH), c(0.03), { mask: i => sausR.m[i] }),
+      strip(track, i => -wl(i) - SB, i => -wl(i) - SA, c(SH), c(0.03), { mask: i => sausL.m[i] }),
+      strip(track, i => -wl(i) - SC, i => -wl(i) - SB, c(0.03), c(SH), { mask: i => sausL.m[i] }),
+    ];
+    add(mergeGeometries(g.map(x => { x.deleteAttribute('uv'); return x; })), M.sausage, 'RBR_Kerbs_Sausage', { cast: true });
+  }
+  add(mergeGeometries(blueGeo.map(g => { g.deleteAttribute('uv'); return g; })), M.blue, 'RBR_White_Lines_Blue');
+  add(mergeGeometries(blackGeo.map(g => { g.deleteAttribute('uv'); return g; })), M.kerbBlack, 'RBR_Kerbs_Black');
+  // asphalt run-off out to the OSM grass edge (starts at the asphalt edge, under the kerbs)
+  const kR = i => wr(i) + KERB_W, kL = i => -wl(i) - KERB_W;
+  const runR = i => kR(i) + D.runR[i], runL = i => kL(i) - D.runL[i];
+  // gravel starts right behind the kerb (FIA 2024: T4, T6, and 2.5 m strips at the T9 / T10 exits)
+  const gravR = i => kR(i) + D.gravR[i], gravL = i => kL(i) - D.gravL[i];
+  const outR = i => Math.max(runR(i), gravR(i)), outL = i => Math.min(runL(i), gravL(i));
   add(mergeGeometries([
-    strip(track, wr, runR, c(-0.012), c(-0.012), { vLen: 12, uLen: 12 }),
-    strip(track, runL, i => -wl(i), c(-0.012), c(-0.012), { vLen: 12, uLen: 12 }),
+    strip(track, wr, runR, c(-0.012), c(-0.012), { mask: i => D.runR[i] > 0.05, vLen: 12, uLen: 12 }),
+    strip(track, runL, i => -wl(i), c(-0.012), c(-0.012), { mask: i => D.runL[i] > 0.05, vLen: 12, uLen: 12 }),
   ]), M.runoff, 'RBR_Runoff_Asphalt');
   add(mergeGeometries([
-    strip(track, runR, gravR, c(-0.03), c(-0.03), { mask: i => D.gravR[i] > 0.4, vLen: 8, uLen: 8 }),
-    strip(track, gravL, runL, c(-0.03), c(-0.03), { mask: i => D.gravL[i] > 0.4, vLen: 8, uLen: 8 }),
+    strip(track, kR, gravR, c(-0.004), c(-0.004), { mask: i => D.gravR[i] > 0.4, vLen: 8, uLen: 8 }),
+    strip(track, gravL, kL, c(-0.004), c(-0.004), { mask: i => D.gravL[i] > 0.4, vLen: 8, uLen: 8 }),
   ]), M.gravel, 'RBR_Gravel_Traps');
   // grass verge from run-off/gravel out to 6 m beyond the barrier (blends into terrain)
   add(mergeGeometries([
-    strip(track, gravR, i => D.barR[i] + 6, c(-0.05), c(-0.2), { vLen: 10, uLen: 10 }),
-    strip(track, i => -D.barL[i] - 6, gravL, c(-0.2), c(-0.05), { vLen: 10, uLen: 10 }),
+    strip(track, outR, i => D.barR[i] + 6, c(-0.05), c(-0.2), { vLen: 10, uLen: 10 }),
+    strip(track, i => -D.barL[i] - 6, outL, c(-0.2), c(-0.05), { vLen: 10, uLen: 10 }),
   ]), M.grass, 'RBR_Grass_Verge');
 
   // ---------------------------------------------------------------- 2. pit lane
@@ -315,7 +363,9 @@ export function createRedBullRing() {
     const P = (lat, d) => [F.x + F.rx * lat + F.tx * d, F.y + dy + 0.0, F.z + F.rz * lat + F.tz * d];
     batch.add([P(lat0, d0), P(lat1, d0), P(lat1, d1), P(lat0, d1)]);
   };
-  const LINE_SP = D.meta.pole_back_m + 1.6; // start/finish line ahead of the pole box
+  // OSM start line + finish (control) line: 120 m apart here, the FIA gives a 126 m start / finish offset
+  const START_SP = D.meta.start_sp ?? D.meta.pole_back_m + 1.6;  // white start line, 4 m ahead of the pole box
+  const LINE_SP = D.meta.finish_sp ?? START_SP;                  // chequered finish / control line (lap timing)
   {
     const F = track.at(LINE_SP);
     const cq = new QuadBatch();
@@ -324,12 +374,21 @@ export function createRedBullRing() {
     cq.add([P(-F.wl, -0.6), P(F.wr, -0.6), P(F.wr, 0.6), P(-F.wl, 0.6)], [0, 0, W / 4.8, 1]);
     add(cq.geometry(), M.chequer, 'RBR_StartFinish_Line');
   }
+  // white start line across the track
+  { const F = track.at(START_SP); quadOn(paint, F, -F.wl, F.wr, -0.15, 0.15); }
+  // timing lines from the FIA circuit map: DRS detection / activation lines across the track, sector and speed-trap
+  // lines as short ticks at both track edges
+  for (const ln of (D.lines || [])) {
+    const F = track.at(ln.sp);
+    if (ln.kind === 'drsDet' || ln.kind === 'drsAct') quadOn(paint, F, -F.wl, F.wr, -0.1, 0.1);
+    else if (ln.kind === 'sector' || ln.kind === 'trap') { quadOn(yellowPaint, F, -F.wl, -F.wl + 1.2, -0.1, 0.1); quadOn(yellowPaint, F, F.wr - 1.2, F.wr, -0.1, 0.1); }
+  }
   const GRID = 22;
   for (let k = 0; k < GRID; k++) {
     const sp = -8 * k;
     const F = track.at(sp);
     const mid = (F.wr - F.wl) / 2;
-    const cL = mid + (k % 2 === 0 ? 2.6 : -2.6);
+    const cL = mid + (k % 2 === 0 ? POLE_SIDE : -POLE_SIDE) * GRID_HALF;   // pole (and odd places) on the left
     quadOn(paint, F, cL - 1.15, cL + 1.15, 1.3, 1.5);              // front bar (ahead of the front wing)
     quadOn(paint, F, cL - 1.15, cL - 0.98, 0, 1.5);                 // side ticks
     quadOn(paint, F, cL + 0.98, cL + 1.15, 0, 1.5);
@@ -352,7 +411,7 @@ export function createRedBullRing() {
     if (Math.abs(along) < PB.len / 2) { pbS0 = Math.min(pbS0, pit.s[j]); pbS1 = Math.max(pbS1, pit.s[j]); }
   }
   if (!isFinite(pbS0)) { pbS0 = pitLen * 0.3; pbS1 = pitLen * 0.7; }
-  const boxes = 11;
+  const boxes = 16; // boxes * 2 = 32 garage positions, as on the FIA pit lane drawing
   for (let b = 0; b < boxes * 2; b++) {
     const s = pbS0 + 8 + (b + 0.5) * ((pbS1 - pbS0 - 16) / (boxes * 2));
     const F = pitAt(s);
@@ -394,8 +453,8 @@ export function createRedBullRing() {
   ]), M.fence, 'RBR_Debris_Fence', { receive: false });
   // tyre walls in front of the concrete where there is a gravel trap
   add(mergeGeometries([
-    wallStrip(track, i => barRi(i) - 0.7, c(-0.05), c(1.0), { mask: i => D.gravR[i] > 2 && mR(i), vLen: 2.4, uFixed: [0, 0.5] }),
-    wallStrip(track, i => barLi(i) + 0.7, c(1.0), c(-0.05), { mask: i => D.gravL[i] > 2 && mL(i), vLen: 2.4, uFixed: [0.5, 0] }),
+    wallStrip(track, i => barRi(i) - 0.7, c(-0.05), c(1.0), { mask: i => (D.tyreR ? D.tyreR[i] : D.gravR[i] > 2) && mR(i), vLen: 2.4, uFixed: [0, 0.5] }),
+    wallStrip(track, i => barLi(i) + 0.7, c(1.0), c(-0.05), { mask: i => (D.tyreL ? D.tyreL[i] : D.gravL[i] > 2) && mL(i), vLen: 2.4, uFixed: [0.5, 0] }),
   ]), M.tyres, 'RBR_Tyre_Walls');
   // fence posts (instanced)
   {
@@ -584,7 +643,7 @@ export function createRedBullRing() {
 
   // ---------------------------------------------------------------- 8. start/finish gantry + start lights
   {
-    const F = track.at(LINE_SP + 1.5);
+    const F = track.at(START_SP + 1.5);
     const latL = -F.wl - 2.2, latR = F.wr + 2.2, H = 7.5;
     const P = lat => [F.x + F.rx * lat, F.z + F.rz * lat];
     const parts = [];
@@ -699,8 +758,53 @@ export function createRedBullRing() {
     const p = gs._front.clone().addScaledVector(gs._face, 0.3);
     board(gs.len > 150 ? 'RBR' : 'SPIELBERG', p.x, p.y, gs._ground + 0.2, Math.min(20, gs.len * 0.4), Math.min(5, gs.len * 0.1), gs._face.x, gs._face.y, { post: false, back: false });
   }
+  // DRS, sector and speed-trap boards on the left of the track (FIA circuit map positions)
+  for (const ln of (D.lines || [])) {
+    const key = { drsDet: 'DRSDET', drsAct: 'DRSACT', trap: 'TRAP' }[ln.kind] || (ln.kind === 'sector' ? (ln.label.endsWith('1') ? 'S1' : 'S2') : null);
+    if (!key) continue;
+    const F = track.at(ln.sp), bl = -(F.wl + KERB_W + 1.5);
+    board(key, F.x + F.rx * bl, F.z + F.rz * bl, F.y + 0.9, 2.4, 0.6, -F.tx, -F.tz);
+  }
   add(signs.geometry(), M.signs, 'RBR_Signage', { receive: false });
   if (posts.length) add(merge(posts), M.steel, 'RBR_Sign_Structures', { cast: false });
+
+  // ---------------------------------------------------------------- 9b. landmark: "Der Bulle vom Spielberg" (OSM position)
+  // Steel bull sculpture on the hill (Neugebauer / Kolldorfer, 2012): 14.6 m bull, 17.2 m including the arch.
+  // Built from simple shapes in brushed steel, no logo.
+  for (const lm of (D.landmarks || [])) {
+    if (lm.kind !== 'bull') continue;
+    const [cx, cz] = lm.c, gy = terrain.height(lm.c[0], lm.c[1]) - 0.3, sc = (lm.total || 17.2) / 13.4; // horn tips = total height
+    const fl = Math.hypot(lm.face[0], lm.face[1]) || 1, fx = lm.face[0] / fl, fz = lm.face[1] / fl; // side-on to the track
+    const parts = [];
+    const ell = (rx, ry, rz, ox, oy, oz, rot = 0) => {
+      const g = new THREE.SphereGeometry(1, 14, 10); g.scale(rx * sc, ry * sc, rz * sc);
+      if (rot) g.rotateZ(rot);
+      g.translate(ox * sc, oy * sc, oz * sc); return g;
+    };
+    const leg = (ox, oz, len, tilt) => {
+      const g = new THREE.CylinderGeometry(0.45 * sc, 0.32 * sc, len * sc, 8); g.translate(0, -len * sc / 2, 0); g.rotateZ(tilt);
+      g.translate(ox * sc, 8.2 * sc, oz * sc); return g;
+    };
+    // local frame: +X = the way the bull faces, Y up. Body leaps with the front up (charging pose).
+    parts.push(ell(5.2, 2.6, 2.3, 0, 9.4, 0, 0.18));          // body
+    parts.push(ell(2.4, 2.4, 2.2, 3.6, 10.6, 0, 0.3));       // shoulders / hump
+    parts.push(ell(1.7, 1.3, 1.25, 6.2, 10.9, 0, -0.5));     // head, lowered
+    for (const sz of [-1, 1]) {
+      const h = new THREE.ConeGeometry(0.32 * sc, 2.6 * sc, 8); h.rotateX(sz * 1.15); h.rotateZ(-0.6);
+      h.translate(6.8 * sc, 12.0 * sc, sz * 1.3 * sc); parts.push(h);             // horns
+    }
+    parts.push(leg(3.4, 1.0, 4.6, -0.9), leg(3.4, -1.0, 4.6, -0.75));             // front legs, reaching forward
+    parts.push(leg(-3.9, 1.0, 5.6, 0.45), leg(-3.9, -1.0, 5.6, 0.35));            // back legs, pushing off
+    { const t = new THREE.CylinderGeometry(0.12 * sc, 0.2 * sc, 4.0 * sc, 6); t.rotateZ(1.2); t.translate(-6.6 * sc, 10.6 * sc, 0); parts.push(t); } // tail
+    // arch the bull leaps over (to 17.2 m total) and a plinth
+    { const a = new THREE.TorusGeometry(6.0 * sc, 0.7 * sc, 8, 28, Math.PI); parts.push(a); }
+    parts.push(new THREE.BoxGeometry(17 * sc, 0.8 * sc, 4 * sc).translate(0, 0.4 * sc - 0.5, 0));
+    const geo = merge(parts.map(g => { if (g.attributes.uv) g.deleteAttribute('uv'); return g; }));
+    const m4 = new THREE.Matrix4().makeRotationY(Math.atan2(-fz, fx)); m4.scale(new THREE.Vector3(DM, DM, DM)); m4.setPosition(cx * DM, gy * DM, cz * DM);
+    geo.applyMatrix4(m4);
+    const mesh = add(geo, M.bull, 'RBR_Landmark_Bull', { cast: true });
+    root.userData.bull = { x: cx, y: gy, z: cz, mesh };
+  }
 
   // ---------------------------------------------------------------- 10. trees (instanced, LOD per 400 m cell)
   {
@@ -711,6 +815,7 @@ export function createRedBullRing() {
       const nw = track.nearestWithin(x, z);
       if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 22) return true;
       for (let j = 0; j < pit.n; j += 4) if ((pit.x[j] - x) ** 2 + (pit.z[j] - z) ** 2 < 70 * 70) return true;
+      for (const lm of (D.landmarks || [])) if ((x - lm.c[0]) ** 2 + (z - lm.c[1]) ** 2 < 40 * 40) return true;
       for (const gs of D.grandstands) {
         const dx = x - gs.c[0], dz = z - gs.c[1];
         const a = Math.abs(dx * gs._ax.x + dz * gs._ax.y), d = Math.abs(dx * gs._face.x + dz * gs._face.y);
@@ -779,7 +884,7 @@ export function createRedBullRing() {
   return {
     group: root, track, terrain, pit, data: D,
     raceline: new Path(D.raceline.x, D.raceline.z, D.raceline.x.map(() => 0), true),
-    turnSp, lineSp: LINE_SP,
+    turnSp, lineSp: LINE_SP, startSp: START_SP,
     /** ground height (m) at x,z for scenery placement */
     groundAt: (x, z) => terrainBase(x, z),
   };
