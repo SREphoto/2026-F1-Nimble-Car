@@ -14,7 +14,7 @@ The scene has about 5,400 separate 3D pieces ("meshes"). Many of them are small 
 | Parts facing or lying the wrong way | 4 (nose camera pods, pitot mast, Camloc fastener heads, radio antenna) | 4 | none |
 | Parts in the wrong material | 3 big ones (helmet in car paint, engine all in titanium colours, radiator in bright titanium) | 3 | none |
 | Wrong design or shape | 8 (engine, helmet, nose join, rear wing, front wing, driveshafts, ride height in Drive mode, missing favicon) | 8 | the beam wing (see the note on the rules) |
-| Shape updates from Samuel's round 3 references | 5 (halo, mirrors, airbox, rear wing, front wing) | 5 | none |
+| Shape updates from Samuel's round 3 references | 8 (halo, mirrors, airbox, rear wing, front wing, driver seating, rain light, tailpipe) | 8 | none |
 | Wasted parts (built, then thrown away) | 5 old decal panels | 1 (the front endplate panel) | the other 4 are kept for now, they are cheap and the livery removes them (see below) |
 
 After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, mostly because the old engine had about 560 tiny repeated parts that nobody could see. The surface-contact test went from 14 floating meshes to 1, and the outside-visibility test no longer shows any engine, camshaft or steering rack part through the bodywork. The car is 1,884 mm wide (the limit is 1,900 mm), nothing sits below the ground, and all 29 livery decals still land with none skipped.
@@ -69,7 +69,7 @@ After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, 
 
 ### 1.4 Seat (`Body_Cockpit_BeadSeat_Assembly`, 7 meshes)
 - **What it is:** a moulded seat with the belt mounts.
-- **Where it sits now:** x 9.2 to 15.8, z 0.7 to 4.9, which is correct.
+- **Where it sits now:** x 9.2 to 15.8, z 0.7 to about 3.9. It was lowered for Samuel's R9 reference so its back stays under the cockpit rim (z 4.2), and the shoulder belts now run over the shoulders under the rim too.
 - **Material:** carbon with a padded cover, which is correct.
 - **Problems:** none.
 
@@ -104,16 +104,18 @@ After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, 
   - The HANS device is a carbon collar on the shoulders, tied to the helmet with two straps, so the head cannot whip forward in a crash.
 - **Where it should sit:** inside the headrest, below the halo, clear of the steering wheel, with the visor at eye level.
 - **Before:** x 11.7 to 14.8, centre at x 13.2. That was too far forward, and the head sat partly in front of the headrest.
-- **Now:** x 12.6 to 15.4, centre at x 14.0.
-- **Clearances now:**
+- **Now (R9, "our driver looks super awkward"):** the driver sits much lower in the tub. The helmet centre moved from x 14.0, z 6.15 to x 13.75, z 5.05 (110 mm lower). Only the helmet shows above the cockpit sides, tucked between the padded headrest wings, with the visor just above the cockpit edge. The HANS collar and neck now sit under the cockpit rim, out of sight.
+- **Clearances now** (closest points between the meshes):
 
   | To | Clearance |
   |---|---|
-  | halo | 89 mm (the new halo is wider and deeper) |
-  | engine cover | 32 mm |
-  | headrest | 35 mm |
-  | tub | 38 mm |
-  | steering wheel | 313 mm |
+  | halo | about 137 mm |
+  | headrest wings | about 24 mm |
+  | tub | about 32 mm |
+  | seat | the helmet's lower edge sits just above the lowered seat back |
+  | steering wheel | about 380 mm |
+
+- **Hands:** the gloves and forearms are fixed to the steering wheel, so they still hold it.
 
 - **Material:** a helmet has its own gloss clear-coat paint, a dark tinted visor, black rubber trim and carbon parts.
   - **Before:** it wore the car's matte camouflage paint.
@@ -134,11 +136,11 @@ After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, 
   - two HANS posts with their straps down to the carbon HANS collar
   - a fireproof balaclava at the neck
 
-### 2.2 Headrest (9 meshes)
-- **What it is:** the padded U-shaped cushion around the back and sides of the helmet.
+### 2.2 Headrest (`Cockpit_Headrest_Assembly`, 9 meshes before, 7 after)
+- **What it is:** the padded cushion around the back and sides of the helmet.
 - **Real job:** it stops the head from moving sideways.
-- **Now:** x 12.8 to 16.6, z 4.1 to 5.3, which is correct.
-- **Problems:** none.
+- **Before:** a grey carbon block, x 12.8 to 16.6, z 4.1 to 5.3. It stood up above the cockpit around the driver's neck, and the helmet sat on top of it. That was the "grey block" in Samuel's R9 note.
+- **Now (`HEADREST_SPEC`):** two rounded, padded wings either side of the helmet (lower at the front) and a lower pad behind it, all painted navy like the tub. It sits down in the cockpit opening, x 13.4 to 16.2, z 4.15 to 5.35, with quick-release pins on the wings.
 
 ### 2.3 Mirrors (35 meshes each before, 20 after)
 - **What they are:** the two rear-view mirrors.
@@ -254,7 +256,10 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
 - **Differential (LSD):** x 33.1 to 34.9. It is correct.
 - **Gear train:** one gear part at x 32.81 to 32.99 sits about 1 cm from the differential, so the float test lists it. It is sealed inside the gearbox and cannot be seen. Left alone and noted.
 - **Driveshafts:** they were fixed at one angle, so when the wheel moved up and down the shaft stayed put and its outer end left the wheel. They now tilt with the wheel travel at each rear corner (`userData.driveshaft` plus `updateKinematics`).
-- **Crash structure and rain light:** x 34.9 to 37.4. They are correct.
+- **Crash structure and rain light (`RIS_SPEC`, R10 and R6):**
+  - **Before:** a short, stubby crash structure (x 34.9 to 37.4) with a round, flat yellow light.
+  - **Now:** a long, slim crash structure. It is flat on top under the pylon feet, then tapers back to a small square tip at x 38.45, low and on the centre line (z 2.4 to 2.9).
+  - **Rain light:** a square-ended box at the very tip. R10 shows the box shape and R6 shows a yellow safety frame, so it has both: a yellow frame, a glowing red lens and a 4 by 3 grid of LEDs, plus a faint red glow light. The 2026-style red LED strips on the rear endplates are unchanged.
 
 ## 7. Suspension and steering, 207 meshes before, 191 after
 - **Wishbones, pushrods and pullrods:** carbon, in the right places.
@@ -329,7 +334,14 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
   - **Lights:** a red LED strip (16 LEDs in a dark bar) runs down the upper trailing edge of each endplate.
   - **Flap:** 25% deeper chord for a bigger sponsor area seen from behind, and the ORACLE panel is taller to match.
   - **Actuator:** the flap actuator sits in a small fairing on top of the mainplane, between the pylons, with a push rod to the flap.
-  - **Exhaust and rain light:** the single tailpipe sits above the crash structure, between the pylons, with the rain light below it.
+  - **Exhaust (`EXHAUST_SPEC`, R10):** the single round tailpipe sits above the crash structure, between the pylons. It now tilts up 3 degrees toward the back and pivots on the downpipe joint, so the two still meet. It is 355 mm long, ending at x 37.7, under the beam wing. It has a heat-tinted finish (straw gold, bronze, then purple and blue at the lip), a sooty inside and a blued lip.
+  - **Rain light:** at the tip of the crash structure, below and behind the tailpipe (see 6).
+  - **Shape changes from R10:**
+    - The mainplane and flap now share a deep spoon: they are 50 mm lower at the centre than at the tips (`spoonDip`). Before, only the mainplane dipped, by 25 mm.
+    - The endplates are thicker (27 mm), with a rounded top front corner and a leading edge that curls inward.
+    - The mainplane tips now end inside the endplate walls.
+    - One slim actuator pod sits on a thin mast that rises from the mainplane, through the slot, to just above the flap at the centre line.
+    - The twin pylons were lengthened to meet the lower mainplane centre.
 - **Setting:** `pylon.style` is now `'underslung_twin'`. The single swan neck from Samuel's first reference car is still there as `'swan_neck'`.
 - **Beam wing:**
   - The 2026 rules remove the lower "beam wing" element (only a plain stay is allowed).

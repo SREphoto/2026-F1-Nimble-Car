@@ -409,7 +409,8 @@ export function createTransmissionGears(options = {}) {
 
   // 2026 style rain light: a square-ended box at the very tip, dark bezel and a glowing red lens
   const tipSt = risAt(1), L = RS.light;
-  const housing = new THREE.Mesh(new RoundedBoxGeometry(L.length, 2 * tipSt.hw + 0.04, 2 * tipSt.hh + 0.04, 3, 0.03), materials.carbonMatte);
+  // yellow safety frame as on the R6 car, square-ended box as in R10
+  const housing = new THREE.Mesh(new RoundedBoxGeometry(L.length, 2 * tipSt.hw + 0.04, 2 * tipSt.hh + 0.04, 3, 0.03), materials.ledYellowSafety || materials.heatShieldGold);
   housing.name = 'RainLight_Housing';
   housing.position.set(tipSt.x + L.length / 2 - 0.02, 0, tipSt.zc);
   risGroup.add(housing);
