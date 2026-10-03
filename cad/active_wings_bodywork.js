@@ -8,6 +8,7 @@
  */
 
 import * as THREE from 'three';
+import { loftRings, eggPoint, sweepGeometry } from './sweep_section.js';
 import { materials } from '../materials.js';
 import {
   createSidepodLiveryTexture,
@@ -31,6 +32,17 @@ import { createWingElement, elementEdges } from './aero_profiles.js';
  */
 export const REAR_WING_SPEC = {
   endplateOuterY: 5.2,  // rear tyre inner face is at +-5.42
+  endplate: {
+    // [local z, outer face y, leading x, trailing x] from the top crest down to the diffuser
+    // (group origin x 36.8, z 7.4; local z -5.2 is world z 2.2, the diffuser top)
+    stations: [
+      [1.55, 5.05, -1.35, 2.05], [1.3, 5.2, -1.5, 2.1], [0.4, 5.2, -1.6, 2.05], [-0.15, 5.2, -1.6, 1.9],
+      [-0.9, 5.08, -1.5, 1.6], [-1.8, 4.82, -1.3, 1.3], [-2.8, 4.55, -1.1, 1.0], [-3.9, 4.3, -0.95, 0.6],
+      [-5.2, 4.1, -0.9, 0.05], // ends on the diffuser trailing edge (x 36.85)
+    ],
+  },
+  ledStrip: { zTop: 1.3, zBottom: -0.9, count: 16 }, // red rain LEDs along each endplate trailing edge
+  flapChordScale: 1.25, // deeper flap for the big sponsor area seen from behind
   flapModeAngles: { Z_MODE: -0.45, X_MODE: -0.05 },
   pylon: {
     style: 'underslung_twin',         // 'underslung_twin' (2026 rules, Samuel's choice) | 'swan_neck'
@@ -49,6 +61,21 @@ export const REAR_WING_SPEC = {
       pod: { at: [-0.35, 0, -0.15], length: 0.55, radius: 0.075, rodTo: [0.5, 0, 0.5] }, // sits on the mainplane top
     },
   },
+};
+
+/** Airbox above the driver (car frame, dm). Rings are 'egg' superellipses: zc, half width, top/bottom half heights. */
+export const AIRBOX_SPEC = {
+  mouth: { x: 15.85, zc: 8.42, hw: 0.74, hh: 0.74, n: 2.7 },
+  lip: 0.16, ductDepth: 1.1, dividerThickness: 0.06,
+  body: [ // behind the lip the skin grows into a pillar that sinks into the engine cover
+    { x: 16.6, zc: 8.4, hw: 1.0, hhTop: 0.98, hhBot: 1.25, n: 2.7 },
+    { x: 17.5, zc: 8.35, hw: 1.08, hhTop: 0.96, hhBot: 1.7, n: 2.8 },
+    { x: 18.5, zc: 8.25, hw: 0.95, hhTop: 0.8, hhBot: 1.75, n: 2.6 },
+    { x: 19.6, zc: 8.05, hw: 0.68, hhTop: 0.5, hhBot: 1.6, n: 2.4 },
+    { x: 20.4, zc: 7.8, hw: 0.4, hhTop: 0.25, hhBot: 1.4, n: 2.2 },
+  ],
+  blade: { path: [[17.05, 0, 9.1], [17.15, 0, 9.4], [17.3, 0, 9.62]], chord: (t) => 1.25 - 0.35 * t, thickness: 0.26 },
+  tCamZ: 9.95, // T-camera group origin (mast base on the blade top)
 };
 
 export const FRONT_WING_SPEC = {
@@ -573,52 +600,53 @@ export function createActiveWingsBodywork(options = {}) {
   const engineCoverGroup = new THREE.Group();
   engineCoverGroup.name = 'Engine_Cover_Airbox_Fin_Assembly';
 
-  // Primary Airbox Scoop (Yellow)
+  // Primary airbox (AIRBOX_SPEC, refs round3 R3 to R5): a big rounded mouth with a thick lip and
+  // a vertical splitter, on a broad pillar that blends down into the engine cover. The roll hoop
+  // runs inside it and a carbon blade on top carries the FIA T-camera.
+  const AB = AIRBOX_SPEC;
   const airboxGroup = new THREE.Group();
   airboxGroup.name = 'Airbox_RollHoop_Intake';
-  airboxGroup.position.set(16.0, 0.0, 8.2); // single forward-facing intake over the roll hoop, behind the helmet
-
-  const scoopShape = new THREE.Shape();
-  scoopShape.moveTo(-0.9, -0.85);
-  scoopShape.lineTo(0.9, -0.85);
-  scoopShape.quadraticCurveTo(1.15, 0.65, 0.0, 1.05);
-  scoopShape.quadraticCurveTo(-1.15, 0.65, -0.9, -0.85);
-  scoopShape.closePath();
-
-  const scoopGeo = new THREE.ExtrudeGeometry(scoopShape, {
-    steps: 1,
-    depth: 3.2,
-    bevelEnabled: true,
-    bevelThickness: 0.15,
-    bevelSize: 0.12,
-    bevelSegments: 3
-  });
-  scoopGeo.center();
-  const scoopMesh = new THREE.Mesh(scoopGeo, yellowMat);
-  scoopMesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(
-    0, 0, 1, 0,
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 0, 1
-  ));
-  scoopMesh.position.set(1.5, 0, 0);
+  // outer skin from the lip back into the cover crown
+  const lipX = AB.mouth.x, L = AB.lip;
+  const mouthSt = (x, grow) => ({ x, zc: AB.mouth.zc, hw: AB.mouth.hw + grow, hhTop: AB.mouth.hh + grow, hhBot: AB.mouth.hh + grow, n: AB.mouth.n });
+  const outerSt = [mouthSt(lipX + L * 0.5, L), mouthSt(lipX + L * 1.3, L * 1.08), ...AB.body];
+  const outerGeo = loftRings(outerSt, eggPoint, 48, { capEnd: true });
+  const scoopMesh = new THREE.Mesh(outerGeo, yellowMat);
   scoopMesh.name = 'Airbox_Scoop_Yellow';
+  scoopMesh.castShadow = true;
   airboxGroup.add(scoopMesh);
-
-  // Dark intake mouth on the forward face so the opening reads as forward-facing
-  const mouthShape = new THREE.Shape();
-  mouthShape.moveTo(-0.7, -0.6);
-  mouthShape.lineTo(0.7, -0.6);
-  mouthShape.quadraticCurveTo(0.9, 0.5, 0.0, 0.82);
-  mouthShape.quadraticCurveTo(-0.9, 0.5, -0.7, -0.6);
-  mouthShape.closePath();
-  const mouthGeo = new THREE.ShapeGeometry(mouthShape);
-  const mouthMesh = new THREE.Mesh(mouthGeo, new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9, side: THREE.DoubleSide }));
-  mouthMesh.quaternion.copy(scoopMesh.quaternion);
-  mouthMesh.position.set(1.5 - 1.76, 0, -0.1); // just ahead of the scoop's front face
+  // rounded lip: a half roll from the outer skin, over the front edge, into the duct
+  const lipSt = [];
+  for (let k = 0; k <= 10; k++) {
+    const a = (k / 10) * Math.PI;
+    lipSt.push(mouthSt(lipX + L * 0.5 - Math.sin(a) * L * 0.5, L * 0.5 + Math.cos(a) * L * 0.5));
+  }
+  const abLipGeo = loftRings(lipSt, eggPoint, 48);
+  const abLipMat = yellowMat.clone(); abLipMat.side = THREE.DoubleSide; // the roll is seen from both sides
+  const lipMesh = new THREE.Mesh(abLipGeo, abLipMat);
+  lipMesh.name = 'Airbox_Intake_Lip';
+  airboxGroup.add(lipMesh);
+  // inner duct, dark, closing behind the mouth
+  const ductGeo = loftRings([mouthSt(lipX + L * 0.5, 0), mouthSt(lipX + AB.ductDepth * 0.6, -0.06), mouthSt(lipX + AB.ductDepth, -0.2)], eggPoint, 48, { capEnd: true });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x07080a, roughness: 0.85, side: THREE.DoubleSide });
+  const mouthMesh = new THREE.Mesh(ductGeo, darkMat);
   mouthMesh.name = 'Airbox_Intake_Mouth';
   airboxGroup.add(mouthMesh);
-  // (The FIA T-camera is modelled once, in cockpit_accessories_driver.js, on top of this intake.)
+  // vertical splitter inside the mouth
+  const divH = 2 * AB.mouth.hh * 0.94;
+  const divider = new THREE.Mesh(new THREE.BoxGeometry(AB.ductDepth - 0.1, AB.dividerThickness, divH), materials.carbonGloss || darkMat);
+  divider.name = 'Airbox_Intake_Divider';
+  divider.position.set(lipX + 0.05 + (AB.ductDepth - 0.1) / 2, 0, AB.mouth.zc - 0.02);
+  airboxGroup.add(divider);
+  // roll-hoop blade on top of the airbox, carrying the T-camera
+  const blade = AB.blade;
+  const bladeGeo = sweepGeometry(blade.path, (t) => blade.chord(t), () => blade.thickness,
+    { samples: 24, ring: 18, n: 2.2, lead: 0.35, widthHint: () => new THREE.Vector3(1, 0, 0) });
+  const bladeMesh = new THREE.Mesh(bladeGeo, materials.carbonGloss || carbonMat);
+  bladeMesh.name = 'Airbox_RollHoop_Blade';
+  bladeMesh.castShadow = true;
+  airboxGroup.add(bladeMesh);
+  // (The FIA T-camera is modelled once, in cockpit_accessories_driver.js, on top of this blade.)
 
   engineCoverGroup.add(airboxGroup);
 
@@ -800,6 +828,7 @@ export function createActiveWingsBodywork(options = {}) {
 
   const rwFlapGeo = new THREE.ExtrudeGeometry(rwFlapShape, { steps: 8, depth: rwSpan - 0.2, bevelEnabled: false });
   rwFlapGeo.center();
+  rwFlapGeo.scale(RW.flapChordScale, RW.flapChordScale, 1); // chord and thickness (before the span rotation)
   rwFlapGeo.rotateX(Math.PI / 2); // Rotate on geometry: chord on X, span on Y, thickness on Z
   rwFlapGeo.computeVertexNormals();
 
@@ -821,8 +850,8 @@ export function createActiveWingsBodywork(options = {}) {
   const oW = rwSpan / 2 - 0.25;
   const oP00 = new THREE.Vector3(0.72, -oW, 0.02); // Bottom-Left (viewer's left from behind = car's right)
   const oP10 = new THREE.Vector3(0.72, oW, 0.02);  // Bottom-Right (viewer's right from behind = car's left)
-  const oP11 = new THREE.Vector3(0.72, oW, 0.55);  // Top-Right
-  const oP01 = new THREE.Vector3(0.72, -oW, 0.55); // Top-Left
+  const oP11 = new THREE.Vector3(0.72, oW, 0.7);   // Top-Right
+  const oP01 = new THREE.Vector3(0.72, -oW, 0.7);  // Top-Left
   const oracleDecal = createDecalQuad(oP00, oP10, oP11, oP01, rwOracleMat);
   oracleDecal.name = 'RearWing_OracleDecal';
   rwFlapPivot.add(oracleDecal);
@@ -848,21 +877,9 @@ export function createActiveWingsBodywork(options = {}) {
 
     // Stations along Z from top to bottom (relative to wing center Z = 0)
     // Defines { z, yOuter, yInner, xFwd, xAft }
-    const stations = [
-      { z:  1.45, yOuter: 7.35, yInner: 7.15, xFwd: -1.4, xAft:  1.50 }, // Top crest
-      { z:  1.15, yOuter: 7.75, yInner: 7.15, xFwd: -1.5, xAft:  1.60 }, // Bevelled top chamfer
-      { z:  0.40, yOuter: 7.82, yInner: 7.12, xFwd: -1.6, xAft:  1.70 }, // Upper flap junction
-      { z: -0.10, yOuter: 7.85, yInner: 7.10, xFwd: -1.6, xAft:  1.70 }, // Mainplane junction
-      { z: -1.00, yOuter: 7.95, yInner: 7.05, xFwd: -1.6, xAft:  1.80 }, // Descending waist
-      { z: -1.85, yOuter: 8.12, yInner: 6.95, xFwd: -1.6, xAft:  1.85 }, // Mid-height flared hip (maximum width)
-      { z: -2.70, yOuter: 7.85, yInner: 6.85, xFwd: -1.5, xAft:  1.75 }, // Inward sweep below tire line
-      { z: -3.50, yOuter: 7.55, yInner: 6.72, xFwd: -1.4, xAft:  1.55 }, // Beam wing junction
-      { z: -4.20, yOuter: 7.35, yInner: 6.65, xFwd: -1.2, xAft:  1.30 }  // Bottom angled tip above diffuser
-    ].map(st => {
-      // Same hip profile, moved inboard so the widest point is at RW_OUT, with a thin wall
-      const yOuter = st.yOuter - (8.12 - RW_OUT);
-      return { ...st, yOuter, yInner: yOuter - RW_T };
-    });
+    // Stations from REAR_WING_SPEC.endplate (refs round3 R6): full width at the wing, then the
+    // plate sweeps down and inboard to land on the diffuser side wall.
+    const stations = RW.endplate.stations.map(([z, yOuter, xFwd, xAft]) => ({ z, yOuter, yInner: yOuter - RW_T, xFwd, xAft }));
     const outerAt = (z) => { // outer face Y at local height z
       for (let k = 0; k < stations.length - 1; k++) {
         const a = stations[k], b = stations[k + 1];
@@ -1040,29 +1057,50 @@ export function createActiveWingsBodywork(options = {}) {
       metalness: 0.30,
       side: THREE.DoubleSide
     });
-    const inY = side * (stations.reduce((m, st) => Math.min(m, st.yInner), 99) - 0.02); // innermost face
-    const inP00 = new THREE.Vector3(-1.4, inY, -3.8);
-    const inP10 = new THREE.Vector3( 1.4, inY, -3.8);
-    const inP11 = new THREE.Vector3( 1.4, inY,  1.2);
-    const inP01 = new THREE.Vector3(-1.4, inY,  1.2);
-    const innerDecal = isLeft
-      ? createDecalQuad(inP10, inP00, inP01, inP11, innerGradMat)
-      : createDecalQuad(inP00, inP10, inP11, inP01, innerGradMat);
+    // conforming strip on the inner face (the plate is swept, so a flat quad would float)
+    const ig = [], iuv = [], iix = [];
+    const IZ0 = stations[stations.length - 1].z, IZ1 = stations[0].z, NC = 8;
+    stations.forEach((st, i) => {
+      for (let j = 0; j <= NC; j++) {
+        const u = j / NC, x = THREE.MathUtils.lerp(st.xFwd + 0.05, st.xAft - 0.05, u);
+        ig.push(x, side * (st.yInner - 0.012), st.z);
+        iuv.push(isLeft ? 1 - u : u, (st.z - IZ0) / (IZ1 - IZ0));
+      }
+      if (i < stations.length - 1) for (let j = 0; j < NC; j++) {
+        const a0 = i * (NC + 1) + j, b0 = a0 + NC + 1;
+        isLeft ? iix.push(a0, a0 + 1, b0, a0 + 1, b0 + 1, b0) : iix.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1);
+      }
+    });
+    const igGeo = new THREE.BufferGeometry();
+    igGeo.setAttribute('position', new THREE.Float32BufferAttribute(ig, 3));
+    igGeo.setAttribute('uv', new THREE.Float32BufferAttribute(iuv, 2));
+    igGeo.setIndex(iix); igGeo.computeVertexNormals();
+    const innerDecal = new THREE.Mesh(igGeo, innerGradMat);
     innerDecal.name = `RearWing_InnerGradient_${isLeft ? 'LH' : 'RH'}`;
     epGroup.add(innerDecal);
 
-    // VERTICAL RED LED RAIN LIGHT STRIP (12 LEDs along trailing edge of endplate)
+    // RED LED RAIN LIGHT STRIP down the upper trailing edge of the endplate (R6)
     const ledStripGroup = new THREE.Group();
     ledStripGroup.name = `RainLED_Strip_${isLeft ? 'LH' : 'RH'}`;
-    const ledGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.04, 8);
-    for (let k = 0; k < 12; k++) {
-      const t = k / 11;
-      const ledZ = THREE.MathUtils.lerp(1.2, -3.8, t);
-      const ledX = THREE.MathUtils.lerp(1.5, 1.35, t) + 0.02;
-      const ledY = side * (outerAt(ledZ) - RW_T / 2); // in the trailing edge, between the faces
+    const aftAt = (z) => { // trailing edge x at local height z
+      for (let k = 0; k < stations.length - 1; k++) {
+        const a = stations[k], b = stations[k + 1];
+        if (z <= a.z && z >= b.z) return THREE.MathUtils.lerp(a.xAft, b.xAft, (a.z - z) / (a.z - b.z));
+      }
+      return stations[stations.length - 1].xAft;
+    };
+    const LS = RW.ledStrip;
+    // dark diffuser bar the LEDs sit in, following the trailing edge
+    const barPts = [];
+    for (let k = 0; k <= 12; k++) { const z = THREE.MathUtils.lerp(LS.zTop, LS.zBottom, k / 12); barPts.push(new THREE.Vector3(aftAt(z) + 0.012, side * (outerAt(z) - RW_T / 2), z)); }
+    const bar = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(barPts), 24, 0.045, 8, false), materials.carbonMatte);
+    bar.name = `RainLED_Bar_${isLeft ? 'LH' : 'RH'}`;
+    ledStripGroup.add(bar);
+    const ledGeo = new THREE.BoxGeometry(0.03, 0.07, 0.1);
+    for (let k = 0; k < LS.count; k++) {
+      const z = THREE.MathUtils.lerp(LS.zTop - 0.05, LS.zBottom + 0.05, k / (LS.count - 1));
       const led = new THREE.Mesh(ledGeo, materials.ledRed);
-      led.rotation.z = Math.PI / 2;
-      led.position.set(ledX, ledY, ledZ);
+      led.position.set(aftAt(z) + 0.05, side * (outerAt(z) - RW_T / 2), z);
       led.name = `RainLED_${isLeft ? 'LH' : 'RH'}_${k}`;
       ledStripGroup.add(led);
     }
@@ -1080,9 +1118,13 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   const beamWingGroup = new THREE.Group();
   beamWingGroup.name = 'RearWing_BeamWing_Assembly';
-  beamWingGroup.position.set(0.4, 0, -2.9); // world Z 4.5, clear above the exhaust (Z 3.31-4.19)
+  beamWingGroup.position.set(0.15, 0, -2.9); // world Z 4.5, clear above the exhaust (Z 3.31-4.19); inside the swept endplates
 
-  const bwSpan = 2 * (RW_OUT - 0.3 - RW_T / 2) - 0.2; // between the endplates (lower endplate is inboard of the hip)
+  // beam wing tips end mid-wall in the swept endplates at this height
+  const epOuterAt = (z) => { const st = RW.endplate.stations;
+    for (let k = 0; k < st.length - 1; k++) if (z <= st[k][0] && z >= st[k + 1][0]) return THREE.MathUtils.lerp(st[k][1], st[k + 1][1], (st[k][0] - z) / (st[k][0] - st[k + 1][0]));
+    return st[st.length - 1][1]; };
+  const bwSpan = 2 * (epOuterAt(beamWingGroup.position.z) - RW_T / 2);
   const bwShape = new THREE.Shape();
   bwShape.moveTo(-0.9, 0.0);
   bwShape.quadraticCurveTo(-0.1, 0.18, 0.9, 0.04);

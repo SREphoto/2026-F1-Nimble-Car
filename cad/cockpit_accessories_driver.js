@@ -34,6 +34,24 @@ import * as THREE from 'three';
 import { materials } from '../materials.js';
 import { createTorxScrew, createSocketHeadBolt } from './fasteners.js';
 import { createDriverHelmet } from './driver_helmet.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { sweepGeometry } from './sweep_section.js';
+import { AIRBOX_SPEC } from './active_wings_bodywork.js';
+
+/** Mirror layout (car frame, dm, left side; right is mirrored). */
+export const MIRROR_SPEC = {
+  pod: { center: [14.0, 4.1, 5.58], depth: 0.52, span: 1.9, height: 0.68, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
+  realReflection: true,           // planar Reflector glass; false falls back to an env-mapped chrome
+  reflectorRes: [256, 96],
+  leds: { rows: 2, cols: 6, blockSpan: 0.5 },
+  stalkChord: 0.22, stalkThickness: 0.07,
+  stalks: [
+    { path: [[14.15, 4.55, 3.55], [14.15, 4.6, 4.2], [14.05, 4.5, 4.9], [14.0, 4.45, 5.3]] }, // sidepod top -> pod outer half
+    { path: [[13.75, 3.0, 4.45], [13.85, 3.2, 4.85], [13.95, 3.5, 5.15], [14.0, 3.65, 5.32]] }, // tub top -> pod inner half
+  ],
+  vane: { path: [[13.95, 3.33, 5.0], [13.95, 3.9, 5.02], [13.95, 4.5, 5.02]], chord: 0.42, thickness: 0.04 }, // ties the two stalks together
+};
 
 export function createCockpitAccessories(options = {}) {
   const group = new THREE.Group();
@@ -105,136 +123,94 @@ export function createCockpitAccessories(options = {}) {
   group.add(headrestGroup);
 
   // =========================================================================
-  // 3. AERODYNAMIC REAR-VIEW MIRRORS (Matching 2026 Reference Photos)
-  // Left: Y = -4.2 dm, Right: Y = +4.2 dm at X = 12.0 dm, Z = 5.2 dm
-  // Features:
-  // - Outer aerodynamic housing with rounded edges
-  // - Front-facing 14-LED marshal amber array (2x7 grid)
-  // - Rear-facing reflective mirror glass seated in recessed frame
-  // - L-shaped carbon aerodynamic mounting stalk
-  // - Horizontal cockpit rim flow conditioning winglet
+  // 3. REAR-VIEW MIRRORS (MIRROR_SPEC, refs round3 R3 to R5)
+  // Wide rounded pod, recessed reflective glass facing the driver, amber marshal LEDs,
+  // two thin curved stalks (sidepod top and tub top) and a small aero vane between them.
   // =========================================================================
+  const MS = MIRROR_SPEC;
   [-1, 1].forEach(side => {
+    const sn = side > 0 ? 'L' : 'R';
     const mirrorAssembly = new THREE.Group();
     mirrorAssembly.name = `Assembly_Mirror_${side > 0 ? 'Left' : 'Right'}`;
-    mirrorAssembly.position.set(9.5, side * 3.4, 5.3);
-    mirrorAssembly.scale.set(0.65, 0.65, 0.65);
+    const [px, py, pz] = MS.pod.center;
+    const pod = new THREE.Group();
+    pod.name = `Mirror_Pod_${sn}`;
+    pod.position.set(px, side * py, pz);
+    pod.rotation.z = -side * MS.pod.toeIn; // glass turned slightly toward the driver
+    mirrorAssembly.add(pod);
 
-    // Mirror Body Outer Shell (Aerodynamic pod)
-    const mirrorBodyShape = new THREE.Shape();
-    mirrorBodyShape.moveTo(-0.8, -0.35);
-    mirrorBodyShape.lineTo(0.8, -0.35);
-    mirrorBodyShape.quadraticCurveTo(1.1, 0, 0.8, 0.35);
-    mirrorBodyShape.lineTo(-0.8, 0.35);
-    mirrorBodyShape.quadraticCurveTo(-1.0, 0, -0.8, -0.35);
-    mirrorBodyShape.closePath();
-
-    const mirrorExtrude = {
-      steps: 2,
-      depth: 1.45,
-      bevelEnabled: true,
-      bevelThickness: 0.12,
-      bevelSize: 0.12,
-      bevelSegments: 4
-    };
-    const mirrorBodyGeo = new THREE.ExtrudeGeometry(mirrorBodyShape, mirrorExtrude);
-    mirrorBodyGeo.center();
-    const mirrorBodyMesh = new THREE.Mesh(mirrorBodyGeo, materials.redBullNavy || materials.carbonGloss);
-    mirrorBodyMesh.rotation.y = side > 0 ? 0.08 : -0.08;
-    mirrorBodyMesh.name = `Mirror_Shell_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(mirrorBodyMesh);
-
-    // Front-Facing 14-LED Marshal Warning Array (2 rows x 7 columns)
-    const ledMatrixGroup = new THREE.Group();
-    ledMatrixGroup.name = `Mirror_MarshalLEDArray_${side > 0 ? 'L' : 'R'}`;
-    // Position on front face (pointing forward: -X direction)
-    ledMatrixGroup.position.set(-0.82, 0, 0);
-
-    // Recessed dark bezel housing the LEDs
-    const ledBezelGeo = new THREE.BoxGeometry(0.06, 0.55, 1.15);
-    const ledBezelMesh = new THREE.Mesh(ledBezelGeo, materials.carbonMatte);
-    ledMatrixGroup.add(ledBezelMesh);
-
-    // 14 Discrete Amber LED Elements (7 across x 2 tall)
-    const ledRadius = 0.045;
-    const ledGeo = new THREE.CylinderGeometry(ledRadius, ledRadius, 0.04, 12);
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 7; col++) {
-        const ledMesh = new THREE.Mesh(ledGeo, materials.ledAmber);
-        ledMesh.rotation.z = Math.PI / 2;
-        const zPos = -0.45 + col * 0.15;
-        const yPos = -0.12 + row * 0.24;
-        ledMesh.position.set(-0.02, yPos, zPos);
-        ledMesh.name = `LED_${row}_${col}`;
-        ledMatrixGroup.add(ledMesh);
-      }
+    const { depth: D, span: S, height: Hh, radius: R } = MS.pod;
+    // Pod body: rounded box (x = depth, y = span, z = height)
+    const body = new THREE.Mesh(new RoundedBoxGeometry(D, S, Hh, 5, R), materials.liveryPaint || materials.carbonGloss);
+    body.name = `Mirror_Shell_${sn}`;
+    body.castShadow = true;
+    pod.add(body);
+    // Thick rear lip that frames the recessed glass
+    const rr = (w, h, r) => { const sh = new THREE.Shape(); const x0 = -w / 2, y0 = -h / 2;
+      sh.moveTo(x0 + r, y0); sh.lineTo(x0 + w - r, y0); sh.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + r);
+      sh.lineTo(x0 + w, y0 + h - r); sh.quadraticCurveTo(x0 + w, y0 + h, x0 + w - r, y0 + h);
+      sh.lineTo(x0 + r, y0 + h); sh.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+      sh.lineTo(x0, y0 + r); sh.quadraticCurveTo(x0, y0, x0 + r, y0); return sh; };
+    const lipShape = rr(S - 0.02, Hh - 0.02, R * 0.9);
+    lipShape.holes.push(rr(S - 2 * MS.pod.lip, Hh - 2 * MS.pod.lip, R * 0.6));
+    const lipGeo = new THREE.ExtrudeGeometry(lipShape, { depth: MS.pod.recess, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2, curveSegments: 6 });
+    lipGeo.rotateY(Math.PI / 2); // extrude -> +X (rearward)
+    lipGeo.rotateX(Math.PI / 2); // shape x -> Y (span), shape y -> Z (height)
+    const lip = new THREE.Mesh(lipGeo, materials.carbonGloss);
+    lip.name = `Mirror_GlassLip_${sn}`;
+    lip.position.x = D / 2 - 0.02;
+    pod.add(lip);
+    // Recessed glass on the rear face: real planar reflection when available
+    const gw = S - 2 * MS.pod.lip - 0.02, gh = Hh - 2 * MS.pod.lip - 0.02;
+    let glass;
+    if (MS.realReflection && Reflector) {
+      glass = new Reflector(new THREE.PlaneGeometry(gw, gh), { textureWidth: MS.reflectorRes[0], textureHeight: MS.reflectorRes[1], color: 0x9aa3ad, clipBias: 0.003 });
+    } else {
+      glass = new THREE.Mesh(new THREE.PlaneGeometry(gw, gh), materials.mirrorGlass);
     }
-    mirrorAssembly.add(ledMatrixGroup);
+    // plane normal +X (rearward), long side along Y, short side along Z
+    glass.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)));
+    glass.position.x = D / 2 + 0.005;
+    glass.name = `Mirror_Glass_${sn}`;
+    pod.add(glass);
+    // Amber marshal LED block on the outboard end of the front face (as on the reference cars)
+    const ledGroup = new THREE.Group();
+    ledGroup.name = `Mirror_MarshalLEDArray_${sn}`;
+    const bez = new THREE.Mesh(new THREE.BoxGeometry(0.02, MS.leds.blockSpan, Hh * 0.62), materials.carbonMatte);
+    ledGroup.add(bez);
+    const ledGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.02, 10);
+    for (let r = 0; r < MS.leds.rows; r++) for (let c = 0; c < MS.leds.cols; c++) {
+      const led = new THREE.Mesh(ledGeo, materials.ledAmber);
+      led.rotation.z = Math.PI / 2;
+      led.position.set(-0.012, (c - (MS.leds.cols - 1) / 2) * MS.leds.blockSpan / MS.leds.cols, (r - (MS.leds.rows - 1) / 2) * 0.08);
+      led.name = `LED_${r}_${c}`;
+      ledGroup.add(led);
+    }
+    ledGroup.position.set(-D / 2 - 0.005, side * (S / 2 - R - MS.leds.blockSpan / 2), 0);
+    pod.add(ledGroup);
+    // Slim amber strip along the bottom of the rear face, under the glass
+    const strip = new THREE.Mesh(new RoundedBoxGeometry(0.03, S * 0.7, 0.035, 2, 0.012), materials.ledAmber);
+    strip.name = `Mirror_RearLEDStrip_${sn}`;
+    strip.position.set(D / 2 + 0.02, 0, -Hh / 2 + MS.pod.lip * 0.5);
+    pod.add(strip);
 
-    // Rear-Facing Reflective Mirror Glass (Pointing rearward: +X direction)
-    const mirrorGlassGeo = new THREE.PlaneGeometry(0.65, 1.25);
-    const mirrorGlassMesh = new THREE.Mesh(mirrorGlassGeo, materials.mirrorGlass);
-    mirrorGlassMesh.rotation.y = Math.PI / 2;
-    // Driver viewing angle: angled slightly inward toward driver
-    mirrorGlassMesh.rotation.z = side > 0 ? -0.15 : 0.15;
-    mirrorGlassMesh.position.set(0.82, 0, 0);
-    mirrorGlassMesh.name = `Mirror_Glass_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(mirrorGlassMesh);
-
-    // L-Shaped Aerodynamic Carbon Mounting Stalk
-    // Stalk connects from cockpit chassis coaming (Y = side * 3.3, Z = 4.8) to mirror base
-    const stalkCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.1, -side * 1.05, -0.65), // Chassis mounting point
-      new THREE.Vector3(0.05, -side * 0.85, -0.45),
-      new THREE.Vector3(0.0, -side * 0.45, -0.15),
-      new THREE.Vector3(-0.05, 0.0, 0.0)             // Mirror underside attachment
-    ]);
-    const stalkGeo = new THREE.TubeGeometry(stalkCurve, 20, 0.09, 8, false);
-    // Flatten stalk into an aerodynamic teardrop chord
-    stalkGeo.scale(1.8, 0.8, 1.0);
-    const stalkMesh = new THREE.Mesh(stalkGeo, materials.carbonGloss);
-    stalkMesh.name = `Mirror_Stalk_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(stalkMesh);
-
-    // Stalk Chassis Mounting Foot with 3x Countersunk Torx Fasteners
-    const footGroup = new THREE.Group();
-    // stalkGeo.scale(1.8, 0.8, 1) also scales the stalk end point -> (0.18, -side*0.84, -0.65)
-    footGroup.position.set(0.18, -side * 0.84, -0.65);
-    const footPlateGeo = new THREE.BoxGeometry(0.5, 0.25, 0.06);
-    const footPlateMesh = new THREE.Mesh(footPlateGeo, materials.titaniumBright);
-    footPlateMesh.rotation.y = side > 0 ? 0.2 : -0.2;
-    footGroup.add(footPlateMesh);
-
-    [-0.15, 0.0, 0.15].forEach((xOff, fIdx) => {
-      const screw = createTorxScrew({
-        headRadius: 0.045,
-        headHeight: 0.025,
-        lobeRadius: 0.025,
-        shankRadius: 0.025,
-        shankLength: 0.05,
-        material: materials.titaniumAnodized
-      });
-      screw.position.set(xOff, 0, 0.03);
-      screw.rotation.x = Math.PI / 2;
-      screw.name = `MirrorFoot_Fastener_${fIdx}`;
-      footGroup.add(screw);
+    // Two thin curved aerofoil stalks: one from the sidepod top, one from the tub top
+    const toWorld = (p) => [p[0], side * p[1], p[2]];
+    MS.stalks.forEach((st, k) => {
+      const g = sweepGeometry(st.path.map(toWorld), () => MS.stalkChord, () => MS.stalkThickness,
+        { samples: 28, ring: 14, n: 2.2, lead: 0.3, widthHint: () => new THREE.Vector3(1, 0, 0) });
+      const m = new THREE.Mesh(g, materials.carbonGloss);
+      m.name = `Mirror_Stalk_${sn}_${k ? 'Tub' : 'Sidepod'}`;
+      m.castShadow = true;
+      mirrorAssembly.add(m);
     });
-    mirrorAssembly.add(footGroup);
-
-    // Horizontal Flow Conditioning Winglet (extends inboard from mirror / cockpit coaming)
-    const wingletShape = new THREE.Shape();
-    wingletShape.moveTo(-0.6, 0);
-    wingletShape.lineTo(0.6, 0);
-    wingletShape.lineTo(0.4, 0.04);
-    wingletShape.lineTo(-0.6, 0.02);
-    wingletShape.closePath();
-    const wingletExtrude = { steps: 1, depth: 0.75, bevelEnabled: false };
-    const wingletGeo = new THREE.ExtrudeGeometry(wingletShape, wingletExtrude);
-    const wingletMesh = new THREE.Mesh(wingletGeo, materials.carbonGloss);
-    wingletMesh.rotation.x = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    wingletMesh.position.set(-0.1, -side * 0.25, -0.15);
-    wingletMesh.name = `Mirror_AeroWinglet_${side > 0 ? 'L' : 'R'}`;
-    mirrorAssembly.add(wingletMesh);
+    // Small flat aero vane between the stalks, under the pod
+    const V = MS.vane;
+    const vg = sweepGeometry(V.path.map(toWorld), () => V.chord, () => V.thickness,
+      { samples: 12, ring: 14, n: 2.2, lead: 0.4, widthHint: () => new THREE.Vector3(-1, 0, -0.12) });
+    const vane = new THREE.Mesh(vg, materials.carbonGloss);
+    vane.name = `Mirror_AeroWinglet_${sn}`;
+    mirrorAssembly.add(vane);
 
     group.add(mirrorAssembly);
   });
@@ -246,7 +222,7 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   const tCamGroup = new THREE.Group();
   tCamGroup.name = 'Assembly_FIA_T_Camera';
-  tCamGroup.position.set(17.4, 0, 9.65); // sits on the airbox crown (Z 9.27) above the roll hoop
+  tCamGroup.position.set(17.3, 0, AIRBOX_SPEC.tCamZ); // on top of the roll-hoop blade above the airbox
 
   // Carbon Fiber Aerodynamic Mast
   const tMastGeo = new THREE.BoxGeometry(0.35, 0.22, 0.65);

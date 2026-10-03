@@ -31,6 +31,29 @@ import {
   createCockpitRimDecals,
 } from "./procedural_livery.js";
 import { createSteeringWheelPCU8D } from "./steering_wheel_pcu8d.js";
+import { sweepGeometry, mergeSimple } from "./sweep_section.js";
+
+/**
+ * Halo layout (car frame, dm). Hoop points run from the apex back to the left pad; the right
+ * side is mirrored. Section is a flattened oval with a fuller leading edge, about 100 x 50 mm.
+ */
+export const HALO_SPEC = {
+  hoop: [
+    [9.2, 0.0, 7.33],   // apex, over the front post
+    [9.4, 0.5, 7.32],
+    [10.1, 1.35, 7.26],
+    [11.4, 2.15, 7.13],
+    [13.0, 2.5, 6.92],  // widest, beside the helmet (helmet half width 1.12)
+    [14.6, 2.42, 6.72],
+    [15.7, 2.25, 6.56],
+    [16.45, 2.05, 6.45],
+    [17.0, 1.95, 6.2],   // legs sink into the chassis shoulder under the cover (surface z 6.7 at x 16.45)
+  ],
+  width: 1.0, height: 0.5, sectionExp: 2.6,
+  padLength: 0.14, padWidth: 1.15, padHeight: 0.8, // feet grow deeper as they blend into the shoulders
+  post: [[7.3, 0, 5.02], [7.75, 0, 5.9], [8.45, 0, 6.78], [9.0, 0, 7.2], [9.3, 0, 7.31]],
+  postWidth: 0.55, postDepth: 0.5, postFootWidth: 1.3, postFootDepth: 0.9,
+};
 
 export function buildMonocoqueAndCockpit(scene, mats) {
   const root = new THREE.Group();
@@ -176,104 +199,36 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   const haloGroup = new THREE.Group();
   haloGroup.name = "Body_Halo_Titanium_Assembly";
 
-  // Center forward mounting pylon
-  const pylonPoints = [
-    new THREE.Vector3(7.2, 0, 4.6),
-    new THREE.Vector3(7.6, 0, 5.5),
-    new THREE.Vector3(8.5, 0, 6.8),
-    new THREE.Vector3(9.2, 0, 7.2)
-  ];
-  const pylonCurve = new THREE.CatmullRomCurve3(pylonPoints);
-  const pylonGeo = new THREE.TubeGeometry(pylonCurve, 32, 0.15, 20, false);
-  const forwardPylon = new THREE.Mesh(pylonGeo, mats.titaniumHalo);
-  forwardPylon.castShadow = true;
-  haloGroup.add(forwardPylon);
-
-  // Halo hoop arch wrapping around driver helmet
-  const hoopPoints = [
-    new THREE.Vector3(9.2, 0, 7.2),
-    new THREE.Vector3(10.2, 1.8, 7.2),
-    new THREE.Vector3(12.5, 2.5, 7.0),
-    new THREE.Vector3(15.2, 2.2, 6.4),
-    new THREE.Vector3(16.5, 2.0, 5.8)
-  ];
-  const hoopCurveLH = new THREE.CatmullRomCurve3(hoopPoints);
-  const hoopGeoLH = new THREE.TubeGeometry(hoopCurveLH, 48, 0.15, 20, false); // slimmer halo tube
-  const hoopLH = new THREE.Mesh(hoopGeoLH, mats.titaniumHalo);
-  hoopLH.castShadow = true;
-  haloGroup.add(hoopLH);
-
-  const hoopPointsRH = hoopPoints.map(p => new THREE.Vector3(p.x, -p.y, p.z));
-  const hoopCurveRH = new THREE.CatmullRomCurve3(hoopPointsRH);
-  const hoopGeoRH = new THREE.TubeGeometry(hoopCurveRH, 48, 0.15, 20, false);
-  const hoopRH = new THREE.Mesh(hoopGeoRH, mats.titaniumHalo);
-  hoopRH.castShadow = true;
-  haloGroup.add(hoopRH);
+  // One moulded carbon-faired halo (HALO_SPEC): a wide, flat wishbone hoop that flares into
+  // mounting pads on the chassis shoulders, plus one front centre post. Single mesh.
+  const H = HALO_SPEC;
+  const hoopPts = [...H.hoop.slice().reverse().map(([x, y, z]) => [x, -y, z]), ...H.hoop.slice(1)];
+  const padT = H.padLength; // fraction of the path at each end that flares into the pad
+  const endBlend = (t) => {
+    const e = Math.min(t, 1 - t); // 0 at the pads
+    return e >= padT ? 0 : Math.pow(1 - e / padT, 2);
+  };
+  const hoopGeo = sweepGeometry(hoopPts,
+    (t) => H.width + (H.padWidth - H.width) * endBlend(t),
+    (t) => H.height + (H.padHeight - H.height) * endBlend(t),
+    { samples: 120, ring: 28, n: H.sectionExp, lead: 0.25,
+      // width lies flat (horizontal) and points forward at the apex
+      widthHint: (t, tg) => { const w = new THREE.Vector3().crossVectors(tg, new THREE.Vector3(0, 0, 1)); if (w.x > 0) w.negate(); return w; } });
+  const postGeo = sweepGeometry(H.post,
+    (t) => H.postWidth + (H.postFootWidth - H.postWidth) * Math.pow(1 - t, 3),
+    (t) => H.postDepth + (H.postFootDepth - H.postDepth) * Math.pow(1 - t, 3),
+    { samples: 40, ring: 24, n: 2.4, widthHint: () => new THREE.Vector3(0, 1, 0) });
+  const haloMesh = new THREE.Mesh(mergeSimple([hoopGeo, postGeo]), mats.titaniumHalo);
+  haloMesh.name = "Halo_Moulded_Shell";
+  haloMesh.castShadow = true;
+  haloMesh.receiveShadow = true;
+  haloMesh.userData.haloSpec = H;
+  haloGroup.add(haloMesh);
 
   // (The six 'micro-vanes' that used to sit here floated in the air inboard of and above the
   //  hoop at a fixed Z 7.35, and caught the AT&T halo decal. Removed; see part_review.md.)
-
-  // Halo Rear Mount Brackets & M14 High-Strength Fasteners
-  for (const hy of [-2.0, 2.0]) {
-    const bktGeo = new THREE.BoxGeometry(0.45, 0.35, 0.40);
-    const bkt = new THREE.Mesh(bktGeo, mats.titaniumAnodized);
-    bkt.position.set(16.5, hy, 5.8);
-    haloGroup.add(bkt);
-
-    const bolt = createSocketHeadBolt(
-      0.14, 0.14, 0.07, 0.45, 0.06, 0.08, mats,
-      `Fastener_HaloMount_M14_${hy > 0 ? "LH" : "RH"}`
-    );
-    bolt.rotation.y = hy > 0 ? Math.PI / 2 : -Math.PI / 2;
-    bolt.position.set(16.5, hy + (hy > 0 ? 0.18 : -0.18), 5.8);
-    haloGroup.add(bolt);
-  }
-
-  // -------------------------------------------------------------
-  // 2B. HALO SPONSOR DECALS & COCKPIT RIM GRAPHICS
-  // Matching Onboard Cockpit View (media_1790507836542.webp)
-  // -------------------------------------------------------------
-  // 1. Center Apex Decal: TAG Heuer Crest & 1Password
-  const haloApexTex = createHaloApexDecalTexture();
-  const haloApexMat = new THREE.MeshBasicMaterial({
-    map: haloApexTex,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
-  const haloApexGeo = new THREE.PlaneGeometry(1.2, 0.6);
-  const haloApexMesh = new THREE.Mesh(haloApexGeo, haloApexMat);
-  haloApexMesh.position.set(9.22, 0, 7.37);
-  haloApexMesh.rotation.set(0, 0, Math.PI / 2); // lie flat on top of halo (normal +Z)
-  haloApexMesh.name = "Decal_Halo_Apex_TAGHeuer";
-  haloGroup.add(haloApexMesh);
-
-  // 2. Driver Left Arm: AT&T Globe Logo & Text
-  const haloAttTex = createHaloArmDecalTexture(true);
-  const haloAttMat = new THREE.MeshBasicMaterial({
-    map: haloAttTex,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
-  const haloAttGeo = new THREE.PlaneGeometry(1.4, 0.35);
-  const haloAttMesh = new THREE.Mesh(haloAttGeo, haloAttMat);
-  haloAttMesh.position.set(10.6, 1.45, 7.37);
-  haloAttMesh.rotation.set(0, 0, Math.PI / 2 - 0.32);
-  haloAttMesh.name = "Decal_Halo_Left_ATT";
-  haloGroup.add(haloAttMesh);
-
-  // 3. Driver Right Arm: ORACLE White Text
-  const haloOracleTex = createHaloArmDecalTexture(false);
-  const haloOracleMat = new THREE.MeshBasicMaterial({
-    map: haloOracleTex,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
-  const haloOracleGeo = new THREE.PlaneGeometry(1.4, 0.35);
-  const haloOracleMesh = new THREE.Mesh(haloOracleGeo, haloOracleMat);
-  haloOracleMesh.position.set(10.6, -1.45, 7.37);
-  haloOracleMesh.rotation.set(0, 0, Math.PI / 2 + 0.32);
-  haloOracleMesh.name = "Decal_Halo_Right_ORACLE";
-  haloGroup.add(haloOracleMesh);
+  // (Flat placeholder decal quads removed: the livery projects TAG Heuer, 1Password, ORACLE and
+  //  AT&T straight onto the halo top surface, see livery_decals.js.)
 
   // 4. Cockpit Rims: Verstappen & #1 Decals
   [-1, 1].forEach((side) => {
@@ -334,7 +289,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     });
     const led = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.03, 16), ledMat);
     led.rotation.z = Math.PI / 2;
-    led.position.set(16.2, ly, 9.3); // on the airbox crown, ahead of the T-camera
+    led.position.set(16.62, ly, 9.36); // on the airbox crown just behind the lip, ahead of the blade
     ledGroup.add(led);
   }
   rollHoopGroup.add(ledGroup);
