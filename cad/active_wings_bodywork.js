@@ -118,7 +118,7 @@ export const FRONT_WING_SPEC = {
       zLift: (u) => 0.55 * smooth01((u - 0.62) / 0.38) },  // outer end sweeps up into the endplate
   ],
   endplate: {
-    x0: -1.8, x1: 2.4,      // chord extent in the wing frame
+    x0: -1.15, x1: 2.4,     // chord extent in the wing frame; R11: starts just ahead of the mainplane tip LE (x -0.9), level with the nose tip
     z0: -0.05,              // profile origin height in the wing frame (wing frame z 0 = world 0.55)
     thickness: 0.05,
     // front-view profile for the left side, [outward from the wall base, up]. The foot scrolls out,
@@ -127,9 +127,9 @@ export const FRONT_WING_SPEC = {
     // wall turns inward toward the tyre (R7), then the top edge flares back out (R8)
     wall: [[0, -0.06], [-0.03, 0.42], [-0.12, 0.95], [-0.3, 1.45], [-0.5, 1.82], [-0.56, 2.05], [-0.44, 2.27]],
     heightScale: (sx) => 0.6 + 0.4 * (1 - (1 - sx) ** 2), // lower at the front, full height at the back
-    // the scrolled foot is its own swept fin (R8): it runs further forward than the wall and
-    // kicks forward and out, widest and tipped up at its front
-    footX0: -2.75, footX1: 2.1,
+    // the scrolled foot is its own swept fin (R8): it kicks out, widest and tipped up at its front,
+    // but (R11) its front stays level with the wall front in the top view
+    footX0: -1.3, footX1: 2.1,   // R11: the foot ends only just ahead of the wall, not far forward
     footOut: (fx) => 0.62 + 0.38 * (1 - fx) ** 0.8,  // fx 0 = foot front, 1 = foot rear
     footKick: (fx) => 0.5 * (1 - fx) ** 3,           // front tip lifts like a fin
     footRise: (fx) => 0.7 + 0.3 * (1 - fx),          // scroll is tallest at the front, lower at the back

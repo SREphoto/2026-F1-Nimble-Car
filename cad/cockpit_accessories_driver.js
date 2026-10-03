@@ -39,16 +39,18 @@ import { AIRBOX_SPEC } from './active_wings_bodywork.js';
 
 /** Mirror layout (car frame, dm, left side; right is mirrored). */
 export const MIRROR_SPEC = {
-  pod: { center: [14.0, 4.1, 5.58], depth: 0.52, span: 1.9, height: 0.68, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
+  // R11 top view: just outboard of the cockpit opening, alongside the halo's side and a little
+  // ahead of its rear legs (x 16.45), close in to the body. The inner edge sits just outside the halo.
+  pod: { center: [15.1, 3.65, 5.3], depth: 0.5, span: 1.5, height: 0.66, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
   realReflection: true,           // planar Reflector glass; false falls back to an env-mapped chrome
   reflectorRes: [256, 96],
-  leds: { rows: 2, cols: 6, blockSpan: 0.5 },
+  leds: { rows: 2, cols: 5, blockSpan: 0.42 },
   stalkChord: 0.22, stalkThickness: 0.07,
-  stalks: [
-    { path: [[14.15, 4.55, 3.55], [14.15, 4.6, 4.2], [14.05, 4.5, 4.9], [14.0, 4.45, 5.3]] }, // sidepod top -> pod outer half
-    { path: [[13.75, 3.0, 4.45], [13.85, 3.2, 4.85], [13.95, 3.5, 5.15], [14.0, 3.65, 5.32]] }, // tub top -> pod inner half
+  stalks: [ // both land on the sidepod top (z 3.8 here)
+    { path: [[15.25, 4.22, 3.72], [15.2, 4.22, 4.2], [15.13, 4.1, 4.7], [15.1, 4.03, 5.05]] },
+    { path: [[14.95, 3.05, 3.72], [15.0, 3.15, 4.2], [15.06, 3.25, 4.65], [15.1, 3.3, 5.05]] },
   ],
-  vane: { path: [[13.95, 3.33, 5.0], [13.95, 3.9, 5.02], [13.95, 4.5, 5.02]], chord: 0.42, thickness: 0.04 }, // ties the two stalks together
+  vane: { path: [[15.08, 3.22, 4.72], [15.08, 3.65, 4.74], [15.08, 4.12, 4.74]], chord: 0.4, thickness: 0.04 }, // ties the two stalks together
 };
 
 /** Padded headrest around the helmet (R9), car frame dm. Origin is the cockpit rim at the head. */
