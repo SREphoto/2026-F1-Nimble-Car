@@ -192,6 +192,13 @@ export async function initGlobe({ onLoadTrack, playable = [HOME] } = {}) {
     return { rounds, renderer, controls, select };
   }
 
+  // the car scene keeps running underneath but skips drawing while the globe covers it (saves GPU time)
+  const mainR = window.renderer;
+  if (mainR && !mainR.__globePatched) {
+    const draw = mainR.render.bind(mainR);
+    mainR.render = (sc, cam) => { if (!root.classList.contains('open')) draw(sc, cam); };
+    mainR.__globePatched = true;
+  }
   async function open() { root.classList.add('open'); if (!built) built = build(); return built; }
   function close() { root.classList.remove('open'); $('gl-tip').style.display = 'none'; }
   $('gl-close').onclick = close;

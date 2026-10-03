@@ -46,10 +46,10 @@ export async function initSessions({ trackMode, tyreStates }) {
       <table class="sp-mylaps"><thead><tr><th>#</th><th>Type</th><th>Time</th><th>S1</th><th>S2</th><th>S3</th><th>Tyre</th><th>Wear</th></tr></thead><tbody id="sp-my"></tbody></table>
       <div class="sp-note">${config.simModel.label}. Other 21 cars use made-up pace numbers (cad/game/grid_2026.json). Your laps are real laps from Drive mode.</div>
     </div>`;
-  document.getElementById('viewport3d')?.appendChild(el);
+  document.body.appendChild(el);
   const css = document.createElement('style');
   css.textContent = `
-    #sess-panel{position:absolute;right:10px;top:10px;z-index:6;width:390px;max-height:calc(100% - 20px);overflow:auto;background:rgba(8,12,20,.86);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;color:#e6edf5;font:11px/1.3 system-ui,sans-serif;backdrop-filter:blur(4px)}
+    #sess-panel{position:fixed;right:12px;top:56px;z-index:30;width:390px;max-height:calc(100vh - 70px);box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:auto;background:rgba(8,12,20,.86);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;color:#e6edf5;font:11px/1.3 system-ui,sans-serif;backdrop-filter:blur(4px)}
     #sess-panel .sp-head{display:flex;gap:6px;align-items:center}
     #sess-panel select{background:#141b26;color:#cfd8e3;border:1px solid #2a3545;border-radius:4px;font-size:11px;padding:2px}
     #sp-seg{font-weight:700;color:#00d4e8}#sp-clock{margin-left:auto;font:700 18px ui-monospace,monospace;letter-spacing:.04em}
@@ -114,7 +114,7 @@ export async function initSessions({ trackMode, tyreStates }) {
     if (c.surf === 'gravel' || c.surf === 'grass') player.offT += dt;
     if (c.lap > player.lapSeen && player.lapSeen > 0 && c.last != null) {
       const startedAt = player.lapStartAt;
-      let type = player.run === 'out' ? 'out' : player.run === 'in' ? 'in' : 'flying';
+      let type = player.run === 'out' ? 'out' : player.run === 'in' || player.box ? 'in' : 'flying';
       if (type === 'flying' && startedAt != null && startedAt >= eng.segDur()) type = 'in';   // started after the flag
       const valid = player.offT <= config.trackLimits.offTrackSecondsToDelete;
       addWear(type);
@@ -123,7 +123,7 @@ export async function initSessions({ trackMode, tyreStates }) {
       player.offT = 0;
       if (type === 'in') { toGarage(); }
       else {
-        player.run = player.box || S.elapsed >= eng.segDur() ? 'in' : 'flying';
+        player.run = S.elapsed >= eng.segDur() ? 'in' : 'flying';   // after the flag: one more lap, then in
         player.lapStartAt = S.elapsed;
         S.playerOnLapSince = player.run === 'flying' ? S.elapsed : null;
       }
@@ -175,19 +175,21 @@ export async function initSessions({ trackMode, tyreStates }) {
   $('sp-box').onclick = () => { player.box = true; render(); };
   $('sp-min').onclick = () => el.classList.toggle('min');
 
+  function step(dt) {
+    if (!eng.state) return;
+    watchCar(dt);
+    eng.tick(dt * ui.speed);
+  }
   let last = performance.now(), acc = 0;
   (function loop(now) {
     requestAnimationFrame(loop);
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    if (eng.state && !ui.paused) {
-      watchCar(dt);
-      for (const ev of eng.tick(dt * ui.speed)) if (ev === 'flag' && player.run !== 'garage') player.box = true;
-    }
+    if (!ui.paused) step(dt);
     acc += dt; if (acc > 0.25) { acc = 0; render(); }
   })(last);
   render();
 
-  const api = { engine: eng, player, start: startSession, leaveGarage, render, setSpeed: s => { ui.speed = s; } };
+  const api = { engine: eng, player, start: startSession, leaveGarage, render, step, setSpeed: s => { ui.speed = s; } };
   window.sessions = api;
   return api;
 }
