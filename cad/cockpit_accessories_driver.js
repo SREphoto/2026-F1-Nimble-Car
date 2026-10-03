@@ -33,176 +33,17 @@
 import * as THREE from 'three';
 import { materials } from '../materials.js';
 import { createTorxScrew, createSocketHeadBolt } from './fasteners.js';
+import { createDriverHelmet } from './driver_helmet.js';
 
 export function createCockpitAccessories(options = {}) {
   const group = new THREE.Group();
   group.name = 'Cockpit_Accessories_Assembly';
 
   // =========================================================================
-  // 1. DRIVER & HELMET (FIA 8860-2018-ABP Specification)
-  // Driver seated at X = 13.2 dm, Y = 0.0 dm, Z = 6.2 dm
+  // 1. DRIVER HELMET & HANS (data-driven, see cad/driver_helmet.js HELMET_SPEC)
+  // Visor, peak, ballistic strip, visor pivots, chin vents, rear spoiler, HANS posts + yoke.
   // =========================================================================
-  const driverGroup = new THREE.Group();
-  driverGroup.name = 'Assembly_Driver_Helmet';
-  driverGroup.position.set(13.2, 0, 6.2);
-
-  // Helmet Outer Shell (Contoured composite shell)
-  const helmetShellGeo = new THREE.SphereGeometry(1.35, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.78);
-  // Flatten sides slightly for authentic human/helmet profile
-  helmetShellGeo.scale(1.15, 0.95, 1.05);
-  const helmetShell = new THREE.Mesh(helmetShellGeo, materials.redBullNavy || materials.carbonSatin);
-  helmetShell.name = 'Helmet_OuterShell';
-  helmetShell.castShadow = true;
-  driverGroup.add(helmetShell);
-
-  // Chin Bar & Lower Jaw Structure
-  const chinShape = new THREE.Shape();
-  chinShape.moveTo(0.2, -0.6);
-  chinShape.lineTo(-1.3, -0.6);
-  chinShape.lineTo(-1.45, -0.2);
-  chinShape.lineTo(-1.35, 0.35);
-  chinShape.lineTo(0.1, 0.35);
-  chinShape.closePath();
-
-  const chinExtrudeSettings = {
-    steps: 2,
-    depth: 1.5,
-    bevelEnabled: true,
-    bevelThickness: 0.15,
-    bevelSize: 0.15,
-    bevelSegments: 4
-  };
-  const chinGeo = new THREE.ExtrudeGeometry(chinShape, chinExtrudeSettings);
-  chinGeo.center();
-  const chinMesh = new THREE.Mesh(chinGeo, materials.redBullNavy || materials.carbonSatin);
-  chinMesh.position.set(-0.35, 0, -0.35);
-  chinMesh.rotation.y = Math.PI / 2;
-  chinMesh.name = 'Helmet_ChinBar';
-  driverGroup.add(chinMesh);
-
-  // Chin Spoiler & Aero Gurney Lip
-  const chinSpoilerGeo = new THREE.CylinderGeometry(0.75, 0.8, 0.12, 24, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
-  const chinSpoiler = new THREE.Mesh(chinSpoilerGeo, materials.carbonGloss);
-  chinSpoiler.rotation.z = Math.PI / 2;
-  chinSpoiler.position.set(-1.4, 0, -0.7);
-  chinSpoiler.name = 'Helmet_ChinSpoiler';
-  driverGroup.add(chinSpoiler);
-
-  // Chin Cooling Vents (4 discrete intake slots)
-  for (let i = -1; i <= 1; i += 2) {
-    for (let j = 0; j < 2; j++) {
-      const ventGeo = new THREE.BoxGeometry(0.08, 0.22, 0.08);
-      const vent = new THREE.Mesh(ventGeo, materials.titaniumAnodized);
-      vent.position.set(-1.42, i * (0.2 + j * 0.25), -0.45 + j * 0.12);
-      vent.name = `Helmet_VentSlot_${i}_${j}`;
-      driverGroup.add(vent);
-    }
-  }
-
-  // Visor Eyeport Recess & Rubber Gasket
-  const gasketCurve = new THREE.EllipseCurve(
-    0, 0,
-    1.0, 0.45,
-    Math.PI * 0.18, Math.PI * 0.82,
-    false, 0
-  );
-  const gasketPoints = gasketCurve.getPoints(24).map(p => new THREE.Vector3(-p.y - 0.7, p.x, 0.05));
-  const gasketSpline = new THREE.CatmullRomCurve3(gasketPoints);
-  const gasketGeo = new THREE.TubeGeometry(gasketSpline, 24, 0.035, 8, false);
-  const gasketMesh = new THREE.Mesh(gasketGeo, materials.siliconeSeal);
-  gasketMesh.name = 'Helmet_VisorGasket';
-  driverGroup.add(gasketMesh);
-
-  // Polycarbonate Visor (Narrow 10mm ABP aperture, dark smoke tint)
-  const visorCurve = new THREE.EllipseCurve(
-    0, 0,
-    1.02, 0.48,
-    Math.PI * 0.20, Math.PI * 0.80,
-    false, 0
-  );
-  const visorPoints = visorCurve.getPoints(24).map(p => new THREE.Vector3(-p.y - 0.72, p.x, 0.05));
-  const visorSpline = new THREE.CatmullRomCurve3(visorPoints);
-  const visorGeo = new THREE.TubeGeometry(visorSpline, 24, 0.16, 6, false);
-  visorGeo.scale(1.0, 1.0, 1.8);
-  const visorMesh = new THREE.Mesh(visorGeo, materials.glassRefractive);
-  visorMesh.name = 'Helmet_Visor_Polycarbonate';
-  driverGroup.add(visorMesh);
-
-  // Ballistic Forehead Strip (Zylon / Aramid strip, FIA 8860-2018-ABP mandatory reinforcement)
-  const zylonStripGeo = new THREE.CylinderGeometry(1.08, 1.08, 0.22, 24, 1, true, Math.PI * 0.65, Math.PI * 0.7);
-  const zylonStrip = new THREE.Mesh(zylonStripGeo, materials.carbonGloss);
-  zylonStrip.rotation.x = Math.PI / 2;
-  zylonStrip.position.set(-0.35, 0, 0.38);
-  zylonStrip.name = 'Helmet_BallisticZylonStrip';
-  driverGroup.add(zylonStrip);
-
-  // Visor Pivot Hardware (Left & Right)
-  [-1, 1].forEach(side => {
-    const pivotGroup = new THREE.Group();
-    pivotGroup.position.set(-0.15, side * 1.02, 0.08);
-
-    // Aluminum mounting disc
-    const discGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.04, 16);
-    const discMesh = new THREE.Mesh(discGeo, materials.alLi2099);
-    discMesh.rotation.x = Math.PI / 2;
-    pivotGroup.add(discMesh);
-
-    // Pivot screw with hex recess
-    const pivotScrew = createSocketHeadBolt({
-      headRadius: 0.1,
-      headHeight: 0.05,
-      hexRadius: 0.055,
-      hexDepth: 0.035,
-      shankRadius: 0.045,
-      shankLength: 0.06,
-      material: materials.titaniumBright
-    });
-    pivotScrew.rotation.x = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    pivotGroup.add(pivotScrew);
-
-    // Tear-off post (clear plastic spool for visor tear-off sheets)
-    const postGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.12, 12);
-    const postMesh = new THREE.Mesh(postGeo, materials.alLi2099);
-    postMesh.rotation.x = Math.PI / 2;
-    postMesh.position.set(-0.45, 0, -0.05);
-    pivotGroup.add(postMesh);
-
-    // HANS Anchor Post (M6 FIA 8858-2010 spec anchor post on lower rear quarter)
-    const hansPostGroup = new THREE.Group();
-    hansPostGroup.position.set(0.65, side * 0.95, -0.45);
-    const hansFlange = new THREE.CylinderGeometry(0.12, 0.12, 0.03, 16);
-    const hansFlangeMesh = new THREE.Mesh(hansFlange, materials.titaniumAnodized);
-    hansFlangeMesh.rotation.x = Math.PI / 2;
-    hansPostGroup.add(hansFlangeMesh);
-
-    const hansSpool = new THREE.CylinderGeometry(0.07, 0.07, 0.1, 16);
-    const hansSpoolMesh = new THREE.Mesh(hansSpool, materials.titaniumBright);
-    hansSpoolMesh.rotation.x = Math.PI / 2;
-    hansSpoolMesh.position.set(0, side * 0.05, 0);
-    hansPostGroup.add(hansSpoolMesh);
-
-    hansPostGroup.name = `Helmet_HANSPost_${side > 0 ? 'Left' : 'Right'}`;
-    driverGroup.add(hansPostGroup);
-
-    driverGroup.add(pivotGroup);
-  });
-
-  // Helmet Top Ventilation Scoops (Aero chimney vents)
-  [-0.2, 0.2].forEach(yOffset => {
-    const chimneyShape = new THREE.Shape();
-    chimneyShape.moveTo(-0.15, -0.08);
-    chimneyShape.lineTo(0.35, -0.08);
-    chimneyShape.lineTo(0.25, 0.12);
-    chimneyShape.lineTo(-0.15, 0.04);
-    chimneyShape.closePath();
-    const chimneyExtrude = { steps: 1, depth: 0.1, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
-    const chimneyGeo = new THREE.ExtrudeGeometry(chimneyShape, chimneyExtrude);
-    const chimneyMesh = new THREE.Mesh(chimneyGeo, materials.carbonGloss);
-    chimneyMesh.rotation.x = Math.PI / 2;
-    chimneyMesh.position.set(0.1, yOffset - 0.05, 1.28);
-    driverGroup.add(chimneyMesh);
-  });
-
+  const driverGroup = createDriverHelmet(options.helmet);
   group.add(driverGroup);
 
   // =========================================================================
@@ -551,7 +392,9 @@ export function createCockpitAccessories(options = {}) {
   const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, bladeExtrude);
   bladeGeo.center();
   const bladeMesh = new THREE.Mesh(bladeGeo, materials.carbonGloss);
+  bladeMesh.rotation.x = Math.PI / 2; // stand the blade up (it used to lie flat, floating over the tub)
   bladeMesh.position.z = 0.35;
+  bladeMesh.name = 'Antenna_UHF_Blade';
   bladeGroup.add(bladeMesh);
 
   sensorsGroup.add(bladeGroup);
@@ -581,6 +424,7 @@ export function createCockpitAccessories(options = {}) {
 
     const camlocHeadGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
     const camlocHeadMesh = new THREE.Mesh(camlocHeadGeo, materials.titaniumBright);
+    camlocHeadMesh.rotation.x = Math.PI / 2; // flat on the hatch (cylinder axis was sideways)
     camlocGroup.add(camlocHeadMesh);
 
     // Screwdriver slot recess
