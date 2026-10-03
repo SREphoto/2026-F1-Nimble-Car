@@ -39,18 +39,20 @@ import { AIRBOX_SPEC } from './active_wings_bodywork.js';
 
 /** Mirror layout (car frame, dm, left side; right is mirrored). */
 export const MIRROR_SPEC = {
-  // R11 top view: just outboard of the cockpit opening, alongside the halo's side and a little
-  // ahead of its rear legs (x 16.45), close in to the body. The inner edge sits just outside the halo.
-  pod: { center: [15.1, 3.65, 5.3], depth: 0.5, span: 1.5, height: 0.66, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
+  // R12 top view (Samuel's guide lines): the mirrors sit well AHEAD of the helmet (x 13.75), out beside
+  // the front of the cockpit opening near the halo's front section, between his 'Mirror' lines
+  // (x 8.4 to 9.5 dm from the front axle). The stalks rise off the sidepod top just behind the inlet lip
+  // (x 8.5 to 8.7). From the seat the glass is in clear view past the halo's sides.
+  pod: { center: [9.0, 3.8, 5.25], depth: 0.55, span: 1.6, height: 0.66, radius: 0.16, lip: 0.07, recess: 0.06, toeIn: 0.1 },
   realReflection: true,           // planar Reflector glass; false falls back to an env-mapped chrome
   reflectorRes: [256, 96],
   leds: { rows: 2, cols: 5, blockSpan: 0.42 },
-  stalkChord: 0.22, stalkThickness: 0.07,
-  stalks: [ // both land on the sidepod top (z 3.8 here)
-    { path: [[15.25, 4.22, 3.72], [15.2, 4.22, 4.2], [15.13, 4.1, 4.7], [15.1, 4.03, 5.05]] },
-    { path: [[14.95, 3.05, 3.72], [15.0, 3.15, 4.2], [15.06, 3.25, 4.65], [15.1, 3.3, 5.05]] },
+  stalkChord: 0.24, stalkThickness: 0.07,
+  stalks: [ // both land on the sidepod top (z about 3.8 here), behind the inlet lip
+    { path: [[9.75, 4.55, 3.74], [9.5, 4.45, 4.25], [9.22, 4.32, 4.72], [9.08, 4.22, 5.02]] },
+    { path: [[9.2, 3.12, 3.7], [9.14, 3.2, 4.2], [9.06, 3.3, 4.65], [9.02, 3.38, 5.02]] },
   ],
-  vane: { path: [[15.08, 3.22, 4.72], [15.08, 3.65, 4.74], [15.08, 4.12, 4.74]], chord: 0.4, thickness: 0.04 }, // ties the two stalks together
+  vane: { path: [[9.12, 3.25, 4.62], [9.12, 3.75, 4.66], [9.18, 4.36, 4.62]], chord: 0.4, thickness: 0.04 }, // ties the two stalks together
 };
 
 /** Padded headrest around the helmet (R9), car frame dm. Origin is the cockpit rim at the head. */

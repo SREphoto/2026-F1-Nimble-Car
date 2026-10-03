@@ -22,6 +22,7 @@
  */
 
 import * as THREE from 'three';
+import { HALO_SPEC } from './monocoque_cockpit.js';
 import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 import { materials, applyCarEnvironment, addCarbonSplit } from '../materials.js';
 import {
@@ -358,8 +359,12 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (!hb.isEmpty()) {
       const apexX = hb.min.x + (hb.max.x - hb.min.x) * 0.2; // where both arms meet the pylon
       // All read from the driver's seat (up = forward, right = driver's right = +Y)
-      tryProject('Halo_1Password', { origin: [apexX + 0.15, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [1.5, 0.38, 0.5], texture: tex.halo1P }, [0.6, 0, 0]);
-      tryProject('Halo_TAGHeuer', { origin: [apexX - 0.6, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [0.5, 0.55, 0.6], texture: tex.tag }, [0.8, 0, 0]);
+      // R2 / R11: TAG Heuer sits on the flat top of the hoop, centred, just behind the front post
+      // (flat from x 8.85 to 9.65 on the centre line), top of the logo toward the nose.
+      // 1Password sits just behind it, across where the two arms meet.
+      const haloTopX0 = HALO_SPEC.post[HALO_SPEC.post.length - 1][0] - 0.45; // front of the flat top
+      tryProject('Halo_TAGHeuer', { origin: [haloTopX0 + 0.3, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [0.48, 0.52, 0.6], texture: tex.tag }, [0.1, 0, 0]);
+      tryProject('Halo_1Password', { origin: [haloTopX0 + 0.72, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [1.3, 0.3, 0.5], texture: tex.halo1P }, [0.2, 0, 0]);
       // Arms: text runs along each arm, reading left-to-right from the driver
       const armX = hb.min.x + (hb.max.x - hb.min.x) * 0.4;
       tryProject('Halo_ATT_R', { origin: [armX, hb.max.y * 0.5, hb.max.z + 5], dir: [0, 0, -1], right: [0.95, 0.3, 0], size: [1.4, 0.35, 0.5], texture: tex.haloATT }, [0, hb.max.y, 0]);
