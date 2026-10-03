@@ -1,0 +1,31 @@
+albert_park: corner names dropped (not found in Wikipedia text): Clark Chicane
+suzuka: corner names dropped (not found in Wikipedia text): First Curve, S Curves
+suzuka: landmark dropped (not found in Wikipedia text): figure-eight
+suzuka: landmark dropped (not found in Wikipedia text): Suzuka Circuit Motopia
+miami: OSM circuit ways had gaps, closed with nearby road ways ['1017340351']
+montreal: landmark dropped (not found in Wikipedia text): Casino de Montréal
+monaco: OSM circuit ways had gaps, closed with nearby road ways ['35092475']
+monaco: 15 of 332 terrain samples had no value and were filled from neighbours
+monaco: corner names dropped (not found in Wikipedia text): Anthony Noghès
+monaco: landmark dropped (not found in Wikipedia text): Hôtel de Paris
+monaco: landmark dropped (not found in Wikipedia text): Port Hercule
+barcelona: corner names dropped (not found in Wikipedia text): Banc Sabadell
+red_bull_ring: corner names dropped (not found in Wikipedia text): Remus, Schlossgold, Red Bull Mobile
+silverstone: landmark dropped (not found in Wikipedia text): Silverstone Wing
+spa: corner names dropped (not found in Wikipedia text): Bruxelles, Fagnes
+zandvoort: TUMFTM 4316 m vs FIA 4259 m, OSM loop used instead
+zandvoort: corner names dropped (not found in Wikipedia text): Mastersbocht
+zandvoort: landmark dropped (not found in Wikipedia text): banked
+zandvoort: TUMFTM length 4316 m differs from the FIA 4259 m by +58 m (older layout or smoothing), check before use
+monza: corner names dropped (not found in Wikipedia text): Curva Biassono
+monza: landmark dropped (not found in Wikipedia text): Parco di Monza
+madring: rejected an OSM loop that needed 3206 m of ordinary roads to close
+madring: OSM ways do not close a lap (best 5430 m), used bacinger/f1-circuits es-2026.geojson instead
+baku: landmark dropped (not found in Wikipedia text): Flame Towers
+baku: landmark dropped (not found in Wikipedia text): Caspian
+lusail: landmark dropped (not found in Wikipedia text): floodlights
+lusail: landmark dropped (not found in Wikipedia text): floodlit
+yas_marina: TUMFTM 5547 m vs FIA 5281 m, OSM loop used instead
+yas_marina: landmark dropped (not found in Wikipedia text): Yas Hotel
+yas_marina: landmark dropped (not found in Wikipedia text): Ferrari World
+yas_marina: TUMFTM length 5547 m differs from the FIA 5281 m by +266 m (older layout or smoothing), check before use

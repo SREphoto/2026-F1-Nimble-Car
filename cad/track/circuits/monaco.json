@@ -97,7 +97,7 @@
   },
   "direction": {
     "value": "clockwise",
-    "basis": "OSM oneway tags / backward roles on the circuit ways",
+    "basis": "OSM oneway tags / forward roles on the circuit ways",
     "stated_by_source": null,
     "note": "Computed from the orientation of the race-direction centreline."
   },
@@ -131,14 +131,15 @@
     "dataset": "eudem25m",
     "samples": 332,
     "spacing_m": 10.01,
-    "min_m": NaN,
-    "max_m": NaN,
-    "total_change_m": NaN,
-    "total_climb_per_lap_m": NaN,
-    "raw_change_m": NaN,
+    "min_m": 0.4,
+    "max_m": 52.3,
+    "total_change_m": 52.0,
+    "total_climb_per_lap_m": 97.4,
+    "raw_change_m": 52.7,
+    "missing_samples_filled": 15,
     "source": "opentopodata",
     "official_change_m": null,
-    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified. Part of the lap is in a tunnel, where the terrain model gives the ground above or the water surface, not the road."
   },
   "track_width": {
     "source": null,

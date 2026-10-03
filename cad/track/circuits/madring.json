@@ -101,6 +101,7 @@
     "total_change_m": 32.3,
     "total_climb_per_lap_m": 65.6,
     "raw_change_m": 33.2,
+    "missing_samples_filled": null,
     "source": "opentopodata",
     "official_change_m": null,
     "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."

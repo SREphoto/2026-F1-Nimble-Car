@@ -78,11 +78,11 @@
       "raceline": "cad/track/raw/tumftm/Spielberg_raceline.csv",
       "length_m": 4315.4,
       "points": 864,
-      "georef_median_m": 1.08,
-      "georef_p95_m": 5.23,
-      "rotation_deg": 0.183,
-      "origin_lat": 47.2203095,
-      "origin_lon": 14.7667293,
+      "georef_median_m": 1.11,
+      "georef_p95_m": 4.44,
+      "rotation_deg": 0.0656,
+      "origin_lat": 47.2203045,
+      "origin_lon": 14.7666979,
       "used": true
     },
     "osm": {
@@ -102,6 +102,7 @@
     "total_change_m": 68.9,
     "total_climb_per_lap_m": 98.1,
     "raw_change_m": 69.4,
+    "missing_samples_filled": null,
     "source": "opentopodata",
     "official_change_m": null,
     "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
@@ -135,7 +136,7 @@
       },
       "barrier_length_m_within_30m": {
         "fence": 104,
-        "tyres": 1515,
+        "tyres": 1301,
         "wall": 6568
       },
       "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
@@ -159,7 +160,7 @@
       ]
     },
     "exit": {
-      "s_m": 595.0,
+      "s_m": 590.0,
       "lat_lon": [
         47.220326,
         14.759875
@@ -239,18 +240,6 @@
   "landmarks": {
     "grandstands": [
       {
-        "name": "Start/Ziel Tribüne",
-        "osm_way": 312030921,
-        "lat_lon": [
-          47.219765,
-          14.765407
-        ],
-        "approx_length_m": 407.0,
-        "s_m": 185.0,
-        "side": "left",
-        "distance_m": 18.1
-      },
-      {
         "name": "Steiermark Tribüne",
         "osm_way": 312030917,
         "lat_lon": [
@@ -260,7 +249,7 @@
         "approx_length_m": 104.0,
         "s_m": 425.0,
         "side": "left",
-        "distance_m": 17.6
+        "distance_m": 18.6
       },
       {
         "name": "Red Bull Tribüne",
@@ -272,7 +261,7 @@
         "approx_length_m": 224.0,
         "s_m": 730.0,
         "side": "left",
-        "distance_m": 24.2
+        "distance_m": 22.9
       },
       {
         "name": "Red Bull Tribüne",
@@ -284,7 +273,7 @@
         "approx_length_m": 174.0,
         "s_m": 780.0,
         "side": "left",
-        "distance_m": 32.1
+        "distance_m": 30.6
       },
       {
         "name": "Tribüne 13",
@@ -296,7 +285,7 @@
         "approx_length_m": 93.0,
         "s_m": 1460.0,
         "side": "left",
-        "distance_m": 77.1
+        "distance_m": 75.8
       },
       {
         "name": "Tribüne Nord",
@@ -308,7 +297,7 @@
         "approx_length_m": 140.0,
         "s_m": 2210.0,
         "side": "left",
-        "distance_m": 111.8
+        "distance_m": 113.0
       },
       {
         "name": "Tribüne Mitte",
@@ -320,7 +309,7 @@
         "approx_length_m": 122.0,
         "s_m": 3150.0,
         "side": "left",
-        "distance_m": 47.5
+        "distance_m": 45.9
       },
       {
         "name": "Tribüne Ost",
@@ -332,7 +321,7 @@
         "approx_length_m": 59.0,
         "s_m": 3895.0,
         "side": "left",
-        "distance_m": 49.4
+        "distance_m": 51.6
       },
       {
         "name": "Tribüne T10",
@@ -344,7 +333,19 @@
         "approx_length_m": 141.0,
         "s_m": 3960.0,
         "side": "left",
-        "distance_m": 28.3
+        "distance_m": 30.6
+      },
+      {
+        "name": "Start/Ziel Tribüne",
+        "osm_way": 312030921,
+        "lat_lon": [
+          47.219765,
+          14.765407
+        ],
+        "approx_length_m": 407.0,
+        "s_m": 4230.0,
+        "side": "left",
+        "distance_m": 18.1
       }
     ],
     "bridges": [],
@@ -364,9 +365,9 @@
         ],
         "height_m": null,
         "levels": null,
-        "s_m": 4305.0,
+        "s_m": 4300.0,
         "side": "right",
-        "distance_m": 18.7
+        "distance_m": 18.8
       }
     ],
     "named": [],

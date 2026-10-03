@@ -423,13 +423,22 @@ def build(c):
     idx = np.linspace(0, len(Cres), nd, endpoint=False).astype(int)
     ll_dem = [(float(a), float(b)) for a, b in LLc[idx]]
     try:
-        z = np.array(sources.dem_profile(ll_dem, c['dem'], cid), float)
+        z = np.array([np.nan if v is None else v for v in sources.dem_profile(ll_dem, c['dem'], cid)], float)
+        n_missing = int(np.isnan(z).sum())
+        if n_missing:
+            # the terrain model has no value at some points (e.g. Monaco's coast edge): fill from neighbours
+            if n_missing > 0.2 * len(z):
+                raise RuntimeError(f'{n_missing} of {len(z)} terrain samples missing')
+            k = np.arange(len(z)); ok = ~np.isnan(z)
+            z = np.interp(k, k[ok], z[ok], period=len(z))
+            REPORT.append(f'{cid}: {n_missing} of {len(z)} terrain samples had no value and were filled from neighbours')
         zs = gaussian_filter1d(z, 3, mode='wrap')    # ~30 m smoothing to remove DEM pixel noise
         z_full = np.interp(s_arr, s_arr[idx], zs, period=L)
         climb = float(np.clip(np.diff(np.r_[zs, zs[0]]), 0, None).sum())
         elev = dict(dataset=c['dem'], samples=nd, spacing_m=round(L / nd, 2), min_m=round(float(zs.min()), 1),
                     max_m=round(float(zs.max()), 1), total_change_m=round(float(zs.max() - zs.min()), 1),
-                    total_climb_per_lap_m=round(climb, 1), raw_change_m=round(float(z.max() - z.min()), 1))
+                    total_climb_per_lap_m=round(climb, 1), raw_change_m=round(float(z.max() - z.min()), 1),
+                    missing_samples_filled=n_missing or None)
     except Exception as e:
         print('  elevation failed', e)
         z_full = None; elev = None
@@ -698,6 +707,9 @@ def build(c):
         gaps.append('Race direction not verified, so s_m, left/right sides and pit entry/exit may be reversed.')
         out['landmarks']['note'] += (' Race direction not verified here: s_m and side follow the order of the source line '
                                      'and may be reversed.')
+    if tunnels and out['elevation'].get('note'):
+        out['elevation']['note'] += (' Part of the lap is in a tunnel, where the terrain model gives the ground above or the '
+                                     'water surface, not the road.')
     if alt_line: gaps.append('Centreline is a coarse hand-drawn line (bacinger/f1-circuits), not survey data.')
     if widths['min_m'] is None: gaps.append('Track width not verified.')
     gaps.append('Kerb types and positions not verified as data (only FIA change notes).')
@@ -711,7 +723,7 @@ def build(c):
         out['built'] = dict(builder='tools/track/build_red_bull_ring.py', data='cad/track/red_bull_ring_data.js', scene='cad/track/red_bull_ring.js',
                             note='This circuit is already built. The builder uses the same TUMFTM file and OSM/EU-DEM sources as this pack.')
     with open(os.path.join(OUT_DIR, f'{cid}.json'), 'w', encoding='utf-8') as f:
-        json.dump(out, f, indent=2, ensure_ascii=False)
+        json.dump(out, f, indent=2, ensure_ascii=False, allow_nan=False)
         f.write('\n')
     print(f'  wrote {cid}.json: {len(stands)} stands, {len(bridges)} bridges, {len(tunnels)} tunnels, {len(buildings)} buildings, pit {pit_side if pit_info else None}')
     return out

@@ -41,7 +41,7 @@
   },
   "direction": {
     "value": "anticlockwise",
-    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "basis": "OSM oneway tags / backward roles on the circuit ways",
     "stated_by_source": null,
     "note": "Computed from the orientation of the race-direction centreline."
   },
@@ -90,6 +90,7 @@
     "total_change_m": 11.5,
     "total_climb_per_lap_m": 79.0,
     "raw_change_m": 16.0,
+    "missing_samples_filled": null,
     "source": "opentopodata",
     "official_change_m": null,
     "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
