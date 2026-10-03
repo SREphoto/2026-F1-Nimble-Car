@@ -21,6 +21,8 @@ import { initTyreStates } from './cad/tyre_states.js';
 import { sumTravel } from './cad/track/ride_model.js';
 import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
+import { initSessions } from './cad/game/session_ui.js';
+import { initGlobe } from './cad/game/globe.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -658,6 +660,11 @@ try {
 } catch (err) {
   console.error('Tyre states failed to initialise:', err);
 }
+
+// Practice / Qualifying sessions and the 2026 calendar globe (cad/game/*, data in cad/game/*.json)
+initSessions({ trackMode, tyreStates }).catch(err => console.error('Sessions failed to initialise:', err));
+initGlobe({ onLoadTrack: id => { if (id === 'red_bull_ring' && trackMode) { trackMode.applyCircuit(true); trackMode.setCam('overview'); } } })
+  .catch(err => console.error('Globe failed to initialise:', err));
 
 animate();
 

@@ -1,0 +1,183 @@
+{
+ "season": 2026,
+ "source": "/workspace/f1-teams/teams_liveries.json (team and driver names, F1 TV graphics colours). Line-up as at the Austrian GP, round 8.",
+ "sim_pace_note": "sim_pace_pct is a made-up game value (percent slower than the quickest car), not real data.",
+ "teams": [
+  {
+   "slug": "mclaren",
+   "team": "McLaren",
+   "colour": "#F47600",
+   "sim_pace_pct": 0.0,
+   "drivers": [
+    {
+     "no": 1,
+     "name": "Lando Norris"
+    },
+    {
+     "no": 81,
+     "name": "Oscar Piastri"
+    }
+   ]
+  },
+  {
+   "slug": "mercedes",
+   "team": "Mercedes",
+   "colour": "#00D7B6",
+   "sim_pace_pct": 0.15,
+   "drivers": [
+    {
+     "no": 63,
+     "name": "George Russell"
+    },
+    {
+     "no": 12,
+     "name": "Kimi Antonelli"
+    }
+   ]
+  },
+  {
+   "slug": "red-bull",
+   "team": "Red Bull Racing",
+   "colour": "#4781D7",
+   "sim_pace_pct": 0.25,
+   "drivers": [
+    {
+     "no": 3,
+     "name": "Max Verstappen"
+    },
+    {
+     "no": 6,
+     "name": "Isack Hadjar"
+    }
+   ]
+  },
+  {
+   "slug": "ferrari",
+   "team": "Ferrari",
+   "colour": "#ED1131",
+   "sim_pace_pct": 0.3,
+   "drivers": [
+    {
+     "no": 16,
+     "name": "Charles Leclerc"
+    },
+    {
+     "no": 44,
+     "name": "Lewis Hamilton"
+    }
+   ]
+  },
+  {
+   "slug": "williams",
+   "team": "Williams",
+   "colour": "#1868DB",
+   "sim_pace_pct": 0.8,
+   "drivers": [
+    {
+     "no": 23,
+     "name": "Alex Albon"
+    },
+    {
+     "no": 55,
+     "name": "Carlos Sainz"
+    }
+   ]
+  },
+  {
+   "slug": "racing-bulls",
+   "team": "Racing Bulls",
+   "colour": "#6C98FF",
+   "sim_pace_pct": 0.9,
+   "drivers": [
+    {
+     "no": 30,
+     "name": "Liam Lawson"
+    },
+    {
+     "no": 41,
+     "name": "Arvid Lindblad"
+    }
+   ]
+  },
+  {
+   "slug": "aston-martin",
+   "team": "Aston Martin",
+   "colour": "#229971",
+   "sim_pace_pct": 1.1,
+   "drivers": [
+    {
+     "no": 14,
+     "name": "Fernando Alonso"
+    },
+    {
+     "no": 18,
+     "name": "Lance Stroll"
+    }
+   ]
+  },
+  {
+   "slug": "haas",
+   "team": "Haas",
+   "colour": "#9C9FA2",
+   "sim_pace_pct": 1.0,
+   "drivers": [
+    {
+     "no": 31,
+     "name": "Esteban Ocon"
+    },
+    {
+     "no": 87,
+     "name": "Oliver Bearman"
+    }
+   ]
+  },
+  {
+   "slug": "audi",
+   "team": "Audi",
+   "colour": "#F50537",
+   "sim_pace_pct": 1.2,
+   "drivers": [
+    {
+     "no": 27,
+     "name": "Nico Hulkenberg"
+    },
+    {
+     "no": 5,
+     "name": "Gabriel Bortoleto"
+    }
+   ]
+  },
+  {
+   "slug": "alpine",
+   "team": "Alpine",
+   "colour": "#00A1E8",
+   "sim_pace_pct": 1.3,
+   "drivers": [
+    {
+     "no": 10,
+     "name": "Pierre Gasly"
+    },
+    {
+     "no": 43,
+     "name": "Franco Colapinto"
+    }
+   ]
+  },
+  {
+   "slug": "cadillac",
+   "team": "Cadillac",
+   "colour": "#909090",
+   "sim_pace_pct": 1.7,
+   "drivers": [
+    {
+     "no": 11,
+     "name": "Sergio Perez"
+    },
+    {
+     "no": 77,
+     "name": "Valtteri Bottas"
+    }
+   ]
+  }
+ ]
+}
