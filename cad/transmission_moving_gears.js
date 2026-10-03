@@ -36,6 +36,17 @@
 import * as THREE from 'three';
 import { materials } from '../materials.js';
 import { createSocketHeadBolt, createStudWith12PtNut, createBellevilleSpring } from './fasteners.js';
+import { loftRings } from './sweep_section.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+/** Rear impact structure and rain light (car frame, dm), ref round3 R10. */
+export const RIS_SPEC = {
+  x0: 35.0, x1: 38.45,                      // gearbox face to tip
+  root: { top: 3.35, bottom: 2.0, hw: 0.6 }, // flat top carries the twin pylon feet
+  tip: { top: 2.92, bottom: 2.4, hw: 0.3 },
+  flatTo: 0.42,                              // top stays at the pylon foot height this far back
+  light: { length: 0.22, cols: 4, rows: 3, glow: 1.1, pointLight: 0.3 },
+};
 
 export function createTransmissionGears(options = {}) {
   const group = new THREE.Group();
@@ -369,77 +380,59 @@ export function createTransmissionGears(options = {}) {
 
   // =========================================================================
   // 7. REAR IMPACT STRUCTURE (RIS) & FIA 15-LED RAIN LIGHT
-  // Matches Reference Images: Central trapezoidal cone below exhaust,
-  // yellow-bordered housing with circular cluster of high-intensity red LEDs
-  // X = 35.5 dm to 38.5 dm, Y = 0.0 dm, Z = 2.15 dm
+  // RIS_SPEC (R10): long slim crash structure below the exhaust, square rain light at the tip
+  // X = 35.0 dm to 38.67 dm, Y = 0.0 dm, Z 2.0 to 3.35 dm
   // =========================================================================
   const risGroup = new THREE.Group();
   risGroup.name = 'Assembly_RearImpactStructure_RainLight';
   risGroup.position.set(35.0, 0.0, 2.9); // bolted to gearbox rear face (X 35.0), under exhaust
 
-  // 50 kJ Carbon Composite Crash Attenuator Cone
-  const coneShape = new THREE.Shape();
-  coneShape.moveTo(-0.6, -0.6);
-  coneShape.lineTo(0.6, -0.6);
-  coneShape.lineTo(0.45, 0.55);
-  coneShape.lineTo(-0.45, 0.55);
-  coneShape.closePath();
-
-  const coneExtrude = { steps: 2, depth: 2.2, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 3 };
-  const coneGeo = new THREE.ExtrudeGeometry(coneShape, coneExtrude);
-  const coneMesh = new THREE.Mesh(coneGeo, materials.carbonGloss);
-  // Extrude rearward (+X), shape X -> lateral Y, shape Y -> vertical Z (narrow end on top)
-  coneMesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(
-    0, 0, 1, 0,
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 0, 1
-  ));
-  coneMesh.position.set(0, 0, -0.2);
+  // Long, slim crash structure (R10): full depth at the gearbox, flat on top under the twin
+  // pylon feet (Z 3.35), then tapering down to a small square tip that carries the rain light.
+  const RS = RIS_SPEC;
+  const risAt = (t) => { // t 0 = gearbox face, 1 = tip; returns the section in the RIS group frame
+    const k = THREE.MathUtils.smoothstep(t, RS.flatTo, 1);
+    const top = THREE.MathUtils.lerp(RS.root.top, RS.tip.top, k);
+    const bot = THREE.MathUtils.lerp(RS.root.bottom, RS.tip.bottom, Math.pow(t, 0.8));
+    const hw = THREE.MathUtils.lerp(RS.root.hw, RS.tip.hw, Math.pow(t, 0.9));
+    return { x: THREE.MathUtils.lerp(RS.x0, RS.x1, t) - risGroup.position.x, zc: (top + bot) / 2 - risGroup.position.z, hw, hh: (top - bot) / 2 };
+  };
+  const risStations = []; for (let i = 0; i <= 16; i++) risStations.push(risAt(i / 16));
+  const risRing = (st, v) => { // rounded rectangle (superellipse n = 5)
+    const a = v * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a), e = 2 / 5;
+    return [st.x, Math.sign(c) * Math.pow(Math.abs(c), e) * st.hw, st.zc + Math.sign(sn) * Math.pow(Math.abs(sn), e) * st.hh];
+  };
+  const coneMesh = new THREE.Mesh(loftRings(risStations, risRing, 32, { capStart: true, capEnd: true }), materials.carbonGloss);
+  coneMesh.name = 'RIS_CrashStructure_Body';
+  coneMesh.castShadow = true;
   risGroup.add(coneMesh);
 
-  // Rain Light Yellow Safety Bezel (Matching Reference Image 4)
-  const bezelShape = new THREE.Shape();
-  bezelShape.absellipse(0, 0, 0.35, 0.48, 0, Math.PI * 2, false, 0);
-  const bezelExtrude = { steps: 1, depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
-  const bezelGeo = new THREE.ExtrudeGeometry(bezelShape, bezelExtrude);
-  const bezelMesh = new THREE.Mesh(bezelGeo, materials.ledYellowSafety || materials.heatShieldGold);
-  bezelMesh.rotation.y = Math.PI / 2;
-  bezelMesh.position.set(2.32, 0, -0.2);
-  bezelMesh.name = 'RainLight_YellowSafetyBezel';
-  risGroup.add(bezelMesh);
-
-  // Dark Recessed Optical Faceplate
-  const faceplateGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.04, 24);
-  const faceplateMesh = new THREE.Mesh(faceplateGeo, materials.carbonMatte);
-  faceplateMesh.rotation.z = Math.PI / 2;
-  faceplateMesh.position.set(2.35, 0, -0.2);
-  risGroup.add(faceplateMesh);
-
-  // 15 High-Intensity Red LED Elements in Concentric Pattern (Matching Reference Image 4)
-  const ledGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.04, 12);
-  // Center LED
-  const centerLed = new THREE.Mesh(ledGeo, materials.ledRed);
-  centerLed.rotation.z = Math.PI / 2;
-  centerLed.position.set(2.38, 0, -0.2);
-  risGroup.add(centerLed);
-
-  // Inner Ring: 5 LEDs
-  for (let i = 0; i < 5; i++) {
-    const a = (i * Math.PI * 2) / 5;
-    const lMesh = new THREE.Mesh(ledGeo, materials.ledRed);
-    lMesh.rotation.z = Math.PI / 2;
-    lMesh.position.set(2.38, Math.cos(a) * 0.11, -0.2 + Math.sin(a) * 0.13);
-    risGroup.add(lMesh);
+  // 2026 style rain light: a square-ended box at the very tip, dark bezel and a glowing red lens
+  const tipSt = risAt(1), L = RS.light;
+  const housing = new THREE.Mesh(new RoundedBoxGeometry(L.length, 2 * tipSt.hw + 0.04, 2 * tipSt.hh + 0.04, 3, 0.03), materials.carbonMatte);
+  housing.name = 'RainLight_Housing';
+  housing.position.set(tipSt.x + L.length / 2 - 0.02, 0, tipSt.zc);
+  risGroup.add(housing);
+  const lensMat = new THREE.MeshStandardMaterial({ color: 0x5a0008, emissive: 0xe00010, emissiveIntensity: L.glow, roughness: 0.25, metalness: 0.0 });
+  const lens = new THREE.Mesh(new THREE.BoxGeometry(0.02, 2 * tipSt.hw - 0.06, 2 * tipSt.hh - 0.06), lensMat);
+  lens.name = 'RainLight_RedLens';
+  lens.position.set(tipSt.x + L.length - 0.01, 0, tipSt.zc);
+  risGroup.add(lens);
+  // LED grid behind the lens (cols x rows), brighter dots
+  const ledGeo = new THREE.BoxGeometry(0.02, 0.07, 0.06);
+  for (let c = 0; c < L.cols; c++) for (let r = 0; r < L.rows; r++) {
+    const led = new THREE.Mesh(ledGeo, materials.ledRed);
+    led.position.set(tipSt.x + L.length + 0.002,
+      (c - (L.cols - 1) / 2) * ((2 * tipSt.hw - 0.16) / (L.cols - 1)),
+      tipSt.zc + (r - (L.rows - 1) / 2) * ((2 * tipSt.hh - 0.16) / (L.rows - 1)));
+    led.name = `RainLight_LED_${c}_${r}`;
+    risGroup.add(led);
   }
-
-  // Outer Ring: 9 LEDs
-  for (let j = 0; j < 9; j++) {
-    const a = (j * Math.PI * 2) / 9;
-    const lMesh = new THREE.Mesh(ledGeo, materials.ledRed);
-    lMesh.rotation.z = Math.PI / 2;
-    lMesh.position.set(2.38, Math.cos(a) * 0.22, -0.2 + Math.sin(a) * 0.26);
-    risGroup.add(lMesh);
+  if (L.pointLight) { // small red glow on the floor and diffuser behind it
+    const glow = new THREE.PointLight(0xff2030, L.pointLight, 6, 2);
+    glow.name = 'RainLight_Glow';
+    glow.position.set(tipSt.x + L.length + 0.25, 0, tipSt.zc);
+    risGroup.add(glow);
   }
 
   group.add(risGroup);

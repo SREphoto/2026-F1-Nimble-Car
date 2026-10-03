@@ -8,8 +8,8 @@
  *   * Narrow 10mm visor aperture, dark polycarbonate visor, ballistic forehead strip
  *   * Visor pivot mechanisms with anodized aluminum hardware, tear-off posts
  *   * HANS anchor posts (M6 FIA 8858-2010 specification)
- * - Confor Foam Headrest:
- *   * Viscoelastic U-shaped surround with quick-release locating pins
+ * - Confor Foam Headrest (HEADREST_SPEC, ref round3 R9):
+ *   * Two padded wings either side of the helmet and a lower rear pad, with quick-release pins
  * - Rear-View Mirrors (MIRROR_SPEC, refs round3 R3 to R5):
  *   * Wide rounded pod with a thick carbon lip around recessed planar-reflector glass
  *   * Amber marshal LED block on the outboard front face, slim amber strip under the glass
@@ -51,6 +51,13 @@ export const MIRROR_SPEC = {
   vane: { path: [[13.95, 3.33, 5.0], [13.95, 3.9, 5.02], [13.95, 4.5, 5.02]], chord: 0.42, thickness: 0.04 }, // ties the two stalks together
 };
 
+/** Padded headrest around the helmet (R9), car frame dm. Origin is the cockpit rim at the head. */
+export const HEADREST_SPEC = {
+  origin: [0, 0, 4.15],
+  wing: { x: 14.55, y: 1.68, length: 2.3, width: 0.72, height: 1.2, radius: 0.3, frontDrop: 0.45 },
+  rear: { x: 15.75, length: 0.9, width: 4.05, height: 0.95, radius: 0.3 },
+};
+
 export function createCockpitAccessories(options = {}) {
   const group = new THREE.Group();
   group.name = 'Cockpit_Accessories_Assembly';
@@ -68,55 +75,49 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   const headrestGroup = new THREE.Group();
   headrestGroup.name = 'Cockpit_Headrest_Assembly';
-  headrestGroup.position.set(14.6, 0, 4.25); // lies flat on the cockpit rim
 
-  const headrestShape = new THREE.Shape();
-  // Outer perimeter of headrest
-  headrestShape.moveTo(-1.6, -2.2);
-  headrestShape.lineTo(1.8, -2.1);
-  headrestShape.lineTo(1.9, 0);
-  headrestShape.lineTo(1.8, 2.1);
-  headrestShape.lineTo(-1.6, 2.2);
-  // Inner cutout for driver helmet
-  const holePath = new THREE.Path();
-  holePath.moveTo(-1.6, -1.35);
-  holePath.lineTo(1.0, -1.35);
-  holePath.quadraticCurveTo(1.3, 0, 1.0, 1.35);
-  holePath.lineTo(-1.6, 1.35);
-  holePath.closePath();
-  headrestShape.holes.push(holePath);
-
-  const headrestExtrude = {
-    steps: 2,
-    depth: 0.95,
-    bevelEnabled: true,
-    bevelThickness: 0.15,
-    bevelSize: 0.15,
-    bevelSegments: 4
-  };
-  const headrestGeo = new THREE.ExtrudeGeometry(headrestShape, headrestExtrude);
-  const headrestMesh = new THREE.Mesh(headrestGeo, materials.carbonMatte);
-  headrestMesh.rotation.set(0, 0, 0); // U-shape in XY plane, extruded up +Z
-  headrestMesh.position.set(0, 0, 0);
-  headrestGroup.add(headrestMesh);
-
-  // Quick-Release Headrest Locating Pins (FIA requirement: removable in <5 sec)
-  [
-    { x: -1.2, y: -2.0 }, { x: -1.2, y: 2.0 },
-    { x: 1.5, y: -1.8 }, { x: 1.5, y: 1.8 }
-  ].forEach((pos, idx) => {
-    const pinGroup = new THREE.Group();
-    pinGroup.position.set(pos.x, pos.y, 0.45);
-    const pinRingGeo = new THREE.TorusGeometry(0.12, 0.03, 8, 16);
-    const pinRingMesh = new THREE.Mesh(pinRingGeo, materials.titaniumAnodized);
-    pinGroup.add(pinRingMesh);
-    const pinStemGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 12);
-    const pinStemMesh = new THREE.Mesh(pinStemGeo, materials.titaniumBright);
-    pinStemMesh.position.z = -0.15;
-    pinGroup.add(pinStemMesh);
-    pinGroup.name = `Headrest_QuickReleasePin_${idx}`;
-    headrestGroup.add(pinGroup);
+  // Padded headrest (R9): two tall rounded wings either side of the helmet and a lower pad
+  // behind it, all sitting down in the cockpit opening. No block sticks up around the neck.
+  const HR = HEADREST_SPEC;
+  headrestGroup.position.set(...HR.origin);
+  const hrMat = materials.liveryPaint || materials.carbonMatte;
+  const hrParts = [];
+  [1, -1].forEach((s) => {
+    const w = HR.wing;
+    const g = new RoundedBoxGeometry(w.length, w.width, w.height, 4, w.radius);
+    // lower at the front so the wing top runs down toward the driver's cheek
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      if (z > 0) pos.setZ(i, z - w.frontDrop * THREE.MathUtils.clamp((-x / (w.length / 2) + 1) / 2, 0, 1));
+    }
+    g.computeVertexNormals();
+    g.translate(w.x, s * w.y, w.height / 2);
+    hrParts.push(g);
   });
+  {
+    const r = HR.rear;
+    const g = new RoundedBoxGeometry(r.length, r.width, r.height, 4, r.radius);
+    g.translate(r.x, 0, r.height / 2);
+    hrParts.push(g);
+  }
+  hrParts.forEach((g, k) => {
+    const m = new THREE.Mesh(g, hrMat);
+    m.name = ['Cockpit_Headrest_Wing_L', 'Cockpit_Headrest_Wing_R', 'Cockpit_Headrest_RearPad'][k];
+    m.castShadow = true;
+    headrestGroup.add(m);
+  });
+
+  // Quick-release locating pins on top of the wings (FIA: removable in under 5 s)
+  [1, -1].forEach((s, si) => [HR.wing.x - 0.5, HR.wing.x + 0.6].forEach((px, k) => {
+    const pinGroup = new THREE.Group();
+    const top = HR.wing.height - HR.wing.frontDrop * THREE.MathUtils.clamp((-(px - HR.wing.x) / (HR.wing.length / 2) + 1) / 2, 0, 1);
+    pinGroup.position.set(px, s * HR.wing.y, top - 0.01);
+    const pinRingMesh = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 8, 16), materials.titaniumAnodized);
+    pinGroup.add(pinRingMesh);
+    pinGroup.name = `Headrest_QuickReleasePin_${si * 2 + k}`;
+    headrestGroup.add(pinGroup);
+  }));
 
   group.add(headrestGroup);
 

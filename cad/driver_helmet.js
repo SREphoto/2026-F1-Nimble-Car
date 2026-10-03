@@ -10,9 +10,10 @@ import * as THREE from 'three';
 import { materials } from '../materials.js';
 
 export const HELMET_SPEC = {
-  // Head centre in the car. Rear of the shell clears the airbox face (X 15.6) and sits in the
-  // headrest U; the top stays level with the halo hoop; the chin clears the steering wheel.
-  centre: [14.0, 0.0, 6.15],
+  // Head centre in the car (R9: the driver sits low in the tub). Only the helmet shows above the
+  // cockpit sides, tucked between the padded headrest wings; the visor sits just above the
+  // cockpit edge, the crown stays well under the halo and the chin clears the steering wheel.
+  centre: [13.75, 0.0, 5.05],
   front: 1.30, rear: 1.42, halfWidth: 1.12, top: 1.22, // shell radii (dm)
   sideFlat: 2.5,                 // superellipse exponent (2 = round, higher = flatter sides)
   rimRear: -0.80, rimFront: -1.26, // bottom edge height (dm below the centre) at the back / chin

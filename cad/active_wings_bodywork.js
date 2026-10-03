@@ -35,12 +35,17 @@ export const REAR_WING_SPEC = {
   endplate: {
     // [local z, outer face y, leading x, trailing x] from the top crest down to the diffuser
     // (group origin x 36.8, z 7.4; local z -5.2 is world z 2.2, the diffuser top)
+    // R10: rounded top front corner (first four rows), thick walls, curled leading edge
     stations: [
-      [1.55, 5.05, -1.35, 2.05], [1.3, 5.2, -1.5, 2.1], [0.4, 5.2, -1.6, 2.05], [-0.15, 5.2, -1.6, 1.9],
+      [1.55, 5.02, -0.55, 2.0], [1.49, 5.08, -1.1, 2.05], [1.37, 5.15, -1.42, 2.08], [1.15, 5.2, -1.56, 2.1],
+      [0.4, 5.2, -1.6, 2.05], [-0.15, 5.2, -1.6, 1.9],
       [-0.9, 5.08, -1.5, 1.6], [-1.8, 4.82, -1.3, 1.3], [-2.8, 4.55, -1.1, 1.0], [-3.9, 4.3, -0.95, 0.6],
       [-5.2, 4.1, -0.9, 0.05], // ends on the diffuser trailing edge (x 36.85)
     ],
+    thickness: 0.27,                  // thick moulded wall (R10)
+    leCurl: { width: 0.2, depth: 0.14 }, // leading edge curls inward over this part of the chord
   },
+  spoonDip: 0.5, // mainplane and flap dip this much at the centre line (deep spoon, R10)
   ledStrip: { zTop: 1.3, zBottom: -0.9, count: 16 }, // red rain LEDs along each endplate trailing edge
   flapChordScale: 1.25, // deeper flap for the big sponsor area seen from behind
   flapModeAngles: { Z_MODE: -0.45, X_MODE: -0.05 },
@@ -55,12 +60,22 @@ export const REAR_WING_SPEC = {
     pod: { at: [-0.75, 0, 0.98], length: 0.8, radius: 0.12, rodTo: [0.55, 0, 0.62] },
     twin: {
       y: [-0.62, 0.62],                // inner faces 0.55 from the centre line: tailpipe radius is 0.44
-      path: [[-0.55, -4.05], [-0.72, -2.7], [-0.74, -1.3], [-0.55, -0.27]], // RIS top -> into the mainplane underside
+      path: [[-0.55, -4.05], [-0.72, -2.75], [-0.74, -1.45], [-0.55, -0.5]], // RIS top -> into the (spooned) mainplane underside
       depth: (t) => 0.55 - 0.15 * t,
       thickness: 0.14,
-      pod: { at: [-0.35, 0, -0.15], length: 0.55, radius: 0.075, rodTo: [0.5, 0, 0.5] }, // sits on the mainplane top
+      // R10: one slim pod on a mast that rises from the mainplane top, through the slot ahead of the
+      // flap, to sit just above the flap at the centre line
+      pod: { at: [0.42, 0, 0.82], length: 0.5, radius: 0.075, rodTo: [0.95, 0, 0.08],
+        mast: [[-0.5, -0.36], [-0.3, 0.2], [0.0, 0.62], [0.24, 0.8]], mastChord: 0.3, mastThickness: 0.06 },
     },
   },
+};
+
+/** Single tailpipe (car frame, dm), ref R10. Pivots on the downpipe joint. */
+export const EXHAUST_SPEC = {
+  joint: [34.15, 0, 3.75], length: 3.55, rRoot: 0.42, rLip: 0.4,
+  tilt: 0.05, // rad, tail up; the lip stays under the beam wing
+  heatTint: [[0, '#b9b2a4'], [0.35, '#c9a35a'], [0.62, '#a2683c'], [0.82, '#6e4a8c'], [1, '#3d5fae']],
 };
 
 /** Airbox above the driver (car frame, dm). Rings are 'egg' superellipses: zc, half width, top/bottom half heights. */
@@ -776,27 +791,47 @@ export function createActiveWingsBodywork(options = {}) {
   finMesh.name = 'Dorsal_Shark_Fin';
   engineCoverGroup.add(finMesh);
 
-  // Central Single Inconel Tailpipe Exhaust (Article C5.8) - media_1790507837418.webp
+  // Central single tailpipe (Article C5.8), ref R10: a round pipe above the crash structure,
+  // between the twin pylons, angled slightly up and back. It pivots on the downpipe joint so the
+  // two still meet, and its heat-tinted finish runs from straw gold to purple and blue at the lip.
+  const EX = EXHAUST_SPEC;
   const exhaustGroup = new THREE.Group();
   exhaustGroup.name = 'PU_Exhaust_Tailpipe_Assembly';
-  exhaustGroup.position.set(36.2, 0, 3.75);
-
-  // Main tubular exhaust pipe
-  const tailpipeGeo = new THREE.CylinderGeometry(0.40, 0.44, 4.2, 32, 1, true);
-  const tailpipe = new THREE.Mesh(tailpipeGeo, materials.inconelExhaust);
-  tailpipe.rotation.z = Math.PI / 2;
+  exhaustGroup.position.set(...EX.joint);
+  exhaustGroup.rotation.y = -EX.tilt; // tail up
+  const tailpipeGeo = new THREE.CylinderGeometry(EX.rLip, EX.rRoot, EX.length, 40, 12, true);
+  tailpipeGeo.rotateZ(-Math.PI / 2); // axis along +X, the lip (top of the cylinder) at the rear
+  tailpipeGeo.translate(EX.length / 2, 0, 0);
+  {
+    const pos = tailpipeGeo.attributes.position, col = [];
+    const stops = EX.heatTint.map(([t, hex]) => [t, new THREE.Color(hex)]);
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const t = pos.getX(i) / EX.length;
+      let k = 0; while (k < stops.length - 2 && t > stops[k + 1][0]) k++;
+      const [t0, c0] = stops[k], [t1, c1] = stops[k + 1];
+      c.copy(c0).lerp(c1, THREE.MathUtils.clamp((t - t0) / (t1 - t0), 0, 1));
+      col.push(c.r, c.g, c.b);
+    }
+    tailpipeGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  }
+  const heatMat = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.9, roughness: 0.3, side: THREE.DoubleSide });
+  heatMat.name = 'Exhaust_HeatTinted_Inconel';
+  const tailpipe = new THREE.Mesh(tailpipeGeo, heatMat);
+  tailpipe.name = 'PU_Exhaust_Tailpipe';
+  tailpipe.castShadow = true;
   exhaustGroup.add(tailpipe);
-
-  // Heat Discoloration Lip (Titanium blue/gold heat oxidation ring)
-  const lipGeo = new THREE.TorusGeometry(0.40, 0.035, 12, 32);
-  const lipMat = new THREE.MeshStandardMaterial({
-    color: 0x3d66aa, // Heat-tinted titanium blue
-    roughness: 0.25,
-    metalness: 0.92
-  });
-  const lip = new THREE.Mesh(lipGeo, lipMat);
+  // sooty inside so the open end reads as a pipe
+  const sootGeo = new THREE.CylinderGeometry(EX.rLip - 0.03, EX.rRoot - 0.03, EX.length * 0.5, 32, 1, true);
+  sootGeo.rotateZ(-Math.PI / 2); sootGeo.translate(EX.length * 0.75 - 0.02, 0, 0);
+  const soot = new THREE.Mesh(sootGeo, new THREE.MeshStandardMaterial({ color: 0x141210, roughness: 0.95, metalness: 0.2, side: THREE.BackSide }));
+  soot.name = 'PU_Exhaust_Tailpipe_Soot';
+  exhaustGroup.add(soot);
+  // rolled lip in blued titanium
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(EX.rLip, 0.035, 12, 40), new THREE.MeshStandardMaterial({ color: 0x3d5aa8, roughness: 0.25, metalness: 0.92 }));
+  lip.name = 'PU_Exhaust_Tailpipe_Lip';
   lip.rotation.y = Math.PI / 2;
-  lip.position.set(2.1, 0, 0);
+  lip.position.set(EX.length, 0, 0);
   exhaustGroup.add(lip);
 
   engineCoverGroup.add(exhaustGroup);
@@ -824,8 +859,10 @@ export function createActiveWingsBodywork(options = {}) {
   // -------------------------------------------------------------------------
   // Wing sits inboard of the rear tyres (tyre inner face Y = ±5.34 dm, ±5.525 with the PR #3 tyres)
   const RW_OUT = RW.endplateOuterY; // endplate outer face at its widest
-  const RW_T = 0.2;     // endplate thickness
-  const rwSpan = 2 * (RW_OUT - 0.27 - RW_T / 2) * 1.0;  // mainplane ends buried mid-endplate
+  const RW_T = RW.endplate.thickness ?? 0.2; // endplate thickness
+  const rwSpan = 2 * (RW_OUT - RW_T / 2);  // mainplane tips end inside the endplate walls
+  // deep spoon (R10): the centre of the mainplane and flap dips by RW.spoonDip, tips stay put
+  const spoonDz = (y, half) => (Math.pow(Math.min(1, Math.abs(y) / half), 2) - 1) * (RW.spoonDip ?? 0.25);
   const rwChord = 2.4;  // 240 mm chord along X
   const rwMainShape = new THREE.Shape();
   rwMainShape.moveTo(-1.2, 0.0);
@@ -842,11 +879,10 @@ export function createActiveWingsBodywork(options = {}) {
   const rwMainPos = rwMainGeo.attributes.position;
   for (let p = 0; p < rwMainPos.count; p++) {
     const ySpan = rwMainPos.getY(p); // Span along Y
-    const norm = Math.abs(ySpan) / (rwSpan / 2);
-    // Center dips down subtly by 0.25 dm (symmetrical spoon)
-    rwMainPos.setZ(p, rwMainPos.getZ(p) + (Math.pow(norm, 2.0) - 1.0) * 0.25);
+    rwMainPos.setZ(p, rwMainPos.getZ(p) + spoonDz(ySpan, rwSpan / 2));
   }
   rwMainGeo.computeVertexNormals();
+  rwMainGeo.computeBoundingBox(); rwMainGeo.computeBoundingSphere();
 
   const rwMainMesh = new THREE.Mesh(rwMainGeo, carbonMat);
   rwMainMesh.rotation.set(0, 0, 0); // 100% horizontal, zero diagonal tilt
@@ -874,11 +910,17 @@ export function createActiveWingsBodywork(options = {}) {
   rwFlapGeo.center();
   rwFlapGeo.scale(RW.flapChordScale, RW.flapChordScale, 1); // chord and thickness (before the span rotation)
   rwFlapGeo.rotateX(Math.PI / 2); // Rotate on geometry: chord on X, span on Y, thickness on Z
+  { // same spoon as the mainplane so the slot gap stays even across the span
+    const fp = rwFlapGeo.attributes.position;
+    for (let p = 0; p < fp.count; p++) fp.setZ(p, fp.getZ(p) + spoonDz(fp.getY(p), rwSpan / 2));
+  }
   rwFlapGeo.computeVertexNormals();
+  rwFlapGeo.computeBoundingBox(); rwFlapGeo.computeBoundingSphere(); // keep picking and raycasts in step with the dip
 
   const rwFlapMesh = new THREE.Mesh(rwFlapGeo, carbonMat);
   rwFlapMesh.rotation.set(0, 0, 0); // 100% horizontal, zero diagonal tilt
   rwFlapMesh.name = 'RearWing_Active_UpperFlap_Mesh';
+  rwFlapMesh.userData.spoonDip = RW.spoonDip ?? 0.25; // the livery aims the ORACLE decal at the dipped centre
   rwFlapPivot.add(rwFlapMesh);
 
   // Backward-Facing 100% Upright Bold ORACLE Wordmark
@@ -933,7 +975,10 @@ export function createActiveWingsBodywork(options = {}) {
     };
 
     const numZ = stations.length;
-    const numX = 12; // Chord segments
+    const numX = 16; // Chord segments
+    // leading edge curls inward (toward the car) over the first part of the chord (R10)
+    const LC = RW.endplate.leCurl || { width: 0, depth: 0 };
+    const curlAt = (u) => (u < LC.width ? LC.depth * Math.pow(1 - u / LC.width, 2) : 0);
     const verts = [];
     const uvs = [];
     const indices = [];
@@ -942,11 +987,10 @@ export function createActiveWingsBodywork(options = {}) {
     for (let i = 0; i < numZ; i++) {
       const st = stations[i];
       const z = st.z;
-      const y = side * st.yOuter;
       for (let j = 0; j <= numX; j++) {
         const u = j / numX;
         const x = THREE.MathUtils.lerp(st.xFwd, st.xAft, u);
-        verts.push(x, y, z);
+        verts.push(x, side * (st.yOuter - curlAt(u)), z);
         uvs.push(u, i / (numZ - 1));
       }
     }
@@ -973,11 +1017,10 @@ export function createActiveWingsBodywork(options = {}) {
     for (let i = 0; i < numZ; i++) {
       const st = stations[i];
       const z = st.z;
-      const y = side * st.yInner;
       for (let j = 0; j <= numX; j++) {
         const u = j / numX;
         const x = THREE.MathUtils.lerp(st.xFwd, st.xAft, u);
-        verts.push(x, y, z);
+        verts.push(x, side * (st.yInner - curlAt(u)), z);
         uvs.push(u, i / (numZ - 1));
       }
     }
@@ -1107,7 +1150,8 @@ export function createActiveWingsBodywork(options = {}) {
     stations.forEach((st, i) => {
       for (let j = 0; j <= NC; j++) {
         const u = j / NC, x = THREE.MathUtils.lerp(st.xFwd + 0.05, st.xAft - 0.05, u);
-        ig.push(x, side * (st.yInner - 0.012), st.z);
+        const uf = (x - st.xFwd) / (st.xAft - st.xFwd);
+        ig.push(x, side * (st.yInner - 0.012 - curlAt(uf)), st.z);
         iuv.push(isLeft ? 1 - u : u, (st.z - IZ0) / (IZ1 - IZ0));
       }
       if (i < stations.length - 1) for (let j = 0; j < NC; j++) {
@@ -1231,6 +1275,7 @@ export function createActiveWingsBodywork(options = {}) {
     return m;
   };
   const addActuator = (pd) => {
+    if (pd.mast) pylonBlade(pd.mast, () => pd.mastChord, pd.mastThickness, 0, 'RearWing_Actuator_Mast');
     const pod = new THREE.Mesh(new THREE.CapsuleGeometry(pd.radius, pd.length, 6, 14), carbonMat);
     pod.name = 'RearWing_Actuator_Pod';
     pod.rotation.set(0, 0, Math.PI / 2); // capsule axis along X

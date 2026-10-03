@@ -298,7 +298,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const b = carBox(flap); const W = b.max.y - b.min.y;
     // Seen from behind, the viewer's right is the car's right (+Y): up = +Z gives that.
     project('RearWing_Flap_ORACLE', flap, {
-      origin: [(b.min.x + b.max.x) / 2 + 3.6, 0, b.max.z + 4.8], dir: [-0.6, 0, -0.8],
+      origin: [(b.min.x + b.max.x) / 2 + 3.6, 0, b.max.z + 4.8 - (flap.userData.spoonDip || 0)], dir: [-0.6, 0, -0.8], // aim at the dipped centre
       up: [0, 0, 1], size: [W * 0.78, W * 0.78 / 8, 1.2], texture: tex.rwFlap,
     });
   }

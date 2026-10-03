@@ -321,8 +321,9 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   const seatMesh = new THREE.Mesh(seatGeo, mats.carbonMatteStructural);
   seatMesh.rotation.x = Math.PI / 2;
   // Local Y is height (becomes world Z after Rx(90deg)), local Z is width:
-  seatMesh.scale.set(1, 0.75, 0.75);       // 5.2 dm shell -> 3.9 dm tall, 2.85 dm wide
-  seatMesh.position.set(12.5, 0, 2.65);    // base rests on tub floor (Z 0.6), top ~4.6
+  // R9: the driver sits low, so the seat back stays under the cockpit rim (Z 4.2)
+  seatMesh.scale.set(1, 0.62, 0.75);       // 5.2 dm shell -> 3.2 dm tall, 2.85 dm wide
+  seatMesh.position.set(12.5, 0, 2.31);    // base rests on tub floor (Z ~0.7), top ~3.9
   seatMesh.castShadow = true;
   seatGroup.add(seatMesh);
 
@@ -330,7 +331,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   const beltMat = new THREE.MeshStandardMaterial({ color: 0x0a1018, roughness: 0.85, metalness: 0.05 });
   for (const by of [-0.65, 0.65]) {
     const sBeltPoints = [
-      new THREE.Vector3(15.5, by, 4.8),
+      new THREE.Vector3(15.3, by, 3.95), // over the shoulders, under the rim
       new THREE.Vector3(13.8, by * 0.9, 3.8),
       new THREE.Vector3(11.8, by * 0.5, 2.8),
       new THREE.Vector3(10.8, 0, 2.4)
