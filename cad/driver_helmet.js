@@ -15,8 +15,8 @@ export const HELMET_SPEC = {
   centre: [14.0, 0.0, 6.15],
   front: 1.30, rear: 1.42, halfWidth: 1.12, top: 1.22, // shell radii (dm)
   sideFlat: 2.5,                 // superellipse exponent (2 = round, higher = flatter sides)
-  rimRear: -0.80, rimFront: -1.18, // bottom edge height (dm below the centre) at the back / chin
-  visor: { az: 66, elLo: -0.12, elHi: 0.30 },   // degrees either side of straight ahead, elevation rad
+  rimRear: -0.80, rimFront: -1.26, // bottom edge height (dm below the centre) at the back / chin
+  visor: { az: 66, elLo: -0.12, elHi: 0.30, cornerRise: 0.13, cornerDrop: 0.09 }, // edges taper so the opening has rounded corners   // degrees either side of straight ahead, elevation rad
   strip: { az: 62, elLo: 0.30, elHi: 0.40 },    // ballistic (Zylon) strip just above the visor
   peak: { az: 58, el: 0.41, out: 0.09 },        // small lip above the visor
   pivot: { el: 0.10, r: 0.17 },                 // visor pivot covers on the temples
@@ -58,7 +58,7 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
     const d = dir(a, e);
     const ax = d.x < 0 ? S.front : S.rear;
     // chin bar: the lower front pushes forward a little
-    const chin = d.x < 0 && d.z < 0 ? 1 + 0.08 * Math.min(1, -d.z * 2) * Math.cos(a) ** 2 : 1;
+    const chin = d.x < 0 && d.z < 0 ? 1 + 0.14 * Math.min(1, -d.z * 2) * Math.cos(a) ** 2 : 1;
     const n = S.sideFlat;
     const f = Math.abs(d.x / (ax * chin)) ** n + Math.abs(d.y / S.halfWidth) ** n + Math.abs(d.z / S.top) ** 2.2;
     return 1 / Math.pow(f, 1 / n);
@@ -75,7 +75,8 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
     const pos = [], uv = [], idx = [];
     const layers = thick > 0 ? 2 : 1;
     for (let L = 0; L < layers; L++) for (let i = 0; i <= na; i++) for (let j = 0; j <= ne; j++) {
-      const a = a0 + (a1 - a0) * (i / na), e = e0 + (e1 - e0) * (j / ne);
+      const t = i / na, E0 = typeof e0 === 'function' ? e0(t) : e0, E1 = typeof e1 === 'function' ? e1(t) : e1;
+      const a = a0 + (a1 - a0) * t, e = E0 + (E1 - E0) * (j / ne);
       const p = surf(a, e, lift + (L ? thick : 0)); pos.push(p.x, p.y, p.z); uv.push(i / na, j / ne);
     }
     const id = (L, i, j) => L * (na + 1) * (ne + 1) + i * (ne + 1) + j;
@@ -94,7 +95,7 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   // ---- Materials (helmet paint is its own gloss clear-coat, not the car's matte paint)
   const shellMat = new THREE.MeshPhysicalMaterial({ map: helmetTexture(S.colours), roughness: 0.28, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.06 });
   shellMat.name = 'Helmet_GlossPaint';
-  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x0b0d12, roughness: 0.05, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.02, iridescence: 0.6, iridescenceIOR: 1.6, side: THREE.DoubleSide });
+  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x2c3858, roughness: 0.12, metalness: 0.35, envMapIntensity: 1.6, sheen: 0.6, sheenColor: 0x6a4cff, clearcoat: 1, clearcoatRoughness: 0.02, iridescence: 0.6, iridescenceIOR: 1.6, side: THREE.DoubleSide });
   visorMat.name = 'Helmet_Visor_SmokedIridium';
   const blackTrim = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.55, metalness: 0.1, side: THREE.DoubleSide });
   blackTrim.name = 'Helmet_BlackRubberTrim';
@@ -136,12 +137,14 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
 
   // ---- Visor (smoked iridium), its rubber seal and the peak
   const V = S.visor;
-  group.add(patch(d2r(-V.az), d2r(V.az), V.elLo, V.elHi, 0.012, visorMat, 'Helmet_Visor_Polycarbonate', 36, 8, 0.012));
-  // seal: a thin raised frame round the visor opening
+  const vs = (t) => Math.abs(2 * t - 1) ** 3;            // 0 in the middle, 1 at the visor ends
+  const vLo = (t) => V.elLo + V.cornerRise * vs(t), vHi = (t) => V.elHi - V.cornerDrop * vs(t);
+  group.add(patch(d2r(-V.az), d2r(V.az), vLo, vHi, 0.012, visorMat, 'Helmet_Visor_Polycarbonate', 48, 8, 0.012));
+  // seal: a thin raised frame round the visor opening (follows the rounded outline)
   const seal = new THREE.Group(); seal.name = 'Helmet_VisorGasket';
-  seal.add(patch(d2r(-V.az - 3), d2r(V.az + 3), V.elLo - 0.035, V.elLo, 0.018, blackTrim, 'Helmet_VisorGasket_Lower', 36, 2));
-  seal.add(patch(d2r(-V.az - 3), d2r(-V.az), V.elLo, V.elHi, 0.018, blackTrim, 'Helmet_VisorGasket_Right', 2, 8));
-  seal.add(patch(d2r(V.az), d2r(V.az + 3), V.elLo, V.elHi, 0.018, blackTrim, 'Helmet_VisorGasket_Left', 2, 8));
+  seal.add(patch(d2r(-V.az), d2r(V.az), (t) => vLo(t) - 0.035, vLo, 0.018, blackTrim, 'Helmet_VisorGasket_Lower', 48, 2));
+  seal.add(patch(d2r(-V.az - 3), d2r(-V.az), vLo(0), vHi(0), 0.018, blackTrim, 'Helmet_VisorGasket_Right', 2, 8));
+  seal.add(patch(d2r(V.az), d2r(V.az + 3), vLo(1), vHi(1), 0.018, blackTrim, 'Helmet_VisorGasket_Left', 2, 8));
   group.add(seal);
   const St = S.strip;
   group.add(patch(d2r(-St.az), d2r(St.az), St.elLo, St.elHi, 0.014, zylon, 'Helmet_BallisticZylonStrip', 32, 3, 0.01));
