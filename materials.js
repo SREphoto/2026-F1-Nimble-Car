@@ -442,13 +442,16 @@ export function addCarbonSplit(material, { splitY = 1.2, stripeColor = 0xd8102c,
     uCamoScale: { value: camoScale },
     uStripeColor: { value: new THREE.Color(stripeColor) },
     uCfScale: { value: towsPerDm },
+    // world -> 'car at load pose' frame, so the split and camo stay attached to the car when it
+    // drives / climbs on the circuit (identity = plain world space)
+    uSpFrame: { value: new THREE.Matrix4() },
   };
   material.userData.carbonSplit = uniforms;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vSpWorld;\nvarying vec3 vCfPos;\nvarying vec3 vCfNrm;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCfPos = position;\nvCfNrm = normal;\nvSpWorld = (modelMatrix * vec4(position, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nuniform mat4 uSpFrame;\nvarying vec3 vSpWorld;\nvarying vec3 vCfPos;\nvarying vec3 vCfNrm;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCfPos = position;\nvCfNrm = normal;\nvSpWorld = (uSpFrame * modelMatrix * vec4(position, 1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
 varying vec3 vSpWorld;

@@ -377,7 +377,14 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
 
   report.ms = Math.round(((typeof performance !== 'undefined') ? performance.now() : 0) - t0);
   if (verbose || (typeof location !== 'undefined' && /[?&]liveryDebug/.test(location.search))) console.info('[livery]', JSON.stringify(report));
-  carModel.userData.livery = { report, carPaint, splitUniforms };
+  // Keep the paint/carbon split and camo fixed to the car body when the car moves (track mode)
+  const loadPose = carModel.matrixWorld.clone();
+  const _inv = new THREE.Matrix4();
+  const syncFrame = () => {
+    carModel.updateMatrixWorld();
+    splitUniforms.uSpFrame.value.multiplyMatrices(loadPose, _inv.copy(carModel.matrixWorld).invert());
+  };
+  carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame };
   return report;
 }
 

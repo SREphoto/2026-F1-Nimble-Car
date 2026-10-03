@@ -16,6 +16,7 @@ import { createFullCarAssembly } from './cad/full_car3d.js';
 import { createTrackEnvironment } from './cad/track_environment.js';
 import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
+import { initTrackMode } from './cad/track/track_mode.js';
 import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 
@@ -56,7 +57,7 @@ scene.fog = new THREE.FogExp2(0x3a5676, 0.0015);
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 400);
 camera.position.set(-36, 18, 42); // 3/4 front view framing car on finish line
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true }); // log depth: full-scale circuit (km) + mm car detail
 renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -432,6 +433,7 @@ window.setCameraView = function(viewName) {
     });
   }
   updateLcdDisplay();
+  carModel?.userData?.livery?.syncFrame?.();
   renderer.render(scene, camera);
 };
 
@@ -582,6 +584,9 @@ function animate() {
     state.speedKmH = Math.max(0, state.speedKmH - 30 * dt);
   }
 
+  // Red Bull Ring: on-track vehicle model (overrides speed/RPM while driving)
+  trackMode?.update(dt);
+
   // Update Procedural Sound Engine
   soundEngine.update({
     rpm: state.rpm,
@@ -626,7 +631,17 @@ function animate() {
   if (!state.tourActive) {
     controls.update();
   }
+  trackMode?.beforeRender(dt);
+  carModel?.userData?.livery?.syncFrame?.(); // paint split follows the car on the circuit
   renderer.render(scene, camera);
+}
+
+// Full-scale Red Bull Ring circuit, driving + chase cameras (cad/track/*)
+let trackMode = null;
+try {
+  trackMode = initTrackMode({ scene, camera, controls, renderer, carModel, state, sunLight, ambientLight, legacyEnv: trackEnv });
+} catch (err) {
+  console.error('Red Bull Ring circuit failed to build:', err);
 }
 
 animate();
