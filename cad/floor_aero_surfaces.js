@@ -18,7 +18,7 @@
  *   * Central mousehole expansion cutout around starter shaft / rear impact structure
  * 
  * Universal Datum:
- * - Floor Datum Plane at Z = 0.1 dm (Jabroc plank rubs on ground at Z = 0.0 dm)
+ * - Floor underside at Z = 0.43 dm; plank bolted beneath it, bottom face at Z = 0.30 dm (static ride height)
  * - Floor span: X in [4.5, 36.5] dm, Width: 15.0 dm (Y in [-7.5, 7.5] dm)
  */
 
@@ -43,10 +43,10 @@ export function createFloorAeroSurfaces(options = {}) {
   floorPlateShape.lineTo(7.5, -7.5);  // Forward floor width expansion
   floorPlateShape.lineTo(26.5, -7.5); // Constant width section
   floorPlateShape.lineTo(28.5, -6.5); // Taper ahead of rear tyre squirt cutout
-  floorPlateShape.lineTo(31.5, -6.5);
-  floorPlateShape.lineTo(36.5, -5.5); // Diffuser trailing edge
-  floorPlateShape.lineTo(36.5, 5.5);
-  floorPlateShape.lineTo(31.5, 6.5);
+  floorPlateShape.lineTo(30.0, -5.4); // Narrow to pass inside the rear tyres (inner face Y = ±5.525)
+  floorPlateShape.lineTo(36.5, -5.2); // Diffuser trailing edge
+  floorPlateShape.lineTo(36.5, 5.2);
+  floorPlateShape.lineTo(30.0, 5.4);
   floorPlateShape.lineTo(28.5, 6.5);
   floorPlateShape.lineTo(26.5, 7.5);
   floorPlateShape.lineTo(7.5, 7.5);
@@ -84,8 +84,10 @@ export function createFloorAeroSurfaces(options = {}) {
       const sExtrude = { steps: 1, depth: 0.04, bevelEnabled: false };
       const sGeo = new THREE.ExtrudeGeometry(strakeShape, sExtrude);
       const sMesh = new THREE.Mesh(sGeo, materials.carbonGloss);
-      sMesh.rotation.x = Math.PI / 2;
-      sMesh.position.set(0, yStart, 0.45);
+      // Underfloor fences hang DOWN from the floor's underside (Z 0.43), ~0.35 dm deep
+      sMesh.rotation.x = -Math.PI / 2;
+      sMesh.scale.y = 0.3;
+      sMesh.position.set(0, yStart, 0.43);
       strakeGroup.add(sMesh);
     }
     floorGroup.add(strakeGroup);
@@ -117,8 +119,8 @@ export function createFloorAeroSurfaces(options = {}) {
     }
 
     // Dual Vertical Carbon Fences Ahead of Rear Tyre (Matching Reference Images 1 & 2!)
-    // Positioned at X = 27.5 dm and 29.0 dm, Y = side * 6.6 dm
-    [27.5, 29.2].forEach((fX, fenceIdx) => {
+    // Positioned at X = 27.5 dm (Y = side * 6.55) and 28.9 dm (Y = side * 5.8, inside the narrowed rear floor)
+    [27.5, 28.9].forEach((fX, fenceIdx) => {
       const fenceShape = new THREE.Shape();
       fenceShape.moveTo(0, 0);
       fenceShape.lineTo(1.4, 0);
@@ -130,10 +132,53 @@ export function createFloorAeroSurfaces(options = {}) {
       const fenceGeo = new THREE.ExtrudeGeometry(fenceShape, fenceExtrude);
       const fenceMesh = new THREE.Mesh(fenceGeo, materials.carbonGloss);
       fenceMesh.rotation.x = Math.PI / 2;
-      fenceMesh.position.set(fX, side * 6.55, 0.45);
+      fenceMesh.position.set(fX, side * (fenceIdx === 0 ? 6.55 : 5.8), 0.45);
       fenceMesh.name = `TyreSquirt_Fence_${fenceIdx}_${side > 0 ? 'L' : 'R'}`;
       edgeGroup.add(fenceMesh);
     });
+
+    // Forward floor-edge fins (refs 08-11): a cascade of cambered vertical vanes on the
+    // floor's leading corner that turn the tyre wake outboard. Extruded straight up (+Z).
+    for (let f = 0; f < 5; f++) {
+      const ch = 1.1 - f * 0.08, camber = side * 0.1;
+      const finShape = new THREE.Shape();
+      finShape.moveTo(-ch / 2, 0);
+      finShape.quadraticCurveTo(0, camber + side * 0.04, ch / 2, 0);
+      finShape.quadraticCurveTo(0, camber - side * 0.04, -ch / 2, 0);
+      const h = 1.45 - f * 0.12;
+      const finGeo = new THREE.ExtrudeGeometry(finShape, { steps: 1, depth: h, bevelEnabled: false });
+      const fin = new THREE.Mesh(finGeo, materials.carbonGloss);
+      fin.position.set(8.0 + f * 0.85, side * (7.05 - f * 0.05), 0.5);
+      fin.rotation.z = side * 0.22; // leading edge toed in, trailing edge outboard
+      fin.castShadow = true;
+      fin.name = `Floor_Edge_Fin_${f + 1}_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(fin);
+    }
+
+    // Bargeboard / sidepod deflector: tall curved panel between the front wheel and the
+    // sidepod inlet, rolled over at the top (kept clear of the front tyre at full lock).
+    {
+      const bbShape = new THREE.Shape();
+      bbShape.moveTo(0, 0);
+      bbShape.lineTo(2.0, 0);
+      bbShape.lineTo(2.0, 2.55);
+      bbShape.quadraticCurveTo(0.9, 3.0, 0, 2.2);
+      bbShape.closePath();
+      const bbGeo = new THREE.ExtrudeGeometry(bbShape, { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 1 });
+      const bb = new THREE.Mesh(bbGeo, materials.carbonGloss);
+      bb.rotation.x = Math.PI / 2;           // shape Y -> world Z (up)
+      bb.rotation.y = 0;
+      bb.position.set(5.2, side * 5.6, 0.5);
+      bb.castShadow = true;
+      bb.name = `Bargeboard_Deflector_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(bb);
+      // Horizontal floor-edge "boomerang" strip joining the deflector foot to the fins
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 0.05), materials.carbonGloss);
+      strip.position.set(7.4, side * 6.6, 1.55);
+      strip.rotation.x = side * 0.25;
+      strip.name = `Floor_Edge_Boomerang_${side > 0 ? 'L' : 'R'}`;
+      edgeGroup.add(strip);
+    }
 
     floorGroup.add(edgeGroup);
   });
@@ -158,14 +203,14 @@ export function createFloorAeroSurfaces(options = {}) {
   const plankGeo = new THREE.ExtrudeGeometry(plankShape, plankExtrude);
   const plankMesh = new THREE.Mesh(plankGeo, materials.jabrocPlank || materials.heatShieldGold);
   plankMesh.rotation.set(0, 0, 0);
-  plankMesh.position.set(0, 0, 0.05); // Bottom datum touches ground at Z = 0
+  plankMesh.position.set(0, 0, 0.31); // Bolted to the floor underside (Z 0.43); plank is the lowest part of the car
   plankGroup.add(plankMesh);
 
   // Precision Countersunk Titanium Skid Pucks with 4x Wear Inspection Holes
   // Positioned along plank length at standardized FIA test locations
   [6.5, 12.0, 18.5, 25.0, 30.5].forEach((puckX, pkIdx) => {
     const puckGroup = new THREE.Group();
-    puckGroup.position.set(puckX, 0, 0.02);
+    puckGroup.position.set(puckX, 0, 0.31); // Flush with the plank's bottom face
 
     // Oval/Rectangular Titanium Puck
     const puckBodyGeo = new THREE.BoxGeometry(0.85, 1.8, 0.04);
@@ -177,6 +222,7 @@ export function createFloorAeroSurfaces(options = {}) {
       [-0.55, 0.55].forEach(hy => {
         const holeGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12);
         const holeMesh = new THREE.Mesh(holeGeo, materials.carbonMatte);
+        holeMesh.rotation.x = Math.PI / 2; // drilled vertically through the puck
         holeMesh.position.set(hx, hy, 0);
         puckGroup.add(holeMesh);
       });
@@ -192,8 +238,10 @@ export function createFloorAeroSurfaces(options = {}) {
         shankLength: 0.06,
         material: materials.titaniumAnodized
       });
-      screw.position.set(0, ty, 0.02);
-      screw.rotation.x = Math.PI;
+      // Fastener axis is local Y: Rx(-90deg) puts the countersunk head flush with the
+      // puck's bottom face and the shank pointing UP into the plank
+      screw.position.set(0, ty, 0);
+      screw.rotation.x = -Math.PI / 2;
       puckGroup.add(screw);
     });
 
@@ -216,7 +264,7 @@ export function createFloorAeroSurfaces(options = {}) {
   diffuserGroup.position.set(28.5, 0, 0.45);
 
   // Diffuser Ramp Surface (Expands from Z = 0.45 dm up to Z = 2.15 dm over 8.0 dm length)
-  const diffWidth = 11.0;
+  const diffWidth = 10.4; // Fits between the rear tyres (inner faces at Y = ±5.525)
   const diffLength = 8.0;
   const diffLift = 1.7; // Height rise
 
