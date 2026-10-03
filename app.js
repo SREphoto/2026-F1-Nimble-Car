@@ -433,6 +433,7 @@ window.setCameraView = function(viewName) {
     });
   }
   updateLcdDisplay();
+  carModel?.userData?.livery?.syncFrame?.();
   renderer.render(scene, camera);
 };
 
@@ -631,6 +632,7 @@ function animate() {
     controls.update();
   }
   trackMode?.beforeRender(dt);
+  carModel?.userData?.livery?.syncFrame?.(); // paint split follows the car on the circuit
   renderer.render(scene, camera);
 }
 
