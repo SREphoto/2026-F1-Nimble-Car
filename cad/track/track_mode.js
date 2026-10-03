@@ -57,10 +57,65 @@ export function initTrackMode(ctx) {
     }
   }
 
+  // ------------------------------------------------------------------ pit lane (OpenStreetMap pit lane polyline)
+  const pit = circuit.pit, PI = circuit.group.userData.pitInfo;
+  const PIT_LIMIT = 80 / 3.6;                       // FIA pit lane speed limit at the Red Bull Ring
+  const pitLen = pit.length;
+  /** nearest point on the pit lane: s (m from the entry end), lat (m, + = right of travel), y */
+  function locatePit(x, z) {
+    let best = 0, bd = Infinity;
+    for (let j = 0; j < pit.n; j += 4) { const d = (pit.x[j] - x) ** 2 + (pit.z[j] - z) ** 2; if (d < bd) { bd = d; best = j; } }
+    for (let j = Math.max(0, best - 4); j <= Math.min(pit.n - 1, best + 4); j++) { const d = (pit.x[j] - x) ** 2 + (pit.z[j] - z) ** 2; if (d < bd) { bd = d; best = j; } }
+    let j0 = Math.min(best, pit.n - 2);
+    let ex = pit.x[j0 + 1] - pit.x[j0], ez = pit.z[j0 + 1] - pit.z[j0];
+    let a = ((x - pit.x[j0]) * ex + (z - pit.z[j0]) * ez) / (ex * ex + ez * ez);
+    if (a < 0 && j0 > 0) { j0--; ex = pit.x[j0 + 1] - pit.x[j0]; ez = pit.z[j0 + 1] - pit.z[j0]; a = ((x - pit.x[j0]) * ex + (z - pit.z[j0]) * ez) / (ex * ex + ez * ez); }
+    const sl = Math.hypot(ex, ez), tx = ex / sl, tz = ez / sl;
+    const ac = Math.max(0, Math.min(1, a));
+    const lat = (x - pit.x[j0] - ex * ac) * (-tz) + (z - pit.z[j0] - ez * ac) * tx;
+    return { j: j0, s: pit.s[j0] + sl * a, lat, y: pit.y[j0] + (pit.y[j0 + 1] - pit.y[j0]) * ac, tx, tz };
+  }
+  function pitAt(s) {
+    s = Math.max(0, Math.min(pitLen - 0.01, s));
+    let j = Math.min(pit.n - 2, Math.floor(s / (pitLen / (pit.n - 1))));
+    while (j > 0 && pit.s[j] > s) j--; while (j < pit.n - 2 && pit.s[j + 1] < s) j++;
+    const a = (s - pit.s[j]) / Math.max(1e-6, pit.s[j + 1] - pit.s[j]);
+    return { x: pit.x[j] + (pit.x[j + 1] - pit.x[j]) * a, z: pit.z[j] + (pit.z[j + 1] - pit.z[j]) * a, rx: -pit.tz[j], rz: pit.tx[j], j };
+  }
+  const pitEntrySp = track.locate(pit.x[0], pit.z[0], -1).sp;   // where the pit lane leaves the track (m from the pole box)
+  // our box: the Red Bull garage, 3rd team from the pit entry after FIA, FOM and McLaren / Mercedes (FIA garage plan,
+  // position along the building estimated at s = 463 m), snapped to the nearest painted box
+  const BOX_S = PI.boxS.reduce((b, s) => (Math.abs(s - 463) < Math.abs(b - 463) ? s : b), PI.boxS[0]);
+  // autopilot pit speed profile: curvature limit, 80 km/h between the pit lane lines, stop at the box
+  const pitVin = new Float64Array(pit.n), pitVout = new Float64Array(pit.n);
+  {
+    for (let j = 0; j < pit.n; j++) {
+      const a = Math.max(0, j - 4), b = Math.min(pit.n - 1, j + 4);
+      const ax = pit.x[j] - pit.x[a], az = pit.z[j] - pit.z[a], bx = pit.x[b] - pit.x[j], bz = pit.z[b] - pit.z[j];
+      const cr = ax * bz - az * bx, la = Math.hypot(ax, az), lb = Math.hypot(bx, bz), lc = Math.hypot(pit.x[b] - pit.x[a], pit.z[b] - pit.z[a]);
+      const k = (a === j || b === j) ? 0 : Math.abs(2 * cr / (la * lb * lc + 1e-9));
+      const den = k - 0.6 * LAT_B, vc = den > 0 ? Math.min(85, Math.sqrt(0.6 * LAT_A / den)) : 85;
+      // 80 km/h between the lines; the pit entry and exit roads are narrow and twisty, so at most about 110 km/h there
+      const lim = pit.s[j] >= PI.lineIn - 12 && pit.s[j] <= PI.lineOut + 3 ? PIT_LIMIT - 0.6 : 30;
+      pitVin[j] = pit.s[j] >= BOX_S ? 0 : Math.min(vc, lim);
+      pitVout[j] = Math.min(vc, lim);
+    }
+    for (let j = pit.n - 2; j >= 0; j--) pitVin[j] = Math.min(pitVin[j], Math.sqrt(pitVin[j + 1] ** 2 + 2 * 9 * (pit.s[j + 1] - pit.s[j])));
+    for (let j = pit.n - 2; j >= 0; j--) pitVout[j] = Math.min(pitVout[j], Math.sqrt(pitVout[j + 1] ** 2 + 2 * 9 * (pit.s[j + 1] - pit.s[j])));
+  }
+  const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  /** autopilot lateral target in the pit lane: centre at the ends, fast lane by the pit wall, box lateral at our box */
+  function pitLatTarget(s) {
+    const fast = -PI.bSide * 2.6;
+    const ends = smooth(s / 70) * smooth((pitLen - s) / 70);
+    const box = smooth(1 - (Math.abs(s - BOX_S) - 4) / 28);
+    return fast * ends * (1 - box) + PI.boxLat * box;
+  }
+
   // ------------------------------------------------------------------ vehicle state (metres, rear-axle reference)
-  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0 };
+  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0, inPit: false, pitS: -1, pitLimiter: false };
   const ride = createRideModel(ctx.rideSpec);   // body heave / pitch / roll + per-corner travel (data in ride_model.js)
-  const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0 };
+  const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0, pitReq: false, pitPhase: null, pitT: 0 };
   const keys = new Set();
   const tmp = { f: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), m: new THREE.Matrix4(), front: new THREE.Vector3(), rear: new THREE.Vector3() };
 
@@ -68,7 +123,7 @@ export function initTrackMode(ctx) {
     const F = track.at(0);
     // origin is the pole box: front axle at (0,0,0) facing -X
     car.x = -F.tx * WHEELBASE; car.z = -F.tz * WHEELBASE; car.h = Math.atan2(F.tz, F.tx);
-    car.x += 0; car.v = 0; car.idx = -1; car.rlIdx = -1; car.lapStart = null; car.lap = 0; car.sectors = [null, null, null];
+    car.x += 0; car.v = 0; car.idx = -1; car.rlIdx = -1; car.inPit = false; car.lapStart = null; car.lap = 0; car.sectors = [null, null, null];
     car.sp = car.prevSp = 0;
     poseCar();
   }
@@ -83,6 +138,7 @@ export function initTrackMode(ctx) {
     car.idx = Lr.i;
     const frx = car.x + fx * WHEELBASE, frz = car.z + fz * WHEELBASE;
     const Lf = surfaceAt(frx, frz, Lr.i);
+    if (car.inPit) { Lr.y = locatePit(car.x, car.z).y; Lf.y = locatePit(frx, frz).y; }
     tmp.rear.set(car.x, Lr.y, car.z); tmp.front.set(frx, Lf.y, frz);
     tmp.f.subVectors(tmp.front, tmp.rear).normalize();
     tmp.r.set(-fz, 0, fx).normalize();
@@ -143,6 +199,7 @@ export function initTrackMode(ctx) {
           drive = state.throttle * Math.min(13.5, POWER / (MASS * Math.max(v, 4)));
           if (gearN >= 3) drive *= THREE.MathUtils.clamp(v / (0.3 * vg), 0.3, 1); // lugging a tall gear
           drive *= THREE.MathUtils.clamp((vg - v) / 2, 0, 1);                      // limiter
+          if (car.pitLimiter) drive *= THREE.MathUtils.clamp((PIT_LIMIT - v) / 1.5, 0, 1); // pit lane speed limiter
         }
       } else if (g === 'R' && v > -6) drive = -state.throttle * 4;
     }
@@ -152,7 +209,7 @@ export function initTrackMode(ctx) {
     const kerbEdge = edge + KERB_W;
     const runEdge = kerbEdge + (L.lat > 0 ? track.d.runR[L.i] : track.d.runL[L.i]);
     const gravEdge = kerbEdge + (L.lat > 0 ? track.d.gravR[L.i] : track.d.gravL[L.i]);   // gravel starts right behind the kerb
-    car.surf = absLat <= kerbEdge ? 'asphalt' : absLat <= gravEdge ? 'gravel' : absLat <= runEdge ? 'runoff' : 'grass';
+    car.surf = car.inPit ? 'asphalt' : absLat <= kerbEdge ? 'asphalt' : absLat <= gravEdge ? 'gravel' : absLat <= runEdge ? 'runoff' : 'grass';
     const surfDrag = car.surf === 'gravel' ? 7 : car.surf === 'grass' ? 2.5 : 0;
     const kd = state.aeroMode === 'X_MODE' ? 0.00085 : 0.00118;
     let a = drive - kd * v * Math.abs(v) - 9.81 * Math.sin(car.pitch || 0) - Math.sign(v) * (0.25 + surfDrag);
@@ -173,7 +230,9 @@ export function initTrackMode(ctx) {
     car.x += Math.cos(car.h) * nv * dt;
     car.z += Math.sin(car.h) * nv * dt;
     // barriers
+    updatePit();
     for (const pt of [[car.x, car.z, 0], [car.x + Math.cos(car.h) * WHEELBASE, car.z + Math.sin(car.h) * WHEELBASE, 1]]) {
+      if (pitBarrier(pt[0], pt[1])) continue;
       const Lb = surfaceAt(pt[0], pt[1], car.idx);
       const lim = Lb.lat > 0 ? Lb.barR - 1.0 : Lb.barL - 1.0;
       if (Math.abs(Lb.lat) > lim) {
@@ -191,6 +250,55 @@ export function initTrackMode(ctx) {
     poseCar();
   }
 
+  // ------------------------------------------------------------------ pit lane state: drive in, limiter, pit wall
+  function trackEdgeInfo(x, z) {
+    const Lt = surfaceAt(x, z, car.idx);
+    return { Lt, onTrack: Math.abs(Lt.lat) <= (Lt.lat > 0 ? Lt.wr : Lt.wl) + KERB_W, offTrack: Math.abs(Lt.lat) > (Lt.lat > 0 ? Lt.wr : Lt.wl) + KERB_W + 0.5 };
+  }
+  function updatePit() {
+    const cx = car.x + Math.cos(car.h) * WHEELBASE * 0.5, cz = car.z + Math.sin(car.h) * WHEELBASE * 0.5;
+    const Lp = locatePit(cx, cz);
+    const inLane = Math.abs(Lp.lat) < PI.PW / 2 - 0.2 && Lp.s > 2 && Lp.s < pitLen - 2;
+    if (!car.inPit) {
+      // drive in: inside the pit lane and off the race track (or the Autopilot pit stop is on its way in)
+      if (inLane && (mode.pitPhase === 'approach' || trackEdgeInfo(cx, cz).offTrack)) car.inPit = true;
+    } else {
+      // drive out: the end of the pit lane, or back onto the track at the entry (driver changed their mind) or exit
+      const auto = mode.autopilot && mode.pitPhase;
+      const atEnd = Lp.s > pitLen - 70 && (!auto || mode.pitPhase === 'out');
+      const atEntry = Lp.s < 45 && !auto;
+      if (Lp.s >= pitLen - 3 || ((atEnd || atEntry) && trackEdgeInfo(cx, cz).onTrack && Math.abs(Lp.lat) > PI.PW / 2 - 0.5)) car.inPit = false;
+    }
+    car.pitS = car.inPit ? Lp.s : -1;
+    car.pitLat = Lp.lat;
+    car.pitLimiter = car.inPit && Lp.s >= PI.lineIn && Lp.s <= PI.lineOut;
+  }
+  /** pit lane walls for one corner point of the car. true = the point was handled by the pit lane (skip track barriers) */
+  function pitBarrier(x, z) {
+    const Lp = locatePit(x, z);
+    const wallHere = PI.wallJ[Math.max(0, Math.min(pit.n - 1, Lp.j))] === 1;
+    const towardTrack = Lp.lat * Math.sign(PI.wallLat);   // + = toward the track side of the pit lane
+    const wallPos = Math.abs(PI.wallLat);
+    let push = 0;
+    if (car.inPit) {
+      if (wallHere && towardTrack > wallPos - 1.0) push = towardTrack - (wallPos - 1.0);                     // pit wall
+      else if (-towardTrack > PI.PW / 2 + 4.0) push = towardTrack + (PI.PW / 2 + 4.0);                        // garage fronts
+      if (push) hitPit(Lp, push);
+      return true;
+    }
+    // on the race track side of the pit wall: keep the car off it
+    if (wallHere && Lp.s > 0 && Lp.s < pitLen && towardTrack > wallPos && towardTrack < wallPos + 1.0) hitPit(Lp, towardTrack - (wallPos + 1.0));
+    return false;
+  }
+  function hitPit(Lp, push) {   // push > 0 moves the car away from the track side, < 0 toward it
+    const rx = -Lp.tz, rz = Lp.tx, sgn = Math.sign(PI.wallLat);
+    car.x -= rx * sgn * push; car.z -= rz * sgn * push;
+    car.v *= 0.55; car.hits++;
+    const th = Math.atan2(Lp.tz, Lp.tx) + (car.v < 0 ? Math.PI : 0);
+    const dh = ((th - car.h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    car.h += dh * 0.5;
+  }
+
   // ------------------------------------------------------------------ autopilot (pure pursuit on the TUM race line)
   function nearestRL(x, z) {
     let best = -1, bd = Infinity;
@@ -200,6 +308,11 @@ export function initTrackMode(ctx) {
   }
   function autopilot(dt) {
     ensureEngine();
+    if (mode.pitReq && !mode.pitPhase) {
+      const dE = ((pitEntrySp - car.sp) % track.length + track.length) % track.length;
+      if (dE < 260 && !car.inPit) mode.pitPhase = 'approach';
+    }
+    if (mode.pitPhase) { pitAutopilot(dt); return; }
     const v = Math.max(0, car.v);
     const i0 = nearestRL(car.x, car.z);
     const Ld = THREE.MathUtils.clamp(5 + 0.42 * v, 7, 42);
@@ -224,6 +337,64 @@ export function initTrackMode(ctx) {
     }
   }
   mode.pace = 1.0;
+  /** Autopilot pit stop: leave the track at the pit entry, 80 km/h between the lines, stop at our box, drive out */
+  function pitAutopilot(dt) {
+    const v = Math.max(0, car.v);
+    const cx = car.x + Math.cos(car.h) * WHEELBASE * 0.5, cz = car.z + Math.sin(car.h) * WHEELBASE * 0.5;
+    let s;                                              // car centre, metres along the pit lane (negative before the entry)
+    if (car.inPit) s = car.pitS;
+    else if (mode.pitPhase === 'approach') {
+      const dE = ((pitEntrySp - car.sp) % track.length + track.length) % track.length;
+      s = dE > track.length / 2 ? locatePit(cx, cz).s : -dE + 1.7;
+      if (s > 60) { mode.pitPhase = null; mode.pitReq = false; $('rbr-pit')?.classList.remove('active'); car.rlIdx = -1; return; } // missed the entry
+    }
+    else {
+      const Lp = locatePit(cx, cz);
+      if (Math.abs(Lp.lat) < 25 && Lp.s < pitLen - 6) s = Lp.s;
+      else { mode.pitPhase = null; mode.pitReq = false; $('rbr-pit')?.classList.remove('active'); car.rlIdx = -1; return; }   // back on the track: normal Autopilot
+    }
+    if (car.inPit && mode.pitPhase === 'approach') mode.pitPhase = 'in';
+    // steering: pure pursuit on the pit lane (on the track before the entry)
+    const Ld = THREE.MathUtils.clamp(4 + 0.4 * v, 6, 30);
+    const st = s + Ld;
+    let tx, tz;
+    if (st < 0) { const F = track.at(pitEntrySp + st); const L0 = track.locate(pit.x[0], pit.z[0], -1).lat; tx = F.x + F.rx * L0; tz = F.z + F.rz * L0; }
+    else { const P = pitAt(st), lt = pitLatTarget(st); tx = P.x + P.rx * lt; tz = P.z + P.rz * lt; }
+    const dx = tx - car.x, dz = tz - car.z;
+    const fwd = dx * Math.cos(car.h) + dz * Math.sin(car.h), rgt = dx * -Math.sin(car.h) + dz * Math.cos(car.h);
+    const Lr = Math.max(4, Math.hypot(dx, dz));
+    setSteer(THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(Math.atan(2 * WHEELBASE * Math.sin(Math.atan2(rgt, fwd)) / Lr)), -30, 30));
+    // speed target
+    let vt;
+    const prof = mode.pitPhase === 'out' ? pitVout : pitVin;
+    const at = q => prof[Math.max(0, Math.min(pit.n - 1, Math.round(q / (pitLen / (pit.n - 1)))))];
+    if (s < 0) vt = Math.min(rlV[nearestRL(car.x, car.z)], Math.sqrt(at(0) ** 2 + 2 * 9 * -s));
+    else vt = Math.min(at(s), at(s + 4 + v * 0.3));
+    if (mode.pitPhase === 'in') {
+      const left = BOX_S - s;
+      vt = Math.min(vt, Math.sqrt(2 * 4 * Math.max(0, left - 0.2)));
+      if (left < 0.6 && v < 1.0) { mode.pitPhase = 'stop'; mode.pitT = 0; }
+    }
+    if (mode.pitPhase === 'stop') {
+      setThrottle(0); setBrake(180); mode.pitT += dt;
+      if (mode.pitT > 2.4) mode.pitPhase = 'out';      // about a 2.4 s stop, a typical 2026 time
+      return;
+    }
+    const err = vt - v;
+    if (err > -0.5) { setThrottle(THREE.MathUtils.clamp(0.3 + err * 0.3, 0, 1)); setBrake(0); }
+    else { setThrottle(0); setBrake(THREE.MathUtils.clamp(-err * 20, 0, 180)); }
+    const now = mode.simTime;
+    if (now - mode.lastShift > 0.18) {
+      let target = 1; while (target < 8 && v > GEAR_VMAX[target] * 0.93) target++;
+      if (String(state.gear) !== String(target)) { selectGear(target); mode.lastShift = now; }
+    }
+    if (mode.pitPhase === 'out' && s >= pitLen - 6) { mode.pitPhase = null; mode.pitReq = false; $('rbr-pit')?.classList.remove('active'); car.rlIdx = -1; }
+  }
+  function requestPitStop(on = true) {
+    mode.pitReq = on; if (!on) mode.pitPhase = null;
+    $('rbr-pit')?.classList.toggle('active', on);
+    if (on && !mode.autopilot) setAutopilot(true);
+  }
 
   // ------------------------------------------------------------------ keyboard driving
   const keyHandler = (e, down) => {
@@ -337,6 +508,7 @@ export function initTrackMode(ctx) {
   }
   function setAutopilot(on) {
     mode.autopilot = on;
+    if (!on) { mode.pitReq = false; mode.pitPhase = null; $('rbr-pit')?.classList.remove('active'); }
     $('rbr-auto')?.classList.toggle('active', on);
     if (on) { car.rlIdx = -1; if (!mode.driving) setDriving(true); }
   }
@@ -373,6 +545,7 @@ export function initTrackMode(ctx) {
     <div class="rbr-row">
       <button type="button" id="rbr-drive" class="rbr-btn" title="Drive the car with the throttle / brake / steering / gear controls (or W A S D, Q/E gears, C camera)">Drive</button>
       <button type="button" id="rbr-auto" class="rbr-btn" title="Autopilot follows the TUM race line using the same throttle/brake/steer/gear controls">Autopilot lap</button>
+      <button type="button" id="rbr-pit" class="rbr-btn" title="Autopilot drives into the pit lane at the next pit entry, keeps to 80 km/h, stops at the Red Bull box and drives out">Autopilot pit stop</button>
       <button type="button" id="rbr-reset" class="rbr-btn" title="Back to the pole-position grid box">Reset to grid</button>
     </div>
     <div class="rbr-row">
@@ -402,6 +575,7 @@ export function initTrackMode(ctx) {
   document.head.appendChild(css);
   $('rbr-drive')?.addEventListener('click', () => setDriving(!mode.driving));
   $('rbr-auto')?.addEventListener('click', () => setAutopilot(!mode.autopilot));
+  $('rbr-pit')?.addEventListener('click', () => requestPitStop(!mode.pitReq));
   $('rbr-reset')?.addEventListener('click', () => { setAutopilot(false); setThrottle(0); setBrake(0); setSteer(0); parkOnGrid(); camState.init = false; });
   $('rbr-classic')?.addEventListener('click', () => applyCircuit(!mode.circuit));
   document.querySelectorAll('.rbr-cam').forEach(b => b.addEventListener('click', () => { if (!mode.circuit) applyCircuit(true); setCam(b.dataset.cam); }));
@@ -456,8 +630,9 @@ export function initTrackMode(ctx) {
     let label = mode.driving ? `${(car.sp / 1000).toFixed(2)} km` : 'Grid P1';
     const turns = circuit.group.userData.turns;
     for (const t of turns) { const d = car.sp - t.sp; if (d > -80 && d < 60) label = `Turn ${t.n}${TURN_NAMES[t.n - 1] ? ' ' + TURN_NAMES[t.n - 1] : ''}`; }
+    if (car.inPit) label = 'Pit lane';
     $('rbr-pos').textContent = label;
-    $('rbr-surf').textContent = car.surf !== 'asphalt' ? car.surf.toUpperCase() : '';
+    $('rbr-surf').textContent = mode.pitPhase === 'stop' ? 'PIT STOP' : car.pitLimiter ? 'PIT LIMITER 80' : car.inPit ? 'PIT LANE' : mode.pitReq ? 'BOX THIS LAP' : car.surf !== 'asphalt' ? car.surf.toUpperCase() : '';
     drawMap();
   }
 
@@ -527,7 +702,7 @@ export function initTrackMode(ctx) {
         if (sc.far !== 4000) { sc.near = 10; sc.far = 4000; sc.left = -160; sc.right = 160; sc.top = 160; sc.bottom = -160; sc.updateProjectionMatrix(); }
       }
     },
-    setDriving, setAutopilot, setCam, parkOnGrid, applyCircuit,
+    setDriving, setAutopilot, setCam, parkOnGrid, applyCircuit, requestPitStop, locatePit, pitAt, BOX_S, pitEntrySp,
     /** teleport to distance sp (m) from the pole box, optionally with speed (m/s) */
     teleport(sp, v = 0, lat = 0) {
       const F = track.at(sp);
