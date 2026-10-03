@@ -79,16 +79,13 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
 12. **Gravel and run-off traced from aerial photos.** Trace the gravel traps, painted run-off and grass edges from
     the basemap.at aerial photos (open data). This replaces the estimated sizes of the Turn 4 and Turn 6 traps and
     fills gaps in the OpenStreetMap grass areas.
-13. **Drivable pit lane.** The pit lane is scenery today (the pit wall blocks the way in). Open the pit entry and
-    exit from the OpenStreetMap lane, add the 80 km/h limit between the pit lane lines, and let Autopilot do a pit
-    stop. Needs changes in `track_mode.js` only.
+13. **Drivable pit lane.** Done on the branch `track/rbr-bull-pits-garages`, see "Round 2" below.
 14. **2026 overtaking zones.** From 2026 the DRS lines are replaced. F1 lists four Straight Mode zones (start/finish
     straight, Turns 1 to 3, Turns 3 to 4, Turns 8 to 9) and an Overtake detection line just before Turn 10 with
     activation on its exit. The exact distances need the 2026 FIA event notes. Linking them to the Z-MODE / X-MODE
     button needs a change in the car and app code, so it is left for the car side.
-15. **Pit building and paddock.** The FIA pit lane drawing shows 32 garage positions. The painted pit boxes now
-    match that (32, up from 22), but the garage doors on the building are still one repeated picture. Add the race control tower and the Red Bull Wing building (labelled on the FIA map next to the paddock) from
-    their OpenStreetMap outlines.
+15. **Team garages and paddock.** See the garage plan in "Round 2" below. Also add the race control tower and the
+    Red Bull Wing building (labelled on the FIA map next to the paddock) from their OpenStreetMap outlines.
 16. **Lap pace.** Autopilot lap is about 1:18.6. The 2025 pole was 1:03.971. Most of the gap is grip and power in
     the simple driving model. The grip numbers live in `track_mode.js`; car mass, power and downforce belong to the
     car files, so any change there should be agreed with the car side first.
@@ -98,6 +95,43 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
     shapes and seat colours from photos.
 19. **Kerb shapes.** Real kerbs here have a flat inner part and a raised outer part; the model has one gentle slope.
     Model the two parts and give the car a small bump over the raised part.
+
+## Round 2 (October 3, 2026)
+
+### Done
+- **Bull statue rebuilt.** The old one was a few balls and cylinders in shiny steel. The new one follows the photos of the
+  real sculpture by Clemens Neugebauer and Martin Kölldorfer (2012): a standing, charging bull with its head low, horns
+  forward, heavy shoulders, front left leg stepping forward, hind legs pushing back and the tail hanging down. The skin
+  is see-through, like the real welded Corten steel plates with gaps between them, in a weathered rust colour, with a
+  dark steel frame inside. The horns are gold (the real ones are gold leaf, 7 m tip to tip). The grey aluminium arch is
+  made of 20 segments and stands over the bull's middle. Height 17.2 m with the arch. The real bull is described as
+  14.6 m; the model uses that as its length from nose to rump, which matches the photos. Code: `cad/track/rbr_bull.js`.
+  Photos used: Wikimedia Commons, "2021 4 Hours of Red Bull Ring - The Bull.jpg" (United Autosports, CC BY-SA 2.0) and
+  "Streckenverlauf um Stier.jpg" (Lukas Raich, CC BY-SA 4.0).
+- **Drivable pit lane.** A concrete pit wall with a fence now runs along the track side of the pit lane. It is open at
+  the entry (between Turns 9 and 10) and the exit (just after Turn 1), so the car can drive in and out. Between the two pit lane
+  lines the car is held to 80 km/h, the FIA limit. The timing panel shows PIT LANE, PIT LIMITER 80 and PIT STOP.
+- **Autopilot pit stop button.** Press Autopilot pit stop during a lap (or from the grid). The car takes the next pit
+  entry, slows to 80 km/h before the line, stops in the Red Bull box for 2.4 s and drives back onto the track, then
+  carries on with the Autopilot lap. The Red Bull box position (about 460 m into the pit lane) is an estimate from the
+  FIA garage order. A lap with a stop takes about 1:40 instead of 1:18.6; normal Autopilot laps are unchanged.
+
+### Garage plan (not built yet)
+1. **Layout.** 32 garage fronts along the pit building, in the 2026 Austrian GP order from the pit entry (FIA garage
+   plan, in `/workspace/f1-pits-garage/data/pit_garage_spec.json`): FIA (3), FOM (1), marshals and walkway (1),
+   McLaren, Mercedes (with a walkway), Red Bull, Ferrari, Williams, Racing Bulls, walkway, Aston Martin, Haas, Audi,
+   Alpine and Cadillac, 3 garages each. Each garage is about 6 m wide and 4.2 m high (Red Bull Ring brochure).
+2. **Fronts.** For each team: a 3D door frame, a header board with the team name in plain letters, and side panels in the
+   team colours from `/workspace/f1-teams/teams_liveries.json` (for example Red Bull navy #192355 with red #DA2520,
+   McLaren papaya #F77C09, Ferrari red #DF111D). Names and colours only, no logos.
+3. **Open Red Bull garage.** Doors open, light grey floor, overhead light box with screens, two cars on stands, tyre
+   racks, tool chests, wall units and fuel rigs, using the sizes and positions in the garage section of
+   `pit_garage_spec.json`. The car's pit box sits in front of it.
+4. **Other teams.** Closed or half-open doors to keep the frame rate up, with one shared set of simple shapes.
+5. **Checks.** The car stops in front of the Red Bull garage, garage fronts line up with the painted boxes, and the
+   page still loads quickly.
+6. **Car-side note.** A pit stop could also change the tyres in the tyre panel (`cad/tyre_states.js`). That is a car
+   file, so it is left for the car side.
 
 ## Sources
 
