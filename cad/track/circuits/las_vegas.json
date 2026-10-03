@@ -1,0 +1,744 @@
+{
+  "schema_version": 1,
+  "id": "las_vegas",
+  "status": "confirmed",
+  "event": {
+    "round": 21,
+    "grand_prix": "Las Vegas Grand Prix",
+    "weekend": "2026-11-19/2026-11-21",
+    "race_date": "2026-11-21",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Las Vegas Strip Circuit",
+    "common_name": "Las Vegas Strip Circuit",
+    "location": "Paradise, Nevada, United States",
+    "lat": 36.10995,
+    "lon": -115.16217,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2023–present)",
+    "opened": "2023-11-16",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 6201.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 6201.0,
+      "wikipedia_m": 6201.0,
+      "osm_loop_m": 6210.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 6210.0
+    }
+  },
+  "corners": {
+    "count": 17,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "OSM oneway tags / backward roles on the circuit ways",
+    "stated_by_source": "counterclockwise",
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:33.365",
+    "driver": "Max Verstappen",
+    "car": "Red Bull Racing RB21",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/las_vegas.csv",
+    "spacing_m": 5.0,
+    "samples": 1242,
+    "length_m": 6210.2,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "relation",
+      "id": 16696508,
+      "name": "Las Vegas Strip Circuit",
+      "url": "https://www.openstreetmap.org/relation/16696508"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 621,
+    "spacing_m": 10.0,
+    "min_m": 629.7,
+    "max_m": 656.5,
+    "total_change_m": 26.8,
+    "total_climb_per_lap_m": 99.8,
+    "raw_change_m": 29.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Turn 3: adjust right-hand side Inside painted kerb and white line (the wall is in the same position)",
+      "Turn 4: Exit Left-Hand side adjust left track edge. The painted kerb was removed.",
+      "Turn 5 and Turn 6 left-hand side adjustment of painted kerb and white line (the wall is in the same position)"
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Turn 3: adjust right-hand side Inside painted kerb and white line (the wall is in the same position)",
+      "Two patches of Asphalt: one 50m before MP4.8 and the second one 20m after over whole track width",
+      "Patch of Asphalt 40m before Turn 5 over whole track width",
+      "Turn 5 and Turn 6 left-hand side adjustment of painted kerb and white line (the wall is in the same position)",
+      "Two patches of Asphalt: one at MP12.9 and the second one at 30 meters after the MP over the whole track width",
+      "Reprofiling of the concrete barrier before pit entry (after the speed limit board) at the right- hand side."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 25367,
+        "concrete": 2203,
+        "grass": 19150
+      },
+      "barrier_length_m_within_30m": {
+        "wall": 111
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines define\nthe track edges. During Qualifying Session and the Race, each time a driver fails to negotiate the\nlap within the track limits, this will result in that lap time being invalidated by the Stewards.\nAdditionally, each time a driver fails to respect track limits at the apex of turn 17, will result in that\nlap time and the immediately following lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 493.0,
+    "length_all_pit_ways_m": 493.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 6100.0,
+      "lat_lon": [
+        36.10797,
+        -115.163901
+      ]
+    },
+    "exit": {
+      "s_m": 410.0,
+      "lat_lon": [
+        36.111151,
+        -115.160786
+      ]
+    },
+    "osm_ways": [
+      1223479152
+    ],
+    "fia_entry_exit_rules": "14.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n14.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the left\nhand side at the pit entry road after the safety car line 1 will be considered as entering the pit\nlane.\n14.3 For safety reasons, drivers must keep to the left of the solid white line (highlighted blue) at the\npit entry when they are entering the pits.\n14.4 During the reconnaissance laps prior to the Race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit.\n14.5 For the safe and orderly conduct of the event, during any live session, team personnel are\nnot allowed in the pit lane beyond the pit lane barrier near pit entry, as indicated in the picture\nbelow.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "90m after T5"
+      },
+      {
+        "point": "S2",
+        "location": "140m after T12"
+      }
+    ],
+    "speed_trap": "140m before T14",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "10m After T2"
+        },
+        {
+          "label": "Detection 2",
+          "location": "710m After T12"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "20m After T4"
+        },
+        {
+          "label": "Activation 2",
+          "location": "870m Before T14"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 1436531125,
+        "lat_lon": [
+          36.122411,
+          -115.163805
+        ],
+        "s_m": 2620.0
+      },
+      {
+        "kind": "monorail bridge over track",
+        "name": "Las Vegas Monorail",
+        "osm_way": 43875943,
+        "lat_lon": [
+          36.115156,
+          -115.166601
+        ],
+        "s_m": 2630.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 155133670,
+        "lat_lon": [
+          36.125465,
+          -115.168408
+        ],
+        "s_m": 3215.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 146617830,
+        "lat_lon": [
+          36.123074,
+          -115.171066
+        ],
+        "s_m": 3615.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": "Las Vegas Boulevard Overpass",
+        "osm_way": 25724074,
+        "lat_lon": [
+          36.115297,
+          -115.172877
+        ],
+        "s_m": 4505.0
+      },
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 1419057401,
+        "lat_lon": [
+          36.115318,
+          -115.17293
+        ],
+        "s_m": 4510.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 25724071,
+        "lat_lon": [
+          36.11425,
+          -115.172825
+        ],
+        "s_m": 4630.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 133878942,
+        "lat_lon": [
+          36.109263,
+          -115.173236
+        ],
+        "s_m": 5185.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 297110936,
+        "lat_lon": [
+          36.108297,
+          -115.172201
+        ],
+        "s_m": 5345.0
+      },
+      {
+        "kind": "monorail bridge over track",
+        "name": "Las Vegas Monorail",
+        "osm_way": 395310512,
+        "lat_lon": [
+          36.115167,
+          -115.166615
+        ],
+        "s_m": 5780.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Hard Rock Las Vegas",
+        "kind": "construction",
+        "osm_way": 33957359,
+        "lat_lon": [
+          36.121511,
+          -115.175733
+        ],
+        "footprint_m": [
+          511.0,
+          420.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 3975.0,
+        "side": "right",
+        "distance_m": 66.2
+      },
+      {
+        "name": "Fashion Show Mall",
+        "kind": "retail",
+        "osm_way": 180584255,
+        "lat_lon": [
+          36.12729,
+          -115.170818
+        ],
+        "footprint_m": [
+          602.0,
+          320.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 3305.0,
+        "side": "right",
+        "distance_m": 32.7
+      },
+      {
+        "name": "Caesars Palace",
+        "kind": "hotel",
+        "osm_way": 115672893,
+        "lat_lon": [
+          36.11659,
+          -115.175648
+        ],
+        "footprint_m": [
+          503.0,
+          358.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4295.0,
+        "side": "right",
+        "distance_m": 77.5
+      },
+      {
+        "name": "Venetian Expo",
+        "kind": "building",
+        "osm_way": 111367819,
+        "lat_lon": [
+          36.122164,
+          -115.16623
+        ],
+        "footprint_m": [
+          353.0,
+          345.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2915.0,
+        "side": "left",
+        "distance_m": 27.5
+      },
+      {
+        "name": "The Forum Shops at Caesars",
+        "kind": "building",
+        "osm_way": 34068416,
+        "lat_lon": [
+          36.118972,
+          -115.174396
+        ],
+        "footprint_m": [
+          530.0,
+          190.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 4050.0,
+        "side": "right",
+        "distance_m": 14.7
+      },
+      {
+        "name": "Caesars Forum",
+        "kind": "building",
+        "osm_way": 762169780,
+        "lat_lon": [
+          36.118786,
+          -115.166244
+        ],
+        "footprint_m": [
+          323.0,
+          204.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1635.0,
+        "side": "left",
+        "distance_m": 36.0
+      },
+      {
+        "name": "Grand Prix Plaza",
+        "kind": "building",
+        "osm_way": 1198427833,
+        "lat_lon": [
+          36.110003,
+          -115.161829
+        ],
+        "footprint_m": [
+          263.0,
+          245.0
+        ],
+        "height_m": "19.5",
+        "levels": "4",
+        "s_m": 435.0,
+        "side": "left",
+        "distance_m": 10.6
+      },
+      {
+        "name": "Paris Las Vegas",
+        "kind": "retail",
+        "osm_way": 33974140,
+        "lat_lon": [
+          36.112215,
+          -115.171104
+        ],
+        "footprint_m": [
+          330.0,
+          187.0
+        ],
+        "height_m": null,
+        "levels": "5",
+        "s_m": 4765.0,
+        "side": "left",
+        "distance_m": 48.4
+      },
+      {
+        "name": "The Palazzo",
+        "kind": "hotel",
+        "osm_way": 180584269,
+        "lat_lon": [
+          36.12421,
+          -115.168789
+        ],
+        "footprint_m": [
+          271.0,
+          214.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2920.0,
+        "side": "left",
+        "distance_m": 31.7
+      },
+      {
+        "name": "Treasure Island Hotel and Casino",
+        "kind": "building",
+        "osm_way": 33959894,
+        "lat_lon": [
+          36.124554,
+          -115.171272
+        ],
+        "footprint_m": [
+          264.0,
+          180.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3485.0,
+        "side": "right",
+        "distance_m": 17.7
+      },
+      {
+        "name": "Flamingo Las Vegas",
+        "kind": "hotel",
+        "osm_way": 116761428,
+        "lat_lon": [
+          36.116477,
+          -115.172142
+        ],
+        "footprint_m": [
+          219.0,
+          212.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4330.0,
+        "side": "left",
+        "distance_m": 27.9
+      },
+      {
+        "name": "Harrah's Showroom",
+        "kind": "building",
+        "osm_way": 128622185,
+        "lat_lon": [
+          36.119332,
+          -115.170976
+        ],
+        "footprint_m": [
+          244.0,
+          160.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4030.0,
+        "side": "left",
+        "distance_m": 24.8
+      },
+      {
+        "name": "The Shops at Crystals",
+        "kind": "retail",
+        "osm_way": 52134608,
+        "lat_lon": [
+          36.10792,
+          -115.174473
+        ],
+        "footprint_m": [
+          204.0,
+          190.0
+        ],
+        "height_m": "30",
+        "levels": null,
+        "s_m": 5255.0,
+        "side": "right",
+        "distance_m": 54.2
+      },
+      {
+        "name": "Sphere",
+        "kind": "commercial",
+        "osm_way": 976405284,
+        "lat_lon": [
+          36.121238,
+          -115.162101
+        ],
+        "footprint_m": [
+          175.0,
+          175.0
+        ],
+        "height_m": "112",
+        "levels": null,
+        "s_m": 2470.0,
+        "side": "left",
+        "distance_m": 26.7
+      },
+      {
+        "name": "The LINQ Hotel + Experience",
+        "kind": "hotel",
+        "osm_way": 115771295,
+        "lat_lon": [
+          36.118375,
+          -115.171191
+        ],
+        "footprint_m": [
+          272.0,
+          111.0
+        ],
+        "height_m": null,
+        "levels": "5",
+        "s_m": 4160.0,
+        "side": "left",
+        "distance_m": 25.1
+      },
+      {
+        "name": "Venetian Tower",
+        "kind": "building",
+        "osm_way": 30618090,
+        "lat_lon": [
+          36.121509,
+          -115.169
+        ],
+        "footprint_m": [
+          183.0,
+          147.0
+        ],
+        "height_m": "145",
+        "levels": "37",
+        "s_m": 3715.0,
+        "side": "left",
+        "distance_m": 140.6
+      },
+      {
+        "name": "Palazzo Tower",
+        "kind": "building",
+        "osm_way": 30424125,
+        "lat_lon": [
+          36.123986,
+          -115.167835
+        ],
+        "footprint_m": [
+          156.0,
+          136.0
+        ],
+        "height_m": "196",
+        "levels": "53",
+        "s_m": 3090.0,
+        "side": "left",
+        "distance_m": 37.4
+      },
+      {
+        "name": "The LINQ Hotel & Casino - A Caesars Rewards Destination",
+        "kind": "hotel",
+        "osm_way": 115773426,
+        "lat_lon": [
+          36.118376,
+          -115.170783
+        ],
+        "footprint_m": [
+          173.0,
+          111.0
+        ],
+        "height_m": null,
+        "levels": "20",
+        "s_m": 4100.0,
+        "side": "left",
+        "distance_m": 116.3
+      },
+      {
+        "name": "Wynn Employee Parking",
+        "kind": "building",
+        "osm_way": 111339081,
+        "lat_lon": [
+          36.120836,
+          -115.163402
+        ],
+        "footprint_m": [
+          240.0,
+          77.0
+        ],
+        "height_m": "25",
+        "levels": null,
+        "s_m": 2625.0,
+        "side": "left",
+        "distance_m": 22.4
+      },
+      {
+        "name": "The Westin Las Vegas Hotel",
+        "kind": "building",
+        "osm_way": 135020970,
+        "lat_lon": [
+          36.115177,
+          -115.165574
+        ],
+        "footprint_m": [
+          161.0,
+          91.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1200.0,
+        "side": "left",
+        "distance_m": 75.0
+      }
+    ],
+    "named": [
+      {
+        "name": "Sphere",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Las Vegas Strip",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Bellagio",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Caesars Palace",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Koval Lane",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Harmon Avenue",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Las Vegas Strip Circuit\" (infobox, layout \"Grand Prix Circuit (2023–present\")",
+      "url": "https://en.wikipedia.org/wiki/Las_Vegas_Strip_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_las_vegas_grand_prix_-_event_notes_-_circuit_map_v2_pit_lane_drawing_emergency_map_exits_quarantine_zone_and_red_zones.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_las_vegas_grand_prix_-_race_directors_event_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/16696508",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 16696508,
+        "name": "Las Vegas Strip Circuit",
+        "url": "https://www.openstreetmap.org/relation/16696508"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

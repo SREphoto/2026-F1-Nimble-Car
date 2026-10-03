@@ -1,0 +1,742 @@
+{
+  "schema_version": 1,
+  "id": "barcelona",
+  "status": "confirmed",
+  "event": {
+    "round": 7,
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
+    "weekend": "2026-06-12/2026-06-14",
+    "race_date": "2026-06-14",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit de Barcelona-Catalunya",
+    "common_name": "Circuit de Barcelona-Catalunya",
+    "location": "Montmeló, Barcelona, Catalonia, Spain",
+    "lat": 41.57,
+    "lon": 2.261111,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit without Chicane (2021–present)",
+    "opened": "1991-09-10",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4657.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4657.0,
+      "wikipedia_m": 4657.0,
+      "osm_loop_m": 4661.0,
+      "tumftm_m": 4649.8,
+      "pack_centreline_m": 4650.0
+    }
+  },
+  "corners": {
+    "count": 14,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "Elf",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3",
+        "name": "Renault",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4",
+        "name": "Repsol",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "5",
+        "name": "Seat",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "9",
+        "name": "Campsa",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10",
+        "name": "La Caixa",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:15.743",
+    "driver": "Oscar Piastri",
+    "car": "McLaren MCL39",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/barcelona.csv",
+    "spacing_m": 5.0,
+    "samples": 930,
+    "length_m": 4649.8,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Catalunya.csv",
+      "raceline": "cad/track/raw/tumftm/Catalunya_raceline.csv",
+      "length_m": 4649.8,
+      "points": 931,
+      "georef_median_m": 0.66,
+      "georef_p95_m": 14.48,
+      "rotation_deg": 0.6172,
+      "origin_lat": 41.5709365,
+      "origin_lon": 2.2619967,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284540,
+      "name": "Circuit de Catalunya GP",
+      "url": "https://www.openstreetmap.org/relation/284540"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 465,
+    "spacing_m": 10.0,
+    "min_m": 113.2,
+    "max_m": 145.4,
+    "total_change_m": 32.3,
+    "total_climb_per_lap_m": 70.3,
+    "raw_change_m": 33.1,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 8.6,
+    "max_m": 17.7,
+    "median_m": 10.9,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "New asphalt has been laid for the length of the pit lane in the working lane, to make good the joint between the concrete and the asphalt.",
+      "The bollards have been removed at the end of the Turn 1 escape road.",
+      "The barrier on the LHS at the entry to Turn 5 has been moved further away from the track.",
+      "The barrier on the RHS at Turn 6 has been moved further away from the track.",
+      "The asphalt area on the LHS beyond the green painted area at Turn 13 has been removed and replaced with gravel.",
+      "New tyre barrier at the pit entry road on the RHS."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 53725
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 2073,
+        "gate": 4
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "Each time a driver fails to respect track limits at turn 14, will result in that lap time and the immediately\nfollowing lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 405.0,
+    "length_all_pit_ways_m": 1037.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 4540.0,
+      "lat_lon": [
+        41.571857,
+        2.262556
+      ]
+    },
+    "exit": {
+      "s_m": 295.0,
+      "lat_lon": [
+        41.56877,
+        2.259963
+      ]
+    },
+    "osm_ways": [
+      178416733,
+      178416729,
+      33742214
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n15.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right hand\nside of the bollard at pit entry will be considered as entering the pit lane.\n15.3 During the reconnaissance laps prior to the race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit in the pit exit road. following the instructions in the art\n13.5 from this competition notes.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.619
+      },
+      {
+        "sector": 2,
+        "length_km": 1.765
+      },
+      {
+        "sector": 3,
+        "length_km": 1.273
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "50m before T4"
+      },
+      {
+        "point": "S2",
+        "location": "90m before T10"
+      }
+    ],
+    "speed_trap": "220m before T1",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "45m after T14",
+        "low_grip_activation": "85m after T14"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "40m before T3 exit",
+        "low_grip_activation": "T3 exit"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "90m after T5",
+        "low_grip_activation": "90m after T5"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "40m after T9",
+        "low_grip_activation": "90m after T9"
+      }
+    ],
+    "overtake": {
+      "detection": "Apex T13",
+      "activation": "Entry T14"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Graderia principal",
+        "osm_way": 33742643,
+        "lat_lon": [
+          41.570191,
+          2.261759
+        ],
+        "approx_length_m": 258.0,
+        "s_m": 255.0,
+        "side": "left",
+        "distance_m": 18.3
+      },
+      {
+        "name": "Tribuna J",
+        "osm_way": 151594586,
+        "lat_lon": [
+          41.567382,
+          2.259392
+        ],
+        "approx_length_m": 121.0,
+        "s_m": 530.0,
+        "side": "left",
+        "distance_m": 20.7
+      },
+      {
+        "name": "Tribuna K",
+        "osm_way": 151594579,
+        "lat_lon": [
+          41.566325,
+          2.258508
+        ],
+        "approx_length_m": 75.0,
+        "s_m": 635.0,
+        "side": "left",
+        "distance_m": 20.8
+      },
+      {
+        "name": "Tribuna E",
+        "osm_way": 151594582,
+        "lat_lon": [
+          41.565663,
+          2.257954
+        ],
+        "approx_length_m": 72.0,
+        "s_m": 645.0,
+        "side": "left",
+        "distance_m": 20.8
+      },
+      {
+        "name": "Tribuna F",
+        "osm_way": 151594584,
+        "lat_lon": [
+          41.564968,
+          2.257373
+        ],
+        "approx_length_m": 92.0,
+        "s_m": 730.0,
+        "side": "left",
+        "distance_m": 21.1
+      },
+      {
+        "name": "Tribuna T1",
+        "osm_way": 1427279730,
+        "lat_lon": [
+          41.563831,
+          2.256022
+        ],
+        "approx_length_m": 46.0,
+        "s_m": 855.0,
+        "side": "left",
+        "distance_m": 85.4
+      },
+      {
+        "name": "Tribuna A",
+        "osm_way": 1427281575,
+        "lat_lon": [
+          41.564134,
+          2.254849
+        ],
+        "approx_length_m": 47.0,
+        "s_m": 1045.0,
+        "side": "left",
+        "distance_m": 24.0
+      },
+      {
+        "name": "Tribuna M",
+        "osm_way": 235224642,
+        "lat_lon": [
+          41.565724,
+          2.253304
+        ],
+        "approx_length_m": 65.0,
+        "s_m": 2095.0,
+        "side": "right",
+        "distance_m": 35.2
+      },
+      {
+        "name": "Tribuna L",
+        "osm_way": 235224640,
+        "lat_lon": [
+          41.564855,
+          2.253532
+        ],
+        "approx_length_m": 43.0,
+        "s_m": 2140.0,
+        "side": "right",
+        "distance_m": 47.4
+      },
+      {
+        "name": "Tribuna N",
+        "osm_way": 152015333,
+        "lat_lon": [
+          41.570252,
+          2.255461
+        ],
+        "approx_length_m": 125.0,
+        "s_m": 2870.0,
+        "side": "left",
+        "distance_m": 32.5
+      },
+      {
+        "name": "Tribuna T10",
+        "osm_way": 151609927,
+        "lat_lon": [
+          41.572598,
+          2.262256
+        ],
+        "approx_length_m": 54.0,
+        "s_m": 3465.0,
+        "side": "right",
+        "distance_m": 17.3
+      },
+      {
+        "name": "Tribuna B",
+        "osm_way": 152007366,
+        "lat_lon": [
+          41.572383,
+          2.259131
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 3735.0,
+        "side": "left",
+        "distance_m": 42.7
+      },
+      {
+        "name": "Tribuna B",
+        "osm_way": 152007371,
+        "lat_lon": [
+          41.57262,
+          2.258829
+        ],
+        "approx_length_m": 52.0,
+        "s_m": 3765.0,
+        "side": "left",
+        "distance_m": 37.6
+      },
+      {
+        "name": "Tribuna B",
+        "osm_way": 33744188,
+        "lat_lon": [
+          41.572917,
+          2.258419
+        ],
+        "approx_length_m": 37.0,
+        "s_m": 3770.0,
+        "side": "left",
+        "distance_m": 37.4
+      },
+      {
+        "name": "Tribuna G",
+        "osm_way": 152007381,
+        "lat_lon": [
+          41.574006,
+          2.258807
+        ],
+        "approx_length_m": 215.0,
+        "s_m": 3980.0,
+        "side": "left",
+        "distance_m": 28.9
+      },
+      {
+        "name": "Tribuna C",
+        "osm_way": 152007378,
+        "lat_lon": [
+          41.57513,
+          2.260418
+        ],
+        "approx_length_m": 36.0,
+        "s_m": 4010.0,
+        "side": "left",
+        "distance_m": 34.8
+      },
+      {
+        "name": "Tribuna C",
+        "osm_way": 152007375,
+        "lat_lon": [
+          41.575226,
+          2.260845
+        ],
+        "approx_length_m": 29.0,
+        "s_m": 4020.0,
+        "side": "left",
+        "distance_m": 50.5
+      },
+      {
+        "name": "Tribuna H",
+        "osm_way": 725695175,
+        "lat_lon": [
+          41.574485,
+          2.263077
+        ],
+        "approx_length_m": 79.0,
+        "s_m": 4285.0,
+        "side": "left",
+        "distance_m": 37.6
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 178416735,
+        "lat_lon": [
+          41.567932,
+          2.253755
+        ],
+        "s_m": 1630.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 178416725,
+        "lat_lon": [
+          41.565838,
+          2.256113
+        ],
+        "s_m": 2315.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Boxes",
+        "kind": "building",
+        "osm_way": 33742578,
+        "lat_lon": [
+          41.569885,
+          2.260362
+        ],
+        "footprint_m": [
+          265.0,
+          230.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 300.0,
+        "side": "right",
+        "distance_m": 25.2
+      },
+      {
+        "name": "Pit Lane Lounge",
+        "kind": "building",
+        "osm_way": 1427366799,
+        "lat_lon": [
+          41.568686,
+          2.259369
+        ],
+        "footprint_m": [
+          72.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 375.0,
+        "side": "right",
+        "distance_m": 30.2
+      },
+      {
+        "name": "VIP Rooftop",
+        "kind": "building",
+        "osm_way": 1372681544,
+        "lat_lon": [
+          41.57224,
+          2.260693
+        ],
+        "footprint_m": [
+          67.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3370.0,
+        "side": "right",
+        "distance_m": 15.3
+      },
+      {
+        "name": "Garden Club",
+        "kind": "building",
+        "osm_way": 1427281567,
+        "lat_lon": [
+          41.573891,
+          2.264032
+        ],
+        "footprint_m": [
+          59.0,
+          51.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4295.0,
+        "side": "left",
+        "distance_m": 35.4
+      },
+      {
+        "name": "Panorama Village",
+        "kind": "building",
+        "osm_way": 152034063,
+        "lat_lon": [
+          41.567429,
+          2.258496
+        ],
+        "footprint_m": [
+          55.0,
+          45.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 500.0,
+        "side": "right",
+        "distance_m": 27.2
+      },
+      {
+        "name": "Centre mèdic",
+        "kind": "building",
+        "osm_way": 151609926,
+        "lat_lon": [
+          41.571974,
+          2.261423
+        ],
+        "footprint_m": [
+          30.0,
+          27.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3410.0,
+        "side": "right",
+        "distance_m": 40.9
+      },
+      {
+        "name": "A",
+        "kind": "building",
+        "osm_way": 1167920784,
+        "lat_lon": [
+          41.57086,
+          2.261153
+        ],
+        "footprint_m": [
+          9.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 40.0,
+        "side": "right",
+        "distance_m": 51.0
+      },
+      {
+        "name": "B",
+        "kind": "building",
+        "osm_way": 1167920785,
+        "lat_lon": [
+          41.570496,
+          2.260845
+        ],
+        "footprint_m": [
+          9.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 90.0,
+        "side": "right",
+        "distance_m": 51.1
+      },
+      {
+        "name": "C",
+        "kind": "building",
+        "osm_way": 1167920786,
+        "lat_lon": [
+          41.570134,
+          2.260531
+        ],
+        "footprint_m": [
+          9.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 135.0,
+        "side": "right",
+        "distance_m": 51.8
+      },
+      {
+        "name": "D",
+        "kind": "building",
+        "osm_way": 1167920787,
+        "lat_lon": [
+          41.569766,
+          2.260226
+        ],
+        "footprint_m": [
+          9.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 185.0,
+        "side": "right",
+        "distance_m": 51.4
+      },
+      {
+        "name": "E",
+        "kind": "building",
+        "osm_way": 1167920788,
+        "lat_lon": [
+          41.569396,
+          2.259919
+        ],
+        "footprint_m": [
+          9.0,
+          8.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 235.0,
+        "side": "right",
+        "distance_m": 51.2
+      }
+    ],
+    "named": [],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit de Barcelona-Catalunya\" (infobox, layout \"Grand Prix Circuit without Chicane (2021–present\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_barcelona-catalunya_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_and_emergency_exits_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_barcelona-catalunya_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284540",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284540,
+        "name": "Circuit de Catalunya GP",
+        "url": "https://www.openstreetmap.org/relation/284540"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ]
+}

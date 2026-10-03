@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "id": "sepang",
+  "status": "confirmed",
+  "event": {
+    "round": 16,
+    "grand_prix": "Bahrain Grand Prix (held in Malaysia)",
+    "weekend": "2026-10-02/2026-10-04",
+    "race_date": "2026-10-04",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Petronas Sepang International Circuit",
+    "common_name": "Sepang International Circuit",
+    "location": "Sepang, Selangor, Malaysia",
+    "lat": 2.760556,
+    "lon": 101.7375,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (1999–present)",
+    "opened": "1999-03-07",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5543.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5543.0,
+      "wikipedia_m": 5543.0,
+      "osm_loop_m": 5546.0,
+      "tumftm_m": 5537.4,
+      "pack_centreline_m": 5537.0
+    }
+  },
+  "corners": {
+    "count": 15,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": "clockwise",
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:34.080",
+    "driver": "Sebastian Vettel",
+    "car": "Ferrari SF70H",
+    "year": 2017,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/sepang.csv",
+    "spacing_m": 5.0,
+    "samples": 1107,
+    "length_m": 5537.4,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Sepang.csv",
+      "raceline": "cad/track/raw/tumftm/Sepang_raceline.csv",
+      "length_m": 5537.4,
+      "points": 1108,
+      "georef_median_m": 1.47,
+      "georef_p95_m": 4.44,
+      "rotation_deg": -0.0654,
+      "origin_lat": 2.760761,
+      "origin_lon": 101.7383789,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284496,
+      "name": "Sepang International Circuit",
+      "url": "https://www.openstreetmap.org/relation/284496"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 554,
+    "spacing_m": 10.0,
+    "min_m": 24.1,
+    "max_m": 52.8,
+    "total_change_m": 28.8,
+    "total_climb_per_lap_m": 82.0,
+    "raw_change_m": 30.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 13.6,
+    "max_m": 16.6,
+    "median_m": 14.5,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 1904,
+        "grass": 467827,
+        "gravel": 5143
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 1167,
+        "guard_rail": 137,
+        "wall": 1464
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "17.1 During any LTCS, each time a driver fails to negotiate Turn 15, will result in that lap time and the\nimmediately following lap time may be invalidated by the Stewards.\n17.2 The dotted white line intersecting the pit exit road marks the track edge.\n5",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 844.0,
+    "length_all_pit_ways_m": 991.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5252.0,
+      "lat_lon": [
+        2.761506,
+        101.740902
+      ]
+    },
+    "exit": {
+      "s_m": 555.0,
+      "lat_lon": [
+        2.760359,
+        101.733422
+      ]
+    },
+    "osm_ways": [
+      23410526,
+      144359483
+    ],
+    "fia_entry_exit_rules": "8.1 In accordance with Appendix L, Chapter IV, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n8.2 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right -hand side of\nthe bollard (as indicated in the image below) will be considered as entering the pit lane. Furthermore,\nthe line painted on the track for the purpose of separating cars entering the pit lane from those on the\ntrack will be considered to start after the bollard. (new picture)\n8.3 For the safe and orderly conduct of the event, during any live session and while the pit exit is open prior\nto the start of the race, team personnel are not allowed to cross the red line in the picture below.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.435
+      },
+      {
+        "sector": 2,
+        "length_km": 1.839
+      },
+      {
+        "sector": 3,
+        "length_km": 2.269
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "145m before T4"
+      },
+      {
+        "point": "S2",
+        "location": "Entry T10"
+      }
+    ],
+    "speed_trap": "205m before T15",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "65m after T15",
+        "low_grip_activation": "85m after T15"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "10m after T3",
+        "low_grip_activation": "50m after T3"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "65m after T8",
+        "low_grip_activation": "95m after T8"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "65m after T14",
+        "low_grip_activation": "80m after T14"
+      }
+    ],
+    "overtake": {
+      "detection": "45m before T15 Exit",
+      "activation": "T15 Exit"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "K1 Grandstand",
+        "osm_way": 107364100,
+        "lat_lon": [
+          2.760908,
+          101.732045
+        ],
+        "approx_length_m": 180.0,
+        "s_m": 695.0,
+        "side": "left",
+        "distance_m": 55.5
+      },
+      {
+        "name": "F Grandstand",
+        "osm_way": 107364038,
+        "lat_lon": [
+          2.761329,
+          101.742949
+        ],
+        "approx_length_m": 148.0,
+        "s_m": 2581.0,
+        "side": "left",
+        "distance_m": 26.8
+      },
+      {
+        "name": "Main Grandstand",
+        "osm_way": 144247993,
+        "lat_lon": [
+          2.76031,
+          101.73859
+        ],
+        "approx_length_m": 654.0,
+        "s_m": 5242.0,
+        "side": "left",
+        "distance_m": 5.7
+      }
+    ],
+    "bridges": [],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Paddock / Pit Building",
+        "kind": "building",
+        "osm_way": 144362327,
+        "lat_lon": [
+          2.760884,
+          101.736749
+        ],
+        "footprint_m": [
+          345.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 5.0,
+        "side": "right",
+        "distance_m": 17.0
+      },
+      {
+        "name": "South Padock",
+        "kind": "building",
+        "osm_way": 1105232836,
+        "lat_lon": [
+          2.75917,
+          101.736994
+        ],
+        "footprint_m": [
+          175.0,
+          52.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 4682.0,
+        "side": "right",
+        "distance_m": 29.8
+      },
+      {
+        "name": "Welcome Center",
+        "kind": "building",
+        "osm_way": 1106756634,
+        "lat_lon": [
+          2.759188,
+          101.731837
+        ],
+        "footprint_m": [
+          53.0,
+          25.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 630.0,
+        "side": "left",
+        "distance_m": 139.1
+      },
+      {
+        "name": "Welcome Center",
+        "kind": "building",
+        "osm_way": 107364040,
+        "lat_lon": [
+          2.759584,
+          101.731786
+        ],
+        "footprint_m": [
+          53.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 635.0,
+        "side": "left",
+        "distance_m": 110.5
+      },
+      {
+        "name": "Medical Center",
+        "kind": "building",
+        "osm_way": 144359492,
+        "lat_lon": [
+          2.761083,
+          101.738955
+        ],
+        "footprint_m": [
+          37.0,
+          25.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5452.0,
+        "side": "right",
+        "distance_m": 25.3
+      },
+      {
+        "name": "Control Post 1",
+        "kind": "building",
+        "osm_way": 1106576349,
+        "lat_lon": [
+          2.765342,
+          101.736595
+        ],
+        "footprint_m": [
+          7.0,
+          5.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1511.0,
+        "side": "left",
+        "distance_m": 50.9
+      }
+    ],
+    "named": [
+      {
+        "name": "grandstand",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Kuala Lumpur International Airport",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Sepang International Circuit\" (infobox, layout \"Grand Prix Circuit (1999–present\")",
+      "url": "https://en.wikipedia.org/wiki/Sepang_International_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_bahrain_grand_prix_in_malaysia_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_bahrain_grand_prix_in_malaysia_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284496",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284496,
+        "name": "Sepang International Circuit",
+        "url": "https://www.openstreetmap.org/relation/284496"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified."
+  ]
+}

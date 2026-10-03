@@ -1,0 +1,513 @@
+{
+  "schema_version": 1,
+  "id": "yas_marina",
+  "status": "confirmed",
+  "event": {
+    "round": 23,
+    "grand_prix": "Abu Dhabi Grand Prix",
+    "weekend": "2026-12-04/2026-12-06",
+    "race_date": "2026-12-06",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Yas Marina Circuit",
+    "common_name": "Yas Marina Circuit",
+    "location": "Yas Island, Abu Dhabi, UAE",
+    "lat": 24.467222,
+    "lon": 54.603056,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2021–present)",
+    "opened": "2009-10",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5281.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5281.0,
+      "wikipedia_m": 5281.0,
+      "osm_loop_m": 5297.0,
+      "tumftm_m": 5546.6,
+      "pack_centreline_m": 5297.0
+    }
+  },
+  "corners": {
+    "count": 16,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "OSM loop oriented to match the TUMFTM file order (stored in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:25.637",
+    "driver": "Kevin Magnussen",
+    "car": "Haas VF-24",
+    "year": 2024,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/yas_marina.csv",
+    "spacing_m": 5.0,
+    "samples": 1059,
+    "length_m": 5297.0,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/YasMarina.csv",
+      "raceline": "cad/track/raw/tumftm/YasMarina_raceline.csv",
+      "length_m": 5546.6,
+      "points": 1110,
+      "georef_median_m": 2.08,
+      "georef_p95_m": 31.6,
+      "rotation_deg": 0.8469,
+      "origin_lat": 24.4698224,
+      "origin_lon": 54.6040618,
+      "used": false,
+      "not_used_reason": "TUMFTM length 5547 m is +266 m off the FIA length (older layout), while the OSM loop is +16 m off, so the OSM loop is used.",
+      "old_layout_width_m": {
+        "min": 10.0,
+        "max": 15.5,
+        "median": 12.8
+      }
+    },
+    "osm": {
+      "type": "relation",
+      "id": 11378665,
+      "name": "Yas Marina Circuit",
+      "url": "https://www.openstreetmap.org/relation/11378665"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 530,
+    "spacing_m": 9.99,
+    "min_m": -4.3,
+    "max_m": 4.2,
+    "total_change_m": 8.5,
+    "total_climb_per_lap_m": 54.8,
+    "raw_change_m": 11.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified. Part of the lap is in a tunnel, where the terrain model gives the ground above or the water surface, not the road."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing. The older-layout TUMFTM file gives 10.0 to 15.5 m (median 12.8 m), which is a fair guide for the unchanged parts of the track."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Grind down the kerb at Turn 4 apex.",
+      "Grind the apex kerb at Turn 6."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "New patch of asphalt to remove a bump at the exit of turn 6 right-hand side",
+      "Debris fence extension at the exit of Turn 1 left-hand side",
+      "Debris fence extension at Turn 3 left-hand side",
+      "New debris fence at Turn 16 left-hand side",
+      "Extended guardrail after Turn 5 on the left-hand side",
+      "Extended Tecpro barrier at the exit of Turn 3 left-hand side",
+      "Support pit entry Tecpro adjusted"
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "artificial_turf": 878,
+        "grass": 65569
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 10840,
+        "wall": 2796
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "18.1 In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines\ndefine the track edges. During Qualifying Session and the Race, each time a driver fails to\nnegotiate the lap within the track limits, this will result in that lap time being invalidated by the\nStewards.\n18.2 Additionally, each time a driver fails to respect track limits at the entry or exit Turn 16, will\nresult in that lap time and the immediately following lap time being invalidated by the\nStewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 646.0,
+    "length_all_pit_ways_m": 646.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5202.0,
+      "lat_lon": [
+        24.468585,
+        54.602942
+      ]
+    },
+    "exit": {
+      "s_m": 565.0,
+      "lat_lon": [
+        24.470176,
+        54.608055
+      ]
+    },
+    "osm_ways": [
+      176695254
+    ],
+    "fia_entry_exit_rules": "14.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n14.2 For safety reasons, drivers must keep to the right of the solid white line at the pit entry when\nentering the pits.\n14.3 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver crossing the safety\ncar line 1 to the right hand side of the orange bollard at pit entry will be considered as entering\nthe pit lane.\n14.4 Overtaking is prohibited in the pit exit road unless a car slows with an obvious problem.\n14.5 During the reconnaissance laps prior to the Race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "205m before Turn 5"
+      },
+      {
+        "point": "S2",
+        "location": "100m before Turn 9"
+      }
+    ],
+    "speed_trap": "150m before Turn 6",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "250m before Turn 5"
+        },
+        {
+          "label": "Detection 2",
+          "location": "50m after Turn 7"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "260m after Turn 5"
+        },
+        {
+          "label": "Activation 2",
+          "location": "165m after Turn 7"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Main Grandstand",
+        "osm_way": 188731381,
+        "lat_lon": [
+          24.470266,
+          54.605547
+        ],
+        "approx_length_m": 376.0,
+        "s_m": 165.0,
+        "side": "left",
+        "distance_m": 18.1
+      },
+      {
+        "name": "Main Grandstand Oasis",
+        "osm_way": 1222411299,
+        "lat_lon": [
+          24.470747,
+          54.60521
+        ],
+        "approx_length_m": 417.0,
+        "s_m": 665.0,
+        "side": "left",
+        "distance_m": 44.6
+      },
+      {
+        "name": "North Grandstand",
+        "osm_way": 168411369,
+        "lat_lon": [
+          24.478679,
+          54.605395
+        ],
+        "approx_length_m": 226.0,
+        "s_m": 1571.0,
+        "side": "right",
+        "distance_m": 18.8
+      },
+      {
+        "name": "North Grandstand Oasis",
+        "osm_way": 189033755,
+        "lat_lon": [
+          24.479249,
+          54.606733
+        ],
+        "approx_length_m": 119.0,
+        "s_m": 1586.0,
+        "side": "right",
+        "distance_m": 87.4
+      },
+      {
+        "name": "West Grandstand",
+        "osm_way": 133907352,
+        "lat_lon": [
+          24.468502,
+          54.601532
+        ],
+        "approx_length_m": 282.0,
+        "s_m": 2676.0,
+        "side": "right",
+        "distance_m": 27.2
+      },
+      {
+        "name": "Marina Grandstand",
+        "osm_way": 133907079,
+        "lat_lon": [
+          24.464591,
+          54.605056
+        ],
+        "approx_length_m": 220.0,
+        "s_m": 3211.0,
+        "side": "right",
+        "distance_m": 23.9
+      },
+      {
+        "name": "South Grandstand",
+        "osm_way": 133907081,
+        "lat_lon": [
+          24.462928,
+          54.608333
+        ],
+        "approx_length_m": 222.0,
+        "s_m": 3686.0,
+        "side": "right",
+        "distance_m": 29.3
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "track on bridge",
+        "name": "YAS Marina Circuit",
+        "osm_way": 188337196,
+        "length_m": 34.0,
+        "s_m": 2436.0,
+        "side": "left",
+        "distance_m": 0.6
+      },
+      {
+        "kind": "unclassified bridge over track",
+        "name": null,
+        "osm_way": 133904804,
+        "lat_lon": [
+          24.467136,
+          54.603012
+        ],
+        "s_m": 3086.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 520933543,
+        "lat_lon": [
+          24.466976,
+          54.602851
+        ],
+        "s_m": 3091.0
+      },
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 1473728620,
+        "lat_lon": [
+          24.467031,
+          54.602886
+        ],
+        "s_m": 3096.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": "Marina Walk Bridge",
+        "osm_way": 188732722,
+        "lat_lon": [
+          24.467879,
+          54.60475
+        ],
+        "s_m": 4967.0
+      },
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 1473750056,
+        "lat_lon": [
+          24.467903,
+          54.604745
+        ],
+        "s_m": 4967.0
+      }
+    ],
+    "tunnels": [
+      {
+        "name": "Pit Lane",
+        "osm_way": 176695255,
+        "length_m": 73.0,
+        "s_m": 595.0,
+        "side": "left",
+        "distance_m": 3.5
+      }
+    ],
+    "buildings": [
+      {
+        "name": "Media Center",
+        "kind": "building",
+        "osm_way": 188732696,
+        "lat_lon": [
+          24.468324,
+          54.604645
+        ],
+        "footprint_m": [
+          76.0,
+          61.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4972.0,
+        "side": "right",
+        "distance_m": 30.9
+      },
+      {
+        "name": "Control Tower",
+        "kind": "roof",
+        "osm_way": 1473728615,
+        "lat_lon": [
+          24.471094,
+          54.60866
+        ],
+        "footprint_m": [
+          124.0,
+          31.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 610.0,
+        "side": "right",
+        "distance_m": 53.1
+      },
+      {
+        "name": "Control Tower",
+        "kind": "roof",
+        "osm_way": 188339057,
+        "lat_lon": [
+          24.469746,
+          54.608836
+        ],
+        "footprint_m": [
+          123.0,
+          31.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 590.0,
+        "side": "right",
+        "distance_m": 67.5
+      },
+      {
+        "name": "Control Tower",
+        "kind": "tower",
+        "osm_way": 1473728616,
+        "lat_lon": [
+          24.470409,
+          54.608769
+        ],
+        "footprint_m": [
+          33.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 595.0,
+        "side": "right",
+        "distance_m": 57.3
+      }
+    ],
+    "named": [
+      {
+        "name": "W Abu Dhabi",
+        "source": "wikipedia"
+      },
+      {
+        "name": "marina",
+        "source": "wikipedia"
+      },
+      {
+        "name": "tunnel",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Yas Marina Circuit\" (infobox, layout \"Grand Prix Circuit (2021–present\")",
+      "url": "https://en.wikipedia.org/wiki/Yas_Marina_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_abu_dhabi_grand_prix_-_event_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_quarantine_zone_and_red_zones.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_abu_dhabi_grand_prix_-_race_directors_event_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/11378665",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 11378665,
+        "name": "Yas Marina Circuit",
+        "url": "https://www.openstreetmap.org/relation/11378665"
+      }
+    }
+  ],
+  "gaps": [
+    "TUMFTM file is an older layout; OSM centreline used, no current-layout track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data."
+  ]
+}

@@ -1,0 +1,739 @@
+{
+  "schema_version": 1,
+  "id": "monaco",
+  "status": "confirmed",
+  "event": {
+    "round": 6,
+    "grand_prix": "Monaco Grand Prix",
+    "weekend": "2026-06-05/2026-06-07",
+    "race_date": "2026-06-07",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit de Monaco",
+    "common_name": "Circuit de Monaco",
+    "location": "La Condamine and Monte Carlo, Monaco",
+    "lat": 43.734722,
+    "lon": 7.420556,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2015–present) (Tabac slightly moved)",
+    "opened": "1929-04-14",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 3337.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 3337.0,
+      "wikipedia_m": 3337.0,
+      "osm_loop_m": 3325.0,
+      "tumftm_m": null,
+      "pack_centreline_m": 3325.0
+    }
+  },
+  "corners": {
+    "count": 19,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "Sainte Dévote",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "2",
+        "name": "Beau Rivage",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3",
+        "name": "Massenet",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4",
+        "name": "Casino",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "5",
+        "name": "Mirabeau",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "6",
+        "name": "Fairmont Hairpin",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "7-8",
+        "name": "Portier",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10-11",
+        "name": "Nouvelle Chicane",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "12",
+        "name": "Tabac",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "13-16",
+        "name": "Swimming Pool",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "17",
+        "name": "La Rascasse",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "OSM oneway tags / forward roles on the circuit ways",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:12.909",
+    "driver": "Lewis Hamilton",
+    "car": "Mercedes W12",
+    "year": 2021,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/monaco.csv",
+    "spacing_m": 5.0,
+    "samples": 665,
+    "length_m": 3324.9,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": null,
+    "osm": {
+      "type": "relation",
+      "id": 148194,
+      "name": "Circuit de Monaco",
+      "url": "https://www.openstreetmap.org/relation/148194"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 332,
+    "spacing_m": 10.01,
+    "min_m": 0.4,
+    "max_m": 52.3,
+    "total_change_m": 52.0,
+    "total_climb_per_lap_m": 97.4,
+    "raw_change_m": 52.7,
+    "missing_samples_filled": 15,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified. Part of the lap is in a tunnel, where the terrain model gives the ground above or the water surface, not the road."
+  },
+  "track_width": {
+    "source": null,
+    "min_m": null,
+    "max_m": null,
+    "median_m": null,
+    "note": "Not verified. No TUMFTM file and no OSM width tags. Measure from aerial imagery or the FIA circuit drawing."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Beginning of kerb at Turn 6 on the left-hand side smoother.",
+      "Entry kerb at Turn 7 on the left-hand side smoother.",
+      "Reduced height of the sausage kerb at Turn 10.",
+      "Reduced height of the sausage kerb at Turn 16.",
+      "End of kerb smoother at the exit of Turn 19 right hand side."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Track resurfaced at Turn 5 runoff.",
+      "Extended/new debris fences at:",
+      "Extended at Turn 5 runoff.",
+      "Added fence on the right-hand side at Turn 6.",
+      "Extended fences at Turn 10 both sides.",
+      "Alignment and extension of the guardrail at Turn 3 left hand side.",
+      "Realignment and extension of the guardrail at Turn 3 left-hand side.",
+      "Extension of the guard rail at Turn 6 left hand side.",
+      "Extension of the guardrail at Turn 10. Opening reduced.",
+      "Extension of the guardrail from Turn 11 and Turn 12.",
+      "Additional line of guardrail at pit entry.",
+      "Change from Tecpro to tyre barrier at Turn 4 left-hand side."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 12704,
+        "grass": 3056
+      },
+      "barrier_length_m_within_30m": {
+        "chain": 114,
+        "guard_rail": 10,
+        "retaining_wall": 878,
+        "wall": 354
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": null,
+  "pit_lane": {
+    "speed_limit_kmh": 60,
+    "speed_limit_source": "fia_notes (Race Director amendment)",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 357.0,
+    "length_all_pit_ways_m": 437.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 530.0,
+      "lat_lon": [
+        43.735262,
+        7.42124
+      ]
+    },
+    "exit": {
+      "s_m": 150.0,
+      "lat_lon": [
+        43.732383,
+        7.422976
+      ]
+    },
+    "osm_ways": [
+      850261588,
+      1388331347
+    ],
+    "fia_entry_exit_rules": "17.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n17.2 During the reconnaissance laps prior to the race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit in the pit exit road following the instructions in the art\n13.5 from this competition notes.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.051
+      },
+      {
+        "sector": 2,
+        "length_km": 1.419
+      },
+      {
+        "sector": 3,
+        "length_km": 0.867
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "60m before T5"
+      },
+      {
+        "point": "S2",
+        "location": "70m before T13"
+      }
+    ],
+    "speed_trap": "190m before T10",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [],
+    "overtake": {
+      "detection": "80m after T16",
+      "activation": "40m after T18"
+    },
+    "note": "No straight mode zones: active aero was not used at Monaco in 2026 (FIA map lists none; formula1.com \"Explained: Why Active Aero will not be used at the Monaco Grand Prix\", 4 June 2026). Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "path bridge over track",
+        "name": null,
+        "osm_way": 167625745,
+        "lat_lon": [
+          43.732768,
+          7.422233
+        ],
+        "s_m": 235.0
+      },
+      {
+        "kind": "primary bridge over track",
+        "name": "Boulevard du Larvotto",
+        "osm_way": 92627405,
+        "lat_lon": [
+          43.741543,
+          7.429885
+        ],
+        "s_m": 1910.0
+      }
+    ],
+    "tunnels": [
+      {
+        "name": "Boulevard Louis II",
+        "osm_way": 4230891,
+        "length_m": 356.0,
+        "s_m": 2030.0,
+        "side": "left",
+        "distance_m": 0.1
+      },
+      {
+        "name": "Boulevard Louis II",
+        "osm_way": 1230247123,
+        "length_m": 6.0,
+        "s_m": 2385.0,
+        "side": "left",
+        "distance_m": 0.7
+      },
+      {
+        "name": "Circuit de Monaco",
+        "osm_way": 1470365907,
+        "length_m": 18.0,
+        "s_m": 1935.0,
+        "side": "right",
+        "distance_m": 0.2
+      }
+    ],
+    "buildings": [
+      {
+        "name": "Salle d'Exposition",
+        "kind": "building",
+        "osm_way": 161885377,
+        "lat_lon": [
+          43.732526,
+          7.424456
+        ],
+        "footprint_m": [
+          283.0,
+          90.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 150.0,
+        "side": "left",
+        "distance_m": 6.9
+      },
+      {
+        "name": "Monte Carlo Star",
+        "kind": "residential",
+        "osm_way": 176722821,
+        "lat_lon": [
+          43.73815,
+          7.428626
+        ],
+        "footprint_m": [
+          133.0,
+          123.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 2230.0,
+        "side": "right",
+        "distance_m": 0.7
+      },
+      {
+        "name": "Les Jardin d'Eau",
+        "kind": "apartments",
+        "osm_way": 1340550266,
+        "lat_lon": [
+          43.741881,
+          7.432115
+        ],
+        "footprint_m": [
+          125.0,
+          110.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 1945.0,
+        "side": "left",
+        "distance_m": 99.8
+      },
+      {
+        "name": "Quai Lucciana",
+        "kind": "building",
+        "osm_way": 128840977,
+        "lat_lon": [
+          43.736733,
+          7.429742
+        ],
+        "footprint_m": [
+          136.0,
+          62.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2315.0,
+        "side": "left",
+        "distance_m": 72.5
+      },
+      {
+        "name": "Palais de la Scala",
+        "kind": "apartments",
+        "osm_way": 94402020,
+        "lat_lon": [
+          43.738497,
+          7.425102
+        ],
+        "footprint_m": [
+          91.0,
+          77.0
+        ],
+        "height_m": null,
+        "levels": "6",
+        "s_m": 1060.0,
+        "side": "left",
+        "distance_m": 53.4
+      },
+      {
+        "name": "Auditorium Rainier III",
+        "kind": "building",
+        "osm_way": 112689159,
+        "lat_lon": [
+          43.738292,
+          7.429523
+        ],
+        "footprint_m": [
+          78.0,
+          68.0
+        ],
+        "height_m": "12.5",
+        "levels": "2",
+        "s_m": 2235.0,
+        "side": "right",
+        "distance_m": 2.4
+      },
+      {
+        "name": "État-Major du Corps des sapeurs-pompiers de Monaco",
+        "kind": "building",
+        "osm_way": 390066683,
+        "lat_lon": [
+          43.732404,
+          7.421657
+        ],
+        "footprint_m": [
+          71.0,
+          59.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 195.0,
+        "side": "left",
+        "distance_m": 30.7
+      },
+      {
+        "name": "Le Renzo 1",
+        "kind": "apartments",
+        "osm_way": 686696680,
+        "lat_lon": [
+          43.740902,
+          7.431731
+        ],
+        "footprint_m": [
+          76.0,
+          52.0
+        ],
+        "height_m": "62",
+        "levels": "18",
+        "s_m": 1995.0,
+        "side": "left",
+        "distance_m": 83.1
+      },
+      {
+        "name": "Le Montaigne",
+        "kind": "apartments",
+        "osm_way": 94399508,
+        "lat_lon": [
+          43.741527,
+          7.427492
+        ],
+        "footprint_m": [
+          72.0,
+          51.0
+        ],
+        "height_m": null,
+        "levels": "8",
+        "s_m": 1605.0,
+        "side": "left",
+        "distance_m": 79.1
+      },
+      {
+        "name": "Les Floralies",
+        "kind": "apartments",
+        "osm_way": 94399972,
+        "lat_lon": [
+          43.740985,
+          7.427131
+        ],
+        "footprint_m": [
+          67.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": "9",
+        "s_m": 1520.0,
+        "side": "left",
+        "distance_m": 81.9
+      },
+      {
+        "name": "Centre de Rencontre International",
+        "kind": "public",
+        "osm_way": 176722820,
+        "lat_lon": [
+          43.737603,
+          7.425892
+        ],
+        "footprint_m": [
+          96.0,
+          34.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1060.0,
+        "side": "right",
+        "distance_m": 6.9
+      },
+      {
+        "name": "Les Townhouses",
+        "kind": "terrace",
+        "osm_way": 686696678,
+        "lat_lon": [
+          43.741744,
+          7.431391
+        ],
+        "footprint_m": [
+          74.0,
+          44.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 1945.0,
+        "side": "left",
+        "distance_m": 85.6
+      },
+      {
+        "name": "Le Shangri-La",
+        "kind": "apartments",
+        "osm_way": 94399922,
+        "lat_lon": [
+          43.733979,
+          7.421119
+        ],
+        "footprint_m": [
+          67.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": "14",
+        "s_m": 430.0,
+        "side": "left",
+        "distance_m": 11.3
+      },
+      {
+        "name": "Casa Mia",
+        "kind": "school",
+        "osm_way": 94399990,
+        "lat_lon": [
+          43.737725,
+          7.42171
+        ],
+        "footprint_m": [
+          68.0,
+          46.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 735.0,
+        "side": "left",
+        "distance_m": 62.1
+      },
+      {
+        "name": "Ecole de la Condamine",
+        "kind": "building",
+        "osm_way": 390066684,
+        "lat_lon": [
+          43.732973,
+          7.421566
+        ],
+        "footprint_m": [
+          61.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 255.0,
+        "side": "left",
+        "distance_m": 16.1
+      },
+      {
+        "name": "Neuehouse",
+        "kind": "building",
+        "osm_way": 1470365896,
+        "lat_lon": [
+          43.741187,
+          7.430148
+        ],
+        "footprint_m": [
+          124.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1920.0,
+        "side": "left",
+        "distance_m": 0.6
+      },
+      {
+        "name": "Le Panorama",
+        "kind": "apartments",
+        "osm_way": 94399585,
+        "lat_lon": [
+          43.736838,
+          7.420776
+        ],
+        "footprint_m": [
+          58.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": "16",
+        "s_m": 715.0,
+        "side": "left",
+        "distance_m": 35.7
+      },
+      {
+        "name": "Rose De France",
+        "kind": "apartments",
+        "osm_way": 94399519,
+        "lat_lon": [
+          43.738153,
+          7.42208
+        ],
+        "footprint_m": [
+          55.0,
+          46.0
+        ],
+        "height_m": null,
+        "levels": "5",
+        "s_m": 815.0,
+        "side": "left",
+        "distance_m": 100.1
+      },
+      {
+        "name": "Halles du marché de la Condamine",
+        "kind": "retail",
+        "osm_way": 201286353,
+        "lat_lon": [
+          43.732548,
+          7.420057
+        ],
+        "footprint_m": [
+          66.0,
+          38.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 305.0,
+        "side": "left",
+        "distance_m": 146.1
+      },
+      {
+        "name": "Le Renzo 2",
+        "kind": "apartments",
+        "osm_way": 1341964786,
+        "lat_lon": [
+          43.740207,
+          7.431325
+        ],
+        "footprint_m": [
+          55.0,
+          42.0
+        ],
+        "height_m": "62",
+        "levels": "18",
+        "s_m": 2035.0,
+        "side": "left",
+        "distance_m": 67.1
+      }
+    ],
+    "named": [
+      {
+        "name": "tunnel",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Fairmont",
+        "source": "wikipedia"
+      },
+      {
+        "name": "Casino",
+        "source": "wikipedia"
+      },
+      {
+        "name": "harbour",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit de Monaco\" (infobox, layout \"Grand Prix Circuit (2015–present) (Tabac slightly moved\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_de_Monaco",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_monaco_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_monaco_grand_prix_-_race_directors_competition_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/148194",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 148194,
+        "name": "Circuit de Monaco",
+        "url": "https://www.openstreetmap.org/relation/148194"
+      }
+    }
+  ],
+  "gaps": [
+    "No TUMFTM centreline; OSM centreline used, no track widths.",
+    "Track width not verified.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

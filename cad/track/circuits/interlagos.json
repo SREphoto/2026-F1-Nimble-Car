@@ -1,0 +1,610 @@
+{
+  "schema_version": 1,
+  "id": "interlagos",
+  "status": "confirmed",
+  "event": {
+    "round": 20,
+    "grand_prix": "São Paulo Grand Prix",
+    "weekend": "2026-11-06/2026-11-08",
+    "race_date": "2026-11-08",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Autódromo José Carlos Pace",
+    "common_name": "Interlagos Circuit",
+    "location": "Interlagos, São Paulo, Brazil",
+    "lat": -23.701111,
+    "lon": -46.697222,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (5th Variation) (1999–present)",
+    "opened": "1940-05-12",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4309.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4309.0,
+      "wikipedia_m": 4309.0,
+      "osm_loop_m": 4308.0,
+      "tumftm_m": 4304.6,
+      "pack_centreline_m": 4305.0
+    }
+  },
+  "corners": {
+    "count": 15,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1-2",
+        "name": "S do Senna",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3",
+        "name": "Curva do Sol",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4",
+        "name": "Descida do Lago",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "6-7",
+        "name": "Ferradura",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "8",
+        "name": "Laranjinha",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "10",
+        "name": "Bico de Pato",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "11",
+        "name": "Mergulho",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "12",
+        "name": "Junção",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "13",
+        "name": "Subida dos Boxes",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "14-15",
+        "name": "Arquibancadas",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "anticlockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": "counterclockwise",
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:10.540",
+    "driver": "Valtteri Bottas",
+    "car": "Mercedes W09",
+    "year": 2018,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/interlagos.csv",
+    "spacing_m": 5.0,
+    "samples": 861,
+    "length_m": 4304.6,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/SaoPaulo.csv",
+      "raceline": "cad/track/raw/tumftm/SaoPaulo_raceline.csv",
+      "length_m": 4304.6,
+      "points": 862,
+      "georef_median_m": 1.46,
+      "georef_p95_m": 4.04,
+      "rotation_deg": -0.6406,
+      "origin_lat": -23.7034745,
+      "origin_lon": -46.7000451,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 6781071,
+      "name": "Autódromo José Carlos Pace",
+      "url": "https://www.openstreetmap.org/relation/6781071"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 430,
+    "spacing_m": 10.01,
+    "min_m": 740.1,
+    "max_m": 793.4,
+    "total_change_m": 53.3,
+    "total_climb_per_lap_m": 132.6,
+    "raw_change_m": 57.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 9.0,
+    "max_m": 17.9,
+    "median_m": 11.7,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 1731,
+        "grass": 209512
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 11137,
+        "wall": 372
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines define\nthe track edges. During Sprint Qualifying, Qualifying Session, the Sprint and the Race, each time\na driver fails to negotiate the lap within the track limits, this will result in that lap time being\ninvalidated by the Stewards.\n7",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "left",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 1377.0,
+    "length_all_pit_ways_m": 1377.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 3895.0,
+      "lat_lon": [
+        -23.699886,
+        -46.70037
+      ]
+    },
+    "exit": {
+      "s_m": 1020.0,
+      "lat_lon": [
+        -23.703103,
+        -46.694963
+      ]
+    },
+    "osm_ways": [
+      33779109
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n15.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the left\nhand side of the pit entry after the safety car line 1 will be considered as entering the pit lane.\n15.3 For safety reasons, drivers must keep to the left of the solid white line at the pit entry when they\nare entering the pits\n15.4 Additionally, drivers must keep to the left of the 1st bollard and to the right of the 2nd bollard\nat the pit entry road.\n15.5 During the reconnaissance laps prior to the Sprint and the Race drivers are allowed to cross\nthe white line separating the pit exit road from the circuit.\n15.6 For the safe and orderly conduct of the event, during any live session, team personnel are\nnot allowed in the pit lane beyond the white line crossing the pit lane near pit entry, as\nindicated in the picture below.\n15.7 A marshal placed at the end of the pit exit road (after the practice start area) will display a\nblue flag for the cars leaving pit lane when another car is approaching on the track.\n15.8 Light panel PE located before the pit entry road on the Left Hand side is only to signal any\nincident at the pit entry road using the yellow, double yellow or the white signals.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "168m before Turn 4"
+      },
+      {
+        "point": "S2",
+        "location": "85m before Turn 12"
+      }
+    ],
+    "speed_trap": "90m before Turn 1",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "Apex of Turn 2"
+        },
+        {
+          "label": "Detection 2",
+          "location": "30m after Turn 13"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "30m after Turn 3"
+        },
+        {
+          "label": "Activation 2",
+          "location": "160m before Turn 15"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": null,
+        "osm_way": 138420848,
+        "lat_lon": [
+          -23.7042,
+          -46.700062
+        ],
+        "approx_length_m": 62.0,
+        "s_m": 55.0,
+        "side": "right",
+        "distance_m": 10.4
+      },
+      {
+        "name": "M",
+        "osm_way": 138420844,
+        "lat_lon": [
+          -23.705196,
+          -46.699866
+        ],
+        "approx_length_m": 162.0,
+        "s_m": 125.0,
+        "side": "right",
+        "distance_m": 14.9
+      },
+      {
+        "name": null,
+        "osm_way": 138550780,
+        "lat_lon": [
+          -23.703247,
+          -46.700327
+        ],
+        "approx_length_m": 101.0,
+        "s_m": 4235.0,
+        "side": "right",
+        "distance_m": 11.9
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 189535484,
+        "lat_lon": [
+          -23.70601,
+          -46.699264
+        ],
+        "s_m": 290.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "CPA M10 / 27º BPM/M",
+        "kind": "building",
+        "osm_way": 619083802,
+        "lat_lon": [
+          -23.701836,
+          -46.701091
+        ],
+        "footprint_m": [
+          27.0,
+          26.0
+        ],
+        "height_m": "4.21",
+        "levels": null,
+        "s_m": 4095.0,
+        "side": "right",
+        "distance_m": 46.8
+      },
+      {
+        "name": "Correios - Centro de Operações CDD Cidade Dutra",
+        "kind": "building",
+        "osm_way": 619083086,
+        "lat_lon": [
+          -23.702227,
+          -46.700969
+        ],
+        "footprint_m": [
+          32.0,
+          19.0
+        ],
+        "height_m": "11.5",
+        "levels": null,
+        "s_m": 4140.0,
+        "side": "right",
+        "distance_m": 41.9
+      },
+      {
+        "name": "14",
+        "kind": "building",
+        "osm_way": 189535478,
+        "lat_lon": [
+          -23.698183,
+          -46.699468
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2770.0,
+        "side": "left",
+        "distance_m": 27.4
+      },
+      {
+        "name": "12",
+        "kind": "building",
+        "osm_way": 190165588,
+        "lat_lon": [
+          -23.700386,
+          -46.700026
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2335.0,
+        "side": "left",
+        "distance_m": 23.1
+      },
+      {
+        "name": "13",
+        "kind": "building",
+        "osm_way": 190165589,
+        "lat_lon": [
+          -23.700661,
+          -46.69844
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2485.0,
+        "side": "right",
+        "distance_m": 23.0
+      },
+      {
+        "name": "9",
+        "kind": "building",
+        "osm_way": 190168363,
+        "lat_lon": [
+          -23.69912,
+          -46.696032
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1610.0,
+        "side": "right",
+        "distance_m": 40.3
+      },
+      {
+        "name": "2",
+        "kind": "building",
+        "osm_way": 191727013,
+        "lat_lon": [
+          -23.706613,
+          -46.698352
+        ],
+        "footprint_m": [
+          4.0,
+          4.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 385.0,
+        "side": "right",
+        "distance_m": 39.5
+      },
+      {
+        "name": "11",
+        "kind": "building",
+        "osm_way": 190167517,
+        "lat_lon": [
+          -23.702191,
+          -46.699983
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2170.0,
+        "side": "left",
+        "distance_m": 30.1
+      },
+      {
+        "name": "7",
+        "kind": "building",
+        "osm_way": 190168361,
+        "lat_lon": [
+          -23.699979,
+          -46.694234
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1375.0,
+        "side": "left",
+        "distance_m": 14.4
+      },
+      {
+        "name": "4",
+        "kind": "building",
+        "osm_way": 191577974,
+        "lat_lon": [
+          -23.705174,
+          -46.695319
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 795.0,
+        "side": "right",
+        "distance_m": 26.9
+      },
+      {
+        "name": "5",
+        "kind": "building",
+        "osm_way": 191577975,
+        "lat_lon": [
+          -23.703892,
+          -46.695319
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 930.0,
+        "side": "left",
+        "distance_m": 8.0
+      },
+      {
+        "name": "6",
+        "kind": "building",
+        "osm_way": 191577976,
+        "lat_lon": [
+          -23.701055,
+          -46.694288
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1260.0,
+        "side": "right",
+        "distance_m": 8.9
+      },
+      {
+        "name": "1",
+        "kind": "building",
+        "osm_way": 191727012,
+        "lat_lon": [
+          -23.705594,
+          -46.699567
+        ],
+        "footprint_m": [
+          4.0,
+          3.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 240.0,
+        "side": "right",
+        "distance_m": 10.4
+      },
+      {
+        "name": "8",
+        "kind": "building",
+        "osm_way": 190168362,
+        "lat_lon": [
+          -23.699454,
+          -46.695357
+        ],
+        "footprint_m": [
+          3.0,
+          2.0
+        ],
+        "height_m": "3.69",
+        "levels": null,
+        "s_m": 1555.0,
+        "side": "left",
+        "distance_m": 10.6
+      }
+    ],
+    "named": [
+      {
+        "name": "Reta Oposta",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Interlagos Circuit\" (infobox, layout \"Grand Prix Circuit (5th Variation) (1999–present\")",
+      "url": "https://en.wikipedia.org/wiki/Interlagos_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_sao_paulo_grand_prix_-_event_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_quarantine_zone_and_red_zones_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_sao_paulo_grand_prix_-_race_directors_event_notes_.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/6781071",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 6781071,
+        "name": "Autódromo José Carlos Pace",
+        "url": "https://www.openstreetmap.org/relation/6781071"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data."
+  ]
+}

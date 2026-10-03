@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "id": "zandvoort",
+  "status": "confirmed",
+  "event": {
+    "round": 12,
+    "grand_prix": "Dutch Grand Prix",
+    "weekend": "2026-08-21/2026-08-23",
+    "race_date": "2026-08-23",
+    "sprint": true,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Circuit Zandvoort",
+    "common_name": "Circuit Zandvoort",
+    "location": "Zandvoort, North Holland, Netherlands",
+    "lat": 52.388889,
+    "lon": 4.540833,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2020–present)",
+    "opened": "1948-08-07",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4259.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4259.0,
+      "wikipedia_m": 4259.0,
+      "osm_loop_m": 4253.0,
+      "tumftm_m": 4316.5,
+      "pack_centreline_m": 4253.0
+    }
+  },
+  "corners": {
+    "count": 14,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "Tarzan",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "2",
+        "name": "Gerlach",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "3",
+        "name": "Hugenholtz",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "4-5",
+        "name": "Hunserug",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "6-7",
+        "name": "Slotemaker",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "7",
+        "name": "Scheivlak",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "11-12",
+        "name": "Hans Ernst",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "13",
+        "name": "Kumho",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "14",
+        "name": "Arie Luyendyk",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "OSM loop oriented to match the TUMFTM file order (stored in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:11.097",
+    "driver": "Lewis Hamilton",
+    "car": "Mercedes W12",
+    "year": 2021,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "osm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/zandvoort.csv",
+    "spacing_m": 5.0,
+    "samples": 851,
+    "length_m": 4253.1,
+    "s0": "Point beside the middle of the OSM pit lane. Approximate start/finish line only.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Zandvoort.csv",
+      "raceline": "cad/track/raw/tumftm/Zandvoort_raceline.csv",
+      "length_m": 4316.5,
+      "points": 864,
+      "georef_median_m": 1.27,
+      "georef_p95_m": 4.84,
+      "rotation_deg": -1.1249,
+      "origin_lat": 52.3887572,
+      "origin_lon": 4.5407015,
+      "used": false,
+      "not_used_reason": "TUMFTM length 4316 m is +57 m off the FIA length (older layout), while the OSM loop is -6 m off, so the OSM loop is used.",
+      "old_layout_width_m": {
+        "min": 8.0,
+        "max": 16.1,
+        "median": 9.5
+      }
+    },
+    "osm": {
+      "type": "relation",
+      "id": 13545573,
+      "name": "Grand Prix Formule 1 van Nederland",
+      "url": "https://www.openstreetmap.org/relation/13545573"
+    },
+    "tumftm_missing_alternative": "OpenStreetMap circuit ways (used here, no widths). Better: trace both track edges from aerial imagery or the FIA circuit drawing to get widths."
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 425,
+    "spacing_m": 10.01,
+    "min_m": 3.5,
+    "max_m": 8.4,
+    "total_change_m": 5.0,
+    "total_climb_per_lap_m": 16.8,
+    "raw_change_m": 5.2,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "osm",
+    "min_m": 10.0,
+    "max_m": 10.0,
+    "median_m": null,
+    "note": "From OSM width tags on the circuit ways. The older-layout TUMFTM file gives 8.0 to 16.1 m (median 9.5 m), which is a fair guide for the unchanged parts of the track."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Smoother beginning of the kerb at the apex of Turn 8."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": null,
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 19293,
+        "grass": 36514,
+        "sand": 108
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 8426,
+        "kerb": 1578,
+        "wall": 459,
+        "yes": 209
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": null,
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 758.0,
+    "length_all_pit_ways_m": 758.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 0.0,
+      "lat_lon": [
+        52.390446,
+        4.543144
+      ]
+    },
+    "exit": {
+      "s_m": 3463.0,
+      "lat_lon": [
+        52.386971,
+        4.539515
+      ]
+    },
+    "osm_ways": [
+      38144527
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Appendix L Chapter 4, Articles 4 and 6 to the ISC drivers must follow the\nprocedures at pit entry and pit exit.\n15.2 Pertaining to Appendix L, Chapter IV, Article 4 to the ISC, any driver passing to the right-hand side of\nthe bollard at safety car line 1 will be considered as entering the pit lane.\n15.3 For the safe and orderly conduct of the event, during any live session and while the pit exit is open prior\nto the start of the race, team personnel are not allowed to cross the finish line at the pit lane, as\nindicated in the picture below.\n15.4 Additional Light Panel at Pit Exit Road\nThis panel will show a yellow or double yellow flag and rain signal if there are any obstacles around\nthe corner leading to the pit exit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.483
+      },
+      {
+        "sector": 2,
+        "length_km": 1.452
+      },
+      {
+        "sector": 3,
+        "length_km": 1.324
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "110m before T7"
+      },
+      {
+        "point": "S2",
+        "location": "150m before T11"
+      }
+    ],
+    "speed_trap": "95m before T1",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "20m after T14",
+        "low_grip_activation": "80m after T14"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "50m after T10",
+        "low_grip_activation": "120m after T10"
+      }
+    ],
+    "overtake": {
+      "detection": "10m before T13",
+      "activation": "45m after T14-entry"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Hoofdtribune",
+        "osm_way": 52473180,
+        "lat_lon": [
+          52.388997,
+          4.540331
+        ],
+        "approx_length_m": 81.0,
+        "s_m": 3738.0,
+        "side": "left",
+        "distance_m": 17.0
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "bridge bridge over track",
+        "name": null,
+        "osm_way": 765476850,
+        "lat_lon": [
+          52.387085,
+          4.539562
+        ],
+        "s_m": 3478.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Pitgebouw",
+        "kind": "building",
+        "osm_way": 52473177,
+        "lat_lon": [
+          52.389893,
+          4.54192
+        ],
+        "footprint_m": [
+          172.0,
+          92.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3718.0,
+        "side": "right",
+        "distance_m": 18.4
+      },
+      {
+        "name": "Shell Express",
+        "kind": "roof",
+        "osm_way": 906789805,
+        "lat_lon": [
+          52.385555,
+          4.536831
+        ],
+        "footprint_m": [
+          16.0,
+          15.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3294.0,
+        "side": "left",
+        "distance_m": 119.8
+      }
+    ],
+    "named": [
+      {
+        "name": "dunes",
+        "source": "wikipedia"
+      },
+      {
+        "name": "banking",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Circuit Zandvoort\" (infobox, layout \"Grand Prix Circuit (2020–present\")",
+      "url": "https://en.wikipedia.org/wiki/Circuit_Zandvoort",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_dutch_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_and_emergency_exits_map.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_dutch_grand_prix_-_race_directors_competition_notes.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/13545573",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 13545573,
+        "name": "Grand Prix Formule 1 van Nederland",
+        "url": "https://www.openstreetmap.org/relation/13545573"
+      }
+    }
+  ],
+  "gaps": [
+    "TUMFTM file is an older layout; OSM centreline used, no current-layout track widths.",
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ]
+}

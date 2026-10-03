@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "id": "red_bull_ring",
+  "status": "confirmed",
+  "event": {
+    "round": 8,
+    "grand_prix": "Austrian Grand Prix",
+    "weekend": "2026-06-26/2026-06-28",
+    "race_date": "2026-06-28",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Red Bull Ring",
+    "common_name": "Red Bull Ring",
+    "location": "Spielberg, Styria, Austria",
+    "lat": 47.219722,
+    "lon": 14.764722,
+    "coordinate_source": "wikipedia",
+    "layout": "Red Bull Ring Grand Prix Circuit (2025–present)",
+    "opened": "1969-07-26 Re-opened: 2011-05-15",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4326.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4326.0,
+      "wikipedia_m": 4326.0,
+      "osm_loop_m": 4329.0,
+      "tumftm_m": 4315.4,
+      "pack_centreline_m": 4315.0
+    }
+  },
+  "corners": {
+    "count": 10,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "1",
+        "name": "Niki Lauda",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "9",
+        "name": "Jochen Rindt",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:07.924",
+    "driver": "Oscar Piastri",
+    "car": "McLaren MCL39",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/red_bull_ring.csv",
+    "spacing_m": 5.0,
+    "samples": 863,
+    "length_m": 4315.4,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Spielberg.csv",
+      "raceline": "cad/track/raw/tumftm/Spielberg_raceline.csv",
+      "length_m": 4315.4,
+      "points": 864,
+      "georef_median_m": 1.11,
+      "georef_p95_m": 4.44,
+      "rotation_deg": 0.0656,
+      "origin_lat": 47.2203045,
+      "origin_lon": 14.7666979,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 5309181,
+      "name": "Red Bull Ring",
+      "url": "https://www.openstreetmap.org/relation/5309181"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "eudem25m",
+    "samples": 432,
+    "spacing_m": 9.99,
+    "min_m": 679.0,
+    "max_m": 747.9,
+    "total_change_m": 68.9,
+    "total_climb_per_lap_m": 98.1,
+    "raw_change_m": 69.4,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 10.2,
+    "max_m": 13.7,
+    "median_m": 10.8,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "Removed inner high kerb at the apex of Turn 3.",
+      "Removed inner high kerb at the apex of Turn 10."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "New fences between Turn 1 and 2 on left- and right-hand side (to protect the advertisement bridge).",
+      "Improved barrier position at the shortcut between Turn 2 and Turn 7.",
+      "Additional row of tyre barrier (double row) plus Tecpro at Turn 2 on the right-hand side.",
+      "Extension of the pit wall at the beginning of the start/finish straight."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 290686
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 104,
+        "tyres": 1301,
+        "wall": 6568
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "Each time a driver fails to respect track limits at turn 10, will result in that lap time and the immediately\nfollowing lap time being invalidated by the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 999.0,
+    "length_all_pit_ways_m": 999.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 3835.0,
+      "lat_lon": [
+        47.222666,
+        14.770096
+      ]
+    },
+    "exit": {
+      "s_m": 590.0,
+      "lat_lon": [
+        47.220326,
+        14.759875
+      ]
+    },
+    "osm_ways": [
+      289111668
+    ],
+    "fia_entry_exit_rules": "15.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n15.2 For safety reasons drivers committed to entering the pit lane, must keep to the right of the white\nline preceding the pit entry which starts at the 50 meters brake marker board as indicated in the\npicture.\n15.3 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver that crosses the dashed line,\nwith the four tyres, at pit entry road will be considered as entering the pit lane, as indicated in\nthe picture below.\n15.4 If there is a yellow flag displayed on LHS in the pit entry road it will be a warning of an incident at\nthe pit entry road. This flag is not intended for drivers staying on track.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.215
+      },
+      {
+        "sector": 2,
+        "length_km": 1.697
+      },
+      {
+        "sector": 3,
+        "length_km": 1.414
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "170m before T3"
+      },
+      {
+        "point": "S2",
+        "location": "60m before T7"
+      }
+    ],
+    "speed_trap": "170m before T4",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "110m after T10",
+        "low_grip_activation": "160m after T10"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "110m after T1",
+        "low_grip_activation": "170m after T1"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "90m after T3",
+        "low_grip_activation": "160m after T3"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "10m after T8",
+        "low_grip_activation": "60m after T8"
+      }
+    ],
+    "overtake": {
+      "detection": "50m before T10",
+      "activation": "110m after T10"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": "Steiermark Tribüne",
+        "osm_way": 312030917,
+        "lat_lon": [
+          47.219012,
+          14.760981
+        ],
+        "approx_length_m": 104.0,
+        "s_m": 425.0,
+        "side": "left",
+        "distance_m": 18.6
+      },
+      {
+        "name": "Red Bull Tribüne",
+        "osm_way": 118364945,
+        "lat_lon": [
+          47.220489,
+          14.758965
+        ],
+        "approx_length_m": 224.0,
+        "s_m": 730.0,
+        "side": "left",
+        "distance_m": 22.9
+      },
+      {
+        "name": "Red Bull Tribüne",
+        "osm_way": 604402038,
+        "lat_lon": [
+          47.222419,
+          14.757212
+        ],
+        "approx_length_m": 174.0,
+        "s_m": 780.0,
+        "side": "left",
+        "distance_m": 30.6
+      },
+      {
+        "name": "Tribüne 13",
+        "osm_way": 1228485529,
+        "lat_lon": [
+          47.227263,
+          14.754051
+        ],
+        "approx_length_m": 93.0,
+        "s_m": 1460.0,
+        "side": "left",
+        "distance_m": 75.8
+      },
+      {
+        "name": "Tribüne Nord",
+        "osm_way": 565072384,
+        "lat_lon": [
+          47.225721,
+          14.766251
+        ],
+        "approx_length_m": 140.0,
+        "s_m": 2210.0,
+        "side": "left",
+        "distance_m": 113.0
+      },
+      {
+        "name": "Tribüne Mitte",
+        "osm_way": 1077517159,
+        "lat_lon": [
+          47.223161,
+          14.760666
+        ],
+        "approx_length_m": 122.0,
+        "s_m": 3150.0,
+        "side": "left",
+        "distance_m": 45.9
+      },
+      {
+        "name": "Tribüne Ost",
+        "osm_way": 1077423719,
+        "lat_lon": [
+          47.222597,
+          14.771117
+        ],
+        "approx_length_m": 59.0,
+        "s_m": 3895.0,
+        "side": "left",
+        "distance_m": 51.6
+      },
+      {
+        "name": "Tribüne T10",
+        "osm_way": 1077423720,
+        "lat_lon": [
+          47.221735,
+          14.771151
+        ],
+        "approx_length_m": 141.0,
+        "s_m": 3960.0,
+        "side": "left",
+        "distance_m": 30.6
+      },
+      {
+        "name": "Start/Ziel Tribüne",
+        "osm_way": 312030921,
+        "lat_lon": [
+          47.219765,
+          14.765407
+        ],
+        "approx_length_m": 407.0,
+        "s_m": 4230.0,
+        "side": "left",
+        "distance_m": 18.1
+      }
+    ],
+    "bridges": [],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Box",
+        "kind": "building",
+        "osm_way": 118364939,
+        "lat_lon": [
+          47.220321,
+          14.765366
+        ],
+        "footprint_m": [
+          300.0,
+          99.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4300.0,
+        "side": "right",
+        "distance_m": 18.8
+      }
+    ],
+    "named": [],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Red Bull Ring\" (infobox, layout \"Red Bull Ring Grand Prix Circuit (2025–present\")",
+      "url": "https://en.wikipedia.org/wiki/Red_Bull_Ring",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_austrian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_austrian_grand_prix_-_race_directors_competition_notes.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/5309181",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 5309181,
+        "name": "Red Bull Ring",
+        "url": "https://www.openstreetmap.org/relation/5309181"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified."
+  ],
+  "built": {
+    "builder": "tools/track/build_red_bull_ring.py",
+    "data": "cad/track/red_bull_ring_data.js",
+    "scene": "cad/track/red_bull_ring.js",
+    "note": "This circuit is already built. The builder uses the same TUMFTM file and OSM/EU-DEM sources as this pack."
+  }
+}

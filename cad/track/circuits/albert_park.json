@@ -1,0 +1,694 @@
+{
+  "schema_version": 1,
+  "id": "albert_park",
+  "status": "confirmed",
+  "event": {
+    "round": 1,
+    "grand_prix": "Australian Grand Prix",
+    "weekend": "2026-03-06/2026-03-08",
+    "race_date": "2026-03-08",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Albert Park Circuit",
+    "common_name": "Albert Park Circuit",
+    "location": "Albert Park, Melbourne, Victoria, Australia",
+    "lat": -37.849722,
+    "lon": 144.968333,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2021–present)",
+    "opened": "1953-11-20 Re-opened: 1996-03-07",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5278.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5278.0,
+      "wikipedia_m": 5278.0,
+      "osm_loop_m": 5308.0,
+      "tumftm_m": 5298.7,
+      "pack_centreline_m": 5299.0
+    }
+  },
+  "corners": {
+    "count": 14,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [],
+    "named_note": "No corner names verified for this circuit."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:19.813",
+    "driver": "Charles Leclerc",
+    "car": "Ferrari SF-24",
+    "year": 2024,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/albert_park.csv",
+    "spacing_m": 5.0,
+    "samples": 1060,
+    "length_m": 5298.7,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Melbourne.csv",
+      "raceline": "cad/track/raw/tumftm/Melbourne_raceline.csv",
+      "length_m": 5298.7,
+      "points": 1060,
+      "georef_median_m": 1.1,
+      "georef_p95_m": 12.73,
+      "rotation_deg": -1.3571,
+      "origin_lat": -37.8500218,
+      "origin_lon": 144.9689848,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 280443,
+      "name": "Albert Park Circuit",
+      "url": "https://www.openstreetmap.org/relation/280443"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 530,
+    "spacing_m": 10.0,
+    "min_m": 3.3,
+    "max_m": 15.9,
+    "total_change_m": 12.7,
+    "total_climb_per_lap_m": 84.1,
+    "raw_change_m": 19.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 8.0,
+    "max_m": 15.6,
+    "median_m": 12.2,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": [
+      "The concrete apron behind the kerb to be removed and replaced with turf at the exit of Turn 10 on the left-hand side."
+    ],
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Realignment of the white line and the barrier at the exit of Turn 2 on the right-hand side.",
+      "The gravel strip at the exit of Turn 6 was replaced by a grass strip.",
+      "The concrete apron behind the kerb to be removed and replaced with turf at the exit of Turn 10 on the left-hand side."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "asphalt": 1661,
+        "grass": 168601,
+        "paved": 793,
+        "sand": 29
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 1418
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "In accordance with the provisions of Article B1.8.6 of the Sporting Regulations, the white\nlines define the track edges. During Qualifying Session and the Race, each time a driver fails\nto negotiate the lap within the track limits, this will result in that lap time being invalidated\nby the Stewards.",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 711.0,
+    "length_all_pit_ways_m": 711.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 4744.0,
+      "lat_lon": [
+        -37.852399,
+        144.973652
+      ]
+    },
+    "exit": {
+      "s_m": 165.0,
+      "lat_lon": [
+        -37.848971,
+        144.967631
+      ]
+    },
+    "osm_ways": [
+      28119448
+    ],
+    "fia_entry_exit_rules": "16.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n16.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver crossing the safety car line\n1 to the right-hand side of the solid white line separating the pit entry road from the track, as\nindicated in the image below, will be considered as entering the pit lane.\n16.3 During the reconnaissance laps prior to the Race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 1.753
+      },
+      {
+        "sector": 2,
+        "length_km": 1.413
+      },
+      {
+        "sector": 3,
+        "length_km": 2.112
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "120m before T6"
+      },
+      {
+        "point": "S2",
+        "location": "140m before T9"
+      }
+    ],
+    "speed_trap": "120m before T1",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "50m after T14",
+        "low_grip_activation": "100m after T14"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "20m after T2",
+        "low_grip_activation": "45m after T2"
+      },
+      {
+        "zone": "A3",
+        "normal_grip_activation": "85m after T5",
+        "low_grip_activation": "125m after T5"
+      },
+      {
+        "zone": "A4",
+        "normal_grip_activation": "35m after T8",
+        "low_grip_activation": null
+      },
+      {
+        "zone": "A5",
+        "normal_grip_activation": "60m after T10",
+        "low_grip_activation": null
+      }
+    ],
+    "overtake": {
+      "detection": "15m after T13",
+      "activation": "Entry T14"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": null,
+        "osm_way": 45381088,
+        "lat_lon": [
+          -37.840989,
+          144.965032
+        ],
+        "approx_length_m": 97.0,
+        "s_m": 1355.0,
+        "side": "right",
+        "distance_m": 73.3
+      },
+      {
+        "name": null,
+        "osm_way": 154181818,
+        "lat_lon": [
+          -37.839733,
+          144.965529
+        ],
+        "approx_length_m": 102.0,
+        "s_m": 1590.0,
+        "side": "right",
+        "distance_m": 48.1
+      },
+      {
+        "name": null,
+        "osm_way": 733176937,
+        "lat_lon": [
+          -37.855206,
+          144.979927
+        ],
+        "approx_length_m": 73.0,
+        "s_m": 4179.0,
+        "side": "left",
+        "distance_m": 244.2
+      },
+      {
+        "name": "Blackie Ironmonger Stand",
+        "osm_way": 45021157,
+        "lat_lon": [
+          -37.855768,
+          144.979177
+        ],
+        "approx_length_m": 44.0,
+        "s_m": 4214.0,
+        "side": "left",
+        "distance_m": 271.8
+      }
+    ],
+    "bridges": [],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Monarch",
+        "kind": "building",
+        "osm_way": 167771327,
+        "lat_lon": [
+          -37.85227,
+          144.97962
+        ],
+        "footprint_m": [
+          81.0,
+          55.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4079.0,
+        "side": "left",
+        "distance_m": 70.6
+      },
+      {
+        "name": "Powerhouse Function Centre",
+        "kind": "building",
+        "osm_way": 26811587,
+        "lat_lon": [
+          -37.850304,
+          144.977199
+        ],
+        "footprint_m": [
+          81.0,
+          54.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3794.0,
+        "side": "right",
+        "distance_m": 10.8
+      },
+      {
+        "name": "Pullman Melbourne Albert Park",
+        "kind": "building",
+        "osm_way": 306782098,
+        "lat_lon": [
+          -37.85022,
+          144.978881
+        ],
+        "footprint_m": [
+          60.0,
+          58.0
+        ],
+        "height_m": null,
+        "levels": "4",
+        "s_m": 3889.0,
+        "side": "left",
+        "distance_m": 79.1
+      },
+      {
+        "name": "Claremont",
+        "kind": "building",
+        "osm_way": 860241986,
+        "lat_lon": [
+          -37.838074,
+          144.963519
+        ],
+        "footprint_m": [
+          55.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1590.0,
+        "side": "left",
+        "distance_m": 143.0
+      },
+      {
+        "name": "Lakeside",
+        "kind": "apartments",
+        "osm_way": 409016090,
+        "lat_lon": [
+          -37.85273,
+          144.979741
+        ],
+        "footprint_m": [
+          64.0,
+          39.0
+        ],
+        "height_m": null,
+        "levels": "12",
+        "s_m": 4144.0,
+        "side": "left",
+        "distance_m": 88.0
+      },
+      {
+        "name": "Middle Park Football Club",
+        "kind": "building",
+        "osm_way": 321789092,
+        "lat_lon": [
+          -37.850513,
+          144.970223
+        ],
+        "footprint_m": [
+          49.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 5204.0,
+        "side": "right",
+        "distance_m": 20.9
+      },
+      {
+        "name": "Albert Park Indoor Sports Centre",
+        "kind": "sports_centre",
+        "osm_way": 321789093,
+        "lat_lon": [
+          -37.850215,
+          144.969841
+        ],
+        "footprint_m": [
+          49.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 5244.0,
+        "side": "right",
+        "distance_m": 20.4
+      },
+      {
+        "name": "Albert Park Fitness",
+        "kind": "fitness_centre",
+        "osm_way": 321789097,
+        "lat_lon": [
+          -37.849957,
+          144.969515
+        ],
+        "footprint_m": [
+          49.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 5284.0,
+        "side": "right",
+        "distance_m": 20.4
+      },
+      {
+        "name": "Pavilion",
+        "kind": "building",
+        "osm_way": 993669986,
+        "lat_lon": [
+          -37.849726,
+          144.969069
+        ],
+        "footprint_m": [
+          49.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 35.0,
+        "side": "right",
+        "distance_m": 18.6
+      },
+      {
+        "name": "South Melbourne Women's Football Club",
+        "kind": "building",
+        "osm_way": 321789095,
+        "lat_lon": [
+          -37.850982,
+          144.970806
+        ],
+        "footprint_m": [
+          48.0,
+          48.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 5089.0,
+        "side": "right",
+        "distance_m": 20.7
+      },
+      {
+        "name": "Parks Victoria Albert Park Office and Depot",
+        "kind": "office",
+        "osm_way": 205282763,
+        "lat_lon": [
+          -37.846046,
+          144.96499
+        ],
+        "footprint_m": [
+          46.0,
+          42.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 640.0,
+        "side": "left",
+        "distance_m": 30.7
+      },
+      {
+        "name": "Middle Park Bowling Club",
+        "kind": "building",
+        "osm_way": 154708921,
+        "lat_lon": [
+          -37.848565,
+          144.965091
+        ],
+        "footprint_m": [
+          45.0,
+          42.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 360.0,
+        "side": "left",
+        "distance_m": 105.4
+      },
+      {
+        "name": "Consulate General of the Republic of Indonesia",
+        "kind": "building",
+        "osm_way": 215159971,
+        "lat_lon": [
+          -37.851631,
+          144.979468
+        ],
+        "footprint_m": [
+          39.0,
+          33.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4019.0,
+        "side": "left",
+        "distance_m": 96.1
+      },
+      {
+        "name": "Albert Sailing Club",
+        "kind": "building",
+        "osm_way": 488129125,
+        "lat_lon": [
+          -37.839724,
+          144.966911
+        ],
+        "footprint_m": [
+          43.0,
+          26.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1740.0,
+        "side": "right",
+        "distance_m": 116.2
+      },
+      {
+        "name": "David Mandie Pavillion",
+        "kind": "pavilion",
+        "osm_way": 45118481,
+        "lat_lon": [
+          -37.853696,
+          144.97162
+        ],
+        "footprint_m": [
+          33.0,
+          29.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4874.0,
+        "side": "left",
+        "distance_m": 110.2
+      },
+      {
+        "name": "yna",
+        "kind": "building",
+        "osm_way": 860243927,
+        "lat_lon": [
+          -37.837332,
+          144.966103
+        ],
+        "footprint_m": [
+          42.0,
+          20.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1780.0,
+        "side": "left",
+        "distance_m": 121.6
+      },
+      {
+        "name": "Beaurepaire Pavilion",
+        "kind": "sports_centre",
+        "osm_way": 154529390,
+        "lat_lon": [
+          -37.847825,
+          144.968266
+        ],
+        "footprint_m": [
+          33.0,
+          25.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 220.0,
+        "side": "right",
+        "distance_m": 109.1
+      },
+      {
+        "name": "Stuart King Pavillion",
+        "kind": "building",
+        "osm_way": 45391275,
+        "lat_lon": [
+          -37.85476,
+          144.978012
+        ],
+        "footprint_m": [
+          27.0,
+          24.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 4264.0,
+        "side": "left",
+        "distance_m": 143.8
+      },
+      {
+        "name": "Centre for Musculoskeletal Medicine",
+        "kind": "retail",
+        "osm_way": 857650297,
+        "lat_lon": [
+          -37.838842,
+          144.963054
+        ],
+        "footprint_m": [
+          19.0,
+          15.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 1495.0,
+        "side": "left",
+        "distance_m": 114.9
+      },
+      {
+        "name": "Carmelite Tennis Club",
+        "kind": "building",
+        "osm_way": 154532560,
+        "lat_lon": [
+          -37.849556,
+          144.966133
+        ],
+        "footprint_m": [
+          12.0,
+          12.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 205.0,
+        "side": "left",
+        "distance_m": 133.1
+      }
+    ],
+    "named": [
+      {
+        "name": "Albert Park Lake",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Albert Park Circuit\" (infobox, layout \"Grand Prix Circuit (2021–present\")",
+      "url": "https://en.wikipedia.org/wiki/Albert_Park_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_quarantine_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_race_directors_competition_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/280443",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 280443,
+        "name": "Albert Park Circuit",
+        "url": "https://www.openstreetmap.org/relation/280443"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No corner names verified."
+  ]
+}

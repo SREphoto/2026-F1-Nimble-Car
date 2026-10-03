@@ -1,0 +1,666 @@
+{
+  "schema_version": 1,
+  "id": "suzuka",
+  "status": "confirmed",
+  "event": {
+    "round": 3,
+    "grand_prix": "Japanese Grand Prix",
+    "weekend": "2026-03-27/2026-03-29",
+    "race_date": "2026-03-29",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Suzuka International Racing Course",
+    "common_name": "Suzuka Circuit",
+    "location": "Suzuka, Mie Prefecture, Japan",
+    "lat": 34.841667,
+    "lon": 136.538889,
+    "coordinate_source": "wikidata Q174170 (P625)",
+    "layout": "Grand Prix Circuit (2003–present)",
+    "opened": "1962-09",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 5807.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 5807.0,
+      "wikipedia_m": 5807.0,
+      "osm_loop_m": 5807.0,
+      "tumftm_m": 5802.9,
+      "pack_centreline_m": 5803.0
+    }
+  },
+  "corners": {
+    "count": 18,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "7",
+        "name": "Dunlop",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "8-9",
+        "name": "Degner",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "11",
+        "name": "Hairpin",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "13-14",
+        "name": "Spoon",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "15",
+        "name": "130R",
+        "source": "wikipedia"
+      },
+      {
+        "turns": "16-17",
+        "name": "Casio Triangle",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "figure-eight",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": "figure-eight layout: the track crosses itself on a bridge",
+    "note": "Suzuka crosses itself, so clockwise/anticlockwise does not apply."
+  },
+  "lap_record": {
+    "time": "1:30.965",
+    "driver": "Andrea Kimi Antonelli",
+    "car": "Mercedes AMG W16",
+    "year": 2025,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/suzuka.csv",
+    "spacing_m": 5.0,
+    "samples": 1161,
+    "length_m": 5802.9,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/Suzuka.csv",
+      "raceline": "cad/track/raw/tumftm/Suzuka_raceline.csv",
+      "length_m": 5802.9,
+      "points": 1161,
+      "georef_median_m": 0.73,
+      "georef_p95_m": 1.7,
+      "rotation_deg": -0.9816,
+      "origin_lat": 34.8449689,
+      "origin_lon": 136.5386239,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 284570,
+      "name": "鈴鹿サーキット",
+      "url": "https://www.openstreetmap.org/relation/284570"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 580,
+    "spacing_m": 10.0,
+    "min_m": 16.6,
+    "max_m": 60.1,
+    "total_change_m": 43.5,
+    "total_climb_per_lap_m": 91.1,
+    "raw_change_m": 46.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 7.8,
+    "max_m": 15.3,
+    "median_m": 9.2,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "New debris fence at Turn 13 on the right-hand side."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "grass": 73656,
+        "sand": 52348
+      },
+      "barrier_length_m_within_30m": {
+        "fence": 3327,
+        "wall": 2680
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "19.1 The dotted white line across pit exit marks the track edge line.\n19.2 Each time a driver fails to respect track limits at the entry (apex) or exit Turn 17, will result in that\nlap time and the immediately following lap time being invalidated by the Stewards.\n5",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 888.0,
+    "length_all_pit_ways_m": 888.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 5523.0,
+      "lat_lon": [
+        34.84602,
+        136.53608
+      ]
+    },
+    "exit": {
+      "s_m": 615.0,
+      "lat_lon": [
+        34.840687,
+        136.542941
+      ]
+    },
+    "osm_ways": [
+      120917578
+    ],
+    "fia_entry_exit_rules": "16.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must follow\nthe procedures at pit entry and pit exit.\n16.2 For safety reasons, the line that is at pit exit, includes the line painted on the track at pit exit and\ncontinuing after SC2 line.\n16.3 If there is a yellow flag displayed on RHS in the pit entry road it will be a warning of an incident at\nthe pit entry road. This flag is not intended for drivers staying on track.\n16.4 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right\nhand side of the bollard at pit entry will be considered as entering the pit lane.\n16.5 During the reconnaissance laps prior to the Race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit.",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2026,
+    "lengths_km": [
+      {
+        "sector": 1,
+        "length_km": 2.184
+      },
+      {
+        "sector": 2,
+        "length_km": 2.526
+      },
+      {
+        "sector": 3,
+        "length_km": 1.097
+      }
+    ],
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "110m before T8"
+      },
+      {
+        "point": "S2",
+        "location": "270m before T15"
+      }
+    ],
+    "speed_trap": "70m after T15",
+    "note": null
+  },
+  "overtaking": {
+    "system": "2026 active aero: straight mode zones and overtake mode",
+    "source": "fia_map",
+    "season": 2026,
+    "straight_mode_zones": [
+      {
+        "zone": "A1",
+        "normal_grip_activation": "Exit T18",
+        "low_grip_activation": "100m after T18"
+      },
+      {
+        "zone": "A2",
+        "normal_grip_activation": "Exit T14",
+        "low_grip_activation": "70m after T14"
+      }
+    ],
+    "overtake": {
+      "detection": "Exit T17",
+      "activation": "Apex T18"
+    },
+    "note": "Straight mode (low-drag wing setting) can be used in each zone. The FIA map gives two activation points per zone: one for normal grip and one for low grip (n/a means the zone is not used in low grip). Overtake mode: detection point and activation point. Locations are as printed on the FIA map."
+  },
+  "landmarks": {
+    "grandstands": [],
+    "bridges": [
+      {
+        "kind": "track on bridge",
+        "name": null,
+        "osm_way": 175231434,
+        "length_m": 36.0,
+        "s_m": 4943.0,
+        "side": "left",
+        "distance_m": 0.6
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "ピットビル",
+        "kind": "building",
+        "osm_way": 184422099,
+        "lat_lon": [
+          34.843849,
+          136.539147
+        ],
+        "footprint_m": [
+          284.0,
+          243.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 335.0,
+        "side": "right",
+        "distance_m": 24.8
+      },
+      {
+        "name": "C",
+        "kind": "bleachers",
+        "osm_way": 184143133,
+        "lat_lon": [
+          34.839043,
+          136.541535
+        ],
+        "footprint_m": [
+          243.0,
+          227.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1185.0,
+        "side": "left",
+        "distance_m": 39.3
+      },
+      {
+        "name": "V1",
+        "kind": "bleachers",
+        "osm_way": 184107052,
+        "lat_lon": [
+          34.843781,
+          136.540274
+        ],
+        "footprint_m": [
+          237.0,
+          191.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 205.0,
+        "side": "left",
+        "distance_m": 20.5
+      },
+      {
+        "name": "ホンダロジスティクス海外センターＡ棟",
+        "kind": "warehouse",
+        "osm_way": 443498255,
+        "lat_lon": [
+          34.840726,
+          136.536877
+        ],
+        "footprint_m": [
+          269.0,
+          161.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1250.0,
+        "side": "left",
+        "distance_m": 93.3
+      },
+      {
+        "name": "D１～D4",
+        "kind": "bleachers",
+        "osm_way": 469368057,
+        "lat_lon": [
+          34.842279,
+          136.537444
+        ],
+        "footprint_m": [
+          205.0,
+          165.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1484.0,
+        "side": "left",
+        "distance_m": 22.7
+      },
+      {
+        "name": "V2",
+        "kind": "bleachers",
+        "osm_way": 183394522,
+        "lat_lon": [
+          34.844684,
+          136.53967
+        ],
+        "footprint_m": [
+          158.0,
+          137.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 0.0,
+        "side": "left",
+        "distance_m": 36.0
+      },
+      {
+        "name": "B2",
+        "kind": "bleachers",
+        "osm_way": 184143132,
+        "lat_lon": [
+          34.838649,
+          136.543417
+        ],
+        "footprint_m": [
+          117.0,
+          110.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 780.0,
+        "side": "left",
+        "distance_m": 50.2
+      },
+      {
+        "name": "E",
+        "kind": "bleachers",
+        "osm_way": 467982372,
+        "lat_lon": [
+          34.844379,
+          136.536498
+        ],
+        "footprint_m": [
+          145.0,
+          82.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1874.0,
+        "side": "left",
+        "distance_m": 17.3
+      },
+      {
+        "name": "チームオフィス",
+        "kind": "building",
+        "osm_way": 184423963,
+        "lat_lon": [
+          34.843951,
+          136.538463
+        ],
+        "footprint_m": [
+          113.0,
+          101.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1739.0,
+        "side": "right",
+        "distance_m": 61.9
+      },
+      {
+        "name": "A1",
+        "kind": "bleachers",
+        "osm_way": 184120096,
+        "lat_lon": [
+          34.8422,
+          136.541827
+        ],
+        "footprint_m": [
+          101.0,
+          77.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 485.0,
+        "side": "left",
+        "distance_m": 20.0
+      },
+      {
+        "name": "G",
+        "kind": "bleachers",
+        "osm_way": 184102361,
+        "lat_lon": [
+          34.844372,
+          136.531749
+        ],
+        "footprint_m": [
+          116.0,
+          53.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5128.0,
+        "side": "left",
+        "distance_m": 27.4
+      },
+      {
+        "name": "B1",
+        "kind": "bleachers",
+        "osm_way": 184143131,
+        "lat_lon": [
+          34.838503,
+          136.543038
+        ],
+        "footprint_m": [
+          100.0,
+          51.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 810.0,
+        "side": "left",
+        "distance_m": 52.3
+      },
+      {
+        "name": "G",
+        "kind": "bleachers",
+        "osm_way": 184102012,
+        "lat_lon": [
+          34.844897,
+          136.530709
+        ],
+        "footprint_m": [
+          109.0,
+          38.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2689.0,
+        "side": "right",
+        "distance_m": 21.9
+      },
+      {
+        "name": "S",
+        "kind": "building",
+        "osm_way": 183394069,
+        "lat_lon": [
+          34.84594,
+          136.538203
+        ],
+        "footprint_m": [
+          61.0,
+          57.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5733.0,
+        "side": "left",
+        "distance_m": 29.7
+      },
+      {
+        "name": "VIP",
+        "kind": "building",
+        "osm_way": 183394524,
+        "lat_lon": [
+          34.843697,
+          136.540624
+        ],
+        "footprint_m": [
+          61.0,
+          56.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 200.0,
+        "side": "left",
+        "distance_m": 38.3
+      },
+      {
+        "name": "D5",
+        "kind": "bleachers",
+        "osm_way": 469395390,
+        "lat_lon": [
+          34.841429,
+          136.538774
+        ],
+        "footprint_m": [
+          65.0,
+          43.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1270.0,
+        "side": "left",
+        "distance_m": 36.7
+      },
+      {
+        "name": "鈴鹿サーキット交通教育センター",
+        "kind": "building",
+        "osm_way": 466925741,
+        "lat_lon": [
+          34.84401,
+          136.541756
+        ],
+        "footprint_m": [
+          51.0,
+          49.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 255.0,
+        "side": "left",
+        "distance_m": 129.2
+      },
+      {
+        "name": "チームオフィス",
+        "kind": "building",
+        "osm_way": 184430911,
+        "lat_lon": [
+          34.842763,
+          136.539672
+        ],
+        "footprint_m": [
+          49.0,
+          44.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 280.0,
+        "side": "right",
+        "distance_m": 78.3
+      },
+      {
+        "name": "レーシングシアター",
+        "kind": "building",
+        "osm_way": 466813342,
+        "lat_lon": [
+          34.84581,
+          136.539373
+        ],
+        "footprint_m": [
+          46.0,
+          45.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 5793.0,
+        "side": "left",
+        "distance_m": 95.7
+      },
+      {
+        "name": "センターハウス",
+        "kind": "building",
+        "osm_way": 184430907,
+        "lat_lon": [
+          34.842939,
+          136.539101
+        ],
+        "footprint_m": [
+          47.0,
+          44.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 1404.0,
+        "side": "right",
+        "distance_m": 72.4
+      }
+    ],
+    "named": [
+      {
+        "name": "Ferris wheel",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Suzuka Circuit\" (infobox, layout \"Grand Prix Circuit (2003–present\")",
+      "url": "https://en.wikipedia.org/wiki/Suzuka_Circuit",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2026 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2026_japanese_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_battery_containment_area_and_red_zone.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2026 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2026_japanese_grand_prix_-_race_directors_competition_notes_v2.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/284570",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 284570,
+        "name": "鈴鹿サーキット",
+        "url": "https://www.openstreetmap.org/relation/284570"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "No grandstands mapped in OSM near the track."
+  ]
+}

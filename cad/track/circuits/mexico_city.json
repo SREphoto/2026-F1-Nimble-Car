@@ -1,0 +1,924 @@
+{
+  "schema_version": 1,
+  "id": "mexico_city",
+  "status": "confirmed",
+  "event": {
+    "round": 19,
+    "grand_prix": "Mexico City Grand Prix",
+    "weekend": "2026-10-30/2026-11-01",
+    "race_date": "2026-11-01",
+    "sprint": false,
+    "source": "formula1.com/en/racing/2026 and Wikipedia 2026 season article"
+  },
+  "circuit": {
+    "official_name": "Autódromo Hermanos Rodríguez",
+    "common_name": "Autódromo Hermanos Rodríguez",
+    "location": "Mexico City, Mexico",
+    "lat": 19.406111,
+    "lon": -99.0925,
+    "coordinate_source": "wikipedia",
+    "layout": "Grand Prix Circuit (2015–present)",
+    "opened": "1959-11-20",
+    "source": "wikipedia"
+  },
+  "length": {
+    "official_m": 4304.0,
+    "source": "fia_map",
+    "checks": {
+      "fia_centreline_m": 4304.0,
+      "wikipedia_m": 4304.0,
+      "osm_loop_m": 4312.0,
+      "tumftm_m": 4297.2,
+      "pack_centreline_m": 4297.0
+    }
+  },
+  "corners": {
+    "count": 17,
+    "count_source": "wikipedia",
+    "note": "Turn count as given by Wikipedia for this layout. The FIA map numbering is the reference for turn labels.",
+    "named": [
+      {
+        "turns": "17",
+        "name": "Peraltada",
+        "source": "wikipedia"
+      }
+    ],
+    "named_note": "Names checked against the Wikipedia article text. The turn label is the usual mapping and should be checked against the FIA map before placing signs."
+  },
+  "direction": {
+    "value": "clockwise",
+    "basis": "TUMFTM centreline order (the database stores tracks in driving direction)",
+    "stated_by_source": null,
+    "note": "Computed from the orientation of the race-direction centreline."
+  },
+  "lap_record": {
+    "time": "1:17.774",
+    "driver": "Valtteri Bottas",
+    "car": "Mercedes W12",
+    "year": 2021,
+    "source": "wikipedia",
+    "note": "Fastest lap set during a race (Wikipedia convention: race laps only). 2026-season records are only listed if Wikipedia already shows them.",
+    "class": "F1"
+  },
+  "centreline": {
+    "source": "tumftm",
+    "geojson": null,
+    "csv": "cad/track/raw/centreline/mexico_city.csv",
+    "spacing_m": 5.0,
+    "samples": 859,
+    "length_m": 4297.2,
+    "s0": "First point of the TUMFTM file. Close to, but not exactly on, the start/finish line.",
+    "tumftm": {
+      "file": "cad/track/raw/tumftm/MexicoCity.csv",
+      "raceline": "cad/track/raw/tumftm/MexicoCity_raceline.csv",
+      "length_m": 4297.2,
+      "points": 860,
+      "georef_median_m": 1.58,
+      "georef_p95_m": 7.39,
+      "rotation_deg": 0.0702,
+      "origin_lat": 19.4059772,
+      "origin_lon": -99.0927457,
+      "used": true
+    },
+    "osm": {
+      "type": "relation",
+      "id": 16251935,
+      "name": "Mexican Grand Prix",
+      "url": "https://www.openstreetmap.org/relation/16251935"
+    },
+    "tumftm_missing_alternative": null
+  },
+  "elevation": {
+    "dataset": "srtm30m",
+    "samples": 430,
+    "spacing_m": 9.99,
+    "min_m": 2224.5,
+    "max_m": 2245.8,
+    "total_change_m": 21.3,
+    "total_climb_per_lap_m": 88.9,
+    "raw_change_m": 28.0,
+    "missing_samples_filled": null,
+    "source": "opentopodata",
+    "official_change_m": null,
+    "note": "Computed from a terrain model sampled along the centreline and smoothed over about 30 m. SRTM includes buildings and trees, so on a street circuit the figure is rough. No official elevation figure was verified."
+  },
+  "track_width": {
+    "source": "tumftm",
+    "min_m": 9.8,
+    "max_m": 17.9,
+    "median_m": 11.6,
+    "note": "Total width (left + right of centreline) from TUMFTM, measured from satellite images. Treat as approximate; TUMFTM smoothed the centreline so it is not always in the middle."
+  },
+  "kerbs": {
+    "value": null,
+    "fia_changes": null,
+    "note": "Kerb types and positions are not published as data. Lines quoted from the FIA Race Director notes (\"Changes to the Circuit\") where they mention kerbs. The current build derives kerbs from curvature."
+  },
+  "run_off": {
+    "value": null,
+    "fia_changes": [
+      "Asphalt grinding at Turn 12 near the 150 meters brake marker."
+    ],
+    "osm_hints": {
+      "surface_area_m2_within_60m": {
+        "artificial_turf": 1216,
+        "concrete": 10171,
+        "grass": 192624
+      },
+      "barrier_length_m_within_30m": {
+        "wall": 6042
+      },
+      "note": "Only what OSM contributors have mapped near the track; incomplete at most circuits."
+    },
+    "note": "Run-off surfaces per corner are not verified. FIA lines quoted where they describe gravel, asphalt, grass, walls or barriers."
+  },
+  "track_limits": "18.1 In accordance with the provisions of Article 33.3 of the Sporting Regulations, the white lines\ndefine the track edges. During Qualifying and the Race, each time a driver fails to negotiate\nthe lap within the track limits, this will result in that lap time being invalidated by the Stewards.\nAdditionally, if a driver fails to negotiate turn 17, this may result in that lap time and the\nimmediately following lap time being invalidated by the Stewards.\n18.2 For the safe and orderly conduct of the event, any driver who misses the apex of Turn 4,\nenters the run-off area, and crosses the solid yellow line painted across the run-off area\n(yellow arrow in the image below) with all 4 wheels may only re-join the circuit after Turn 5\nusing the asphalt rejoin route (highlighted orange in the image below). Drivers may only use\nthe grass if it is clearly unavoidable.\n18.3 Any driver whose car passes completely behind the red and white kerb at the apex of Turn\n11 must re-join the track by keeping to the right of the first polystyrene block arrangement\nand then wholly to the left of the second polystyrene block parallel to the on the exit of the\ncorner.\n6",
+  "pit_lane": {
+    "speed_limit_kmh": 80,
+    "speed_limit_source": "FIA 2026 F1 Sporting Regulations B1.6.3a default (80 km/h); the Race Director notes do not amend it (2025 notes; 2026 notes not issued yet)",
+    "side": "right",
+    "side_basis": "OSM pit lane position relative to the race-direction centreline",
+    "length_m": 583.0,
+    "length_all_pit_ways_m": 795.0,
+    "length_note": "Length of the OSM pit lane way (usually includes the entry and exit roads). Not an official figure.",
+    "entry": {
+      "s_m": 3832.0,
+      "lat_lon": [
+        19.405627,
+        -99.096814
+      ]
+    },
+    "exit": {
+      "s_m": 130.0,
+      "lat_lon": [
+        19.405723,
+        -99.091565
+      ]
+    },
+    "osm_ways": [
+      638504647,
+      772763791
+    ],
+    "fia_entry_exit_rules": "14.1 In accordance with Chapter 4, Articles 4 and 6 of Appendix L to the ISC drivers must\nfollow the procedures at pit entry and pit exit.\n14.2 Pertaining to Chapter 4, Article 4 of Appendix L to the ISC any driver passing to the right\nhand side of the bollard at pit entry will be considered as entering the pit lane.\n14.3 During the reconnaissance laps prior to the Race drivers are allowed to cross the white line\nseparating the pit exit road from the circuit.\n14.4 For the safety and ordely conduct of the event, no part of a tyre of a car entering the pit lane\nmay cross the white line painted on the left hand side of the pit entry road (as highligted in\nthe picture below). For the avoidance of doubt, crossing means that the outside of any tyre\nshould not go beyond the outside, with respect to the pit entry road, of this line.\n5",
+    "garages": {
+      "value": null,
+      "note": "Not verified. The FIA pit lane drawing (fia_map source) shows the garage layout per team."
+    }
+  },
+  "sectors": {
+    "source": "fia_map",
+    "season": 2025,
+    "lengths_km": null,
+    "intermediates": [
+      {
+        "point": "S1",
+        "location": "136m before Turn 4"
+      },
+      {
+        "point": "S2",
+        "location": "242m before Turn 12"
+      }
+    ],
+    "speed_trap": "234m before Turn 1",
+    "note": "The 2025 map gives intermediate points but not sector lengths."
+  },
+  "overtaking": {
+    "system": "2025 DRS (2026 documents not published yet)",
+    "source": "fia_map",
+    "season": 2025,
+    "straight_mode_zones": null,
+    "overtake": null,
+    "drs": {
+      "detection_points": [
+        {
+          "label": "Detection 1",
+          "location": "70m after Turn 9"
+        },
+        {
+          "label": "Detection 2",
+          "location": "Exit Turn 15"
+        }
+      ],
+      "activation_points": [
+        {
+          "label": "Activation 1",
+          "location": "80m after Turn 11"
+        },
+        {
+          "label": "Activation 2",
+          "location": "240m after Turn 17"
+        },
+        {
+          "label": "Activation 3",
+          "location": "115m after Turn 3"
+        }
+      ],
+      "note": "DRS points as printed on the FIA map. Detection and activation lists are not always one to one (several activation points can share one detection point)."
+    },
+    "note": "The 2026 event has not taken place, so the 2026 straight mode zones are not published. The 2025 DRS points are the best available guide; 2026 zones will likely sit on the same straights but this is not confirmed. Replace when the 2026 FIA circuit map is issued."
+  },
+  "landmarks": {
+    "grandstands": [
+      {
+        "name": null,
+        "osm_way": 377679572,
+        "lat_lon": [
+          19.406293,
+          -99.092255
+        ],
+        "approx_length_m": 91.0,
+        "s_m": 85.0,
+        "side": "left",
+        "distance_m": 28.8
+      },
+      {
+        "name": null,
+        "osm_way": 1165561484,
+        "lat_lon": [
+          19.407466,
+          -99.090618
+        ],
+        "approx_length_m": 41.0,
+        "s_m": 205.0,
+        "side": "left",
+        "distance_m": 175.6
+      },
+      {
+        "name": null,
+        "osm_way": 1165561485,
+        "lat_lon": [
+          19.407453,
+          -99.089801
+        ],
+        "approx_length_m": 38.0,
+        "s_m": 290.0,
+        "side": "left",
+        "distance_m": 179.7
+      },
+      {
+        "name": null,
+        "osm_way": 1165561486,
+        "lat_lon": [
+          19.407367,
+          -99.089624
+        ],
+        "approx_length_m": 38.0,
+        "s_m": 300.0,
+        "side": "left",
+        "distance_m": 180.2
+      },
+      {
+        "name": null,
+        "osm_way": 1165561487,
+        "lat_lon": [
+          19.407299,
+          -99.08882
+        ],
+        "approx_length_m": 40.0,
+        "s_m": 395.0,
+        "side": "left",
+        "distance_m": 175.3
+      },
+      {
+        "name": null,
+        "osm_way": 1165561488,
+        "lat_lon": [
+          19.40721,
+          -99.088639
+        ],
+        "approx_length_m": 41.0,
+        "s_m": 410.0,
+        "side": "left",
+        "distance_m": 175.5
+      },
+      {
+        "name": null,
+        "osm_way": 1165561489,
+        "lat_lon": [
+          19.407168,
+          -99.087828
+        ],
+        "approx_length_m": 40.0,
+        "s_m": 500.0,
+        "side": "left",
+        "distance_m": 175.2
+      },
+      {
+        "name": null,
+        "osm_way": 1165509184,
+        "lat_lon": [
+          19.40684,
+          -99.085591
+        ],
+        "approx_length_m": 22.0,
+        "s_m": 735.0,
+        "side": "left",
+        "distance_m": 181.9
+      },
+      {
+        "name": "Platea Alta Derecha",
+        "osm_way": 1313865160,
+        "lat_lon": [
+          19.403844,
+          -99.085861
+        ],
+        "approx_length_m": 88.0,
+        "s_m": 750.0,
+        "side": "right",
+        "distance_m": 109.6
+      },
+      {
+        "name": "Palco Central",
+        "osm_way": 828705061,
+        "lat_lon": [
+          19.404156,
+          -99.085701
+        ],
+        "approx_length_m": 19.0,
+        "s_m": 765.0,
+        "side": "right",
+        "distance_m": 93.2
+      },
+      {
+        "name": "Dugout Local",
+        "osm_way": 828705066,
+        "lat_lon": [
+          19.403697,
+          -99.085628
+        ],
+        "approx_length_m": 30.0,
+        "s_m": 775.0,
+        "side": "right",
+        "distance_m": 134.4
+      },
+      {
+        "name": "Berma Derecha",
+        "osm_way": 828705068,
+        "lat_lon": [
+          19.403057,
+          -99.085728
+        ],
+        "approx_length_m": 41.0,
+        "s_m": 775.0,
+        "side": "right",
+        "distance_m": 205.1
+      },
+      {
+        "name": null,
+        "osm_way": 828705058,
+        "lat_lon": [
+          19.403746,
+          -99.085428
+        ],
+        "approx_length_m": 157.0,
+        "s_m": 785.0,
+        "side": "right",
+        "distance_m": 100.4
+      },
+      {
+        "name": "Platea Alta Izquierda",
+        "osm_way": 828705060,
+        "lat_lon": [
+          19.404157,
+          -99.085299
+        ],
+        "approx_length_m": 80.0,
+        "s_m": 785.0,
+        "side": "right",
+        "distance_m": 86.2
+      },
+      {
+        "name": null,
+        "osm_way": 1165509181,
+        "lat_lon": [
+          19.406527,
+          -99.085136
+        ],
+        "approx_length_m": 57.0,
+        "s_m": 790.0,
+        "side": "left",
+        "distance_m": 144.2
+      },
+      {
+        "name": "Dugout Visitante",
+        "osm_way": 828705067,
+        "lat_lon": [
+          19.403901,
+          -99.085237
+        ],
+        "approx_length_m": 27.0,
+        "s_m": 805.0,
+        "side": "right",
+        "distance_m": 120.5
+      },
+      {
+        "name": "Berma Izquierda",
+        "osm_way": 828705069,
+        "lat_lon": [
+          19.403671,
+          -99.084584
+        ],
+        "approx_length_m": 34.0,
+        "s_m": 1076.0,
+        "side": "right",
+        "distance_m": 104.2
+      },
+      {
+        "name": "Jardines",
+        "osm_way": 828705076,
+        "lat_lon": [
+          19.402943,
+          -99.084873
+        ],
+        "approx_length_m": 175.0,
+        "s_m": 1081.0,
+        "side": "right",
+        "distance_m": 84.0
+      },
+      {
+        "name": null,
+        "osm_way": 1164917111,
+        "lat_lon": [
+          19.402555,
+          -99.087494
+        ],
+        "approx_length_m": 41.0,
+        "s_m": 2601.0,
+        "side": "right",
+        "distance_m": 117.9
+      },
+      {
+        "name": "Gimnasio Constancio Córdoba Álvarez",
+        "osm_way": 999253131,
+        "lat_lon": [
+          19.403444,
+          -99.094846
+        ],
+        "approx_length_m": 61.0,
+        "s_m": 3372.0,
+        "side": "left",
+        "distance_m": 14.3
+      },
+      {
+        "name": null,
+        "osm_way": 377679562,
+        "lat_lon": [
+          19.405758,
+          -99.096077
+        ],
+        "approx_length_m": 147.0,
+        "s_m": 3727.0,
+        "side": "right",
+        "distance_m": 18.4
+      },
+      {
+        "name": null,
+        "osm_way": 1315400018,
+        "lat_lon": [
+          19.404608,
+          -99.096224
+        ],
+        "approx_length_m": 139.0,
+        "s_m": 3762.0,
+        "side": "left",
+        "distance_m": 8.1
+      },
+      {
+        "name": null,
+        "osm_way": 999253129,
+        "lat_lon": [
+          19.40784,
+          -99.095679
+        ],
+        "approx_length_m": 102.0,
+        "s_m": 3997.0,
+        "side": "left",
+        "distance_m": 99.2
+      },
+      {
+        "name": null,
+        "osm_way": 736211980,
+        "lat_lon": [
+          19.406626,
+          -99.095012
+        ],
+        "approx_length_m": 55.0,
+        "s_m": 4087.0,
+        "side": "left",
+        "distance_m": 24.7
+      },
+      {
+        "name": null,
+        "osm_way": 377679571,
+        "lat_lon": [
+          19.406498,
+          -99.093868
+        ],
+        "approx_length_m": 177.0,
+        "s_m": 4102.0,
+        "side": "left",
+        "distance_m": 26.8
+      },
+      {
+        "name": null,
+        "osm_way": 999253128,
+        "lat_lon": [
+          19.407662,
+          -99.094232
+        ],
+        "approx_length_m": 101.0,
+        "s_m": 4112.0,
+        "side": "left",
+        "distance_m": 97.9
+      }
+    ],
+    "bridges": [
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 736211972,
+        "lat_lon": [
+          19.405741,
+          -99.09015
+        ],
+        "s_m": 275.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 736211974,
+        "lat_lon": [
+          19.405264,
+          -99.086476
+        ],
+        "s_m": 660.0
+      },
+      {
+        "kind": "unclassified bridge over track",
+        "name": "Calle 63",
+        "osm_way": 685930807,
+        "lat_lon": [
+          19.405252,
+          -99.086269
+        ],
+        "s_m": 685.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 736211970,
+        "lat_lon": [
+          19.401958,
+          -99.083729
+        ],
+        "s_m": 1331.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 736211978,
+        "lat_lon": [
+          19.399601,
+          -99.085238
+        ],
+        "s_m": 1641.0
+      },
+      {
+        "kind": "footway bridge over track",
+        "name": null,
+        "osm_way": 54241135,
+        "lat_lon": [
+          19.405536,
+          -99.097357
+        ],
+        "s_m": 3812.0
+      }
+    ],
+    "tunnels": [],
+    "buildings": [
+      {
+        "name": "Estadio Alfredo Harp Helú",
+        "kind": "stadium",
+        "osm_way": 827822088,
+        "lat_lon": [
+          19.403642,
+          -99.085235
+        ],
+        "footprint_m": [
+          315.0,
+          284.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 690.0,
+        "side": "right",
+        "distance_m": 7.5
+      },
+      {
+        "name": null,
+        "kind": "stadium",
+        "osm_way": 1311621922,
+        "lat_lon": [
+          19.403578,
+          -99.085267
+        ],
+        "footprint_m": [
+          290.0,
+          229.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 695.0,
+        "side": "right",
+        "distance_m": 8.9
+      },
+      {
+        "name": "Tridente",
+        "kind": "roof",
+        "osm_way": 828705077,
+        "lat_lon": [
+          19.404202,
+          -99.085779
+        ],
+        "footprint_m": [
+          225.0,
+          194.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 695.0,
+        "side": "right",
+        "distance_m": 8.9
+      },
+      {
+        "name": "Estadio Jesús Martínez \"Palillo\"",
+        "kind": "stadium",
+        "osm_way": 1197776848,
+        "lat_lon": [
+          19.407571,
+          -99.094801
+        ],
+        "footprint_m": [
+          204.0,
+          188.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 3997.0,
+        "side": "left",
+        "distance_m": 37.8
+      },
+      {
+        "name": "Paddock",
+        "kind": "building",
+        "osm_way": 377679570,
+        "lat_lon": [
+          19.405651,
+          -99.09382
+        ],
+        "footprint_m": [
+          304.0,
+          83.0
+        ],
+        "height_m": null,
+        "levels": "3",
+        "s_m": 70.0,
+        "side": "right",
+        "distance_m": 28.5
+      },
+      {
+        "name": "Velódromo CNAR",
+        "kind": "stadium",
+        "osm_way": 377679564,
+        "lat_lon": [
+          19.402758,
+          -99.091802
+        ],
+        "footprint_m": [
+          119.0,
+          75.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 3087.0,
+        "side": "left",
+        "distance_m": 25.8
+      },
+      {
+        "name": "Pabellón Acuático",
+        "kind": "sports_hall",
+        "osm_way": 377555342,
+        "lat_lon": [
+          19.400556,
+          -99.088223
+        ],
+        "footprint_m": [
+          122.0,
+          71.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2541.0,
+        "side": "left",
+        "distance_m": 39.5
+      },
+      {
+        "name": "Pabellón de Pelota",
+        "kind": "sports_hall",
+        "osm_way": 377555343,
+        "lat_lon": [
+          19.400071,
+          -99.089326
+        ],
+        "footprint_m": [
+          96.0,
+          63.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2731.0,
+        "side": "left",
+        "distance_m": 130.5
+      },
+      {
+        "name": "Food Court izquierdo",
+        "kind": "building",
+        "osm_way": 828705072,
+        "lat_lon": [
+          19.40412,
+          -99.084611
+        ],
+        "footprint_m": [
+          74.0,
+          54.0
+        ],
+        "height_m": null,
+        "levels": "1",
+        "s_m": 860.0,
+        "side": "right",
+        "distance_m": 62.6
+      },
+      {
+        "name": "Talentos",
+        "kind": "dormitory",
+        "osm_way": 999529543,
+        "lat_lon": [
+          19.398059,
+          -99.088176
+        ],
+        "footprint_m": [
+          57.0,
+          30.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2161.0,
+        "side": "left",
+        "distance_m": 132.9
+      },
+      {
+        "name": "Talentos",
+        "kind": "dormitory",
+        "osm_way": 999529544,
+        "lat_lon": [
+          19.39762,
+          -99.087956
+        ],
+        "footprint_m": [
+          57.0,
+          30.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2116.0,
+        "side": "left",
+        "distance_m": 103.6
+      },
+      {
+        "name": "Talentos",
+        "kind": "dormitory",
+        "osm_way": 999529545,
+        "lat_lon": [
+          19.397344,
+          -99.088367
+        ],
+        "footprint_m": [
+          57.0,
+          30.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2086.0,
+        "side": "left",
+        "distance_m": 142.7
+      },
+      {
+        "name": "Talentos",
+        "kind": "dormitory",
+        "osm_way": 999529546,
+        "lat_lon": [
+          19.397063,
+          -99.088157
+        ],
+        "footprint_m": [
+          57.0,
+          30.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2071.0,
+        "side": "left",
+        "distance_m": 119.3
+      },
+      {
+        "name": "Talentos",
+        "kind": "dormitory",
+        "osm_way": 999529542,
+        "lat_lon": [
+          19.398209,
+          -99.087802
+        ],
+        "footprint_m": [
+          57.0,
+          29.0
+        ],
+        "height_m": null,
+        "levels": null,
+        "s_m": 2181.0,
+        "side": "left",
+        "distance_m": 97.0
+      },
+      {
+        "name": "Medical Centre",
+        "kind": "building",
+        "osm_way": 377679579,
+        "lat_lon": [
+          19.403766,
+          -99.092444
+        ],
+        "footprint_m": [
+          28.0,
+          21.0
+        ],
+        "height_m": null,
+        "levels": "2",
+        "s_m": 3152.0,
+        "side": "right",
+        "distance_m": 29.2
+      }
+    ],
+    "named": [
+      {
+        "name": "Foro Sol",
+        "source": "wikipedia"
+      },
+      {
+        "name": "stadium",
+        "source": "wikipedia"
+      },
+      {
+        "name": "baseball",
+        "source": "wikipedia"
+      }
+    ],
+    "note": "Grandstands, bridges, tunnels and buildings come from OSM within a few hundred metres of the track (s_m = distance along the pack centreline, side = left/right in race direction). \"named\" are notable features mentioned in the Wikipedia article, without positions."
+  },
+  "sources": [
+    {
+      "id": "wikipedia",
+      "what": "English Wikipedia article \"Autódromo Hermanos Rodríguez\" (infobox, layout \"Grand Prix Circuit (2015–present\")",
+      "url": "https://en.wikipedia.org/wiki/Autódromo_Hermanos_Rodríguez",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_map",
+      "what": "FIA 2025 circuit map, pit lane drawing and emergency exits (Race Director document)",
+      "url": "https://www.fia.com/system/files/decision-document/2025_mexico_city_grand_prix_-_event_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_quarantine_zone_area.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "fia_notes",
+      "what": "FIA 2025 Race Director competition/event notes",
+      "url": "https://www.fia.com/system/files/decision-document/2025_mexico_city_grand_prix_-_race_directors_event_notes_v3.pdf",
+      "retrieved": "2026-10-03"
+    },
+    {
+      "id": "osm",
+      "what": "OpenStreetMap contributors (ODbL): circuit ways, pit lane, landmarks, run-off hints",
+      "url": "https://www.openstreetmap.org/relation/16251935",
+      "retrieved": "2026-10-03",
+      "osm": {
+        "type": "relation",
+        "id": 16251935,
+        "name": "Mexican Grand Prix",
+        "url": "https://www.openstreetmap.org/relation/16251935"
+      }
+    }
+  ],
+  "gaps": [
+    "Kerb types and positions not verified as data (only FIA change notes).",
+    "Run-off surface per corner not verified (only FIA change notes and OSM hints).",
+    "Garage count not verified.",
+    "2026 FIA circuit map not issued yet; sectors and overtaking use 2025 DRS data."
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cad/track/circuits/schema.json",
+  "title": "Circuit research file (schema_version 1)",
+  "description": "One file per circuit on the 2026 calendar, written by tools/track/research/build_research_pack.py. All distances are metres and all positions are WGS84 latitude/longitude, so the files do not depend on the scene frame. A track builder converts to the scene frame itself (see README.md). Rule for every field: a value that could not be checked against a source is null, and a nearby 'note' says why. Numbers are never guessed.",
+  "type": "object",
+  "required": ["schema_version", "id", "event", "circuit", "length", "centreline", "sources", "gaps"],
+  "$defs": {
+    "note": {"type": ["string", "null"], "description": "Plain-English explanation, usually why a value is null or how it was worked out."},
+    "source_ref": {"type": ["string", "null"], "description": "Id of an entry in the top-level 'sources' list (wikipedia, fia_map, fia_notes, osm, tumftm, dem) or a short text."},
+    "lat_lon": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "[latitude, longitude] in degrees (WGS84)."},
+    "s_m": {"type": ["number", "null"], "description": "Distance in metres along the pack centreline (cad/track/raw/centreline/<id>.csv), measured in race direction from s = 0."},
+    "side": {"enum": ["left", "right", null], "description": "Side of the track, looking in race direction."},
+    "fia_location": {"type": ["string", "null"], "description": "Location text copied from the FIA circuit map, e.g. '110m after T10'. Turn numbers follow the FIA map."}
+  },
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "description": "Short id, same as the file name and the id in calendar_2026.json."},
+    "status": {"type": "string", "description": "'confirmed' when the round is on the official calendar."},
+    "event": {
+      "type": "object",
+      "properties": {
+        "round": {"type": "integer"},
+        "grand_prix": {"type": "string"},
+        "weekend": {"type": "string", "description": "ISO date range 'YYYY-MM-DD/YYYY-MM-DD' (local dates at the circuit)."},
+        "race_date": {"type": "string"},
+        "sprint": {"type": "boolean"},
+        "source": {"type": "string"}
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "properties": {
+        "official_name": {"type": "string"},
+        "common_name": {"type": "string"},
+        "location": {"type": "string"},
+        "lat": {"type": "number"}, "lon": {"type": "number"},
+        "coordinate_source": {"$ref": "#/$defs/source_ref"},
+        "layout": {"type": ["string", "null"], "description": "Name of the layout used in F1 (from the Wikipedia infobox)."},
+        "opened": {"type": ["string", "null"]},
+        "source": {"$ref": "#/$defs/source_ref"}
+      }
+    },
+    "length": {
+      "type": "object",
+      "description": "Lap length. 'official_m' is the FIA centreline length from the circuit map. 'checks' lists every length found so a builder can see how well the sources agree.",
+      "properties": {
+        "official_m": {"type": ["number", "null"]},
+        "source": {"$ref": "#/$defs/source_ref"},
+        "checks": {
+          "type": "object",
+          "properties": {
+            "fia_centreline_m": {"type": ["number", "null"]},
+            "wikipedia_m": {"type": ["number", "null"]},
+            "osm_loop_m": {"type": ["number", "null"], "description": "Length of the closed loop found in the OpenStreetMap circuit ways."},
+            "tumftm_m": {"type": ["number", "null"]},
+            "pack_centreline_m": {"type": ["number", "null"], "description": "Length of the centreline CSV in this pack."}
+          }
+        }
+      }
+    },
+    "corners": {
+      "type": "object",
+      "properties": {
+        "count": {"type": ["integer", "null"]},
+        "count_source": {"$ref": "#/$defs/source_ref"},
+        "named": {"type": "array", "items": {"type": "object", "properties": {
+          "turns": {"type": "string", "description": "FIA turn number or range, e.g. '10-11'."},
+          "name": {"type": "string"},
+          "source": {"$ref": "#/$defs/source_ref"}}}},
+        "note": {"$ref": "#/$defs/note"}, "named_note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "direction": {
+      "type": "object",
+      "properties": {
+        "value": {"enum": ["clockwise", "anticlockwise", "figure-eight", null]},
+        "basis": {"type": ["string", "null"], "description": "How the race direction of the centreline was decided."},
+        "stated_by_source": {"type": ["string", "null"]},
+        "note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "lap_record": {
+      "type": "object",
+      "description": "Race lap record for the current layout as listed on Wikipedia. All fields null when none is listed.",
+      "properties": {
+        "time": {"type": ["string", "null"], "description": "m:ss.sss"},
+        "driver": {"type": ["string", "null"]}, "car": {"type": ["string", "null"]}, "year": {"type": ["integer", "null"]},
+        "class": {"type": ["string", "null"]}, "source": {"$ref": "#/$defs/source_ref"}, "note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "centreline": {
+      "type": "object",
+      "description": "The track centreline in race direction. The CSV columns are s_m, lat, lon, elev_m, w_right_m, w_left_m, one row every spacing_m metres. Width columns are blank when there is no TUMFTM data.",
+      "properties": {
+        "source": {"enum": ["tumftm", "osm"], "description": "tumftm = TUMFTM file fitted onto OSM; osm = OSM circuit ways only."},
+        "csv": {"type": "string"},
+        "spacing_m": {"type": "number"}, "samples": {"type": "integer"}, "length_m": {"type": "number"},
+        "s0": {"type": "string", "description": "Where s = 0 is. Not exactly the start/finish line."},
+        "tumftm": {"type": ["object", "null"], "description": "The TUMFTM file and how it was fitted: origin_lat/origin_lon is where the TUMFTM (0, 0) point lands, rotation_deg turns TUMFTM x/y (east/north-ish) onto true east/north, georef_median_m and georef_p95_m say how closely it matches OSM. 'used' is false when the file holds an older layout."},
+        "osm": {"type": ["object", "null"], "description": "OSM relation id or list of way ids used for the loop."},
+        "tumftm_missing_alternative": {"type": ["string", "null"]}
+      }
+    },
+    "elevation": {
+      "type": "object",
+      "description": "Height along the centreline from a public terrain model (OpenTopoData). These are computed, not official.",
+      "properties": {
+        "dataset": {"enum": ["eudem25m", "srtm30m"]},
+        "min_m": {"type": ["number", "null"]}, "max_m": {"type": ["number", "null"]},
+        "total_change_m": {"type": ["number", "null"], "description": "Highest minus lowest point after smoothing."},
+        "total_climb_per_lap_m": {"type": ["number", "null"], "description": "Sum of all uphill gains over one lap after smoothing."},
+        "raw_change_m": {"type": ["number", "null"]},
+        "official_change_m": {"type": ["number", "null"]},
+        "note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "track_width": {
+      "type": "object",
+      "properties": {"source": {"type": ["string", "null"]}, "min_m": {"type": ["number", "null"]}, "max_m": {"type": ["number", "null"]}, "median_m": {"type": ["number", "null"]}, "note": {"$ref": "#/$defs/note"}}
+    },
+    "kerbs": {
+      "type": "object",
+      "description": "value stays null (no source publishes kerbs as data). fia_changes quotes FIA Race Director note lines that mention kerbs.",
+      "properties": {"value": {"type": "null"}, "fia_changes": {"type": ["array", "null"], "items": {"type": "string"}}, "note": {"$ref": "#/$defs/note"}}
+    },
+    "run_off": {
+      "type": "object",
+      "description": "value stays null. fia_changes quotes FIA lines about gravel, asphalt, grass, walls and barriers. osm_hints totals what OSM has mapped near the track (surface areas in m2 within 60 m, barrier lengths in m within 30 m).",
+      "properties": {"value": {"type": "null"}, "fia_changes": {"type": ["array", "null"]}, "osm_hints": {"type": ["object", "null"]}, "note": {"$ref": "#/$defs/note"}}
+    },
+    "track_limits": {"type": ["string", "null"], "description": "Track limits text from the FIA Race Director notes."},
+    "pit_lane": {
+      "type": "object",
+      "properties": {
+        "speed_limit_kmh": {"type": ["number", "null"]},
+        "speed_limit_source": {"type": ["string", "null"]},
+        "side": {"$ref": "#/$defs/side"},
+        "side_basis": {"type": ["string", "null"]},
+        "length_m": {"type": ["number", "null"], "description": "OSM pit lane way length, usually including entry and exit roads. Not official."},
+        "entry": {"type": ["object", "null"], "properties": {"s_m": {"$ref": "#/$defs/s_m"}, "lat_lon": {"$ref": "#/$defs/lat_lon"}}},
+        "exit": {"type": ["object", "null"], "properties": {"s_m": {"$ref": "#/$defs/s_m"}, "lat_lon": {"$ref": "#/$defs/lat_lon"}}},
+        "osm_ways": {"type": ["array", "null"]},
+        "fia_entry_exit_rules": {"type": ["string", "null"], "description": "Pit entry and exit section quoted from the FIA notes."},
+        "garages": {"type": "object", "properties": {"value": {"type": ["integer", "null"]}, "note": {"$ref": "#/$defs/note"}}}
+      }
+    },
+    "sectors": {
+      "type": "object",
+      "description": "Timing sectors from the FIA circuit map: sector lengths, intermediate points and the speed trap.",
+      "properties": {"source": {"type": "string"}, "season": {"type": "integer"}, "lengths_km": {"type": "array"}, "intermediates": {"type": "array"}, "speed_trap": {"$ref": "#/$defs/fia_location"}, "note": {"$ref": "#/$defs/note"}}
+    },
+    "overtaking": {
+      "type": "object",
+      "description": "2026 rounds: straight mode zones (normal-grip and low-grip activation points) and the overtake mode detection/activation points, from the 2026 FIA map. Rounds without a 2026 map yet: the 2025 DRS detection and activation points.",
+      "properties": {
+        "system": {"type": "string"}, "source": {"type": "string"}, "season": {"type": "integer"},
+        "straight_mode_zones": {"type": "array", "items": {"type": "object", "properties": {"zone": {"type": "string"}, "normal_grip_activation": {"$ref": "#/$defs/fia_location"}, "low_grip_activation": {"$ref": "#/$defs/fia_location"}}}},
+        "overtake": {"type": ["object", "null"], "properties": {"detection": {"$ref": "#/$defs/fia_location"}, "activation": {"$ref": "#/$defs/fia_location"}}},
+        "drs": {"type": ["object", "null"], "properties": {"detection_points": {"type": "array"}, "activation_points": {"type": "array"}}},
+        "note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "landmarks": {
+      "type": "object",
+      "description": "Grandstands, bridges, tunnels and the largest named buildings from OSM near the track, each with s_m, side and distance from the centreline. 'named' lists features mentioned in the Wikipedia article, without positions.",
+      "properties": {
+        "grandstands": {"type": "array"}, "bridges": {"type": "array"}, "tunnels": {"type": "array"}, "buildings": {"type": "array"}, "named": {"type": "array"}, "note": {"$ref": "#/$defs/note"}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {"type": "object", "properties": {"id": {"type": "string"}, "what": {"type": "string"}, "url": {"type": "string"}, "retrieved": {"type": "string"}}}
+    },
+    "gaps": {"type": "array", "items": {"type": "string"}, "description": "Plain list of what is missing or uncertain for this circuit."},
+    "built": {"type": ["object", "null"], "description": "Present when a scene for this circuit already exists in the repo (only the Red Bull Ring today)."}
+  }
+}
