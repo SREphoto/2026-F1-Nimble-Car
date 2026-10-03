@@ -41,7 +41,17 @@ import { materials } from '../materials.js';
 import { createSocketHeadBolt, createTorxScrew, createStudWith12PtNut } from './fasteners.js';
 import { createPirelliSidewallTexture } from './procedural_livery.js';
 
+/**
+ * Link blade sizes (dm): [chord, thickness]. R11 ("look at thickness"): wide, flat carbon
+ * aerofoil blades, not thin rods. The foil spans 0.8 x chord and is about 0.6 x thickness deep.
+ */
+export const SUSPENSION_SPEC = {
+  front: { upper: [1.0, 0.2], lower: [1.1, 0.22], pullRod: [0.6, 0.16], trackRod: [0.7, 0.16] },
+  rear: { upper: [1.05, 0.2], lower: [1.15, 0.22], pushRod: [0.65, 0.16] },
+};
+
 export function createSuspensionSteering(options = {}) {
+  const SS = SUSPENSION_SPEC;
   // Steering rack half-length (dm). The housing sits inside the survival cell; only the track rods exit.
   const RACK_HALF = 1.45;
   const group = new THREE.Group();
@@ -265,24 +275,24 @@ export function createSuspensionSteering(options = {}) {
 
     // Upper Wishbone (Forward Leg & Aft Leg)
     // Inboard pickups sit on the nose / tub skin (nose ±1.45 wide at X=-1.8, tub ±1.7 at X=1.5)
-    const fwdUpperIn = new THREE.Vector3(-1.8, side * 1.35, 3.6);
-    const aftUpperIn = new THREE.Vector3(1.4, side * 1.65, 4.0);
+    const fwdUpperIn = new THREE.Vector3(-0.85, side * 1.45, 3.65); // R11: legs close together so the arm runs nearly straight across
+    const aftUpperIn = new THREE.Vector3(0.95, side * 1.62, 3.95);
     const upperOuter = new THREE.Vector3(0.0, side * 6.6, 4.5);
-    fsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.42, 0.11, undefined, onUpright(upperOuter)));
-    fsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.42, 0.11, undefined, { ...onUpright(upperOuter), sharedOuter: true }));
+    fsCorner.add(createAeroLink(fwdUpperIn, upperOuter, ...SS.front.upper, undefined, onUpright(upperOuter)));
+    fsCorner.add(createAeroLink(aftUpperIn, upperOuter, ...SS.front.upper, undefined, { ...onUpright(upperOuter), sharedOuter: true }));
 
     // Lower Wishbone (Forward Leg & Aft Leg)
-    const fwdLowerIn = new THREE.Vector3(-1.6, side * 1.3, 1.9);
-    const aftLowerIn = new THREE.Vector3(1.6, side * 1.7, 1.6);
+    const fwdLowerIn = new THREE.Vector3(-0.85, side * 1.4, 1.9);
+    const aftLowerIn = new THREE.Vector3(1.0, side * 1.68, 1.65);
     const lowerOuter = new THREE.Vector3(0.0, side * 6.6, 2.5);
-    fsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.48, 0.12, undefined, onUpright(lowerOuter)));
-    fsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.48, 0.12, undefined, { ...onUpright(lowerOuter), sharedOuter: true }));
+    fsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, ...SS.front.lower, undefined, onUpright(lowerOuter)));
+    fsCorner.add(createAeroLink(aftLowerIn, lowerOuter, ...SS.front.lower, undefined, { ...onUpright(lowerOuter), sharedOuter: true }));
 
     // Pull-Rod Strut (Runs diagonally from upright upper clevis to lower tub rocker)
     const pullRodOuter = new THREE.Vector3(0.0, side * 6.4, 4.3);
-    const pullRodInner = new THREE.Vector3(1.8, side * 1.8, 2.2);
+    const pullRodInner = new THREE.Vector3(1.5, side * 1.8, 2.2);
     // (inner end on the chassis rocker, outer end on the upright)
-    fsCorner.add(createAeroLink(pullRodInner, pullRodOuter, 0.28, 0.08, materials.titaniumBright, onUpright(pullRodOuter)));
+    fsCorner.add(createAeroLink(pullRodInner, pullRodOuter, ...SS.front.pullRod, materials.carbonGloss, onUpright(pullRodOuter)));
 
 
     // Front Upright Carrier (Aluminum-Lithium monobloc casting) at origin of pivot
@@ -308,7 +318,7 @@ export function createSuspensionSteering(options = {}) {
     // Track rod: inner end rides on the steering rack bar, outer end on the steering arm
     const trInnerBase = new THREE.Vector3(0.5, side * RACK_HALF, 3.2); // rack-bar end, just inside the tub wall
     const trOuter = new THREE.Vector3(-0.35, side * 6.65, 3.55); // steering-arm tip (pivot-local -0.35, -side*0.15, 0)
-    fsCorner.add(createAeroLink(trInnerBase, trOuter, 0.32, 0.09, materials.carbonGloss, {
+    fsCorner.add(createAeroLink(trInnerBase, trOuter, ...SS.front.trackRod, materials.carbonGloss, {
       innerFn: () => trInnerBase.clone().setY(trInnerBase.y + (rackBar ? rackBar.position.y : 0)),
       ...onUpright(trOuter)
     }));
@@ -419,20 +429,20 @@ export function createSuspensionSteering(options = {}) {
     const fwdUpperIn = new THREE.Vector3(32.2, side * 1.2, 3.7);
     const aftUpperIn = new THREE.Vector3(34.8, side * 1.2, 3.6);
     const upperOuter = new THREE.Vector3(34.0, side * 6.1, 4.6);
-    rsCorner.add(createAeroLink(fwdUpperIn, upperOuter, 0.46, 0.12, undefined, onRearUpright(upperOuter)));
-    rsCorner.add(createAeroLink(aftUpperIn, upperOuter, 0.46, 0.12, undefined, { ...onRearUpright(upperOuter), sharedOuter: true }));
+    rsCorner.add(createAeroLink(fwdUpperIn, upperOuter, ...SS.rear.upper, undefined, onRearUpright(upperOuter)));
+    rsCorner.add(createAeroLink(aftUpperIn, upperOuter, ...SS.rear.upper, undefined, { ...onRearUpright(upperOuter), sharedOuter: true }));
 
     // Lower Wishbone (Forward Leg & Aft Leg)
     const fwdLowerIn = new THREE.Vector3(31.8, side * 1.3, 1.7);
     const aftLowerIn = new THREE.Vector3(34.8, side * 1.3, 1.7);
     const lowerOuter = new THREE.Vector3(34.0, side * 6.1, 2.5);
-    rsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, 0.52, 0.13, undefined, onRearUpright(lowerOuter)));
-    rsCorner.add(createAeroLink(aftLowerIn, lowerOuter, 0.52, 0.13, undefined, { ...onRearUpright(lowerOuter), sharedOuter: true }));
+    rsCorner.add(createAeroLink(fwdLowerIn, lowerOuter, ...SS.rear.lower, undefined, onRearUpright(lowerOuter)));
+    rsCorner.add(createAeroLink(aftLowerIn, lowerOuter, ...SS.rear.lower, undefined, { ...onRearUpright(lowerOuter), sharedOuter: true }));
 
     // Push-Rod Strut (Runs diagonally from upright lower clevis to upper gearbox rocker)
     const pushRodOuter = new THREE.Vector3(34.0, side * 5.9, 2.6);
     const pushRodInner = new THREE.Vector3(32.5, side * 1.25, 3.85); // ends on the rocker
-    rsCorner.add(createAeroLink(pushRodInner, pushRodOuter, 0.32, 0.09, materials.titaniumBright, onRearUpright(pushRodOuter)));
+    rsCorner.add(createAeroLink(pushRodInner, pushRodOuter, ...SS.rear.pushRod, materials.carbonGloss, onRearUpright(pushRodOuter)));
 
     // Rear Upright Carrier
     const uprightGeo = new THREE.BoxGeometry(0.85, 0.55, 2.5);

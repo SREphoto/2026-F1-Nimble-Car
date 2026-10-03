@@ -22,6 +22,7 @@
  */
 
 import * as THREE from 'three';
+import { HALO_SPEC } from './monocoque_cockpit.js';
 import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 import { materials, applyCarEnvironment, addCarbonSplit } from '../materials.js';
 import {
@@ -127,7 +128,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
    * @param up      which way is "up" for the artwork (car frame)
    * @param size    [width, height, depth] of the projector box (dm)
    */
-  function project(name, mesh, { origin, dir, up = [0, 0, 1], right = null, size, texture, matOpts, renderOrder = 1 }) {
+  function project(name, mesh, { origin, dir, up = [0, 0, 1], right = null, size, texture, matOpts, renderOrder = 1, spill = [] }) {
     if (!mesh) { report.skipped.push(`${name}: target not found`); return null; }
     const dW = toWorldDir(dir);
     raycaster.set(toWorldPoint(origin), dW);
@@ -166,6 +167,17 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     decal.receiveShadow = true;
     mesh.add(decal);
     report.decals++;
+    // same projector carried onto neighbouring parts (one continuous logo over stacked wing elements)
+    spill.forEach((m, k) => {
+      const g2 = new DecalGeometry(m, hit.point, rot, new THREE.Vector3(...size));
+      const f2 = g2.attributes.position && g2.attributes.position.count ? filterFacing(g2, z, 1) : null;
+      g2.dispose();
+      if (!f2) return;
+      f2.applyMatrix4(m.matrixWorld.clone().invert());
+      const d2 = new THREE.Mesh(f2, decal.material);
+      d2.name = `Livery_Decal_${name}_part${k + 2}`; d2.renderOrder = renderOrder; d2.receiveShadow = true;
+      m.add(d2);
+    });
     return decal;
   }
 
@@ -184,7 +196,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     rokt: createRoktDecalTexture(),
     engineTop: createEngineTopDecalTexture(),
     noseTop: createNoseTopDecalTexture(),
-    fwRedBull: createFrontWingRedBullTexture(),
+    fwRedBull: { 1: createFrontWingRedBullTexture('Red'), '-1': createFrontWingRedBullTexture('Bull') },
     visa: createVisaDecalTexture(),
     mobilFront: createMobilEndplateTexture(),
     mobilRear: createMobilEndplateTexture({ withPlayer: true }),
@@ -216,28 +228,32 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
 
   // ---- Front wing: Red Bull across the mainplane, VISA on the upper flaps ----
   const fwMain = byName('FrontWing_Mainplane');
-  if (fwMain) {
-    const b = carBox(fwMain); const C = b.max.x - b.min.x;
-    sides.forEach((s) => {
-      project(`FrontWing_RedBull_${sideName(s)}`, fwMain, {
-        origin: [b.min.x + C * 0.42, s * absMaxY(b) * 0.56, b.max.z + 5], dir: [0, 0, -1], up: [1, 0, 0],
-        size: [absMaxY(b) * 0.72, absMaxY(b) * 0.72 / 4, 0.4], texture: tex.fwRedBull,
-      });
-    });
-  }
   const fwFlaps = [];
   carModel.traverse((o) => {
     if (!o.isMesh || o.material !== materials.carbonGlossAero) return;
     const b = carBox(o);
     if (o.userData.fwFlap || (b.max.x < -7 && (b.max.z - b.min.z) < 1.0 && (b.max.y - b.min.y) > 3 && b.min.z > 0.55)) fwFlaps.push({ o, b });
   });
+  if (fwMain) {
+    // R7 / R11 / R12: 'Red' on the right half, 'Bull' on the left, each one big word laid over all
+    // three elements and turned to follow the swept leading edge, reading from the front and above.
+    const b = carBox(fwMain);
+    sides.forEach((s) => {
+      const span = absMaxY(b), yc = s * span * 0.5;
+      const flaps = fwFlaps.filter(({ b: fb }) => Math.sign(fb.min.y + fb.max.y) === s).map(({ o }) => o);
+      project(`FrontWing_RedBull_${sideName(s)}`, fwMain, {
+        origin: [b.min.x + 1.85, yc, b.max.z + 5], dir: [0, 0, -1], up: [1, -s * 0.19, 0],
+        size: [span * 0.62, span * 0.31, 2.6], texture: tex.fwRedBull[s], spill: flaps,
+      });
+    });
+  }
   sides.forEach((s) => {
     const mine = fwFlaps.filter(({ b }) => Math.sign(b.min.y + b.max.y) === s).sort((p, q) => q.b.max.z - p.b.max.z)[0];
     if (!mine) return;
     const { o, b } = mine;
     project(`FrontWing_VISA_${sideName(s)}`, o, {
       origin: [(b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z + 5], dir: [0, 0, -1], up: [1, 0, 0],
-      size: [2.6, 0.65, 0.5], texture: tex.visa,
+      size: [2.6, 0.65, 0.5], texture: tex.visa, renderOrder: 2,
     });
   });
 
@@ -358,8 +374,12 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (!hb.isEmpty()) {
       const apexX = hb.min.x + (hb.max.x - hb.min.x) * 0.2; // where both arms meet the pylon
       // All read from the driver's seat (up = forward, right = driver's right = +Y)
-      tryProject('Halo_1Password', { origin: [apexX + 0.15, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [1.5, 0.38, 0.5], texture: tex.halo1P }, [0.6, 0, 0]);
-      tryProject('Halo_TAGHeuer', { origin: [apexX - 0.6, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [0.5, 0.55, 0.6], texture: tex.tag }, [0.8, 0, 0]);
+      // R2 / R11: TAG Heuer sits on the flat top of the hoop, centred, just behind the front post
+      // (flat from x 8.85 to 9.65 on the centre line), top of the logo toward the nose.
+      // 1Password sits just behind it, across where the two arms meet.
+      const haloTopX0 = HALO_SPEC.post[HALO_SPEC.post.length - 1][0] - 0.45; // front of the flat top
+      tryProject('Halo_TAGHeuer', { origin: [haloTopX0 + 0.3, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [0.48, 0.52, 0.6], texture: tex.tag }, [0.1, 0, 0]);
+      tryProject('Halo_1Password', { origin: [haloTopX0 + 0.72, 0, hb.max.z + 5], dir: [0, 0, -1], right: [0, 1, 0], size: [1.3, 0.3, 0.5], texture: tex.halo1P }, [0.2, 0, 0]);
       // Arms: text runs along each arm, reading left-to-right from the driver
       const armX = hb.min.x + (hb.max.x - hb.min.x) * 0.4;
       tryProject('Halo_ATT_R', { origin: [armX, hb.max.y * 0.5, hb.max.z + 5], dir: [0, 0, -1], right: [0.95, 0.3, 0], size: [1.4, 0.35, 0.5], texture: tex.haloATT }, [0, hb.max.y, 0]);

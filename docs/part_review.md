@@ -148,11 +148,11 @@ After the fixes the scene has 4,783 meshes, down from 5,405. That is 622 fewer, 
 - **Where they should sit:** just outboard of the cockpit and ahead of the halo's rear feet, on thin stalks from the sidepod and the tub top.
 - **Before:** a narrow box on one L-shaped stalk at x 8.8 to 10.2, too far forward, with flat chrome glass.
 - **Now:** built from `MIRROR_SPEC` in `cad/cockpit_accessories_driver.js`:
-  - a wide rounded pod (190 mm wide, 68 mm tall) at x 14.0, y ±4.1, z 5.6, turned slightly toward the driver
+  - a rounded pod (150 mm wide, 66 mm tall) at x 15.1, y ±3.65, z 5.3, turned slightly toward the driver. Samuel's R11 top view moved it in, from y ±4.1 at x 14.0, so it sits just outboard of the cockpit, alongside the halo's side (its inner edge is just outside the halo) and a little ahead of the halo's rear legs.
   - the glass is recessed behind a thick carbon lip and is a real planar mirror (it reflects the car and the track live). Set `realReflection: false` for a cheaper chrome look.
   - an amber LED block on the outboard end of the front face (as in R3 and R4), plus a slim amber strip under the glass on the rear face
-  - two thin curved aerofoil stalks, one from the sidepod top and one from the tub top, tied together by a small flat vane
-  - x 13.6 to 14.4, y ±3.0 to 5.1, z 3.6 to 5.9
+  - two thin curved aerofoil stalks from the sidepod top (z 3.8 here), tied together by a small flat vane
+  - x 14.85 to 15.35, y ±2.9 to 4.4, z 3.7 to 5.65
 - **Material:** painted pod, gloss carbon lip, stalks and vane, which is correct.
 
 ### 2.4 FIA camera on the air intake (28 meshes)
@@ -263,6 +263,7 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
 
 ## 7. Suspension and steering, 207 meshes before, 191 after
 - **Wishbones, pushrods and pullrods:** carbon, in the right places.
+  - **R11 ("look at thickness"):** every link, front and rear, is now a wide, flat carbon aerofoil blade instead of a thin rod. The wishbones are about 80 to 90 mm wide and 12 mm thick. The pull rods, push rods and track rods are about 50 mm wide, and they are now carbon instead of titanium. All sizes are in `SUSPENSION_SPEC`. The inner mounts are still fixed to the chassis, and the outer ends still follow the uprights.
 - **Duplicates:** at 8 outer joints, both legs of a wishbone had each added their own ball joint, so 16 ball joints were doubled. Each joint is now added once (`sharedOuter` option).
 - **Steering rack:**
   - **Problem:** its tube was 5.6 dm long (y ±2.8), so about 110 mm stuck out of each side of the tub.
@@ -287,7 +288,8 @@ New `cad/powertrain_moving_internals.js`. Every position comes from `PU_SPEC` an
   - **Nose brackets (R8):** three short angled carbon brackets under the nose join the wing to the nose. One sits on the centre line under the nose tip, and one per side angles up and inward from the mainplane into each nose pillar. They are fixed parts, because the mainplane does not move.
   - **Endplate (R7 and R8):** two moulded shells per side.
     - A tall curved wall rises from the wing, curves inward toward the tyre, and flares back out at its top edge. It is lower at the front and full height at the back.
-    - A separate scrolled foot curls out, over and down at the base. It runs further forward than the wall and kicks forward and out like a fin, widest and tipped up at its front.
+    - A separate scrolled foot curls out, over and down at the base. It kicks out like a fin, widest and tipped up at its front.
+    - **R11 top view:** the endplate no longer sticks out far ahead. The wall now starts at x -9.75 (was -10.4) and the foot at x -9.9 (was -11.35). That is just ahead of the mainplane's tip leading edge, and about level with the nose tip.
     - The two references read differently at the top of the wall (R7 says it turns inward, R8 says it flares outward). The wall does both: it leans inward, then the top lip turns back out. The profile is the `endplate.wall` list in `FRONT_WING_SPEC`, so it is easy to change.
   - **Width:** the outer edge of the foot is the widest point, inside y ±9.5, so the car stays inside the 1,900 mm limit.
 - **Movement:** the middle and top elements are the adjustable flaps. They pivot at the front of the middle element. Each flap group carries its own mode angles (`userData.modeAngles`), and the animation reads them. The risers move with the flaps.
@@ -366,3 +368,12 @@ They cost very little, and removing them touches the livery code, so they are le
 
 ## 11. Image sheets
 All the before and after sheets are in `/workspace/f1-audit/review2/`. The raw single views are in `before_raw/` and `after_raw/`. Round 3 added `sheet_08_halo.png`, `sheet_09_mirrors.png` and `sheet_10_airbox.png`, and updated `sheet_01_whole_car.png` and `sheet_06_rear_wing.png`.
+
+## R11 / R12 top-down pass (PR #7)
+- Mirrors: moved forward from x 15.1 to x 9.0 dm (pod x 8.7 to 9.4), between Samuel's R12 'Mirror' lines (x 8.4 to 9.5) and well ahead of the helmet (x 12.4 to 15.2). Stalks rise off the sidepod top just behind the inlet lip.
+- Front suspension: the front and rear legs of each wishbone now meet the chassis close together (x -0.85 and +1.0 instead of -1.8 and +1.6), so the arms run nearly straight across as in R11.
+- Front wing: the mainplane leading edge now sweeps back 2.0 dm from the centre to the tip (was 0.5). Endplates and scrolled feet moved back with the tips (endplate x -8.25 to -4.7).
+- Red Bull on the front wing: one big word per side, 'Red' on the right and 'Bull' on the left, projected over all three elements and turned to follow the sweep. VISA stays on the top element, drawn above it.
+- Sidepods: 0.3 to 0.5 dm slimmer along their length (max half width 6.2, was 6.7), tapering harder behind x 23, to match the R12 outline.
+- TAG Heuer: on the flat top of the halo, centred, just behind the front post, top of the logo toward the nose.
+- Rear wing: left in place. Corrected for the camera perspective of R12 (the wing sits high, so it looks bigger and further back), its centre is within about 0.3 dm of ours. R12's endplates look about 1.5 dm longer front to back.
