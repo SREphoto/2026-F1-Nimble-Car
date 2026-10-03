@@ -482,6 +482,7 @@ export function createTrackEnvironment(options = {}) {
 
   const trackGeo = new THREE.PlaneGeometry(trackLength, trackWidth);
   const trackMesh = new THREE.Mesh(trackGeo, tarmacMat);
+  trackMesh.name = 'Classic_Track_Tarmac'; // names used by cad/tyre_states.js (wet track sheen)
   trackMesh.rotation.x = -Math.PI / 2; // Lie flat on Y = 0
   trackMesh.position.set(0, 0, 0);
   trackMesh.receiveShadow = true;
@@ -492,6 +493,7 @@ export function createTrackEnvironment(options = {}) {
   const flDepth = 24;         // 2.4 meters wide along X
   const flGeo = new THREE.PlaneGeometry(flDepth, flWidth);
   const flMesh = new THREE.Mesh(flGeo, finishLineMat);
+  flMesh.name = 'Classic_Track_FinishLine';
   flMesh.rotation.x = -Math.PI / 2;
   flMesh.position.set(0, 0.02, 0); // Flush on tarmac
   flMesh.receiveShadow = true;
@@ -506,6 +508,7 @@ export function createTrackEnvironment(options = {}) {
     metalness: 0.1
   });
   const gridMesh = new THREE.Mesh(gridGeo, gridMat);
+  gridMesh.name = 'Classic_Track_GridSlots';
   gridMesh.rotation.x = -Math.PI / 2;
   gridMesh.position.set(200, 0.03, 0);
   gridMesh.receiveShadow = true;
@@ -522,6 +525,7 @@ export function createTrackEnvironment(options = {}) {
       const isRed = k % 2 === 0;
       const kerbGeo = new THREE.BoxGeometry(blockLength, 0.6, 15);
       const kerb = new THREE.Mesh(kerbGeo, isRed ? redKerbMat : whiteKerbMat);
+      kerb.name = 'Classic_Track_Kerb';
       kerb.position.set(kX, 0.25, kerbZ);
       kerb.receiveShadow = true;
       envGroup.add(kerb);
@@ -713,6 +717,7 @@ export function createTrackEnvironment(options = {}) {
   // Pit Lane Tarmac (Width = 50 dm, Length = 1600 dm)
   const pitLaneGeo = new THREE.PlaneGeometry(trackLength, 50);
   const pitLaneMesh = new THREE.Mesh(pitLaneGeo, tarmacMat);
+  pitLaneMesh.name = 'Classic_Track_PitLane';
   pitLaneMesh.rotation.x = -Math.PI / 2;
   pitLaneMesh.position.set(0, 0.01, 120);
   pitLaneMesh.receiveShadow = true;

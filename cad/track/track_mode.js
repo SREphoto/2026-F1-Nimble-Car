@@ -144,7 +144,8 @@ export function initTrackMode(ctx) {
     const kd = state.aeroMode === 'X_MODE' ? 0.00085 : 0.00118;
     let a = drive - kd * v * Math.abs(v) - 9.81 * Math.sin(car.pitch || 0) - Math.sign(v) * (0.25 + surfDrag);
     let dv = a * dt;
-    const brake = (state.brakeKgf / 180) * brakeLimit(Math.abs(v)) * (car.surf === 'gravel' ? 0.4 : 1) * dt;
+    const tyreGrip = state.tyreGrip ?? 1;          // cad/tyre_states.js: compound × wear × weather
+    const brake = (state.brakeKgf / 180) * brakeLimit(Math.abs(v)) * (car.surf === 'gravel' ? 0.4 : 1) * tyreGrip * dt;
     let nv = v + dv;
     if (nv > 0) nv = Math.max(0, nv - brake); else if (nv < 0) nv = Math.min(0, nv + brake);
     if (Math.abs(nv) < 0.05 && drive === 0) nv = 0;
@@ -152,7 +153,7 @@ export function initTrackMode(ctx) {
     // lateral: kinematic bicycle model with grip-limited yaw rate (understeer at the limit)
     const delta = THREE.MathUtils.degToRad(state.steeringDeg);
     let yaw = (nv * Math.tan(delta)) / WHEELBASE;
-    const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45);
+    const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45) * tyreGrip;
     if (Math.abs(nv * yaw) > grip) yaw = Math.sign(yaw) * grip / Math.max(1, Math.abs(nv));
     car.h += yaw * dt;
     car.x += Math.cos(car.h) * nv * dt;
@@ -197,7 +198,7 @@ export function initTrackMode(ctx) {
     setSteer(THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(delta), -30, 30));
     // speed target slightly ahead (reaction margin)
     let j = i0; for (let k = 0; k < Math.round(4 + v * 0.12); k++) j = raceline.wrap(j + 1);
-    const vt = Math.min(rlV[i0], rlV[j]) * mode.pace;
+    const vt = Math.min(rlV[i0], rlV[j]) * mode.pace * Math.sqrt(state.tyreGrip ?? 1); // slower on worn / wet / blown tyres
     const err = vt - v;
     if (err > -0.8) { setThrottle(THREE.MathUtils.clamp(0.35 + err * 0.3, 0, 1)); setBrake(0); }
     else { setThrottle(0); setBrake(THREE.MathUtils.clamp(-err * 16, 0, 180)); }
