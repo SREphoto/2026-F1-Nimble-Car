@@ -241,7 +241,10 @@ def build(c):
             l2, len2, n2 = geo.loop_from_ways(main + gap_ways, ways, nodes, enu, official_m)
             # only accept a short patch: the part of the loop not on circuit ways must be small
             fill = _fill_len(l2, main, ways, nodes, enu) if l2 is not None else 1e9
-            if l2 is not None and fill > min(400.0, 0.08 * official_m):
+            used = _loop_ways(l2, ways, gap_ways) if l2 is not None else []
+            # a short fill is fine; a long one only when one or two road ways give a lap within 0.5% of the FIA length
+            close = l2 is not None and len(used) <= 2 and abs(len2 - official_m) < 0.005 * official_m
+            if l2 is not None and fill > min(400.0, 0.08 * official_m) and not close:
                 REPORT.append(f'{cid}: rejected an OSM loop that needed {fill:.0f} m of ordinary roads to close')
                 l2 = None
             if l2 is not None and (loop is None or abs(len2 - official_m) < abs(loop_len - official_m)):
