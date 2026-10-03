@@ -52,9 +52,10 @@ export function createTransmissionGears(options = {}) {
   casingGroup.position.copy(gbOrigin);
 
   // Lower Main Casing (Houses gear cassette and differential)
-  const caseGeo = new THREE.BoxGeometry(6.2, 2.4, 1.8);
+  // Extends rearward past the axle line so the differential (X = 34.0) is enclosed: X 27.4 -> 35.0
+  const caseGeo = new THREE.BoxGeometry(7.6, 2.4, 1.8);
   const caseMesh = new THREE.Mesh(caseGeo, materials.titaniumAnodized);
-  caseMesh.position.set(0, 0, -0.2);
+  caseMesh.position.set(0.7, 0, -0.2);
   casingGroup.add(caseMesh);
 
   // Upper Bellhousing & Suspension Mount Bulkhead
@@ -214,7 +215,7 @@ export function createTransmissionGears(options = {}) {
   // =========================================================================
   const clutchGroup = new THREE.Group();
   clutchGroup.name = 'Assembly_Carbon_Clutch_Pack';
-  clutchGroup.position.set(27.3, 0.0, 2.8);
+  clutchGroup.position.set(27.3, 0.0, 1.45); // coaxial with crankshaft (Z 1.45)
 
   // Aluminum-Lithium Clutch Basket / Flywheel Housing
   const basketGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.65, 24, 1, true);
@@ -256,16 +257,15 @@ export function createTransmissionGears(options = {}) {
 
   // =========================================================================
   // 5. ACTIVE LIMITED SLIP DIFFERENTIAL (LSD) & BEVEL RING GEAR
-  // Centered on rear axle centerline at X = 34.0 dm, Z = 2.35 dm
+  // Centered on rear axle line at X = 34.0 dm, Z = 2.8 dm (inside casing, axis lateral)
   // =========================================================================
   const diffGroup = new THREE.Group();
   diffGroup.name = 'Kinematic_Active_LSD_Assembly';
-  diffGroup.position.set(34.0, 0.0, 2.35);
+  diffGroup.position.set(34.0, 0.0, 2.8);
 
   // Large Crown Wheel / Bevel Ring Gear
   const ringGearGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.18, 32);
-  const ringGear = new THREE.Mesh(ringGearGeo, materials.titaniumBright);
-  ringGear.rotation.x = Math.PI / 2;
+  const ringGear = new THREE.Mesh(ringGearGeo, materials.titaniumBright); // axis = Y (lateral)
   ringGear.position.set(0, -0.45, 0);
   diffGroup.add(ringGear);
 
@@ -281,8 +281,7 @@ export function createTransmissionGears(options = {}) {
 
   // Differential Ramp Carrier Housing (with 45°/60° ramp slots)
   const carrierGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.8, 20);
-  const carrier = new THREE.Mesh(carrierGeo, materials.titaniumAnodized);
-  carrier.rotation.x = Math.PI / 2;
+  const carrier = new THREE.Mesh(carrierGeo, materials.titaniumAnodized); // axis = Y (lateral)
   diffGroup.add(carrier);
 
   // 4x Internal Bevel Spider Gears & Cross Pins
@@ -308,18 +307,25 @@ export function createTransmissionGears(options = {}) {
   // =========================================================================
   const driveshaftsGroup = new THREE.Group();
   driveshaftsGroup.name = 'Kinematic_Driveshafts_Assembly';
-  driveshaftsGroup.position.set(34.0, 0.0, 2.35);
+  driveshaftsGroup.position.set(34.0, 0.0, 2.8);
 
+  // Diff output (Z 2.8) to rear hub (Y ±6.0 inboard face of upright, Z ~3.55): ~7° up-angle
+  const DS_TILT = 0.12;
   [-1, 1].forEach((side, dsIdx) => {
     const dsAssembly = new THREE.Group();
     dsAssembly.name = `Driveshaft_${side > 0 ? 'Left' : 'Right'}`;
+    dsAssembly.rotation.x = side * DS_TILT; // outer end rises toward the wheel hub
 
-    // Inboard Tripod CV Housing
+    // Spins about its own (local Y) axis - see full_car3d.js updateKinematics
+    const spin = new THREE.Group();
+    spin.name = `Driveshaft_Spin_${side > 0 ? 'Left' : 'Right'}`;
+    dsAssembly.add(spin);
+
+    // Inboard Tripod CV Housing (CylinderGeometry is already along Y = lateral)
     const tripodHousingGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.45, 16);
     const tripodHousing = new THREE.Mesh(tripodHousingGeo, materials.titaniumBright);
-    tripodHousing.rotation.x = Math.PI / 2;
     tripodHousing.position.set(0, side * 0.75, 0);
-    dsAssembly.add(tripodHousing);
+    spin.add(tripodHousing);
 
     // 3 Spherical Needle-Bearing Tripod Rollers inside
     for (let r = 0; r < 3; r++) {
@@ -327,33 +333,31 @@ export function createTransmissionGears(options = {}) {
       const rollerGeo = new THREE.SphereGeometry(0.08, 12, 12);
       const roller = new THREE.Mesh(rollerGeo, materials.titaniumAnodized);
       roller.position.set(Math.cos(rAng) * 0.18, side * 0.75, Math.sin(rAng) * 0.18);
-      dsAssembly.add(roller);
+      spin.add(roller);
     }
 
-    // Pleated Rubber/Silicone Bellows Boot
+    // Pleated Rubber/Silicone Bellows Boot (rings around the lateral shaft axis)
     for (let b = 0; b < 4; b++) {
       const bY = side * (0.95 + b * 0.12);
       const bootRingGeo = new THREE.TorusGeometry(0.24 - b * 0.03, 0.04, 8, 16);
       const bootRing = new THREE.Mesh(bootRingGeo, materials.siliconeSeal);
-      bootRing.rotation.y = Math.PI / 2;
+      bootRing.rotation.x = Math.PI / 2;
       bootRing.position.set(0, bY, 0);
-      dsAssembly.add(bootRing);
+      spin.add(bootRing);
     }
 
     // Hollow Gun-Drilled High-Strength Steel Shaft Bar
-    const shaftLength = 5.2;
+    const shaftLength = 4.6;
     const shaftBarGeo = new THREE.CylinderGeometry(0.11, 0.11, shaftLength, 16);
     const shaftBar = new THREE.Mesh(shaftBarGeo, materials.titaniumBright);
-    shaftBar.rotation.x = Math.PI / 2;
     shaftBar.position.set(0, side * (1.45 + shaftLength / 2), 0);
-    dsAssembly.add(shaftBar);
+    spin.add(shaftBar);
 
-    // Outboard Wheel Hub Spline & Retention Nut
+    // Outboard Wheel Hub Spline & Retention Nut (at the rear upright)
     const splineGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.45, 16);
     const splineMesh = new THREE.Mesh(splineGeo, materials.titaniumAnodized);
-    splineMesh.rotation.x = Math.PI / 2;
     splineMesh.position.set(0, side * (1.45 + shaftLength), 0);
-    dsAssembly.add(splineMesh);
+    spin.add(splineMesh);
 
     driveshaftsGroup.add(dsAssembly);
   });
@@ -368,7 +372,7 @@ export function createTransmissionGears(options = {}) {
   // =========================================================================
   const risGroup = new THREE.Group();
   risGroup.name = 'Assembly_RearImpactStructure_RainLight';
-  risGroup.position.set(36.5, 0.0, 2.15);
+  risGroup.position.set(35.0, 0.0, 2.9); // bolted to gearbox rear face (X 35.0), under exhaust
 
   // 50 kJ Carbon Composite Crash Attenuator Cone
   const coneShape = new THREE.Shape();
@@ -381,7 +385,13 @@ export function createTransmissionGears(options = {}) {
   const coneExtrude = { steps: 2, depth: 2.2, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 3 };
   const coneGeo = new THREE.ExtrudeGeometry(coneShape, coneExtrude);
   const coneMesh = new THREE.Mesh(coneGeo, materials.carbonGloss);
-  coneMesh.rotation.y = -Math.PI / 2;
+  // Extrude rearward (+X), shape X -> lateral Y, shape Y -> vertical Z (narrow end on top)
+  coneMesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(
+    0, 0, 1, 0,
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1
+  ));
   coneMesh.position.set(0, 0, -0.2);
   risGroup.add(coneMesh);
 
@@ -392,7 +402,7 @@ export function createTransmissionGears(options = {}) {
   const bezelGeo = new THREE.ExtrudeGeometry(bezelShape, bezelExtrude);
   const bezelMesh = new THREE.Mesh(bezelGeo, materials.ledYellowSafety || materials.heatShieldGold);
   bezelMesh.rotation.y = Math.PI / 2;
-  bezelMesh.position.set(2.22, 0, 0);
+  bezelMesh.position.set(2.32, 0, -0.2);
   bezelMesh.name = 'RainLight_YellowSafetyBezel';
   risGroup.add(bezelMesh);
 
@@ -400,7 +410,7 @@ export function createTransmissionGears(options = {}) {
   const faceplateGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.04, 24);
   const faceplateMesh = new THREE.Mesh(faceplateGeo, materials.carbonMatte);
   faceplateMesh.rotation.z = Math.PI / 2;
-  faceplateMesh.position.set(2.25, 0, 0);
+  faceplateMesh.position.set(2.35, 0, -0.2);
   risGroup.add(faceplateMesh);
 
   // 15 High-Intensity Red LED Elements in Concentric Pattern (Matching Reference Image 4)
@@ -408,7 +418,7 @@ export function createTransmissionGears(options = {}) {
   // Center LED
   const centerLed = new THREE.Mesh(ledGeo, materials.ledRed);
   centerLed.rotation.z = Math.PI / 2;
-  centerLed.position.set(2.28, 0, 0);
+  centerLed.position.set(2.38, 0, -0.2);
   risGroup.add(centerLed);
 
   // Inner Ring: 5 LEDs
@@ -416,7 +426,7 @@ export function createTransmissionGears(options = {}) {
     const a = (i * Math.PI * 2) / 5;
     const lMesh = new THREE.Mesh(ledGeo, materials.ledRed);
     lMesh.rotation.z = Math.PI / 2;
-    lMesh.position.set(2.28, Math.cos(a) * 0.11, Math.sin(a) * 0.13);
+    lMesh.position.set(2.38, Math.cos(a) * 0.11, -0.2 + Math.sin(a) * 0.13);
     risGroup.add(lMesh);
   }
 
@@ -425,7 +435,7 @@ export function createTransmissionGears(options = {}) {
     const a = (j * Math.PI * 2) / 9;
     const lMesh = new THREE.Mesh(ledGeo, materials.ledRed);
     lMesh.rotation.z = Math.PI / 2;
-    lMesh.position.set(2.28, Math.cos(a) * 0.22, Math.sin(a) * 0.26);
+    lMesh.position.set(2.38, Math.cos(a) * 0.22, -0.2 + Math.sin(a) * 0.26);
     risGroup.add(lMesh);
   }
 

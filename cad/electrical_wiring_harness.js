@@ -93,12 +93,12 @@ export function createElectricalHarness(options = {}) {
   const hvGroup = new THREE.Group();
   hvGroup.name = 'High_Voltage_800V_Network';
 
-  // HV Cable 1 (DC Bus): From Energy Store rear bulkhead (X = 18.2, Y = 0.4, Z = 2.2)
+  // HV Cable 1 (DC Bus): From Energy Store rear face (X = 20.9, Y = 0.4, Z = 1.8)
   // to Left Inverter (X = 28.2, Y = -1.2, Z = 3.6)
   const hvSpline1 = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(18.2, 0.4, 2.2),
-    new THREE.Vector3(20.0, 0.6, 2.3),
-    new THREE.Vector3(22.5, -0.6, 2.5),
+    new THREE.Vector3(20.9, 0.4, 1.8),
+    new THREE.Vector3(21.6, 0.5, 1.9),
+    new THREE.Vector3(22.8, -0.6, 2.4),
     new THREE.Vector3(25.0, -1.0, 3.0),
     new THREE.Vector3(27.0, -1.15, 3.4),
     new THREE.Vector3(28.2, -1.2, 3.6)
@@ -108,12 +108,12 @@ export function createElectricalHarness(options = {}) {
   hvMesh1.name = 'HVCable_ES_to_Inverter_Left';
   hvGroup.add(hvMesh1);
 
-  // HV Cable 2 (DC Bus): From Energy Store rear bulkhead (X = 18.2, Y = -0.4, Z = 2.2)
+  // HV Cable 2 (DC Bus): From Energy Store rear face (X = 20.9, Y = -0.4, Z = 1.8)
   // to Right Inverter (X = 28.2, Y = 1.2, Z = 3.6)
   const hvSpline2 = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(18.2, -0.4, 2.2),
-    new THREE.Vector3(20.0, -0.6, 2.3),
-    new THREE.Vector3(22.5, 0.6, 2.5),
+    new THREE.Vector3(20.9, -0.4, 1.8),
+    new THREE.Vector3(21.6, -0.5, 1.9),
+    new THREE.Vector3(22.8, 0.6, 2.4),
     new THREE.Vector3(25.0, 1.0, 3.0),
     new THREE.Vector3(27.0, 1.15, 3.4),
     new THREE.Vector3(28.2, 1.2, 3.6)
@@ -123,13 +123,13 @@ export function createElectricalHarness(options = {}) {
   hvMesh2.name = 'HVCable_ES_to_Inverter_Right';
   hvGroup.add(hvMesh2);
 
-  // HV 3-Phase AC Feeder Cables: From Inverters (X = 28.2) to MGU-K Motor (X = 23.5, Y = -1.6, Z = 1.4)
+  // HV 3-Phase AC Feeder Cables: From Inverters (X = 28.2) to MGU-K Motor (X = 23.5, Y = -2.25, Z = 1.4)
   [-0.12, 0.0, 0.12].forEach((offsetY, phaseIdx) => {
     const mgukSpline = new THREE.CatmullRomCurve3([
       new THREE.Vector3(28.0, -1.2 + offsetY, 3.5),
       new THREE.Vector3(26.5, -1.35 + offsetY, 2.8),
-      new THREE.Vector3(25.0, -1.5 + offsetY, 2.0),
-      new THREE.Vector3(23.5, -1.6 + offsetY * 0.8, 1.4)
+      new THREE.Vector3(25.0, -1.9 + offsetY, 2.0),
+      new THREE.Vector3(23.5, -2.25 + offsetY * 0.8, 1.4)
     ]);
     const mgukCableGeo = new THREE.TubeGeometry(mgukSpline, 24, 0.075, 10, false);
     const mgukCableMesh = new THREE.Mesh(mgukCableGeo, materials.cableOrangeHV);
@@ -138,11 +138,11 @@ export function createElectricalHarness(options = {}) {
   });
 
   // High-Voltage Connectors at terminations
-  hvGroup.add(createHVConnector(new THREE.Vector3(18.2, 0.4, 2.2), new THREE.Vector3(1, 0, 0)));
-  hvGroup.add(createHVConnector(new THREE.Vector3(18.2, -0.4, 2.2), new THREE.Vector3(1, 0, 0)));
+  hvGroup.add(createHVConnector(new THREE.Vector3(20.9, 0.4, 1.8), new THREE.Vector3(1, 0, 0)));
+  hvGroup.add(createHVConnector(new THREE.Vector3(20.9, -0.4, 1.8), new THREE.Vector3(1, 0, 0)));
   hvGroup.add(createHVConnector(new THREE.Vector3(28.2, -1.2, 3.6), new THREE.Vector3(-1, 0, 0)));
   hvGroup.add(createHVConnector(new THREE.Vector3(28.2, 1.2, 3.6), new THREE.Vector3(-1, 0, 0)));
-  hvGroup.add(createHVConnector(new THREE.Vector3(23.5, -1.6, 1.4), new THREE.Vector3(1, 0, 0.5)));
+  hvGroup.add(createHVConnector(new THREE.Vector3(23.5, -2.25, 1.4), new THREE.Vector3(1, 0, 0.5)));
 
   group.add(hvGroup);
 
@@ -158,8 +158,9 @@ export function createElectricalHarness(options = {}) {
     new THREE.Vector3(6.5, 0.8, 1.8),   // Front chassis interface
     new THREE.Vector3(9.0, 1.1, 1.6),   // Cockpit right sill
     new THREE.Vector3(13.0, 1.25, 1.6),  // Beside driver seat
-    new THREE.Vector3(16.5, 0.9, 1.8),   // Behind driver bulkhead
-    new THREE.Vector3(19.0, 0.5, 2.4),   // SECU mounting plate
+    new THREE.Vector3(16.5, 2.1, 2.0),   // Behind driver bulkhead, beside battery/fuel cell
+    new THREE.Vector3(18.6, 1.75, 5.0),  // Up the fuel cell flank to SECU mounting plate
+    new THREE.Vector3(21.0, 1.6, 4.0),   // Down the rear face of the fuel cell
     new THREE.Vector3(22.0, 0.4, 2.6)    // Engine interface
   ]);
   const spineGeo = new THREE.TubeGeometry(masterSpine, 48, 0.08, 10, false);
@@ -272,10 +273,10 @@ export function createElectricalHarness(options = {}) {
   const rearSpline = new THREE.CatmullRomCurve3([
     new THREE.Vector3(22.0, 0.0, 2.6),
     new THREE.Vector3(25.5, 0.0, 2.8),
-    new THREE.Vector3(28.5, 0.0, 3.2),
-    new THREE.Vector3(31.5, 0.0, 3.4),
-    new THREE.Vector3(34.0, 0.0, 3.5),
-    new THREE.Vector3(36.2, 0.0, 3.8) // Rear crash structure / rain light
+    new THREE.Vector3(28.5, 0.0, 3.8),
+    new THREE.Vector3(31.5, 0.0, 3.8),
+    new THREE.Vector3(34.0, 0.0, 3.8),
+    new THREE.Vector3(36.0, 0.0, 3.3) // Top of rear impact structure / rain light
   ]);
   const rearGeo = new THREE.TubeGeometry(rearSpline, 36, 0.055, 8, false);
   const rearMesh = new THREE.Mesh(rearGeo, materials.harnessBlack);
@@ -283,16 +284,16 @@ export function createElectricalHarness(options = {}) {
   lvGroup.add(rearMesh);
 
   // Rear Rain Light & Active Wing Feeder Cables
-  // Rain Light Connector at X = 36.2, Y = 0.0, Z = 3.6
-  lvGroup.add(createLVConnector(new THREE.Vector3(36.2, 0.0, 3.6), new THREE.Vector3(1, 0, 0)));
+  // Rain Light Connector at X = 36.0, Y = 0.0, Z = 3.3 (top of rear impact structure)
+  lvGroup.add(createLVConnector(new THREE.Vector3(36.0, 0.0, 3.3), new THREE.Vector3(1, 0, 0)));
 
   // Rear Active Wing Vertical Pylon Wiring (Running up the dual rear wing pylons to active flap & LED strips)
   [-1, 1].forEach(side => {
     const rwPylonSpline = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(34.0, side * 1.5, 3.5),
-      new THREE.Vector3(35.5, side * 1.8, 5.5),
-      new THREE.Vector3(37.0, side * 2.2, 7.5),
-      new THREE.Vector3(38.0, side * 3.8, 9.2) // Vertical rain LED strip on endplate
+      new THREE.Vector3(34.0, side * 1.5, 3.8),
+      new THREE.Vector3(35.5, side * 2.2, 4.6),
+      new THREE.Vector3(37.0, side * 3.5, 5.4),  // stays inboard of the rear tyres
+      new THREE.Vector3(37.9, side * 4.55, 6.0)  // rain LED strip on the endplate inner face
     ]);
     const rwPylonGeo = new THREE.TubeGeometry(rwPylonSpline, 24, 0.035, 8, false);
     const rwPylonMesh = new THREE.Mesh(rwPylonGeo, materials.harnessBlack);
@@ -303,7 +304,7 @@ export function createElectricalHarness(options = {}) {
   // FIA Standard ECU (McLaren Applied TAG-320/400) Aluminum Billet Housing with 3x Mil-Spec Headers
   const ecuGroup = new THREE.Group();
   ecuGroup.name = 'Assembly_SECU_EngineControlUnit';
-  ecuGroup.position.set(19.2, 0.55, 2.5);
+  ecuGroup.position.set(19.2, 0.55, 5.4); // on top of the fuel cell (top face Z 5.2)
 
   const ecuBoxGeo = new THREE.BoxGeometry(0.85, 1.45, 0.35);
   const ecuBoxMesh = new THREE.Mesh(ecuBoxGeo, materials.alLi2099);
@@ -351,10 +352,10 @@ export function createElectricalHarness(options = {}) {
 
   // Ground Strap 1: Monocoque Ground Stud to V6 Engine Block
   const gBraid1Spline = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(17.8, 0.0, 1.8),
-    new THREE.Vector3(18.8, -0.2, 1.6),
-    new THREE.Vector3(20.5, -0.3, 1.5),
-    new THREE.Vector3(21.8, -0.1, 1.4)
+    new THREE.Vector3(17.2, -1.5, 1.5),
+    new THREE.Vector3(18.8, -1.4, 1.4),
+    new THREE.Vector3(20.5, -1.4, 1.4),
+    new THREE.Vector3(21.8, -0.6, 1.4)
   ]);
   // Flat braided ribbon geometry
   const gBraid1Geo = new THREE.TubeGeometry(gBraid1Spline, 16, 0.06, 4, false);
@@ -365,8 +366,8 @@ export function createElectricalHarness(options = {}) {
 
   // Terminal Lugs with M6 Titanium Studs at both ends
   [
-    new THREE.Vector3(17.8, 0.0, 1.8),
-    new THREE.Vector3(21.8, -0.1, 1.4)
+    new THREE.Vector3(17.2, -1.5, 1.5),
+    new THREE.Vector3(21.8, -0.6, 1.4)
   ].forEach((gPos, idx) => {
     const lugGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.03, 12);
     const lugMesh = new THREE.Mesh(lugGeo, materials.copperWindings);
@@ -404,11 +405,13 @@ export function createElectricalHarness(options = {}) {
   // =========================================================================
   // 4. HIGH-VOLTAGE ENERGY STORE (BATTERY PACK) INTERNAL DETAILS
   // 4.0 MJ Usable, 35.0 kg min weight, 800V DC immersion-cooled architecture
-  // Located under fuel cell: X = 14.5 dm to 18.2 dm, Y = [-2.2, 2.2], Z = [0.8, 2.4]
+  // Located under the fuel cell, behind the seat back:
+  // X = 17.5 dm to 20.9 dm, Y = [-1.24, 1.24], Z = [1.0, 2.2] (scaled to fit the tub's lower section)
   // =========================================================================
   const esGroup = new THREE.Group();
   esGroup.name = 'Assembly_EnergyStore_Battery_Internals';
-  esGroup.position.set(16.3, 0.0, 1.6);
+  esGroup.position.set(19.2, 0.0, 1.6);
+  esGroup.scale.set(1.0, 0.65, 0.85); // fits inside the tub's elliptical floor section
 
   // Lightweight Al-Li / Carbon Hybrid Ballistic Enclosure
   const esBoxGeo = new THREE.BoxGeometry(3.4, 3.8, 1.4);
@@ -467,6 +470,36 @@ export function createElectricalHarness(options = {}) {
   esGroup.add(pyrofuseGroup);
 
   group.add(esGroup);
+
+  // =========================================================================
+  // 5. FUEL CELL (simplified safety bladder)
+  // Sits between the driver's seat back (X ~15.8) and Bulkhead D-D (X 22.0),
+  // directly above the energy store. X = 16.9-21.5, Y = [-1.9, 1.9], Z = [2.3, 5.2]
+  // =========================================================================
+  const fuelGroup = new THREE.Group();
+  fuelGroup.name = 'Assembly_FuelCell';
+  fuelGroup.position.set(19.2, 0.0, 3.75);
+
+  const fuelCellGeo = new THREE.BoxGeometry(4.6, 3.8, 2.9);
+  const fuelCellMesh = new THREE.Mesh(fuelCellGeo, materials.carbonMatte);
+  fuelCellMesh.name = 'FuelCell_Bladder';
+  fuelGroup.add(fuelCellMesh);
+
+  // Refuelling/breather coupling on the left upper flank
+  const fillerGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.2, 20);
+  const fillerMesh = new THREE.Mesh(fillerGeo, materials.alLi2099);
+  fillerMesh.position.set(-1.2, 1.98, 0.9);
+  fillerMesh.name = 'FuelCell_FillerCoupling';
+  fuelGroup.add(fillerMesh);
+
+  // Fuel pump / collector access plate on the rear face (toward the engine)
+  const pumpPlateGeo = new THREE.BoxGeometry(0.06, 1.2, 0.9);
+  const pumpPlateMesh = new THREE.Mesh(pumpPlateGeo, materials.alLi2099);
+  pumpPlateMesh.position.set(2.33, 0, -0.6);
+  pumpPlateMesh.name = 'FuelCell_PumpAccessPlate';
+  fuelGroup.add(pumpPlateMesh);
+
+  group.add(fuelGroup);
 
   return group;
 }
