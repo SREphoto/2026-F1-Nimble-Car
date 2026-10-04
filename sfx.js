@@ -147,10 +147,20 @@ class SoundEngine {
     return this.muted;
   }
 
-  update({ rpm, throttle, brakeKgf, speedKmH }) {
+  update({ rpm, throttle, brakeKgf, speedKmH, engineOn }) {
     if (!this.initialized || !this.ctx || this.muted) return;
 
     const t = this.ctx.currentTime;
+    const isRunning = (engineOn !== undefined ? engineOn : (rpm && rpm > 100));
+
+    // When the engine is off and RPM has dropped, silence all oscillators
+    if (!isRunning && (!rpm || rpm < 50)) {
+      this.engineGain.gain.setTargetAtTime(0.0, t, 0.05);
+      this.turboGain.gain.setTargetAtTime(0.0, t, 0.05);
+      this.brakeGain.gain.setTargetAtTime(0.0, t, 0.05);
+      return;
+    }
+
     const safeRpm = Math.max(800, rpm || 0);
 
     // V6 firing frequency: (RPM / 60) * 3 combustion pulses per revolution
@@ -180,6 +190,25 @@ class SoundEngine {
     this.brakeGain.gain.setTargetAtTime(brakeVol, t, 0.05);
 
     this.prevThrottle = throttle;
+  }
+
+  playStarter() {
+    if (!this.initialized || !this.ctx || this.muted) return;
+    const t = this.ctx.currentTime;
+    // MGU-K electric starter spin-up chirp
+    const starterOsc = this.ctx.createOscillator();
+    const starterGain = this.ctx.createGain();
+    starterOsc.type = 'sawtooth';
+    starterOsc.frequency.setValueAtTime(320, t);
+    starterOsc.frequency.exponentialRampToValueAtTime(1100, t + 0.12);
+
+    starterGain.gain.setValueAtTime(0.25, t);
+    starterGain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+
+    starterOsc.connect(starterGain);
+    starterGain.connect(this.masterGain);
+    starterOsc.start(t);
+    starterOsc.stop(t + 0.13);
   }
 
   playShift() {

@@ -24,6 +24,28 @@
         <span class="brand-model">2026 F1 NIMBLE CAR</span>
         <span class="brand-tag">SREdesigns - Samuel R Erwin III</span>
       </div>
+
+      <!-- Team Livery & UI Theme Setting -->
+      <div class="topbar-team-setting">
+        <label for="team-select" class="team-setting-label">
+          <span class="team-swatch-badge" id="team-swatch-current" title="Active Team Colors"></span>
+          <span class="team-setting-text">Team Theme:</span>
+        </label>
+        <select id="team-select" class="team-dropdown" aria-label="Select Formula 1 Team Theme & Livery">
+          <option value="ferrari" selected>🔴 Scuderia Ferrari</option>
+          <option value="mclaren">🟠 McLaren F1 Team</option>
+          <option value="red-bull">🔵 Red Bull Racing</option>
+          <option value="mercedes">⚪ Mercedes-AMG Petronas</option>
+          <option value="aston-martin">🟢 Aston Martin Aramco</option>
+          <option value="williams">🔷 Williams Racing</option>
+          <option value="alpine">💗 Alpine F1 Team</option>
+          <option value="sauber">❇️ Kick Sauber / Audi</option>
+          <option value="racing-bulls">⚡ Visa Cash App RB</option>
+          <option value="haas">🏁 Haas F1 Team</option>
+        </select>
+        <button type="button" class="view-btn btn-design-modal" id="btn-design-modal" title="View Design Principles & Inspiration Sources">✦ Design Inspiration</button>
+      </div>
+
       <div class="topbar-status">
         <span id="status-pill" class="pill pill-green">Z-MODE (HIGH DOWNFORCE)</span>
         <span id="status-detail" class="muted">ICE: 0 RPM · Speed: 0 km/h · Gear: N</span>
@@ -44,17 +66,17 @@
           
           <label class="orbit-speed-ctrl" title="Auto-orbit speed">
             <span>Orbit</span>
-            <input type="range" id="orbit-speed" min="0.2" max="4" step="0.1" value="1.0" />
+            <input type="range" id="orbit-speed" min="0.2" max="4" step="0.1" value="1.0" aria-label="Auto-orbit speed" />
             <span id="orbit-speed-val">1.0×</span>
           </label>
           <label class="orbit-speed-ctrl" title="Camera distance">
             <span>Zoom</span>
-            <input type="range" id="camera-zoom" min="0" max="100" step="1" value="50" />
+            <input type="range" id="camera-zoom" min="0" max="100" step="1" value="50" aria-label="Camera distance zoom" />
             <span id="camera-zoom-val">50%</span>
           </label>
           <label class="orbit-speed-ctrl light-ctrl" title="Circuit floodlight & sun intensity">
             <span>Light</span>
-            <input type="range" id="lab-light" min="0.2" max="2.5" step="0.05" value="1.2" />
+            <input type="range" id="lab-light" min="0.2" max="2.5" step="0.05" value="1.2" aria-label="Circuit floodlight and sun intensity" />
             <span id="lab-light-val">1.2×</span>
           </label>
           <label class="orbit-speed-ctrl light-ctrl" title="Track atmosphere and lighting mood">
@@ -86,7 +108,7 @@
 
         <div id="viewport3d" class="viewport"></div>
         <p id="viewport-status" class="viewport-caption">Loading 2026 F1 Nimble Car…</p>
-        <div class="stage-hint">Orbit: Left Click Drag · Pan: Right Click Drag · Zoom: Scroll Wheel · Sliders for Controls</div>
+        <div class="stage-hint">Orbit: Drag · Zoom: Scroll · Shortcuts: Space (Engine) · X (Aero) · C (Cutaway) · W (Wireframe) · M (Sound) · H (Panels) · 1–8/N/R (Gears) · Arrows (Throttle/Steer) · 0 (Reset)</div>
       </section>
 
       <!-- Instrument Telemetry & Controls Panel -->
@@ -113,7 +135,7 @@
                 <span>Throttle Pedal</span>
                 <span id="val-throttle">0%</span>
               </label>
-              <input type="range" id="slider-throttle" min="0" max="100" step="1" value="0" />
+              <input type="range" id="slider-throttle" min="0" max="100" step="1" value="0" aria-label="Throttle pedal percentage" />
             </div>
 
             <div class="ctrl-group">
@@ -121,7 +143,7 @@
                 <span>Brake Pedal Effort (BBW)</span>
                 <span id="val-brake">0 kgf</span>
               </label>
-              <input type="range" id="slider-brake" min="0" max="180" step="2" value="0" />
+              <input type="range" id="slider-brake" min="0" max="180" step="2" value="0" aria-label="Brake-by-wire pedal effort in kilograms-force" />
             </div>
 
             <div class="ctrl-group">
@@ -129,7 +151,7 @@
                 <span>Steering Angle</span>
                 <span id="val-steer">0.0°</span>
               </label>
-              <input type="range" id="slider-steer" min="-30" max="30" step="0.5" value="0" />
+              <input type="range" id="slider-steer" min="-30" max="30" step="0.5" value="0" aria-label="Steering angle in degrees" />
             </div>
 
             <!-- Sequential Gear Selector -->
@@ -155,7 +177,7 @@
                 <span>Exploded View Separation</span>
                 <span id="val-exploded">0%</span>
               </label>
-              <input type="range" id="slider-exploded" min="0" max="100" step="1" value="0" />
+              <input type="range" id="slider-exploded" min="0" max="100" step="1" value="0" aria-label="Exploded view separation percentage" />
             </div>
           </div>
         </div>
@@ -272,6 +294,138 @@
           </div>
         </div>
       </aside>
+    </div>
+  </div>
+
+  <!-- Design Principles & Inspiration Modal -->
+  <div id="design-modal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge">Design System & Inspiration</span>
+          <h2 id="modal-title" class="modal-title">Human Creativity & F1 Digital Twin UI Principles</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-modal-close" aria-label="Close design principles modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3 class="section-title">Design Philosophy: Human Craftsmanship over AI Homogeneity</h3>
+          <p class="section-desc">
+            Inspired by the principles outlined in Punit Chawla's curated guide <em>"10 New Websites For Design Inspiration With Real Human Creativity"</em>, this application is engineered to resist generic, cookie-cutter AI aesthetics. Instead, it prioritizes <strong>tactile micro-interactions</strong>, <strong>high-contrast technical legibility</strong>, and <strong>authentic motorsport physics and telemetry aesthetics</strong>.
+          </p>
+        </section>
+
+        <section class="modal-section">
+          <h3 class="section-title">The 10 Curated Inspiration Platforms & Their Application</h3>
+          <div class="inspiration-grid">
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">01</span>
+                <span class="insp-name">Recent.design</span>
+              </div>
+              <p class="insp-summary">Human-curated showcase spanning digital interfaces, real-time 3D, and kinematic motion.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Interactive Three.js WebGL lighting, procedural PBR shader materials (exposed carbon twill, anodized titanium, and lacquered bodywork).</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">02</span>
+                <span class="insp-name">Godly (godly.website)</span>
+              </div>
+              <p class="insp-summary">Astronomically good cutting-edge web experiences with subtle glow halos, tactile depth, and dark telemetry.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Frosted glassmorphism (<code>backdrop-filter: blur(12px)</code>), soft luminous accent glows, and tactile button depress feedback.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">03</span>
+                <span class="insp-name">Minimal Gallery</span>
+              </div>
+              <p class="insp-summary">Mastery of visual restraint, intentional negative space, and strict typographic hierarchy.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Monospaced tabular numerals (<code>tabular-nums</code>) preventing telemetry jitter, crisp hairline dividers, and uncluttered toolbars.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">04</span>
+                <span class="insp-name">Mobbin</span>
+              </div>
+              <p class="insp-summary">Massive benchmark library of real-world production mobile and desktop application flows.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Collapsible 3-tray panel architecture, immediate keyboard shortcuts (Space, X, C, W, M, H, 1–8), and instant camera viewpoint presets.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">05</span>
+                <span class="insp-name">SiteInspire</span>
+              </div>
+              <p class="insp-summary">Trusted directory showcasing clean structure, intuitive visual orientation, and functional usability.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Clear spatial layout separating the real-time 3D racetrack stage, driver controls, part isolation, and FIA regulatory specs.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">06</span>
+                <span class="insp-name">Awwwards</span>
+              </div>
+              <p class="insp-summary">The benchmark for award-winning digital experiences, storytelling, and immersive 3D execution.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Cinematic 360° drone tour, realistic environment reflections, and animated aerodynamic DRS wing flaps.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">07</span>
+                <span class="insp-name">Figma Community</span>
+              </div>
+              <p class="insp-summary">Open-source design systems, atomic design tokens, and modular UI kit architectures.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Systematic CSS Custom Property token architecture (<code>--team-primary</code>, <code>--team-surface</code>, <code>--team-glow</code>) allowing zero-refresh theme switching.</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">08</span>
+                <span class="insp-name">Deck.gallery</span>
+              </div>
+              <p class="insp-summary">Bespoke presentation grids, executive technical dashboards, and high-density tabular data.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> High-density 2026 FIA technical regulation compliance table with precise metric comparisons (-200mm wheelbase, 350kW MGU-K).</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">09</span>
+                <span class="insp-name">Posts.design</span>
+              </div>
+              <p class="insp-summary">Visual identity systems, social brand guidelines, and distinctive graphic signatures.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Authentic multi-team liveries (Scuderia Ferrari Rosso Corsa, McLaren Papaya, Mercedes Petronas Teal, Aston Martin Racing Green).</div>
+            </article>
+
+            <article class="insp-card">
+              <div class="insp-card-head">
+                <span class="insp-number">10</span>
+                <span class="insp-name">Land-book</span>
+              </div>
+              <p class="insp-summary">High-conversion product showcase layouts, clear calls-to-action, and feature spotlights.</p>
+              <div class="insp-applied"><strong>Applied in Nimble Car:</strong> Prominent interactive controls, intuitive status pill states, and full-screen distraction-free viewing toggle.</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="modal-section">
+          <h3 class="section-title">Core Principles Implemented in This System</h3>
+          <ul class="principles-list">
+            <li><strong>1. Semantic Design Tokens over Hardcoding:</strong> Colors, surface tones, and glows are driven by dynamic variables (<code>var(--team-primary)</code>, <code>var(--team-accent-glow)</code>), giving instant theming without page reload.</li>
+            <li><strong>2. Optical Contrast & Anti-Glare Dark Mode:</strong> Built on high-performance dark backgrounds (<code>#090d14</code>) to reduce eye fatigue and make high-energy racing colors pop with optical balance.</li>
+            <li><strong>3. Tabular Numeral Stability:</strong> Speed, RPM, gear, and telemetry numbers use monospace font metrics so changing numbers never cause layout shift or visual jitter.</li>
+            <li><strong>4. Synchronized Multi-Sensory Digital Twin:</strong> Switching team theme instantly updates the UI, the PCU-8D steering wheel display, and the physical 3D car bodywork paint in Three.js simultaneously.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-hint">Press <kbd>Esc</kbd> or click anywhere outside to close</span>
+        <button type="button" class="view-btn active" id="btn-modal-done">Close & Return to Cockpit</button>
+      </div>
     </div>
   </div>
 

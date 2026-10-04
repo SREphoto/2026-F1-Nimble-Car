@@ -7,3 +7,18 @@ node_modules/
 
 # Red Bull Ring data builder download cache (tools/track/build_red_bull_ring.py)
 .track_cache/
+
+# Unity temporary build files and caches
+unity_pits/[Ll]ibrary/
+unity_pits/[Tt]emp/
+unity_pits/[Oo]bj/
+unity_pits/[Bb]uild/
+unity_pits/[Bb]uilds/
+unity_pits/[Ll]ogs/
+unity_pits/[Uu]ser[Ss]ettings/
+unity_pits/[Mm]emoryCaptures/
+
+# Local agent scratch & brain
+.claude-brain/
+.agents/
+

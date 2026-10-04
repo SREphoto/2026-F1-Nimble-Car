@@ -23,6 +23,7 @@ import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 import { initSessions } from './cad/game/session_ui.js';
 import { initGlobe } from './cad/game/globe.js';
+import { F1_TEAMS, applyTeamTheme, getSavedTeam, getCurrentTeam } from './teams.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -145,28 +146,38 @@ const lcdCtx = lcdCanvas.getContext('2d');
 function updateLcdDisplay() {
   const w = lcdCanvas.width;
   const h = lcdCanvas.height;
+  const currentTeam = getCurrentTeam?.() || {
+    shortName: 'FERRARI',
+    css: { primary: '#e80020', secondary: '#ffe500' }
+  };
 
   // Background
   lcdCtx.fillStyle = '#05070a';
   lcdCtx.fillRect(0, 0, w, h);
 
-  // Top Shift Lights (15 LED indicators: Green, Red, Blue)
+  // Top Shift Lights (15 LED indicators: Green, Team Accent / Red, Blue)
   const rpmRatio = Math.max(0, Math.min(1, (state.rpm - 4000) / 8000));
   const numLedsLit = Math.floor(rpmRatio * 15);
   for (let i = 0; i < 15; i++) {
     const lx = 35 + i * 29;
-    const ly = 18;
+    const ly = 16;
     if (i < numLedsLit) {
-      if (i < 5) lcdCtx.fillStyle = '#3dd68c';      // Green
-      else if (i < 10) lcdCtx.fillStyle = '#f04460'; // Red
-      else lcdCtx.fillStyle = '#00d4e8';             // Blue shift flash
+      if (i < 5) lcdCtx.fillStyle = '#3dd68c';                 // Green
+      else if (i < 10) lcdCtx.fillStyle = '#f04460';            // Red
+      else lcdCtx.fillStyle = currentTeam.css.primary || '#00d4e8'; // Team shift flash
     } else {
       lcdCtx.fillStyle = '#1a2330';
     }
     lcdCtx.beginPath();
-    lcdCtx.arc(lx, ly, 8, 0, Math.PI * 2);
+    lcdCtx.arc(lx, ly, 7, 0, Math.PI * 2);
     lcdCtx.fill();
   }
+
+  // Active Team Moniker (Center Top)
+  lcdCtx.fillStyle = currentTeam.css.secondary || '#8b9bb0';
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.textAlign = 'center';
+  lcdCtx.fillText(currentTeam.shortName || 'F1 2026', w / 2, 44);
 
   // Gear Display (Center Huge)
   lcdCtx.fillStyle = '#ffffff';
@@ -178,7 +189,7 @@ function updateLcdDisplay() {
   lcdCtx.fillStyle = '#8b9bb0';
   lcdCtx.font = '14px sans-serif';
   lcdCtx.fillText('SPEED (KM/H)', 110, 85);
-  lcdCtx.fillStyle = '#00d4e8';
+  lcdCtx.fillStyle = currentTeam.css.primary || '#00d4e8';
   lcdCtx.font = 'bold 42px monospace';
   lcdCtx.fillText(Math.round(state.speedKmH).toString(), 110, 130);
 
@@ -186,7 +197,7 @@ function updateLcdDisplay() {
   lcdCtx.fillStyle = '#8b9bb0';
   lcdCtx.font = '14px sans-serif';
   lcdCtx.fillText('ENGINE RPM', w - 110, 85);
-  lcdCtx.fillStyle = '#f0b429';
+  lcdCtx.fillStyle = currentTeam.css.secondary || '#f0b429';
   lcdCtx.font = 'bold 42px monospace';
   lcdCtx.fillText(Math.round(state.rpm).toString(), w - 110, 130);
 
@@ -197,7 +208,7 @@ function updateLcdDisplay() {
   lcdCtx.strokeRect(15, 175, w - 30, 65);
 
   // Aero Mode Tag
-  lcdCtx.fillStyle = state.aeroMode === 'X_MODE' ? '#00d4e8' : '#3dd68c';
+  lcdCtx.fillStyle = state.aeroMode === 'X_MODE' ? (currentTeam.css.primary || '#00d4e8') : '#3dd68c';
   lcdCtx.font = 'bold 18px monospace';
   lcdCtx.textAlign = 'left';
   lcdCtx.fillText(`AERO: ${state.aeroMode}`, 35, 212);
@@ -216,6 +227,75 @@ function updateLcdDisplay() {
 // =========================================================================
 // 6. UI INTERACTION & CONTROLS BINDING
 // =========================================================================
+
+// Team Selection & Live 3D / UI Theme Synchronization
+const teamSelect = document.getElementById('team-select');
+teamSelect?.addEventListener('change', (e) => {
+  applyTeamTheme(e.target.value, {
+    carModel,
+    materials,
+    renderer,
+    updateLcd: updateLcdDisplay
+  });
+});
+
+window.setTeam = function(teamId) {
+  return applyTeamTheme(teamId, {
+    carModel,
+    materials,
+    renderer,
+    updateLcd: updateLcdDisplay
+  });
+};
+
+// Initial Team Theme Application (Restores user choice from localStorage)
+try {
+  const initialTeam = getSavedTeam();
+  applyTeamTheme(initialTeam, {
+    carModel,
+    materials,
+    renderer,
+    updateLcd: updateLcdDisplay
+  });
+} catch (themeErr) {
+  console.warn('Initial team theme hydration error:', themeErr);
+}
+
+// Design Principles & Inspiration Modal Controls
+const designModal = document.getElementById('design-modal');
+const btnDesignModal = document.getElementById('btn-design-modal');
+const btnModalClose = document.getElementById('btn-modal-close');
+const btnModalDone = document.getElementById('btn-modal-done');
+
+function openDesignModal() {
+  if (designModal) {
+    designModal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeDesignModal() {
+  if (designModal) {
+    designModal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
+}
+
+btnDesignModal?.addEventListener('click', openDesignModal);
+btnModalClose?.addEventListener('click', closeDesignModal);
+btnModalDone?.addEventListener('click', closeDesignModal);
+
+designModal?.addEventListener('click', (e) => {
+  if (e.target === designModal) {
+    closeDesignModal();
+  }
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && designModal && !designModal.hasAttribute('hidden')) {
+    closeDesignModal();
+  }
+});
 
 // Window Resize Helper
 function handleResize() {
@@ -240,63 +320,70 @@ document.querySelectorAll('.panel-collapse-btn').forEach(btn => {
 
 // Master Toggle All Panels Button (Full-Screen View)
 const btnTogglePanels = document.getElementById('btn-toggle-panels');
-btnTogglePanels?.addEventListener('click', () => {
+function togglePanels() {
   const workspace = document.querySelector('.workspace');
   if (workspace) {
     const isHidden = workspace.classList.toggle('panels-hidden');
-    btnTogglePanels.classList.toggle('active', isHidden);
-    btnTogglePanels.textContent = isHidden ? 'Show Panels' : 'Hide Panels';
+    btnTogglePanels?.classList.toggle('active', isHidden);
+    if (btnTogglePanels) btnTogglePanels.textContent = isHidden ? 'Show Panels' : 'Hide Panels';
     setTimeout(handleResize, 60);
     setTimeout(handleResize, 260);
   }
-});
+}
+btnTogglePanels?.addEventListener('click', togglePanels);
 
 // Viewport Toolbar Buttons
 const btnCutaway = document.getElementById('btn-cutaway');
-btnCutaway?.addEventListener('click', () => {
+function toggleCutaway() {
   state.cutawayActive = !state.cutawayActive;
-  btnCutaway.classList.toggle('active', state.cutawayActive);
+  btnCutaway?.classList.toggle('active', state.cutawayActive);
   carModel?.setCutawayMode(state.cutawayActive);
-});
+}
+btnCutaway?.addEventListener('click', toggleCutaway);
 
 const btnExplode = document.getElementById('btn-explode');
-btnExplode?.addEventListener('click', () => {
+function toggleExplode() {
   state.explodedProgress = state.explodedProgress > 0 ? 0 : 1.0;
   const slider = document.getElementById('slider-exploded');
   if (slider) slider.value = state.explodedProgress * 100;
   const valEl = document.getElementById('val-exploded');
   if (valEl) valEl.textContent = `${Math.round(state.explodedProgress * 100)}%`;
-  btnExplode.classList.toggle('active', state.explodedProgress > 0);
-});
+  btnExplode?.classList.toggle('active', state.explodedProgress > 0);
+}
+btnExplode?.addEventListener('click', toggleExplode);
 
 const btnWireframe = document.getElementById('btn-wireframe');
-btnWireframe?.addEventListener('click', () => {
+function toggleWireframe() {
   state.wireframe = !state.wireframe;
-  btnWireframe.classList.toggle('active', state.wireframe);
+  btnWireframe?.classList.toggle('active', state.wireframe);
   carModel?.setWireframeMode(state.wireframe);
-});
+}
+btnWireframe?.addEventListener('click', toggleWireframe);
 
 const btnAudio = document.getElementById('btn-audio');
-btnAudio?.addEventListener('click', () => {
+function toggleAudio() {
   soundEngine.init();
   state.soundMuted = !state.soundMuted;
   soundEngine.setMuted(state.soundMuted);
-  btnAudio.classList.toggle('active', !state.soundMuted);
-  btnAudio.textContent = state.soundMuted ? '🔊 Sound: Off' : '🔊 Sound: On';
-});
+  btnAudio?.classList.toggle('active', !state.soundMuted);
+  if (btnAudio) btnAudio.textContent = state.soundMuted ? '🔊 Sound: Off' : '🔊 Sound: On';
+}
+btnAudio?.addEventListener('click', toggleAudio);
 
 const btnTour = document.getElementById('btn-tour');
-btnTour?.addEventListener('click', () => {
+function toggleTour() {
   state.tourActive = !state.tourActive;
-  btnTour.classList.toggle('active', state.tourActive);
-});
+  btnTour?.classList.toggle('active', state.tourActive);
+}
+btnTour?.addEventListener('click', toggleTour);
 
 const btnAutoRotate = document.getElementById('btn-auto-rotate');
-btnAutoRotate?.addEventListener('click', () => {
+function toggleAutoRotate() {
   state.autoRotate = !state.autoRotate;
-  btnAutoRotate.classList.toggle('active', state.autoRotate);
+  btnAutoRotate?.classList.toggle('active', state.autoRotate);
   controls.autoRotate = state.autoRotate;
-});
+}
+btnAutoRotate?.addEventListener('click', toggleAutoRotate);
 
 // Orbit, Zoom, Light Sliders
 document.getElementById('orbit-speed')?.addEventListener('input', e => {
@@ -455,25 +542,32 @@ document.getElementById('btn-view-reset')?.addEventListener('click', () => {
 
 // Powertrain & Driving Controls
 const btnEngineStart = document.getElementById('btn-engine-start');
-btnEngineStart?.addEventListener('click', () => {
+function toggleEngine() {
   if (state.pyrofuseCut) return;
   state.engineOn = !state.engineOn;
-  btnEngineStart.classList.toggle('active', state.engineOn);
-  btnEngineStart.textContent = state.engineOn ? 'ICE STOP' : 'ICE START';
-});
+  if (state.engineOn) {
+    soundEngine.playStarter();
+  }
+  btnEngineStart?.classList.toggle('active', state.engineOn);
+  if (btnEngineStart) {
+    btnEngineStart.textContent = state.engineOn ? 'ICE STOP' : 'ICE START';
+  }
+}
+btnEngineStart?.addEventListener('click', toggleEngine);
 
 const btnAeroToggle = document.getElementById('btn-aero-toggle');
-btnAeroToggle?.addEventListener('click', () => {
+function toggleAero() {
   state.aeroMode = state.aeroMode === 'Z_MODE' ? 'X_MODE' : 'Z_MODE';
   soundEngine.playAeroSwitch();
-  btnAeroToggle.classList.toggle('active', state.aeroMode === 'X_MODE');
-  btnAeroToggle.textContent = `${state.aeroMode} (AERO)`;
+  btnAeroToggle?.classList.toggle('active', state.aeroMode === 'X_MODE');
+  if (btnAeroToggle) btnAeroToggle.textContent = `${state.aeroMode} (AERO)`;
   const pill = document.getElementById('status-pill');
   if (pill) {
     pill.textContent = state.aeroMode === 'X_MODE' ? 'X-MODE (LOW DRAG)' : 'Z-MODE (HIGH DOWNFORCE)';
     pill.className = `pill ${state.aeroMode === 'X_MODE' ? 'pill-amber' : 'pill-green'}`;
   }
-});
+}
+btnAeroToggle?.addEventListener('click', toggleAero);
 
 const btnPyrofuse = document.getElementById('btn-pyrofuse');
 btnPyrofuse?.addEventListener('click', () => {
@@ -488,47 +582,147 @@ btnPyrofuse?.addEventListener('click', () => {
   }
 });
 
-// Throttle, Brake, Steering Sliders
+// Throttle, Brake, Steering, Exploded Setters
+function setThrottlePercent(pct) {
+  const val = Math.max(0, Math.min(100, pct));
+  state.throttle = val / 100;
+  const slider = document.getElementById('slider-throttle');
+  if (slider) slider.value = val;
+  const valEl = document.getElementById('val-throttle');
+  if (valEl) valEl.textContent = `${Math.round(val)}%`;
+}
+
 document.getElementById('slider-throttle')?.addEventListener('input', e => {
-  state.throttle = parseFloat(e.target.value) / 100;
-  document.getElementById('val-throttle').textContent = `${e.target.value}%`;
+  setThrottlePercent(parseFloat(e.target.value));
 });
 
-document.getElementById('slider-brake')?.addEventListener('input', e => {
-  state.brakeKgf = parseFloat(e.target.value);
-  document.getElementById('val-brake').textContent = `${state.brakeKgf} kgf`;
+function setBrakeKgf(kgf) {
+  const val = Math.max(0, Math.min(180, kgf));
+  state.brakeKgf = val;
+  const slider = document.getElementById('slider-brake');
+  if (slider) slider.value = val;
+  const valEl = document.getElementById('val-brake');
+  if (valEl) valEl.textContent = `${Math.round(val)} kgf`;
   // Safety interlock: heavy braking drops X-Mode to Z-Mode
   if (state.brakeKgf > 15 && state.aeroMode === 'X_MODE') {
     state.aeroMode = 'Z_MODE';
     soundEngine.playAeroSwitch();
     btnAeroToggle?.classList.remove('active');
     if (btnAeroToggle) btnAeroToggle.textContent = 'Z-MODE (AERO)';
+    const pill = document.getElementById('status-pill');
+    if (pill) {
+      pill.textContent = 'Z-MODE (HIGH DOWNFORCE)';
+      pill.className = 'pill pill-green';
+    }
   }
+}
+
+document.getElementById('slider-brake')?.addEventListener('input', e => {
+  setBrakeKgf(parseFloat(e.target.value));
 });
+
+function setSteeringDeg(deg) {
+  const val = Math.max(-30, Math.min(30, deg));
+  state.steeringDeg = val;
+  const slider = document.getElementById('slider-steer');
+  if (slider) slider.value = val;
+  const valEl = document.getElementById('val-steer');
+  if (valEl) valEl.textContent = `${val > 0 ? '+' : ''}${val.toFixed(1)}°`;
+}
 
 document.getElementById('slider-steer')?.addEventListener('input', e => {
-  state.steeringDeg = parseFloat(e.target.value);
-  document.getElementById('val-steer').textContent = `${state.steeringDeg > 0 ? '+' : ''}${state.steeringDeg.toFixed(1)}°`;
+  setSteeringDeg(parseFloat(e.target.value));
 });
+
+function setExplodedPercent(pct) {
+  const val = Math.max(0, Math.min(100, pct));
+  state.explodedProgress = val / 100;
+  const slider = document.getElementById('slider-exploded');
+  if (slider) slider.value = val;
+  const valEl = document.getElementById('val-exploded');
+  if (valEl) valEl.textContent = `${Math.round(val)}%`;
+  btnExplode?.classList.toggle('active', state.explodedProgress > 0);
+}
 
 document.getElementById('slider-exploded')?.addEventListener('input', e => {
-  state.explodedProgress = parseFloat(e.target.value) / 100;
-  document.getElementById('val-exploded').textContent = `${e.target.value}%`;
-  btnExplode?.classList.toggle('active', state.explodedProgress > 0);
+  setExplodedPercent(parseFloat(e.target.value));
 });
 
-// Gear Buttons with Pneumatic Shift Pop SFX
+// Gear Selector with Pneumatic Shift Pop SFX
+function setGear(g) {
+  const newGear = isNaN(g) ? g : parseInt(g);
+  if (newGear !== state.gear) {
+    soundEngine.playShiftPop();
+  }
+  state.gear = newGear;
+  document.querySelectorAll('.gear-btn').forEach(b => {
+    b.classList.toggle('active', String(b.dataset.gear) === String(g));
+  });
+}
+
 document.querySelectorAll('.gear-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const g = btn.dataset.gear;
-    const newGear = isNaN(g) ? g : parseInt(g);
-    if (newGear !== state.gear) {
-      soundEngine.playShiftPop();
-    }
-    state.gear = newGear;
+    setGear(btn.dataset.gear);
   });
+});
+
+// Keyboard Shortcuts for Showcase Mode (active when not driving on circuit and not focused on inputs)
+window.addEventListener('keydown', e => {
+  const activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+    return;
+  }
+  if (trackMode?.mode?.driving) {
+    return;
+  }
+
+  const k = e.key.toLowerCase();
+  if (e.code === 'Space') {
+    e.preventDefault();
+    toggleEngine();
+  } else if (k === 'x') {
+    e.preventDefault();
+    toggleAero();
+  } else if (k === 'c') {
+    e.preventDefault();
+    toggleCutaway();
+  } else if (k === 'w') {
+    e.preventDefault();
+    toggleWireframe();
+  } else if (k === 'm') {
+    e.preventDefault();
+    toggleAudio();
+  } else if (k === 'h') {
+    e.preventDefault();
+    togglePanels();
+  } else if (k === 't') {
+    e.preventDefault();
+    toggleTour();
+  } else if (k === '0') {
+    e.preventDefault();
+    window.setCameraView('CAM_ISO');
+  } else if (k === 'n') {
+    e.preventDefault();
+    setGear('N');
+  } else if (k === 'r') {
+    e.preventDefault();
+    setGear('R');
+  } else if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(k)) {
+    e.preventDefault();
+    setGear(parseInt(k));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    setThrottlePercent(state.throttle * 100 + 5);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    setThrottlePercent(state.throttle * 100 - 5);
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    setSteeringDeg(state.steeringDeg - 2.5);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    setSteeringDeg(state.steeringDeg + 2.5);
+  }
 });
 
 // Part Explorer Isolation & Focused Camera Framing
@@ -600,7 +794,8 @@ function animate() {
     speedKmH: state.speedKmH,
     gear: state.gear,
     aeroMode: state.aeroMode,
-    brakeKgf: state.brakeKgf
+    brakeKgf: state.brakeKgf,
+    engineOn: state.engineOn
   });
 
   // Cinematic 360° Drone Tour Flyaround

@@ -11,7 +11,11 @@ Unit test suite for F12026CarController:
 - Brake-by-Wire MGU-K regen & friction torque blending
 """
 
+import os
+import sys
 import unittest
+
+sys.path.insert(0, os.path.dirname(__file__))
 from full_car_controller import F12026CarController
 
 
