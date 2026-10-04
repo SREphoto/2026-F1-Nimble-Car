@@ -71,6 +71,16 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.20;
 container.appendChild(renderer.domElement);
 
+renderer.domElement.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  console.warn('[WebGL] Context lost. Preventing default to allow recovery.');
+});
+
+renderer.domElement.addEventListener('webglcontextrestored', () => {
+  console.info('[WebGL] Context restored. Refreshing size and scene...');
+  handleResize();
+});
+
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
@@ -144,6 +154,7 @@ const lcdCanvas = document.getElementById('lcd');
 const lcdCtx = lcdCanvas.getContext('2d');
 
 function updateLcdDisplay() {
+  if (!lcdCanvas || lcdCanvas.offsetParent === null) return;
   const w = lcdCanvas.width;
   const h = lcdCanvas.height;
   const currentTeam = getCurrentTeam?.() || {
@@ -151,77 +162,224 @@ function updateLcdDisplay() {
     css: { primary: '#e80020', secondary: '#ffe500' }
   };
 
-  // Background
-  lcdCtx.fillStyle = '#05070a';
+  // 1. Deep Cockpit Gunmetal Background & Screen Borders
+  lcdCtx.fillStyle = '#060a10';
   lcdCtx.fillRect(0, 0, w, h);
 
-  // Top Shift Lights (15 LED indicators: Green, Team Accent / Red, Blue)
-  const rpmRatio = Math.max(0, Math.min(1, (state.rpm - 4000) / 8000));
+  // Outer Screen Bezel Line
+  lcdCtx.strokeStyle = '#182436';
+  lcdCtx.lineWidth = 3;
+  lcdCtx.strokeRect(4, 4, w - 8, h - 8);
+
+  // 2. Arched 15-LED Shift Light Array (5 Green, 5 Red, 5 Violet/Team Accent)
+  const rpmRatio = Math.max(0, Math.min(1, (state.rpm - 4000) / 8500));
   const numLedsLit = Math.floor(rpmRatio * 15);
   for (let i = 0; i < 15; i++) {
-    const lx = 35 + i * 29;
+    const lx = 112 + i * 20.5;
     const ly = 16;
     if (i < numLedsLit) {
-      if (i < 5) lcdCtx.fillStyle = '#3dd68c';                 // Green
-      else if (i < 10) lcdCtx.fillStyle = '#f04460';            // Red
-      else lcdCtx.fillStyle = currentTeam.css.primary || '#00d4e8'; // Team shift flash
+      if (i < 5) lcdCtx.fillStyle = '#00e676';                   // Green
+      else if (i < 10) lcdCtx.fillStyle = '#ff334b';             // Red
+      else lcdCtx.fillStyle = currentTeam.css.primary || '#9d4edd'; // Team shift flash / Violet
     } else {
-      lcdCtx.fillStyle = '#1a2330';
+      lcdCtx.fillStyle = '#111a26';
     }
     lcdCtx.beginPath();
-    lcdCtx.arc(lx, ly, 7, 0, Math.PI * 2);
+    lcdCtx.arc(lx, ly, 5.5, 0, Math.PI * 2);
     lcdCtx.fill();
+    lcdCtx.strokeStyle = '#05070a';
+    lcdCtx.lineWidth = 1.2;
+    lcdCtx.stroke();
   }
 
-  // Active Team Moniker (Center Top)
-  lcdCtx.fillStyle = currentTeam.css.secondary || '#8b9bb0';
-  lcdCtx.font = 'bold 12px monospace';
-  lcdCtx.textAlign = 'center';
-  lcdCtx.fillText(currentTeam.shortName || 'F1 2026', w / 2, 44);
+  // Flanking Status LEDs (Left: DRS/Flag 3x, Right: ERS/Oil 3x)
+  const leftLeds = ['#ffaa00', '#00e676', '#00b4d8'];
+  leftLeds.forEach((color, idx) => {
+    lcdCtx.fillStyle = color;
+    lcdCtx.beginPath();
+    lcdCtx.arc(32 + idx * 18, 16, 4.5, 0, Math.PI * 2);
+    lcdCtx.fill();
+  });
 
-  // Gear Display (Center Huge)
+  const rightLeds = ['#ffd60a', '#ff334b', '#00f5d4'];
+  rightLeds.forEach((color, idx) => {
+    lcdCtx.fillStyle = color;
+    lcdCtx.beginPath();
+    lcdCtx.arc(w - 74 + idx * 18, 16, 4.5, 0, Math.PI * 2);
+    lcdCtx.fill();
+  });
+
+  // 3. Top Header: Delta, Lap, Team Moniker & Speed
+  // Top Left: Delta & Boxed Last Lap
   lcdCtx.fillStyle = '#ffffff';
-  lcdCtx.font = 'bold 84px monospace';
-  lcdCtx.textAlign = 'center';
-  lcdCtx.fillText(String(state.gear), w / 2, 135);
-
-  // Speed (Left)
-  lcdCtx.fillStyle = '#8b9bb0';
-  lcdCtx.font = '14px sans-serif';
-  lcdCtx.fillText('SPEED (KM/H)', 110, 85);
-  lcdCtx.fillStyle = currentTeam.css.primary || '#00d4e8';
-  lcdCtx.font = 'bold 42px monospace';
-  lcdCtx.fillText(Math.round(state.speedKmH).toString(), 110, 130);
-
-  // Engine RPM (Right)
-  lcdCtx.fillStyle = '#8b9bb0';
-  lcdCtx.font = '14px sans-serif';
-  lcdCtx.fillText('ENGINE RPM', w - 110, 85);
-  lcdCtx.fillStyle = currentTeam.css.secondary || '#f0b429';
-  lcdCtx.font = 'bold 42px monospace';
-  lcdCtx.fillText(Math.round(state.rpm).toString(), w - 110, 130);
-
-  // Bottom Telemetry Bar: Aero Mode, SoC, Brake Bias
-  lcdCtx.fillStyle = '#141b26';
-  lcdCtx.fillRect(15, 175, w - 30, 65);
-  lcdCtx.strokeStyle = '#2a3545';
-  lcdCtx.strokeRect(15, 175, w - 30, 65);
-
-  // Aero Mode Tag
-  lcdCtx.fillStyle = state.aeroMode === 'X_MODE' ? (currentTeam.css.primary || '#00d4e8') : '#3dd68c';
-  lcdCtx.font = 'bold 18px monospace';
+  lcdCtx.font = 'bold 22px monospace';
   lcdCtx.textAlign = 'left';
-  lcdCtx.fillText(`AERO: ${state.aeroMode}`, 35, 212);
+  lcdCtx.fillText('+0.00', 24, 52);
 
-  // Battery SoC
+  // LAST: 0.00.00 Cyan Badge Box
+  lcdCtx.fillStyle = '#0a1728';
+  lcdCtx.fillRect(22, 60, 118, 18);
+  lcdCtx.strokeStyle = '#00d4e8';
+  lcdCtx.lineWidth = 1.2;
+  lcdCtx.strokeRect(22, 60, 118, 18);
+  lcdCtx.fillStyle = '#00d4e8';
+  lcdCtx.font = 'bold 11px monospace';
+  lcdCtx.fillText('LAST: 0.00.00', 28, 73);
+
+  // Top Center: Lap & Team
+  lcdCtx.textAlign = 'center';
+  lcdCtx.fillStyle = currentTeam.css.secondary || '#ffd60a';
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.fillText(`${currentTeam.shortName || 'F1 2026'}`, w / 2, 44);
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = '11px monospace';
+  lcdCtx.fillText('0 LAP', w / 2, 60);
+
+  // Top Right: Speed in Bold Yellow + Sub-deltas
+  lcdCtx.textAlign = 'right';
+  lcdCtx.fillStyle = '#ffd60a';
+  lcdCtx.font = '900 34px monospace';
+  lcdCtx.fillText(`${Math.round(state.speedKmH)}.0`, w - 46, 54);
+
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.fillStyle = '#00e676';
+  lcdCtx.fillText('0.00', w - 46, 70);
+  lcdCtx.fillStyle = '#ff9f1c';
+  lcdCtx.fillText('0.00', w - 46, 84);
+
+  // 4. Central Gear Indicator Box (Matching Reference Images 5 & 8)
+  const gbX = w / 2 - 38;
+  const gbY = 70;
+  const gbW = 76;
+  const gbH = 92;
+
+  lcdCtx.fillStyle = '#091322';
+  lcdCtx.fillRect(gbX, gbY, gbW, gbH);
+  lcdCtx.strokeStyle = currentTeam.css.primary || '#00d4e8';
+  lcdCtx.lineWidth = 3.5;
+  lcdCtx.strokeRect(gbX, gbY, gbW, gbH);
+
+  // Big Gear Letter
+  const gearText = state.gear === 0 || state.gear === 'N' ? 'N' : String(state.gear);
+  lcdCtx.fillStyle = '#ffffff';
+  lcdCtx.font = '900 68px "Arial Black", monospace';
+  lcdCtx.textAlign = 'center';
+  lcdCtx.textBaseline = 'middle';
+  lcdCtx.fillText(gearText, gbX + gbW / 2, gbY + gbH / 2 - 2);
+
+  // Sub-badge: "0 NONE"
+  lcdCtx.textBaseline = 'alphabetic';
+  lcdCtx.fillStyle = '#0e223a';
+  lcdCtx.fillRect(gbX + 6, gbY + gbH + 5, gbW - 12, 16);
+  lcdCtx.strokeStyle = '#00d4e8';
+  lcdCtx.lineWidth = 1;
+  lcdCtx.strokeRect(gbX + 6, gbY + gbH + 5, gbW - 12, 16);
+  lcdCtx.fillStyle = '#00d4e8';
+  lcdCtx.font = 'bold 10px monospace';
+  lcdCtx.fillText('0 NONE', w / 2, gbY + gbH + 17);
+
+  // BATT SoC & Target
+  const socVal = Math.round(state.batterySoc * 100);
+  lcdCtx.fillStyle = '#00e676';
+  lcdCtx.font = 'bold 24px monospace';
+  lcdCtx.fillText(`${socVal}`, w / 2, gbY + gbH + 46);
+  lcdCtx.fillStyle = '#ff334b';
+  lcdCtx.font = 'bold 10px monospace';
+  lcdCtx.fillText('TARGET 80', w / 2, gbY + gbH + 60);
+
+  // 5. Lower Left Quadrant: Tire Telemetry (FRONT 70 70 / REAR 70 70)
+  lcdCtx.textAlign = 'left';
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = 'bold 11px sans-serif';
+  lcdCtx.fillText('FRONT', 24, 108);
+  lcdCtx.fillStyle = '#00e676';
+  lcdCtx.font = 'bold 17px monospace';
+  lcdCtx.fillText('70   70', 88, 108);
+
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = 'bold 11px sans-serif';
+  lcdCtx.fillText('REAR', 24, 136);
+  lcdCtx.fillStyle = '#00e676';
+  lcdCtx.font = 'bold 17px monospace';
+  lcdCtx.fillText('70   70', 88, 136);
+
+  // Tire Carcass Temps / Pressures
   lcdCtx.fillStyle = '#e6edf5';
-  lcdCtx.font = '16px monospace';
-  lcdCtx.fillText(`BATT: ${(state.batterySoc * 100).toFixed(1)}%`, 220, 212);
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.fillText('T   70   70', 24, 168);
+  lcdCtx.fillText('T   70   70', 24, 188);
 
-  // BBW Brake Line Pressure
+  // Aero Mode & Engine RPM
+  lcdCtx.fillStyle = state.aeroMode === 'X_MODE' ? (currentTeam.css.primary || '#00d4e8') : '#00e676';
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.fillText(`AERO: ${state.aeroMode}`, 24, 218);
+
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = '11px monospace';
+  lcdCtx.fillText(`ICE: ${Math.round(state.rpm)} RPM`, 24, 236);
+
+  // 6. Lower Right Quadrant: Brakes, BBAL, BBW
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = 'bold 11px sans-serif';
+  lcdCtx.fillText('DISC', 302, 108);
+  lcdCtx.fillStyle = '#ffaa00';
+  lcdCtx.font = 'bold 17px monospace';
+  lcdCtx.fillText('40   40', 362, 108);
+
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = 'bold 11px sans-serif';
+  lcdCtx.fillText('PAD', 302, 136);
+  lcdCtx.fillStyle = '#ffaa00';
+  lcdCtx.font = 'bold 17px monospace';
+  lcdCtx.fillText('40   40', 362, 136);
+
+  lcdCtx.fillStyle = '#00d4e8';
+  lcdCtx.font = 'bold 12px monospace';
+  lcdCtx.fillText('BBAL: 55.5%', 302, 168);
+
   const brakeBar = (state.brakeKgf / 180) * 100;
   lcdCtx.fillStyle = '#f04460';
-  lcdCtx.fillText(`BBW: ${brakeBar.toFixed(0)} BAR`, 380, 212);
+  lcdCtx.fillText(`BBW: ${brakeBar.toFixed(0)} BAR`, 302, 188);
+
+  lcdCtx.fillStyle = currentTeam.css.secondary || '#ffd60a';
+  lcdCtx.fillText('STRAT 2 · HPP', 302, 218);
+
+  // 7. Far Right Edge: Vertical Graduated Throttle / Power Bar Meter
+  const barX = w - 28;
+  const barY = 96;
+  const barW = 16;
+  const barH = 138;
+
+  // Meter background & border
+  lcdCtx.fillStyle = '#0d1520';
+  lcdCtx.fillRect(barX, barY, barW, barH);
+  lcdCtx.strokeStyle = '#223246';
+  lcdCtx.lineWidth = 1.5;
+  lcdCtx.strokeRect(barX, barY, barW, barH);
+
+  // Active Throttle Fill (or Brake Red if braking)
+  const isBraking = state.brakeKgf > 10;
+  const activeRatio = isBraking ? Math.min(1, state.brakeKgf / 150) : Math.max(0, Math.min(1, state.throttle));
+  const fillH = activeRatio * barH;
+  lcdCtx.fillStyle = isBraking ? '#ff334b' : '#00e676';
+  lcdCtx.fillRect(barX + 2, barY + (barH - fillH), barW - 4, fillH);
+
+  // Ladder Division Ticks
+  lcdCtx.strokeStyle = '#060a10';
+  lcdCtx.lineWidth = 1.2;
+  for (let s = 1; s < 10; s++) {
+    const sy = barY + s * (barH / 10);
+    lcdCtx.beginPath();
+    lcdCtx.moveTo(barX, sy);
+    lcdCtx.lineTo(barX + barW, sy);
+    lcdCtx.stroke();
+  }
+
+  // Label
+  lcdCtx.fillStyle = '#8b9bb0';
+  lcdCtx.font = 'bold 9px monospace';
+  lcdCtx.textAlign = 'center';
+  lcdCtx.fillText(isBraking ? 'BRK' : 'THR', barX + barW / 2, barY - 6);
 }
 
 // =========================================================================
@@ -297,12 +455,28 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Window Resize Helper
+// Window Resize Helper with Zero-Dimension Guards & Smooth Debouncing
 function handleResize() {
   if (!container || !camera || !renderer) return;
-  camera.aspect = container.clientWidth / container.clientHeight;
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (!w || !h || w <= 0 || h <= 0) return;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(w, h, false);
+}
+
+let resizeRaf = null;
+function debouncedResize() {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(handleResize);
+}
+
+if (typeof ResizeObserver !== 'undefined' && container) {
+  const ro = new ResizeObserver(() => {
+    debouncedResize();
+  });
+  ro.observe(container);
 }
 
 // Collapsible Panels (Individual)
@@ -313,7 +487,8 @@ document.querySelectorAll('.panel-collapse-btn').forEach(btn => {
     if (panel) {
       panel.classList.toggle('collapsed');
       btn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
-      setTimeout(handleResize, 260);
+      debouncedResize();
+      setTimeout(debouncedResize, 260);
     }
   });
 });
@@ -326,8 +501,9 @@ function togglePanels() {
     const isHidden = workspace.classList.toggle('panels-hidden');
     btnTogglePanels?.classList.toggle('active', isHidden);
     if (btnTogglePanels) btnTogglePanels.textContent = isHidden ? 'Show Panels' : 'Hide Panels';
-    setTimeout(handleResize, 60);
-    setTimeout(handleResize, 260);
+    debouncedResize();
+    setTimeout(debouncedResize, 60);
+    setTimeout(debouncedResize, 260);
   }
 }
 btnTogglePanels?.addEventListener('click', togglePanels);
@@ -864,7 +1040,7 @@ initGlobe({ onLoadTrack: id => { if (id === 'red_bull_ring' && trackMode) { trac
 animate();
 
 // Window Resize Handling
-window.addEventListener('resize', handleResize);
+window.addEventListener('resize', debouncedResize);
 
 // Ready status
 window.__CAR_READY__ = true;

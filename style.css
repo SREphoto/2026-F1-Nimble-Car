@@ -399,9 +399,19 @@ body {
 }
 
 .viewport {
-  flex: 1;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+.viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
 }
 .viewport-caption {
   position: absolute;
@@ -897,4 +907,52 @@ body {
   padding: 2px 5px;
   font-family: var(--mono);
   font-size: 0.70rem;
+}
+
+/* Responsive Mobile & Tablet Layout */
+@media (max-width: 900px) {
+  .workspace {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  .stage {
+    flex: 0 0 52vh !important;
+    min-height: 280px !important;
+    height: 52vh !important;
+    width: 100% !important;
+  }
+  .panel-collapsible {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+  }
+  .panel-collapsible.collapsed {
+    flex: 0 0 42px !important;
+    height: 42px !important;
+    max-height: 42px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+  }
+  .panel-collapsible.collapsed .panel-body {
+    display: none !important;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .view-toolbar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .view-btn {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
 }

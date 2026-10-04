@@ -27,7 +27,7 @@ export const HELMET_SPEC = {
   colours: { base: '#18245e', crown: '#f6c200', stripe: '#d0021b', accent: '#ffffff' },
 };
 
-function helmetTexture(c) {
+export function helmetTexture(c) {
   const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512;
   const g = cv.getContext('2d');
   // u (x) runs around the helmet from the back (0) through the left, front (0.5), right, back (1)

@@ -6,6 +6,8 @@
  * and real-time synchronization between the UI design system and the 3D WebGL car model.
  */
 
+import { helmetTexture } from './cad/driver_helmet.js';
+
 export const F1_TEAMS = {
   'ferrari': {
     id: 'ferrari',
@@ -34,6 +36,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#e80020', '#ffe500', '#101014'],
     driverNames: 'Leclerc (16) · Hamilton (44)',
+    driverNumber: 16,
+    driverGlove: { color: 0x18181c, roughness: 0.82 },
+    driverHelmetColours: { base: '#d4001f', crown: '#ffffff', stripe: '#ffe500', accent: '#009246' },
     showDecals: false,
     description: 'Iconic Rosso Corsa high-gloss lacquer with Giallo Modena aerodynamic accents and Maranello exposed carbon weave.'
   },
@@ -63,7 +68,10 @@ export const F1_TEAMS = {
       textOnPrimary: '#000000'
     },
     swatch: ['#ff8000', '#14171a', '#47c7fc'],
-    driverNames: 'Norris (1) · Piastri (81)',
+    driverNames: 'Norris (4) · Piastri (81)',
+    driverNumber: 4,
+    driverGlove: { color: 0x14171a, roughness: 0.82 }, // Black Richard Mille Nomex (media_1791155036932.webp)
+    driverHelmetColours: { base: '#d6f20d', crown: '#14171a', stripe: '#ff8000', accent: '#47c7fc' }, // Lando Norris fluo yellow (media_1791155039275.webp)
     showDecals: false,
     description: 'Vibrant Papaya Orange with raw Anthracite carbon composite weave and Stealth Ice Blue aerodynamic highlights.'
   },
@@ -93,7 +101,10 @@ export const F1_TEAMS = {
       textOnPrimary: '#ffffff'
     },
     swatch: ['#18245e', '#f6c200', '#d8102c'],
-    driverNames: 'Verstappen (3) · Hadjar (6)',
+    driverNames: 'Verstappen (1) · Hadjar (6)',
+    driverNumber: 1,
+    driverGlove: { color: 0x18245e, roughness: 0.82 },
+    driverHelmetColours: { base: '#18245e', crown: '#f6c200', stripe: '#d0021b', accent: '#ffffff' },
     showDecals: true,
     description: 'Authentic 2026 Matte Racing Navy with Sun Yellow airbox, Bull Crimson accents, and official partner decals.'
   },
@@ -124,6 +135,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#00d2be', '#0b0d10', '#d0d8e2'],
     driverNames: 'Russell (63) · Antonelli (12)',
+    driverNumber: 63,
+    driverGlove: { color: 0xf4f6f8, roughness: 0.82 }, // White Puma Nomex (media_1791155235396.webp)
+    driverHelmetColours: { base: '#00d2be', crown: '#10141a', stripe: '#00d2be', accent: '#ffffff' }, // George Russell #63 turquoise
     showDecals: false,
     description: 'Obsidian metallic weave with iconic Petronas Emerald Teal flowing streaks and Silver Arrow detailing.'
   },
@@ -154,6 +168,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#00594f', '#cedc00', '#0b1411'],
     driverNames: 'Alonso (14) · Stroll (18)',
+    driverNumber: 14,
+    driverGlove: { color: 0x0a1613, roughness: 0.82 },
+    driverHelmetColours: { base: '#00594f', crown: '#cedc00', stripe: '#ffffff', accent: '#cedc00' },
     showDecals: false,
     description: 'Lustrous British Racing Green metallic with electric Lime Essence aerodynamic edge highlights.'
   },
@@ -184,6 +201,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#005aff', '#041e42', '#ffffff'],
     driverNames: 'Albon (23) · Sainz (55)',
+    driverNumber: 23,
+    driverGlove: { color: 0x061226, roughness: 0.82 },
+    driverHelmetColours: { base: '#005aff', crown: '#041e42', stripe: '#00a0de', accent: '#ffffff' },
     showDecals: false,
     description: 'Heritage Royal & Navy blue contrast with Apex Cyan wingtips and high-contrast diamond white accents.'
   },
@@ -214,38 +234,44 @@ export const F1_TEAMS = {
     },
     swatch: ['#0078d0', '#fd4bc7', '#0c1018'],
     driverNames: 'Gasly (10) · Colapinto (43)',
+    driverNumber: 10,
+    driverGlove: { color: 0x0c121c, roughness: 0.82 },
+    driverHelmetColours: { base: '#0078d0', crown: '#fd4bc7', stripe: '#ffffff', accent: '#fd4bc7' },
     showDecals: false,
     description: 'Enstone Racing Blue metallic flanked by high-energy BWT Electric Pink endplates and dark carbon.'
   },
   'sauber': {
     id: 'sauber',
-    name: 'Kick Sauber / Audi',
-    shortName: 'AUDI SAUBER',
-    brandTag: 'Hinwil · 2026 Kick Sauber / Audi',
-    bodyColor: 0x0d110d,       // Stealth Carbon
-    accentColor: 0x52e252,     // Fluo Kinetic Green
-    amberColor: 0xffffff,      // White
-    stripeColor: 0x52e252,
-    roughness: 0.38,
-    metalness: 0.10,
-    clearcoat: 0.85,
-    clearcoatRoughness: 0.08,
+    name: 'Audi F1 Team / Sauber',
+    shortName: 'AUDI F1',
+    brandTag: 'Hinwil / Neuburg · 2026 Audi Revolut F1',
+    bodyColor: 0x111317,       // Obsidian Matte Carbon (Image 4)
+    accentColor: 0xff1801,     // Audi Sport Racing Red (Image 4)
+    amberColor: 0xf0f2f5,      // Revolut Silver White
+    stripeColor: 0xff1801,
+    roughness: 0.32,
+    metalness: 0.20,
+    clearcoat: 0.90,
+    clearcoatRoughness: 0.06,
     css: {
-      primary: '#52e252',
-      primaryRgb: '82, 226, 82',
-      secondary: '#ffffff',
-      secondaryRgb: '255, 255, 255',
-      tertiary: '#0a0e0a',
-      accentGlow: 'rgba(82, 226, 82, 0.45)',
-      surface: '#0c140c',
-      surfaceHover: '#121e12',
-      badgeBg: 'rgba(82, 226, 82, 0.18)',
-      textOnPrimary: '#000000'
+      primary: '#ff1801',
+      primaryRgb: '255, 24, 1',
+      secondary: '#f0f2f5',
+      secondaryRgb: '240, 242, 245',
+      tertiary: '#111317',
+      accentGlow: 'rgba(255, 24, 1, 0.45)',
+      surface: '#120f10',
+      surfaceHover: '#1e1416',
+      badgeBg: 'rgba(255, 24, 1, 0.18)',
+      textOnPrimary: '#ffffff'
     },
-    swatch: ['#52e252', '#0a0e0a', '#ffffff'],
+    swatch: ['#ff1801', '#111317', '#f0f2f5'],
     driverNames: 'Hülkenberg (27) · Bortoleto (5)',
+    driverNumber: 27,
+    driverGlove: { color: 0xf4f6f8, roughness: 0.82 },
+    driverHelmetColours: { base: '#ff1801', crown: '#ffffff', stripe: '#111317', accent: '#e0e0e0' },
     showDecals: false,
-    description: 'High-contrast Fluo Kinetic Green speedlines against pure stealth exposed carbon fiber monocoque.'
+    description: 'Authentic 2026 Audi Works livery with Audi Sport Red chevron flanks, Revolut Titanium Silver, and exposed twill carbon.'
   },
   'racing-bulls': {
     id: 'racing-bulls',
@@ -274,6 +300,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#1634ca', '#ff1801', '#ffffff'],
     driverNames: 'Lawson (30) · Lindblad (41)',
+    driverNumber: 30,
+    driverGlove: { color: 0x0c182c, roughness: 0.82 },
+    driverHelmetColours: { base: '#163464', crown: '#ffffff', stripe: '#cc1e46', accent: '#e21b23' },
     showDecals: false,
     description: 'Gleaming high-metallic Royal Blue with Flash Red pinstripes and razor-sharp alpine white accents.'
   },
@@ -304,6 +333,9 @@ export const F1_TEAMS = {
     },
     swatch: ['#ffffff', '#e6002b', '#161a1d'],
     driverNames: 'Ocon (31) · Bearman (87)',
+    driverNumber: 31,
+    driverGlove: { color: 0x181a1e, roughness: 0.82 },
+    driverHelmetColours: { base: '#ffffff', crown: '#e6002b', stripe: '#161a1d', accent: '#e6002b' },
     showDecals: false,
     description: 'Clean Arctic White bodywork accented with Haas Crimson impact zones and slate carbon fiber aerodynamics.'
   }
@@ -425,12 +457,45 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
     carModel.userData.livery.splitUniforms.uStripeColor.value.setHex(team.stripeColor);
   }
 
-  // Decal visibility: Show full Red Bull decals only when Red Bull is chosen;
-  // non-Red Bull teams feature clean aerodynamic competition livery.
+  // Driver Equipment & Liveries Synchronization
+  if (materials?.driverGlove && team.driverGlove) {
+    materials.driverGlove.color.setHex(team.driverGlove.color);
+    materials.driverGlove.roughness = team.driverGlove.roughness || 0.82;
+    materials.driverGlove.needsUpdate = true;
+  }
+
   if (carModel) {
     carModel.traverse(obj => {
-      if (obj.isMesh && obj.name && obj.name.startsWith('Livery_Decal_')) {
-        obj.visible = team.showDecals;
+      if (obj.isMesh && obj.name) {
+        // Red Bull Decals toggle
+        if (obj.name.startsWith('Livery_Decal_')) {
+          obj.visible = team.showDecals;
+        }
+        // Driver Gloves (White for Mercedes, Black for McLaren/others)
+        else if (obj.name.startsWith('Driver_Glove_') && !obj.name.includes('_Pad_') && team.driverGlove) {
+          if (obj.material) {
+            obj.material.color.setHex(team.driverGlove.color);
+            obj.material.roughness = team.driverGlove.roughness || 0.82;
+            obj.material.needsUpdate = true;
+          }
+        }
+        // Driver Helmet (FIA 8860-2018-ABP Shell)
+        else if (obj.name === 'Helmet_OuterShell' && team.driverHelmetColours) {
+          try {
+            const hTex = helmetTexture(team.driverHelmetColours);
+            obj.material.map = hTex;
+            obj.material.needsUpdate = true;
+          } catch (hErr) {
+            // ignore
+          }
+        }
+        // Driver Nomex Suit Chest
+        else if (obj.name === 'Driver_Suit_Chest') {
+          if (obj.material) {
+            obj.material.color.setHex(team.bodyColor);
+            obj.material.needsUpdate = true;
+          }
+        }
       }
     });
   }

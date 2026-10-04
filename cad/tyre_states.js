@@ -79,7 +79,7 @@ const WEAR_MAT = {
 WEAR_MAT.blown = WEAR_MAT.heavy;
 const PATTERN_BUMP = { slick: 1, inter: 1.3, wet: 1.5 };       // grooves are real geometry now; bump adds edge detail
 // Grooved treads (inter / wet) are real geometry: a finer lathe displaced inward from the groove mask.
-const GROOVE_SEGMENTS = 768;                                   // around the tyre (6 texture tiles × 128)
+const GROOVE_SEGMENTS = 192;                                   // around the tyre (6 texture tiles × 32)
 const GROOVE_DEPTH = { inter: 0.03, wet: 0.05 };                // dm: 3 mm intermediate, 5 mm full wet (new)
 
 // simple grip model used by Drive mode (cad/track/track_mode.js reads state.tyreGrip)
@@ -102,7 +102,7 @@ const normCorner = (c) => {
 };
 
 // ---------------------------------------------------------------------------------------------
-// Sidewall textures (2048² colour per compound × level, 1024² height per wordmark)
+// Sidewall textures (1024² colour per compound × level, 1024² height per wordmark)
 // ---------------------------------------------------------------------------------------------
 const texCache = new Map();
 const cached = (key, fn) => { if (!texCache.has(key)) texCache.set(key, fn()); return texCache.get(key); };
@@ -112,7 +112,7 @@ function sidewallColorTex(compound, level, base) {
   return cached(`sw|${compound}|${level}`, () => {
     if (compound === 'medium' && level === 'crisp' && base) return base.map;   // the original medium artwork
     const C = COMPOUNDS[compound];
-    const S = 2048, px = S / (2 * R), cx = S / 2;
+    const S = 1024, px = S / (2 * R), cx = S / 2;
     const cv = makeCanvas(S, S), ctx = cv.getContext('2d');
     const fade = { new: 0, crisp: 0, dulled: 0.2, faded: 0.5 }[level];
     paintSidewall(ctx, S, 'color', { ink: mixHex(C.ink, '#6f6a60', fade), mainText: C.main, compoundText: C.text });
@@ -474,7 +474,7 @@ function patchBlown(mat, U, { flap = false, damage = null } = {}) {
         .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.92, tyreDmg.a);');
     }
   };
-  mat.customProgramCacheKey = () => `tyreBlown|${flap ? 1 : 0}|${damage ? 1 : 0}`;
+  mat.customProgramCacheKey = () => `${mat.type}|${mat.name || ''}|tyreBlown|${flap ? 1 : 0}|${damage ? 1 : 0}`;
   mat.needsUpdate = true;
   return mat;
 }
@@ -693,12 +693,12 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     };
     const mirror = U.uTyreDmgMirror.value === 1;
     const flapMat = patchBlown(withEnv(new THREE.MeshStandardMaterial({ name: `Tyre_Blown_Flaps_${k}`, map: flapTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 }), 0.4), U, { flap: true });
-    const flapDepth = patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: flapTex(), alphaTest: 0.5 }), U, { flap: true });
+    const flapDepth = patchBlown(new THREE.MeshDepthMaterial({ name: `Tyre_Blown_FlapDepth_${k}`, depthPacking: THREE.RGBADepthPacking, map: flapTex(), alphaTest: 0.5 }), U, { flap: true });
     const fkey = `${c.size}|${mirror ? 1 : 0}`;
     flapGeoCache[fkey] ||= buildFlapGeometry(c.hw, blownDamageTex().userData.patches, mirror);
     const flapMesh = new THREE.Mesh(flapGeoCache[fkey], flapMat);
     flapMesh.name = 'Tyre_Blown_Flaps'; flapMesh.customDepthMaterial = flapDepth; flapMesh.castShadow = c.tread.castShadow; flapMesh.frustumCulled = false;
-    blown[k] = { U, mats: new Map(), depth: patchBlown(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), U), flapMat, flapMesh };
+    blown[k] = { U, mats: new Map(), depth: patchBlown(new THREE.MeshDepthMaterial({ name: `Tyre_Blown_Depth_${k}`, depthPacking: THREE.RGBADepthPacking }), U), flapMat, flapMesh };
     return blown[k];
   }
   const flapGeoCache = {};
@@ -752,11 +752,16 @@ export function initTyreStates({ carModel, renderer, scene, state = {}, trackMod
     ks.forEach((k) => { const r = [1, cornerXY[k][0], cornerXY[k][1]]; for (let i = 0; i < 3; i++) { bv[i] += r[i] * target(k); for (let j = 0; j < 3; j++) M[i][j] += r[i] * r[j]; } });
     const det3 = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
     const D = det3(M);
+    if (!Number.isFinite(D) || Math.abs(D) < 1e-7) return;
     let [c0, cx, cy] = [0, 1, 2].map((c) => det3(M.map((row, i) => row.map((v, j) => (j === c ? bv[i] : v)))) / D);
     const plane = (k) => c0 + cx * cornerXY[k][0] + cy * cornerXY[k][1];
     const rise = Math.max(...ks.map(plane));
     if (rise > 0) c0 -= rise;
-    stance.rotation.set(Math.asin(cy), Math.asin(-cx), 0);
+    stance.rotation.set(
+      Math.asin(Math.max(-1, Math.min(1, cy))),
+      Math.asin(Math.max(-1, Math.min(1, -cx))),
+      0
+    );
     stance.position.z = c0;
     ks.forEach((k) => { travel[corners[k].kinKey] = target(k) - plane(k); });
     stance.userData.solve = { c0, cx, cy, travel: { ...travel } };

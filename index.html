@@ -14,6 +14,27 @@
     }
   }
   </script>
+  <!-- Mobile In-Browser Console & DevTools (Eruda: active on mobile devices or via ?debug=true/?console=true) -->
+  <script>
+    (function () {
+      const q = new URLSearchParams(window.location.search);
+      const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth <= 1024);
+      if (q.get('debug') === 'true' || q.get('console') === 'true' || q.has('eruda') || isMobile) {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/eruda';
+        s.onload = function () {
+          if (window.eruda) {
+            window.eruda.init({
+              tool: ['console', 'elements', 'network', 'resources', 'info'],
+              defaults: { displaySize: 45, transparency: 0.95, theme: 'Dark' }
+            });
+            console.info('[Mobile Console] Eruda active. Tap the floating icon to inspect console logs & errors.');
+          }
+        };
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="app">
