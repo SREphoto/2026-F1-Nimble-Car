@@ -489,8 +489,8 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
             // ignore
           }
         }
-        // Driver Nomex Suit Chest
-        else if (obj.name === 'Driver_Suit_Chest') {
+        // Driver Nomex Suit (Chest, Shoulders, Upper Arms, Forearms, Thighs)
+        else if (obj.name && obj.name.startsWith('Driver_Suit_') && !obj.name.includes('Flank') && !obj.name.includes('Elbow') && !obj.name.includes('Knee') && !obj.name.includes('Shin') && !obj.name.includes('Pelvis') && !obj.name.includes('Zip')) {
           if (obj.material) {
             obj.material.color.setHex(team.bodyColor);
             obj.material.needsUpdate = true;
