@@ -32,6 +32,11 @@ import {
 } from "./procedural_livery.js";
 import { createSteeringWheelPCU8D } from "./steering_wheel_pcu8d.js";
 import { sweepGeometry, mergeSimple } from "./sweep_section.js";
+import {
+  createCarbonBeadSeatShell,
+  createArticulatedDriver,
+  updateDriverKinematics,
+} from "./driver_model.js";
 
 /**
  * Halo layout (car frame, dm). Hoop points run from the apex back to the left pad; the right
@@ -373,36 +378,9 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   root.add(rollHoopGroup);
 
   // -------------------------------------------------------------
-  // 4. DRIVER COCKPIT: BEAD SEAT & 6-POINT HARNESS
+  // 4. HIGH-BACK MOLDED CARBON BEAD SEAT SHELL (media_1791233403328.webp)
   // -------------------------------------------------------------
-  const seatGroup = new THREE.Group();
-  seatGroup.name = "Body_Cockpit_BeadSeat_Assembly";
-
-  // Anatomical custom bead seat shell (inclined 32 degrees)
-  const seatShape = new THREE.Shape();
-  seatShape.moveTo(0, 0);
-  seatShape.lineTo(4.8, 0.2);
-  seatShape.lineTo(6.5, 2.2);
-  seatShape.lineTo(4.8, 5.2);
-  seatShape.lineTo(4.2, 5.0);
-  seatShape.lineTo(5.8, 2.4);
-  seatShape.lineTo(4.4, 0.6);
-  seatShape.lineTo(0, 0.4);
-  seatShape.closePath();
-
-  const seatGeo = new THREE.ExtrudeGeometry(seatShape, {
-    steps: 1, depth: 3.8, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04
-  });
-  seatGeo.center();
-  const seatMesh = new THREE.Mesh(seatGeo, mats.carbonMatteStructural);
-  seatMesh.rotation.x = Math.PI / 2;
-  // Local Y is height (becomes world Z after Rx(90deg)), local Z is width:
-  // R9: the driver sits low, so the seat back stays under the cockpit rim (Z 4.2)
-  seatMesh.scale.set(1, 0.62, 0.75);       // 5.2 dm shell -> 3.2 dm tall, 2.85 dm wide
-  seatMesh.position.set(13.0, 0, 1.95);    // base rests on interior tub floor (Z ~0.68)
-  seatMesh.castShadow = true;
-  seatGroup.add(seatMesh);
-
+  const seatGroup = createCarbonBeadSeatShell(mats);
   root.add(seatGroup);
 
   // -------------------------------------------------------------
@@ -447,305 +425,19 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   wheelMount.add(pcu8dWheel);
   steeringGroup.add(wheelMount);
 
-  // Driver Textured Racing Gloves Gripping the Wheel (Richard Mille / Puma style from Reference Images)
-  const gloveMat = mats.driverGlove || new THREE.MeshStandardMaterial({
-    name: 'Driver_Glove_Material',
-    color: 0x14171a, // Default black textured racing Nomex fabric
-    roughness: 0.82,
-    metalness: 0.05
-  });
-  if (mats) mats.driverGlove = gloveMat;
-
-  const siliconeMat = new THREE.MeshStandardMaterial({
-    name: 'Driver_Glove_Grip_Material',
-    color: 0x2e3238, // High-friction silicone palm grip ribs
-    roughness: 0.65,
-    metalness: 0.12
-  });
-
-  [-1.35, 1.35].forEach((handY) => {
-    const isLeft = handY > 0;
-    const gloveGroup = new THREE.Group();
-    gloveGroup.name = `Driver_RacingGlove_${isLeft ? "LH" : "RH"}`;
-
-    // Palm / Hand knuckle wrap around grip
-    const palmGeo = new THREE.CylinderGeometry(0.25, 0.27, 0.98, 16);
-    const palm = new THREE.Mesh(palmGeo, gloveMat);
-    palm.name = `Driver_Glove_Palm_${isLeft ? "LH" : "RH"}`;
-    palm.position.set(0.04, handY, 0);
-    palm.rotation.y = -0.35;
-    gloveGroup.add(palm);
-
-    // Anatomical thumb wrap resting on upper thumb rest
-    const thumbGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.42, 10);
-    const thumb = new THREE.Mesh(thumbGeo, gloveMat);
-    thumb.name = `Driver_Glove_Thumb_${isLeft ? "LH" : "RH"}`;
-    thumb.position.set(-0.12, handY * 0.88, 0.18);
-    thumb.rotation.x = isLeft ? 0.4 : -0.4;
-    thumb.rotation.y = 0.5;
-    gloveGroup.add(thumb);
-
-    // Curled finger wraps around wheel rim
-    const fingerGeo = new THREE.CylinderGeometry(0.22, 0.24, 0.82, 12);
-    const fingerMesh = new THREE.Mesh(fingerGeo, gloveMat);
-    fingerMesh.name = `Driver_Glove_Fingers_${isLeft ? "LH" : "RH"}`;
-    fingerMesh.position.set(-0.06, handY * 1.04, -0.15);
-    fingerMesh.rotation.y = -0.25;
-    gloveGroup.add(fingerMesh);
-
-    // Gauntlet wrist cuff meeting the forearm sleeve at [8.35, ±1.35, 4.18]
-    const cuffGeo = new THREE.CylinderGeometry(0.26, 0.28, 0.35, 16);
-    const cuffMesh = new THREE.Mesh(cuffGeo, gloveMat);
-    cuffMesh.name = `Driver_Glove_Cuff_${isLeft ? "LH" : "RH"}`;
-    cuffMesh.position.set(0.15, handY, -0.02);
-    cuffMesh.rotation.z = Math.PI / 2;
-    gloveGroup.add(cuffMesh);
-
-    // Silicone grip pads on inner palm
-    const padGeo = new THREE.BoxGeometry(0.05, 0.18, 0.65);
-    const pad = new THREE.Mesh(padGeo, siliconeMat);
-    pad.name = `Driver_Glove_Pad_${isLeft ? "LH" : "RH"}`;
-    pad.position.set(-0.18, handY, 0);
-    gloveGroup.add(pad);
-
-    steeringGroup.add(gloveGroup);
-  });
-
   root.add(steeringGroup);
 
-  // =============================================================
-  // DRIVER COCKPIT BODY & SEATING POSTURE (Matching Master Reference Ergonomics)
-  // Complete human driver model: reclined torso (32°), muscular shoulders,
-  // articulated upper & forearms connected to steering wheel gloves,
-  // HANS yoke, 6-point harness, thighs, bent knees, shins, and boots on pedals.
-  // =============================================================
-  const driverGroup = new THREE.Group();
-  driverGroup.name = "Driver_Cockpit_Assembly";
-
-  // Nomex Suit Materials (Team Adaptive)
-  const suitMat = mats.liveryPaint ? mats.liveryPaint.clone() : new THREE.MeshStandardMaterial({ color: 0xff8000, roughness: 0.82 });
-  suitMat.roughness = 0.80;
-  suitMat.clearcoat = 0.05;
-  const darkNomexMat = new THREE.MeshStandardMaterial({ name: 'Driver_Dark_Nomex', color: 0x14171a, roughness: 0.88 });
-  const harnessMat = new THREE.MeshStandardMaterial({ name: 'Driver_Harness_Webbing', color: 0x0a0d12, roughness: 0.92 });
-  const bootMat = new THREE.MeshStandardMaterial({ name: 'Driver_Boot_Leather', color: 0x16181b, roughness: 0.75 });
-  const soleMat = new THREE.MeshStandardMaterial({ name: 'Driver_Boot_Sole', color: 0x282c32, roughness: 0.95 });
-
-  // 1. Pelvis & Hips (seated deep in carbon seat bucket)
-  const pelvisGeo = new THREE.BoxGeometry(1.6, 2.4, 1.1);
-  const pelvisMesh = new THREE.Mesh(pelvisGeo, darkNomexMat);
-  pelvisMesh.position.set(12.8, 0, 1.28);
-  pelvisMesh.name = "Driver_Suit_Pelvis";
-  driverGroup.add(pelvisMesh);
-
-  // 2. Reclined Athletic Torso (32° aft rake matching FIA 2026 driver datum)
-  const torsoGroup = new THREE.Group();
-  torsoGroup.position.set(13.4, 0, 2.65);
-  torsoGroup.rotation.y = -0.56; // ~32 deg recline angle
-  torsoGroup.name = "Driver_Torso_Assembly";
-
-  const chestGeo = new THREE.BoxGeometry(1.5, 2.6, 2.4);
-  const chestMesh = new THREE.Mesh(chestGeo, suitMat);
-  chestMesh.name = "Driver_Suit_Chest";
-  torsoGroup.add(chestMesh);
-
-  // Contrast stretch flank panels on ribcage
-  [-1.25, 1.25].forEach((fy) => {
-    const flankGeo = new THREE.BoxGeometry(1.3, 0.22, 2.2);
-    const flankMesh = new THREE.Mesh(flankGeo, darkNomexMat);
-    flankMesh.position.set(0, fy, 0);
-    flankMesh.name = `Driver_Suit_Flank_${fy > 0 ? "LH" : "RH"}`;
-    torsoGroup.add(flankMesh);
-  });
-
-  // Center Nomex zip placket & sponsor crest
-  const zipGeo = new THREE.BoxGeometry(0.10, 0.22, 2.3);
-  const zipMesh = new THREE.Mesh(zipGeo, darkNomexMat);
-  zipMesh.position.set(0.76, 0, 0);
-  zipMesh.name = "Driver_Suit_ZipPlacket";
-  torsoGroup.add(zipMesh);
-
-  driverGroup.add(torsoGroup);
-
-  // 3. Complete Driver Arms Kinematic Chain (Shoulders -> Upper Arms -> Elbows -> Forearms -> Gloves)
-  [-1, 1].forEach((side) => {
-    const isLeft = side > 0;
-    const sy = isLeft ? 1.55 : -1.55;
-    const ey = isLeft ? 1.80 : -1.80;
-    const wy = isLeft ? 1.35 : -1.35;
-
-    // Muscular Deltoid Shoulder Cap
-    const shoulderGeo = new THREE.CylinderGeometry(0.36, 0.38, 0.45, 14);
-    const shoulderMesh = new THREE.Mesh(shoulderGeo, suitMat);
-    shoulderMesh.position.set(13.8, sy, 3.95);
-    shoulderMesh.name = `Driver_Suit_Shoulder_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(shoulderMesh);
-
-    // Upper Arm (Biceps / Triceps Nomex sleeve tube)
-    const shoulderPt = new THREE.Vector3(13.8, sy, 3.95);
-    const elbowPt = new THREE.Vector3(11.3, ey, 3.35);
-    const upperCurve = new THREE.CatmullRomCurve3([shoulderPt, elbowPt]);
-    const upperGeo = new THREE.TubeGeometry(upperCurve, 12, 0.28, 12, false);
-    const upperMesh = new THREE.Mesh(upperGeo, suitMat);
-    upperMesh.name = `Driver_Suit_UpperArm_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(upperMesh);
-
-    // Articulated Elbow Joint (Dark anti-abrasion fabric patch)
-    const elbowGeo = new THREE.CylinderGeometry(0.28, 0.30, 0.35, 12);
-    const elbowMesh = new THREE.Mesh(elbowGeo, darkNomexMat);
-    elbowMesh.position.set(11.3, ey, 3.35);
-    elbowMesh.name = `Driver_Suit_Elbow_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(elbowMesh);
-
-    // Forearm (Sleeve extending forward to meet steering wheel glove wrist)
-    const wristPt = new THREE.Vector3(8.35, wy, 4.18);
-    const foreCurve = new THREE.CatmullRomCurve3([elbowPt, wristPt]);
-    const foreGeo = new THREE.TubeGeometry(foreCurve, 12, 0.25, 12, false);
-    const foreMesh = new THREE.Mesh(foreGeo, suitMat);
-    foreMesh.name = `Driver_Suit_Forearm_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(foreMesh);
-  });
-
-  // 4. Complete Driver Legs Kinematic Chain (Pelvis -> Thighs -> Knees -> Shins -> Racing Boots)
-  [-1, 1].forEach((side) => {
-    const isLeft = side > 0;
-    const hy = isLeft ? 0.65 : -0.65;
-    const ky = isLeft ? 0.75 : -0.75;
-    const ay = isLeft ? 0.45 : -0.45;
-    const az = isLeft ? 1.75 : 1.65;
-
-    // Muscular Thigh (Extending from seat bucket over bolster to bent knees)
-    const hipPt = new THREE.Vector3(12.8, hy, 1.30);
-    const midThigh = new THREE.Vector3(10.8, hy * 1.05, 2.20);
-    const kneePt = new THREE.Vector3(8.8, ky, 3.05);
-    const thighCurve = new THREE.CatmullRomCurve3([hipPt, midThigh, kneePt]);
-    const thighGeo = new THREE.TubeGeometry(thighCurve, 14, 0.32, 12, false);
-    const thighMesh = new THREE.Mesh(thighGeo, suitMat);
-    thighMesh.name = `Driver_Suit_Thigh_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(thighMesh);
-
-    // Articulated Knee Joint (Dark stretch Nomex)
-    const kneeGeo = new THREE.CylinderGeometry(0.30, 0.32, 0.40, 12);
-    const kneeMesh = new THREE.Mesh(kneeGeo, darkNomexMat);
-    kneeMesh.position.set(8.8, ky, 3.05);
-    kneeMesh.name = `Driver_Suit_Knee_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(kneeMesh);
-
-    // Shin (Extending forward through scuttle footwell archway to pedals)
-    const anklePt = new THREE.Vector3(3.3, ay, az);
-    const midShin = new THREE.Vector3(6.0, ay * 1.15, (3.05 + az) / 2);
-    const shinCurve = new THREE.CatmullRomCurve3([kneePt, midShin, anklePt]);
-    const shinGeo = new THREE.TubeGeometry(shinCurve, 14, 0.26, 12, false);
-    const shinMesh = new THREE.Mesh(shinGeo, darkNomexMat);
-    shinMesh.name = `Driver_Suit_Shin_${isLeft ? "LH" : "RH"}`;
-    driverGroup.add(shinMesh);
-
-    // Racing Boots (Resting on Brake and Throttle pedals)
-    const bootSub = new THREE.Group();
-    bootSub.name = `Driver_Boot_${isLeft ? "LH" : "RH"}`;
-    bootSub.position.set(2.8, ay, az);
-    bootSub.rotation.y = 0.28;
-
-    const bootUpperGeo = new THREE.BoxGeometry(0.82, 0.38, 0.58);
-    const bootUpper = new THREE.Mesh(bootUpperGeo, bootMat);
-    bootUpper.position.set(-0.15, 0, 0.12);
-    bootSub.add(bootUpper);
-
-    const toeGeo = new THREE.CylinderGeometry(0.18, 0.20, 0.38, 14);
-    toeGeo.scale(1.2, 1, 0.85);
-    const toeMesh = new THREE.Mesh(toeGeo, bootMat);
-    toeMesh.rotation.z = Math.PI / 2;
-    toeMesh.position.set(-0.42, 0, 0.04);
-    bootSub.add(toeMesh);
-
-    const soleGeo = new THREE.BoxGeometry(0.98, 0.40, 0.08);
-    const soleMesh = new THREE.Mesh(soleGeo, soleMat);
-    soleMesh.position.set(-0.22, 0, -0.20);
-    bootSub.add(soleMesh);
-
-    driverGroup.add(bootSub);
-  });
-
-  // 5. Fireproof Balaclava Neck & HANS Collar
-  const neckGeo = new THREE.CylinderGeometry(0.48, 0.54, 0.95, 16);
-  const neckMesh = new THREE.Mesh(neckGeo, darkNomexMat);
-  neckMesh.position.set(13.85, 0, 3.90);
-  neckMesh.name = "Driver_Neck_Balaclava";
-  driverGroup.add(neckMesh);
-
-  const hansGeo = new THREE.TorusGeometry(0.92, 0.14, 8, 24, Math.PI);
-  const hansMesh = new THREE.Mesh(hansGeo, mats.carbonGloss || mats.carbonMatteStructural);
-  hansMesh.rotation.x = Math.PI / 2;
-  hansMesh.rotation.z = -Math.PI / 2;
-  hansMesh.position.set(13.95, 0, 3.98);
-  hansMesh.name = "Driver_HANS_Collar";
-  driverGroup.add(hansMesh);
-
-  // 6. Integrated 6-Point Racing Harness
-  const harnessGroup = new THREE.Group();
-  harnessGroup.name = "Driver_Harness_Assembly";
-
-  // Central Rotary Camlock Buckle
-  const buckleGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 20);
-  const buckleMesh = new THREE.Mesh(buckleGeo, mats.titaniumBright);
-  buckleMesh.rotation.z = Math.PI / 2;
-  buckleMesh.position.set(12.3, 0, 2.55);
-  buckleMesh.name = "Driver_Harness_RotaryBuckle";
-  harnessGroup.add(buckleMesh);
-
-  const leverGeo = new THREE.BoxGeometry(0.04, 0.03, 0.14);
-  const leverMesh = new THREE.Mesh(leverGeo, mats.anodizedRed);
-  leverMesh.position.set(12.3, 0.02, 2.62);
-  harnessGroup.add(leverMesh);
-
-  // Shoulder straps with titanium quick-adjusters
-  [-0.55, 0.55].forEach((sy) => {
-    const sPts = [
-      new THREE.Vector3(15.8, sy * 1.15, 4.10),
-      new THREE.Vector3(13.9, sy, 3.95),
-      new THREE.Vector3(13.1, sy * 0.75, 3.25),
-      new THREE.Vector3(12.3, sy * 0.20, 2.58)
-    ];
-    const sCurve = new THREE.CatmullRomCurve3(sPts);
-    const sGeo = new THREE.TubeGeometry(sCurve, 16, 0.065, 8, false);
-    const sMesh = new THREE.Mesh(sGeo, harnessMat);
-    harnessGroup.add(sMesh);
-
-    // Aluminum quick-adjuster
-    const adjGeo = new THREE.BoxGeometry(0.12, 0.06, 0.18);
-    const adjMesh = new THREE.Mesh(adjGeo, mats.titaniumBright);
-    adjMesh.position.set(13.2, sy * 0.75, 3.30);
-    harnessGroup.add(adjMesh);
-  });
-
-  // Lap straps
-  [-1, 1].forEach((side) => {
-    const lPts = [
-      new THREE.Vector3(13.0, side * 1.45, 1.40),
-      new THREE.Vector3(12.6, side * 0.85, 1.95),
-      new THREE.Vector3(12.3, side * 0.25, 2.55)
-    ];
-    const lCurve = new THREE.CatmullRomCurve3(lPts);
-    const lGeo = new THREE.TubeGeometry(lCurve, 10, 0.06, 8, false);
-    const lMesh = new THREE.Mesh(lGeo, harnessMat);
-    harnessGroup.add(lMesh);
-  });
-
-  // Crotch anti-submarine straps
-  [-0.18, 0.18].forEach((cy) => {
-    const cPts = [
-      new THREE.Vector3(11.5, cy, 1.10),
-      new THREE.Vector3(11.9, cy * 0.8, 1.70),
-      new THREE.Vector3(12.3, cy * 0.4, 2.52)
-    ];
-    const cCurve = new THREE.CatmullRomCurve3(cPts);
-    const cGeo = new THREE.TubeGeometry(cCurve, 8, 0.05, 8, false);
-    const cMesh = new THREE.Mesh(cGeo, harnessMat);
-    harnessGroup.add(cMesh);
-  });
-
-  driverGroup.add(harnessGroup);
+  // -------------------------------------------------------------
+  // 5B. MASTER ARTICULATED DRIVER RIG (Matching 5 Master References)
+  // Complete human driver with organic anatomy, Richard Mille gloves,
+  // FIA 8856-2018 waffle boots, 6-point harness, and dynamic 60fps IK rig.
+  // -------------------------------------------------------------
+  const driverGroup = createArticulatedDriver({ materials: mats });
   root.add(driverGroup);
+  root.userData.driverModel = driverGroup;
+  root.userData.updateDriver = (state, pedalAssembly) => {
+    updateDriverKinematics(driverGroup, state, pcu8dWheel, pedalAssembly);
+  };
 
   // -------------------------------------------------------------
   // 6. ADJUSTABLE PEDAL SLED & 180 kgf BRAKE LOAD CELL

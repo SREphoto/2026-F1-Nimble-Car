@@ -43,7 +43,7 @@ export function createFullCarAssembly(options = {}) {
   masterCar.add(subassemblies.monocoque);
 
   // 2. Cockpit Accessories & Driver
-  subassemblies.cockpitAccessories = createCockpitAccessories(options);
+  subassemblies.cockpitAccessories = createCockpitAccessories({ ...options, helmetInDriver: true });
   masterCar.add(subassemblies.cockpitAccessories);
 
   // 3. Detailed Friction Brakes (Front & Rear Corners)
@@ -97,8 +97,9 @@ export function createFullCarAssembly(options = {}) {
     frontSuspLeft: subassemblies.suspension.getObjectByName('Front_Suspension_Left'),
     frontSuspRight: subassemblies.suspension.getObjectByName('Front_Suspension_Right'),
     rearSuspLeft: subassemblies.suspension.getObjectByName('Rear_Suspension_Left'),
-    rearSuspRight: subassemblies.suspension.getObjectByName('Rear_Suspension_Right'),
     steeringWheel: subassemblies.monocoque.getObjectByName('McLaren_PCU8D_FullAssembly') || subassemblies.monocoque.getObjectByName('Pivot_Steering_Wheel_Assembly'),
+    driver: subassemblies.monocoque.userData.driverModel,
+    pedals: subassemblies.monocoque.getObjectByName('Body_PedalSled_Assembly'),
     frontWingFlaps: [
       subassemblies.bodywork.getObjectByName('FrontWing_ActiveFlap_Left'),
       subassemblies.bodywork.getObjectByName('FrontWing_ActiveFlap_Right')
@@ -144,6 +145,7 @@ export function createFullCarAssembly(options = {}) {
       aeroMode = 'Z_MODE', // 'Z_MODE' (high downforce) or 'X_MODE' (low drag)
       gear = 1,
       brakeKgf = 0,
+      throttle = 0,
       explodedProgress = 0, // 0.0 (assembled) to 1.0 (fully exploded)
       // Wheel travel relative to the chassis in dm (+ = bump / wheel up), per corner
       suspensionTravel = null
@@ -192,6 +194,17 @@ export function createFullCarAssembly(options = {}) {
     // 3. Steering Kinematics & Full Suspension Articulation
     if (kinematics.steeringWheel) {
       kinematics.steeringWheel.rotation.z = -steeringAngle * 2.5; // Steering column ratio
+    }
+    // 3B. Master Driver Kinematic Articulation (Apex Head Tracking, Arm IK, Pedals & Gs)
+    if (subassemblies.monocoque?.userData?.updateDriver) {
+      subassemblies.monocoque.userData.updateDriver({
+        steeringAngle,
+        throttle,
+        brakeKgf,
+        speedKmH,
+        rpm,
+        dt
+      }, kinematics.pedals);
     }
     // Only the uprights steer and travel; inner wishbone, push/pull-rod and track-rod mounts
     // stay on the chassis and the links are re-solved between the two ends each frame.
@@ -281,6 +294,10 @@ export function createFullCarAssembly(options = {}) {
       if (subassemblies.cockpitAccessories) {
         subassemblies.cockpitAccessories.position.z = THREE.MathUtils.lerp(0, 7.5, explodedProgress);
       }
+      // Driver elevates with seat
+      if (kinematics.driver) {
+        kinematics.driver.position.z = THREE.MathUtils.lerp(0, 4.8, explodedProgress);
+      }
       // Powertrain and Turbo separate upward (+4.0 dm)
       if (subassemblies.powertrain) {
         subassemblies.powertrain.position.z = THREE.MathUtils.lerp(0, 4.0, explodedProgress);
@@ -330,6 +347,7 @@ export function createFullCarAssembly(options = {}) {
       if (kinematics.frontAero) kinematics.frontAero.position.set(0, 0, 0);
       if (kinematics.rearWing) kinematics.rearWing.position.set(36.8, 0, 7.4);
       if (subassemblies.cockpitAccessories) subassemblies.cockpitAccessories.position.set(0, 0, 0);
+      if (kinematics.driver) kinematics.driver.position.set(0, 0, 0);
       if (subassemblies.powertrain) subassemblies.powertrain.position.set(0, 0, 0);
       if (subassemblies.transmission) subassemblies.transmission.position.set(0, 0, 0);
       if (subassemblies.electrical) subassemblies.electrical.position.set(0, 0, 0);

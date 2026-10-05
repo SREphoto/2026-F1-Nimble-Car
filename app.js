@@ -480,15 +480,25 @@ if (typeof ResizeObserver !== 'undefined' && container) {
 }
 
 // Collapsible Panels (Individual)
-document.querySelectorAll('.panel-collapse-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetId = `panel-${btn.dataset.collapse}`;
-    const panel = document.getElementById(targetId);
-    if (panel) {
-      panel.classList.toggle('collapsed');
-      btn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
-      debouncedResize();
-      setTimeout(debouncedResize, 260);
+document.querySelectorAll('.panel-collapsible').forEach(panel => {
+  const btn = panel.querySelector('.panel-collapse-btn');
+  const head = panel.querySelector('.panel-head');
+
+  const togglePanel = () => {
+    panel.classList.toggle('collapsed');
+    if (btn) btn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
+    debouncedResize();
+    setTimeout(debouncedResize, 260);
+  };
+
+  btn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePanel();
+  });
+
+  head?.addEventListener('click', () => {
+    if (panel.classList.contains('collapsed')) {
+      togglePanel();
     }
   });
 });
@@ -696,6 +706,7 @@ window.setCameraView = function(viewName) {
       aeroMode: state.aeroMode,
       gear: state.gear,
       brakeKgf: state.brakeKgf,
+      throttle: state.throttle,
       explodedProgress: state.explodedProgress,
       suspensionTravel: sumTravel(tyreStates?.suspensionTravel, trackMode?.suspensionTravel)
     });
@@ -998,6 +1009,7 @@ function animate() {
       aeroMode: state.aeroMode,
       gear: state.gear,
       brakeKgf: state.brakeKgf,
+      throttle: state.throttle,
       explodedProgress: state.explodedProgress,
       suspensionTravel: sumTravel(tyreStates?.suspensionTravel, trackMode?.suspensionTravel)
     });

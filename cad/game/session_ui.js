@@ -53,7 +53,9 @@ export async function initSessions({ trackMode, tyreStates }) {
     #sess-panel .sp-head{display:flex;gap:6px;align-items:center}
     #sess-panel select{background:#141b26;color:#cfd8e3;border:1px solid #2a3545;border-radius:4px;font-size:11px;padding:2px}
     #sp-seg{font-weight:700;color:#00d4e8}#sp-clock{margin-left:auto;font:700 18px ui-monospace,monospace;letter-spacing:.04em}
-    #sp-min{background:none;border:0;color:#8b9bb0;cursor:pointer}
+    #sp-min{background:none;border:0;color:#8b9bb0;cursor:pointer;font-size:12px;padding:2px 4px;border-radius:3px}
+    #sp-min:hover{color:#fff;background:rgba(255,255,255,.08)}
+    #sess-panel.min .sp-head{cursor:pointer}
     #sess-panel .sp-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:6px}
     #sess-panel .sp-btn{background:#141b26;color:#cfd8e3;border:1px solid #2a3545;border-radius:4px;padding:3px 7px;font-size:11px;cursor:pointer}
     #sess-panel .sp-btn:disabled{opacity:.4;cursor:default}
@@ -173,7 +175,17 @@ export async function initSessions({ trackMode, tyreStates }) {
   $('sp-newset').onclick = () => { player.wear = 0; applyTyres(); render(); };
   $('sp-go').onclick = leaveGarage;
   $('sp-box').onclick = () => { player.box = true; render(); };
-  $('sp-min').onclick = () => el.classList.toggle('min');
+  const toggleMin = () => {
+    const isMin = el.classList.toggle('min');
+    $('sp-min').textContent = isMin ? '▸' : '▾';
+    $('sp-min').title = isMin ? 'Expand session panel' : 'Collapse session panel';
+  };
+  $('sp-min').onclick = (e) => { e.stopPropagation(); toggleMin(); };
+  el.querySelector('.sp-head')?.addEventListener('click', (e) => {
+    if (el.classList.contains('min') && e.target !== $('sp-pick')) {
+      toggleMin();
+    }
+  });
 
   function step(dt) {
     if (!eng.state) return;

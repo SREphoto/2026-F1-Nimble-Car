@@ -69,9 +69,12 @@ export function createCockpitAccessories(options = {}) {
   // =========================================================================
   // 1. DRIVER HELMET & HANS (data-driven, see cad/driver_helmet.js HELMET_SPEC)
   // Visor, peak, ballistic strip, visor pivots, chin vents, rear spoiler, HANS posts + yoke.
+  // When helmetInDriver is true, the helmet is integrated into the articulated driver rig.
   // =========================================================================
-  const driverGroup = createDriverHelmet(options.helmet);
-  group.add(driverGroup);
+  if (!options.helmetInDriver) {
+    const driverGroup = createDriverHelmet(options.helmet);
+    group.add(driverGroup);
+  }
 
   // =========================================================================
   // 2. CONFOR FOAM HEADREST SURROUND (Viscoelastic cockpit safety collar)

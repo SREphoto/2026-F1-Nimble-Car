@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { createRedBullRing, DM } from './red_bull_ring.js';
 import { createRideModel } from './ride_model.js';
+import { soundEngine } from '../../sfx.js';
 
 const WHEELBASE = 3.4;          // m (2026 regs)
 const MASS = 800;               // kg incl. driver
@@ -115,7 +116,7 @@ export function initTrackMode(ctx) {
   // ------------------------------------------------------------------ vehicle state (metres, rear-axle reference)
   const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0, inPit: false, pitS: -1, pitLimiter: false };
   const ride = createRideModel(ctx.rideSpec);   // body heave / pitch / roll + per-corner travel (data in ride_model.js)
-  const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0, pitReq: false, pitPhase: null, pitT: 0 };
+  const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0, pitReq: false, pitPhase: null, pitT: 0, pitTyresChanged: false };
   const keys = new Set();
   const tmp = { f: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), m: new THREE.Matrix4(), front: new THREE.Vector3(), rear: new THREE.Vector3() };
 
@@ -125,6 +126,8 @@ export function initTrackMode(ctx) {
     car.x = -F.tx * WHEELBASE; car.z = -F.tz * WHEELBASE; car.h = Math.atan2(F.tz, F.tx);
     car.x += 0; car.v = 0; car.idx = -1; car.rlIdx = -1; car.inPit = false; car.lapStart = null; car.lap = 0; car.sectors = [null, null, null];
     car.sp = car.prevSp = 0;
+    mode.pitTyresChanged = false;
+    setAeroMode('Z_MODE');
     poseCar();
   }
 
@@ -166,6 +169,9 @@ export function initTrackMode(ctx) {
 
   // ------------------------------------------------------------------ UI helpers that drive the existing controls
   const $ = id => document.getElementById(id);
+  function setAeroMode(target) {
+    if (state.aeroMode !== target) $('btn-aero-toggle')?.click();
+  }
   function setThrottle(t) {
     state.throttle = t; const s = $('slider-throttle'); if (s) s.value = Math.round(t * 100);
     const l = $('val-throttle'); if (l) l.textContent = `${Math.round(t * 100)}%`;
@@ -174,11 +180,12 @@ export function initTrackMode(ctx) {
     b = Math.round(b);
     state.brakeKgf = b; const s = $('slider-brake'); if (s) s.value = b;
     const l = $('val-brake'); if (l) l.textContent = `${b} kgf`;
-    if (b > 15 && state.aeroMode === 'X_MODE') $('btn-aero-toggle')?.click();
+    if (b > 15 && state.aeroMode === 'X_MODE') setAeroMode('Z_MODE');
   }
   function setSteer(d) {
     state.steeringDeg = d; const s = $('slider-steer'); if (s) s.value = d;
     const l = $('val-steer'); if (l) l.textContent = `${d > 0 ? '+' : ''}${d.toFixed(1)}°`;
+    if (Math.abs(d) > 8 && Math.abs(car.v) > 38 && state.aeroMode === 'X_MODE') setAeroMode('Z_MODE');
   }
   function selectGear(g) {
     const btn = document.querySelector(`.gear-btn[data-gear="${g}"]`);
@@ -335,10 +342,20 @@ export function initTrackMode(ctx) {
       let target = 1; while (target < 8 && v > GEAR_VMAX[target] * 0.93) target++;
       if (String(state.gear) !== String(target)) { selectGear(target); mode.lastShift = now; }
     }
+    // 2026 Active Aerodynamics: Straight Mode (X-Mode) on straights, Z-Mode for corners & braking
+    const distToNextTurn = circuit.turnSp?.length
+      ? Math.min(...circuit.turnSp.map(t => ((t - car.sp) % track.length + track.length) % track.length))
+      : 999;
+    const canUseXMode = !car.inPit && !mode.pitPhase && car.surf === 'asphalt' &&
+      state.throttle > 0.85 && state.brakeKgf === 0 &&
+      v > 38 && Math.abs(state.steeringDeg) < 3.2 &&
+      distToNextTurn > 85 && err > -0.2;
+    setAeroMode(canUseXMode ? 'X_MODE' : 'Z_MODE');
   }
   mode.pace = 1.0;
   /** Autopilot pit stop: leave the track at the pit entry, 80 km/h between the lines, stop at our box, drive out */
   function pitAutopilot(dt) {
+    setAeroMode('Z_MODE');
     const v = Math.max(0, car.v);
     const cx = car.x + Math.cos(car.h) * WHEELBASE * 0.5, cz = car.z + Math.sin(car.h) * WHEELBASE * 0.5;
     let s;                                              // car centre, metres along the pit lane (negative before the entry)
@@ -373,11 +390,37 @@ export function initTrackMode(ctx) {
     if (mode.pitPhase === 'in') {
       const left = BOX_S - s;
       vt = Math.min(vt, Math.sqrt(2 * 4 * Math.max(0, left - 0.2)));
-      if (left < 0.6 && v < 1.0) { mode.pitPhase = 'stop'; mode.pitT = 0; }
+      if (left < 0.6 && v < 1.0) { mode.pitPhase = 'stop'; mode.pitT = 0; mode.pitTyresChanged = false; }
     }
     if (mode.pitPhase === 'stop') {
-      setThrottle(0); setBrake(180); mode.pitT += dt;
-      if (mode.pitT > 2.4) mode.pitPhase = 'out';      // about a 2.4 s stop, a typical 2026 time
+      setThrottle(0); setBrake(180);
+      const prevT = mode.pitT;
+      mode.pitT += dt;
+      // Wheel gun pneumatic pop as jacks lift the car
+      if (prevT === 0 && mode.pitT > 0) {
+        soundEngine?.playShiftPop?.();
+      }
+      // Service tyres at t = 1.2s: fit fresh tyres, repair any blown corners, reset session wear
+      if (!mode.pitTyresChanged && mode.pitT >= 1.2) {
+        mode.pitTyresChanged = true;
+        if (window.tyreStates) {
+          try {
+            window.tyreStates.setBlown('all', false);
+            window.tyreStates.setTyreWear('all', 'new');
+          } catch (e) {
+            console.warn('[track_mode] pit tyre refresh failed:', e);
+          }
+        }
+        if (window.sessions?.player) {
+          window.sessions.player.wear = 0;
+          window.sessions.render?.();
+        }
+        soundEngine?.playShiftPop?.();
+      }
+      if (mode.pitT > 2.4) {
+        mode.pitPhase = 'out';
+        mode.pitTyresChanged = false;
+      }
       return;
     }
     const err = vt - v;
@@ -388,10 +431,10 @@ export function initTrackMode(ctx) {
       let target = 1; while (target < 8 && v > GEAR_VMAX[target] * 0.93) target++;
       if (String(state.gear) !== String(target)) { selectGear(target); mode.lastShift = now; }
     }
-    if (mode.pitPhase === 'out' && s >= pitLen - 6) { mode.pitPhase = null; mode.pitReq = false; $('rbr-pit')?.classList.remove('active'); car.rlIdx = -1; }
+    if (mode.pitPhase === 'out' && s >= pitLen - 6) { mode.pitPhase = null; mode.pitReq = false; mode.pitTyresChanged = false; $('rbr-pit')?.classList.remove('active'); car.rlIdx = -1; }
   }
   function requestPitStop(on = true) {
-    mode.pitReq = on; if (!on) mode.pitPhase = null;
+    mode.pitReq = on; if (!on) { mode.pitPhase = null; mode.pitTyresChanged = false; }
     $('rbr-pit')?.classList.toggle('active', on);
     if (on && !mode.autopilot) setAutopilot(true);
   }
@@ -503,12 +546,18 @@ export function initTrackMode(ctx) {
       if (mode.cam === 'free') setCam('chase');
     } else {
       setAutopilot(false);
+      setAeroMode('Z_MODE');
       keys.clear();
     }
   }
   function setAutopilot(on) {
     mode.autopilot = on;
-    if (!on) { mode.pitReq = false; mode.pitPhase = null; $('rbr-pit')?.classList.remove('active'); }
+    if (!on) {
+      mode.pitReq = false;
+      mode.pitPhase = null;
+      $('rbr-pit')?.classList.remove('active');
+      setAeroMode('Z_MODE');
+    }
     $('rbr-auto')?.classList.toggle('active', on);
     if (on) { car.rlIdx = -1; if (!mode.driving) setDriving(true); }
   }
@@ -541,31 +590,43 @@ export function initTrackMode(ctx) {
   const hud = document.createElement('div');
   hud.id = 'rbr-hud';
   hud.innerHTML = `
-    <div class="rbr-head"><b>RED BULL RING</b><span>Spielberg · ${(track.length / 1000).toFixed(3)} km · 10 turns · Δh ${circuit.data.meta.elevation_span_m.toFixed(0)} m</span></div>
-    <div class="rbr-row">
-      <button type="button" id="rbr-drive" class="rbr-btn" title="Drive the car with the throttle / brake / steering / gear controls (or W A S D, Q/E gears, C camera)">Drive</button>
-      <button type="button" id="rbr-auto" class="rbr-btn" title="Autopilot follows the TUM race line using the same throttle/brake/steer/gear controls">Autopilot lap</button>
-      <button type="button" id="rbr-pit" class="rbr-btn" title="Autopilot drives into the pit lane at the next pit entry, keeps to 80 km/h, stops at the Red Bull box and drives out">Autopilot pit stop</button>
-      <button type="button" id="rbr-reset" class="rbr-btn" title="Back to the pole-position grid box">Reset to grid</button>
+    <div class="rbr-head">
+      <div class="rbr-head-title"><b>RED BULL RING</b><span>Spielberg · ${(track.length / 1000).toFixed(3)} km · 10 turns · Δh ${circuit.data.meta.elevation_span_m.toFixed(0)} m</span></div>
+      <button type="button" id="rbr-min" class="rbr-min-btn" title="Collapse HUD" aria-label="Collapse HUD">▾</button>
     </div>
-    <div class="rbr-row">
-      <button type="button" class="rbr-btn rbr-cam" data-cam="chase">Chase</button>
-      <button type="button" class="rbr-btn rbr-cam" data-cam="tv">TV</button>
-      <button type="button" class="rbr-btn rbr-cam" data-cam="orbit">Orbit car</button>
-      <button type="button" class="rbr-btn rbr-cam" data-cam="overview">Overview</button>
-      <button type="button" id="rbr-classic" class="rbr-btn" title="Show the original finish-line studio set instead of the full circuit">Classic set</button>
-    </div>
-    <div class="rbr-tele"><span id="rbr-lap">Lap –</span><span id="rbr-time">0:00.000</span><span id="rbr-last">Last –</span><span id="rbr-best">Best –</span></div>
-    <div class="rbr-tele"><span id="rbr-s1">S1 –</span><span id="rbr-s2">S2 –</span><span id="rbr-s3">S3 –</span></div>
-    <div class="rbr-tele"><span id="rbr-spd">0 km/h</span><span id="rbr-pos">Grid</span><span id="rbr-surf"></span></div>
-    <canvas id="rbr-map" width="220" height="150"></canvas>`;
+    <div id="rbr-body">
+      <div class="rbr-row">
+        <button type="button" id="rbr-drive" class="rbr-btn" title="Drive the car with the throttle / brake / steering / gear controls (or W A S D, Q/E gears, C camera)">Drive</button>
+        <button type="button" id="rbr-auto" class="rbr-btn" title="Autopilot follows the TUM race line using the same throttle/brake/steer/gear controls">Autopilot lap</button>
+        <button type="button" id="rbr-pit" class="rbr-btn" title="Autopilot drives into the pit lane at the next pit entry, keeps to 80 km/h, stops at the Red Bull box and drives out">Autopilot pit stop</button>
+        <button type="button" id="rbr-reset" class="rbr-btn" title="Back to the pole-position grid box">Reset to grid</button>
+      </div>
+      <div class="rbr-row">
+        <button type="button" class="rbr-btn rbr-cam" data-cam="chase">Chase</button>
+        <button type="button" class="rbr-btn rbr-cam" data-cam="tv">TV</button>
+        <button type="button" class="rbr-btn rbr-cam" data-cam="orbit">Orbit car</button>
+        <button type="button" class="rbr-btn rbr-cam" data-cam="overview">Overview</button>
+        <button type="button" id="rbr-classic" class="rbr-btn" title="Show the original finish-line studio set instead of the full circuit">Classic set</button>
+      </div>
+      <div class="rbr-tele"><span id="rbr-lap">Lap –</span><span id="rbr-time">0:00.000</span><span id="rbr-last">Last –</span><span id="rbr-best">Best –</span></div>
+      <div class="rbr-tele"><span id="rbr-s1">S1 –</span><span id="rbr-s2">S2 –</span><span id="rbr-s3">S3 –</span></div>
+      <div class="rbr-tele"><span id="rbr-spd">0 km/h</span><span id="rbr-pos">Grid</span><span id="rbr-surf"></span></div>
+      <canvas id="rbr-map" width="220" height="150"></canvas>
+    </div>`;
   const host = $('viewport3d');
   host?.appendChild(hud);
   const css = document.createElement('style');
   css.textContent = `
     #viewport3d{position:relative}
-    #rbr-hud{position:absolute;left:10px;bottom:10px;z-index:5;background:rgba(8,12,20,.78);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 10px;color:#e6edf5;font:12px/1.35 system-ui,sans-serif;width:300px;backdrop-filter:blur(4px);user-select:none}
+    #rbr-hud{position:absolute;left:10px;bottom:10px;z-index:5;background:rgba(8,12,20,.78);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 10px;color:#e6edf5;font:12px/1.35 system-ui,sans-serif;width:300px;backdrop-filter:blur(4px);user-select:none;transition:width .2s ease}
+    #rbr-hud .rbr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+    #rbr-hud .rbr-head-title{flex:1;min-width:0}
     #rbr-hud .rbr-head b{font-size:13px;letter-spacing:.08em;margin-right:6px}#rbr-hud .rbr-head span{color:#8b9bb0;font-size:11px}
+    #rbr-hud .rbr-min-btn{background:none;border:1px solid rgba(255,255,255,.15);border-radius:4px;color:#8b9bb0;cursor:pointer;font-size:11px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;line-height:1}
+    #rbr-hud .rbr-min-btn:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
+    #rbr-hud.min{width:auto}
+    #rbr-hud.min #rbr-body{display:none}
+    #rbr-hud.min .rbr-head{cursor:pointer}
     #rbr-hud .rbr-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
     #rbr-hud .rbr-btn{background:#141b26;color:#cfd8e3;border:1px solid #2a3545;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer}
     #rbr-hud .rbr-btn.active{background:#00d4e8;color:#04121a;border-color:#00d4e8}
@@ -573,6 +634,19 @@ export function initTrackMode(ctx) {
     #rbr-map{display:block;margin-top:6px;width:220px;height:150px}
     .workspace.panels-hidden #rbr-hud{opacity:.92}`;
   document.head.appendChild(css);
+  $('rbr-min')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isMin = hud.classList.toggle('min');
+    $('rbr-min').textContent = isMin ? '▸' : '▾';
+    $('rbr-min').title = isMin ? 'Expand HUD' : 'Collapse HUD';
+  });
+  hud.querySelector('.rbr-head')?.addEventListener('click', () => {
+    if (hud.classList.contains('min')) {
+      hud.classList.remove('min');
+      const b = $('rbr-min');
+      if (b) { b.textContent = '▾'; b.title = 'Collapse HUD'; }
+    }
+  });
   $('rbr-drive')?.addEventListener('click', () => setDriving(!mode.driving));
   $('rbr-auto')?.addEventListener('click', () => setAutopilot(!mode.autopilot));
   $('rbr-pit')?.addEventListener('click', () => requestPitStop(!mode.pitReq));
@@ -584,7 +658,7 @@ export function initTrackMode(ctx) {
   const mapC = $('rbr-map'), mctx = mapC?.getContext('2d');
   let mapXf = null;
   function drawMap() {
-    if (!mctx) return;
+    if (!mctx || hud.classList.contains('min')) return;
     if (!mapXf) {
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
       for (let i = 0; i < track.n; i++) { x0 = Math.min(x0, track.x[i]); x1 = Math.max(x1, track.x[i]); z0 = Math.min(z0, track.z[i]); z1 = Math.max(z1, track.z[i]); }
@@ -632,7 +706,7 @@ export function initTrackMode(ctx) {
     for (const t of turns) { const d = car.sp - t.sp; if (d > -80 && d < 60) label = `Turn ${t.n}${TURN_NAMES[t.n - 1] ? ' ' + TURN_NAMES[t.n - 1] : ''}`; }
     if (car.inPit) label = 'Pit lane';
     $('rbr-pos').textContent = label;
-    $('rbr-surf').textContent = mode.pitPhase === 'stop' ? 'PIT STOP' : car.pitLimiter ? 'PIT LIMITER 80' : car.inPit ? 'PIT LANE' : mode.pitReq ? 'BOX THIS LAP' : car.surf !== 'asphalt' ? car.surf.toUpperCase() : '';
+    $('rbr-surf').textContent = mode.pitPhase === 'stop' ? (mode.pitT >= 1.2 ? 'PIT STOP: TYRES FITTED' : 'PIT STOP: BOXING') : car.pitLimiter ? 'PIT LIMITER 80' : car.inPit ? 'PIT LANE' : mode.pitReq ? 'BOX THIS LAP' : car.surf !== 'asphalt' ? car.surf.toUpperCase() : state.aeroMode === 'X_MODE' ? 'X-MODE' : '';
     drawMap();
   }
 
