@@ -6,6 +6,20 @@
   <title>2026 Formula 1 "Nimble Car" · SREdesigns - Samuel R Erwin III</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
+  <script>
+    window.addEventListener('error', function (e) {
+      const msg = e.message || (e.error && e.error.message) || String(e);
+      console.error('[Global Error]', e);
+      const el = document.getElementById('viewport-status');
+      if (el) el.textContent = 'Fatal Startup Error: ' + msg;
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      const msg = (e.reason && (e.reason.message || e.reason.stack)) || String(e.reason || e);
+      console.error('[Unhandled Rejection]', e);
+      const el = document.getElementById('viewport-status');
+      if (el) el.textContent = 'Fatal Rejection: ' + msg;
+    });
+  </script>
   <script type="importmap">
   {
     "imports": {

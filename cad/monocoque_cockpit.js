@@ -506,8 +506,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
     torsoGroup.add(strapMesh);
   });
 
-  const buckleGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 20);
-  const buckleMesh = new THREE.Mesh(buckleGeo, mats.titaniumBright);
+  const driverBuckleGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 20);
+  const buckleMesh = new THREE.Mesh(driverBuckleGeo, mats.titaniumBright);
   buckleMesh.rotation.z = Math.PI / 2;
   buckleMesh.position.set(0.72, 0, -0.38);
   torsoGroup.add(buckleMesh);
