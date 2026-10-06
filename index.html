@@ -78,6 +78,7 @@
           <option value="racing-bulls">⚡ Visa Cash App RB</option>
           <option value="haas">🏁 Haas F1 Team</option>
         </select>
+        <button type="button" class="view-btn" id="btn-regulations" title="Open the 2026 regulations sheet">Regulations</button>
         <button type="button" class="view-btn btn-design-modal" id="btn-design-modal" title="View Design Principles & Inspiration Sources">✦ Design Inspiration</button>
       </div>
 
@@ -91,6 +92,7 @@
       <!-- 3D Viewport & Stage -->
       <section class="stage">
         <div class="view-toolbar">
+          <button type="button" class="view-btn" id="btn-garage" title="Go into our team garage: look around, walk, click parts of the car, take the wheels or bodywork off">Garage</button>
           <button type="button" class="view-btn" id="btn-cutaway" title="Toggle translucent bodywork to inspect internal engine, MGU-K, battery, and gearbox">X-Ray (Cutaway)</button>
           <button type="button" class="view-btn" id="btn-explode" title="Separate major assemblies along kinematic axes">Exploded view</button>
           <button type="button" class="view-btn" id="btn-wireframe" title="Toggle wireframe overlay">Wireframe</button>
@@ -218,117 +220,6 @@
         </div>
       </aside>
 
-      <!-- Part Explorer & Isolation Panel -->
-      <aside class="parts panel-collapsible" id="panel-parts" data-panel="parts">
-        <div class="panel-head">
-          <h2 class="panel-title">Part Explorer</h2>
-          <button type="button" class="panel-collapse-btn" data-collapse="parts" title="Collapse panel" aria-expanded="true">▾</button>
-        </div>
-        <div class="panel-body">
-          <div class="part-list">
-            <button type="button" class="part-item active" data-isolate="ALL">
-              <span class="part-dot"></span>
-              <span class="part-name">Full Vehicle Assembly (All Systems)</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="monocoque">
-              <span class="part-dot"></span>
-              <span class="part-name">1. Monocoque & Safety Cell (Ti Halo, Cockpit)</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="cockpitAccessories">
-              <span class="part-dot"></span>
-              <span class="part-name">2. Driver, Helmet, Mirrors & Sensors</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="steering">
-              <span class="part-dot"></span>
-              <span class="part-name">McLaren Applied PCU-8D Steering Wheel</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="brakes">
-              <span class="part-dot"></span>
-              <span class="part-name">3. Detailed Carbon Brakes (1400+ Hole Discs)</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="electrical">
-              <span class="part-dot"></span>
-              <span class="part-name">4. Electrical Looms & 800V Energy Store</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="powertrain">
-              <span class="part-dot"></span>
-              <span class="part-name">5. 1.6L V6 ICE, Valvetrain, Chain, Turbo & MGU-K</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="transmission">
-              <span class="part-dot"></span>
-              <span class="part-name">6. 8-Speed Seamless Gearbox, LSD & Driveshafts</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="suspension">
-              <span class="part-dot"></span>
-              <span class="part-name">7. Aerodynamic Suspension, Steering & Pirelli Tyres</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="floor">
-              <span class="part-dot"></span>
-              <span class="part-name">8. Underbody Floor, Jabroc Plank & Diffuser</span>
-            </button>
-            <button type="button" class="part-item" data-isolate="bodywork">
-              <span class="part-dot"></span>
-              <span class="part-name">9. Active Front/Rear Wings, Sidepods & Shark Fin</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Technical Specifications & Compliance Panel -->
-      <aside class="lab panel-collapsible" id="panel-lab" data-panel="lab">
-        <div class="panel-head">
-          <h2 class="panel-title">2026 Regulations Compliance</h2>
-          <button type="button" class="panel-collapse-btn" data-collapse="lab" title="Collapse panel" aria-expanded="true">▾</button>
-        </div>
-        <div class="panel-body">
-          <div class="spec-table">
-            <div class="spec-row">
-              <span class="spec-key">Wheelbase</span>
-              <span class="spec-val">3400 mm (-200 mm)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Overall Width</span>
-              <span class="spec-val">1900 mm (-100 mm)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Minimum Weight</span>
-              <span class="spec-val">768 kg (-30 kg target)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">ICE Power</span>
-              <span class="spec-val">~400 kW (1.6L 90° V6)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">MGU-K Power</span>
-              <span class="spec-val">350 kW (up from 120 kW)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Fuel Energy Flow</span>
-              <span class="spec-val">3000 MJ/h max (Article C5)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">MGU-H</span>
-              <span class="spec-val">Banned (Pure Turbocharger)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Aero Drag Drop (X-Mode)</span>
-              <span class="spec-val">-55% Drag Reduction</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Front Tyres</span>
-              <span class="spec-val">280/710-18 (-25 mm)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Rear Tyres</span>
-              <span class="spec-val">375/710-18 (-30 mm)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-key">Plank Material</span>
-              <span class="spec-val">10mm Jabroc + Titanium Pucks</span>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
   </div>
 

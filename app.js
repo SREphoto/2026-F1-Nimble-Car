@@ -17,6 +17,7 @@ import { createTrackEnvironment } from './cad/track_environment.js';
 import { soundEngine } from './sfx.js';
 import { materials } from './materials.js';
 import { initTrackMode } from './cad/track/track_mode.js';
+import { initGarageInspect } from './cad/track/garage/garage_inspect.js';
 import { initTyreStates } from './cad/tyre_states.js';
 import { sumTravel } from './cad/track/ride_model.js';
 import { applyLivery } from './cad/livery_decals.js';
@@ -1021,6 +1022,7 @@ function animate() {
   if (!state.tourActive) {
     controls.update();
   }
+  garageInspect?.update(dt);
   trackMode?.beforeRender(dt);
   tyreStates?.update(dt);
   carModel?.userData?.livery?.syncFrame?.(); // paint split follows the car on the circuit
@@ -1042,6 +1044,14 @@ try {
   if (carModel) tyreStates = initTyreStates({ carModel, renderer, scene, state, trackMode });
 } catch (err) {
   console.error('Tyre states failed to initialise:', err);
+}
+
+// Garage inspect (cad/track/garage/*): Garage button, walk-around team garage, part info cards, regulations on the desk
+let garageInspect = null;
+try {
+  if (carModel) garageInspect = initGarageInspect({ scene, camera, controls, renderer, carModel, trackMode, legacyEnv: trackEnv, getTeamId: () => getCurrentTeam()?.id || 'red-bull' });
+} catch (err) {
+  console.error('Garage failed to build:', err);
 }
 
 // Practice / Qualifying sessions and the 2026 calendar globe (cad/game/*, data in cad/game/*.json)
