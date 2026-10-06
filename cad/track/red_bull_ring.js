@@ -21,6 +21,8 @@ import { RED_BULL_RING as D } from './red_bull_ring_data.js';
 import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
 import { buildBullSculpture } from './rbr_bull.js';
 import { createPitStopStation } from '../pit_stop_crew.js';
+import { RED_BULL_RING_STYLE as STYLE } from './styles/red_bull_ring_style.js';
+import { makeAsphaltTextures, makeRubberTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts } from './trackside.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -219,7 +221,9 @@ export function createRedBullRing() {
   const root = new THREE.Group();
   root.name = 'RedBullRing_Circuit';
   const tex = makeTrackTextures();
-  const atlas = makeSignAtlas();
+  const SURF = makeAsphaltTextures(STYLE.surface), KS = STYLE.kerbs, BS = STYLE.barriers, FS = STYLE.fence;
+  const sponsorTex = makeSponsorTexture(BS), concreteTex = makeConcreteTexture(), fenceTex = makeFenceTexture();
+  const atlas = makeSignAtlas(STYLE.barriers.sponsors.map(sp => ({ key: 'SP_' + sp.name.toUpperCase().replace(/\W/g, ''), text: sp.name, bg: sp.bg, fg: sp.fg, accent: sp.accent })));
   const track = new TrackPath(D);
   const terrain = new Terrain({ ...D.terrain, h_: D.terrain.h });
   const outerT = new Terrain({ ...D.outer, h_: D.outer.h });
@@ -229,7 +233,16 @@ export function createRedBullRing() {
   const c = v => () => v;
 
   const M = {
-    asphalt: new THREE.MeshStandardMaterial({ map: tex.asphalt, color: 0xffffff, roughness: 0.92, metalness: 0.0 }),
+    asphalt: new THREE.MeshStandardMaterial({ map: SURF.map, bumpMap: SURF.bump, bumpScale: 0.6, color: 0xffffff, roughness: STYLE.surface.dry.roughness, metalness: 0.0 }),
+    rubber: new THREE.MeshStandardMaterial({ map: makeRubberTexture(STYLE.surface), transparent: true, depthWrite: false, vertexColors: true, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
+    patch: new THREE.MeshStandardMaterial({ map: makePatchTexture(STYLE.surface), transparent: true, depthWrite: false, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    kerbFlat: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'flat'), roughness: 0.6 }),
+    kerbRaised: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'raised'), roughness: 0.55 }),
+    kerbSaw: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'sawtooth'), roughness: 0.55 }),
+    sponsor: new THREE.MeshStandardMaterial({ map: sponsorTex, roughness: 0.65, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
+    wallConcrete: new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.85 }),
+    tyreTop: new THREE.MeshStandardMaterial({ map: makeTyreTopTexture(), roughness: 0.95 }),
+    tecpro: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }),
     runoff: new THREE.MeshStandardMaterial({ map: tex.runoff, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
     gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 1.0, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 }),
     grass: new THREE.MeshLambertMaterial({ map: tex.grass, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 3 }),
@@ -243,7 +256,8 @@ export function createRedBullRing() {
     concrete: new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.85 }),
     concreteDark: new THREE.MeshStandardMaterial({ color: 0x8d9197, roughness: 0.9 }),
     steel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.45, metalness: 0.7 }),
-    fence: new THREE.MeshStandardMaterial({ map: tex.fence, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.6, depthWrite: true }),
+    fence: new THREE.MeshStandardMaterial({ map: fenceTex, alphaToCoverage: true, alphaTest: 0.04, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.6 }),
+    cable: new THREE.MeshStandardMaterial({ color: 0x8d949b, roughness: 0.4, metalness: 0.8, side: THREE.DoubleSide }),
     tyres: new THREE.MeshStandardMaterial({ map: tex.tyres, roughness: 0.95, side: THREE.DoubleSide }),
     crowd: new THREE.MeshLambertMaterial({ map: tex.crowd }),
     seats: new THREE.MeshLambertMaterial({ map: tex.seats }),
@@ -276,34 +290,103 @@ export function createRedBullRing() {
   const blueR = inFeat('blueline', 'R'), blueL = inFeat('blueline', 'L');
   const sausR = inFeat('sausage', 'R'), sausL = inFeat('sausage', 'L');
   add(strip(track, i => -wl(i), wr, c(0), c(0), { vLen: 12, uLen: 12 }), M.asphalt, 'RBR_Asphalt');
+  // racing line rubber (TUM race line): darker where cars brake and turn, streaky texture, faded edges
+  {
+    const R = new Path(D.raceline.x, D.raceline.z, D.raceline.x.map(() => 0), true), rn = R.n, RS = STYLE.surface.rubber;
+    const kr = new Float32Array(rn);
+    for (let j = 0; j < rn; j++) { const a = R.wrap(j - 3), b = R.wrap(j + 3); kr[j] = Math.abs(R.tx[a] * R.tz[b] - R.tz[a] * R.tx[b]); }
+    const pos = [], col = [], uv = [], idx = [];
+    let hint = -1;
+    for (let r = 0; r <= rn; r++) {
+      const j = r % rn; let km = 0; for (let q = 0; q < 28; q++) km = Math.max(km, kr[R.wrap(j + q)] * (1 - q / 40));
+      const I = RS.darkest * (0.45 + 0.55 * Math.min(1, km / 0.06)) + RS.brakingBoost * Math.min(1, km / 0.06) * 0.3;
+      const L = track.locate(R.x[j], R.z[j], hint); hint = L.i;
+      for (const e of [-1, 1]) {
+        const x = R.x[j] + R.rx(j) * e * RS.width / 2, z = R.z[j] + R.rz(j) * e * RS.width / 2;
+        pos.push(x * DM, (L.y + 0.005) * DM, z * DM); col.push(1, 1, 1, Math.min(1, I)); uv.push(e < 0 ? 0 : 1, R.s[r] / 6);
+      }
+      if (r < rn) { const a = r * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    // normals point down if the winding is reversed: make them all face up
+    const nrm = g.attributes.normal; for (let k = 0; k < nrm.count; k++) if (nrm.getY(k) < 0) nrm.setXYZ(k, -nrm.getX(k), -nrm.getY(k), -nrm.getZ(k));
+    add(g, M.rubber, 'RBR_Rubber_Line');
+    M.rubber.side = THREE.DoubleSide;
+  }
+  // repair patches (decals) spread over the lap
+  {
+    const pr = rng(515), q = [], quv = [], qi = [];
+    for (let k = 0; k < STYLE.surface.patches; k++) {
+      const F = track.at(pr() * track.length), w = 2 + pr() * 4, l = 3 + pr() * 9, lat = (pr() * 2 - 1) * Math.max(0, Math.min(F.wr, F.wl) - w / 2 - 0.5);
+      const b = q.length / 3;
+      for (const [a, d, u, v] of [[-l / 2, -w / 2, 0, 0], [l / 2, -w / 2, 1, 0], [l / 2, w / 2, 1, 1], [-l / 2, w / 2, 0, 1]]) {
+        const x = F.x + F.tx * a + F.rx * (lat + d), z = F.z + F.tz * a + F.rz * (lat + d);
+        q.push(x * DM, (F.y + 0.003) * DM, z * DM); quv.push(u, v);
+      }
+      qi.push(b, b + 2, b + 1, b, b + 3, b + 2);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(q, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(quv, 2)); g.setIndex(qi); g.computeVertexNormals();
+    M.patch.side = THREE.DoubleSide; add(g, M.patch, 'RBR_Surface_Patches');
+  }
+  /** wet sheen: 0 = dry, 1 = damp (lower roughness, darker), for the Wet sheen button */
+  root.userData.setWet = (w) => {
+    const S = STYLE.surface;
+    for (const m of [M.asphalt, M.runoff]) { m.roughness = S.dry.roughness + (S.wet.roughness - S.dry.roughness) * w; m.metalness = S.dry.metalness + (S.wet.metalness - S.dry.metalness) * w; m.color.setScalar(1 + (S.wet.darken - 1) * w); }
+    M.asphalt.bumpScale = 0.6 * (1 - 0.6 * w);
+  };
   // white track-limit lines (inside the asphalt edge); where the FIA moved the line onto the kerb it is drawn there instead
   const LW = 0.2;
-  const kerbY = u => 0.006 + (0.04 - 0.006) * Math.max(0, Math.min(1, u / KERB_W)); // kerb surface height u m beyond the edge
+  // kerb type per sample and side (style data): apex kerbs on the inside of a corner, exit kerbs on the outside
+  const KTYPES = ['flat', 'raised', 'sawtooth'];
+  const turnSpK = D.turns.map(ti => track.spOf(ti));
+  const kerbTypeR = new Int8Array(n), kerbTypeL = new Int8Array(n);
+  for (let i = 0; i < n; i++) {
+    let kk = 0; for (let q = -10; q <= 10; q++) kk += track.k[track.wrap(i + q)];
+    const sp = track.spOf(i);
+    let tn = 0, bd = 140; turnSpK.forEach((t, k) => { const d = Math.abs(((sp - t + track.length * 1.5) % track.length) - track.length / 2); if (d < bd) { bd = d; tn = k + 1; } });
+    const over = KS.perTurn[tn] || {};
+    const inside = over.inside || KS.inside, outside = over.outside || KS.outside;
+    kerbTypeR[i] = KTYPES.indexOf(kk > 0 ? inside : outside);
+    kerbTypeL[i] = KTYPES.indexOf(kk > 0 ? outside : inside);
+  }
+  const kerbYR = (i, u) => kerbHeight(KS, KTYPES[kerbTypeR[i]], u) + 0.002, kerbYL = (i, u) => kerbHeight(KS, KTYPES[kerbTypeL[i]], u) + 0.002;
   const lines = [
     strip(track, i => -wl(i), i => -wl(i) + LW, c(0.004), c(0.004), { mask: i => !blueL.m[i] }),
     strip(track, i => wr(i) - LW, wr, c(0.004), c(0.004), { mask: i => !blueR.m[i] }),
     // moved white lines, on the kerb
-    strip(track, i => wr(i) + blueR.on[i] - LW / 2, i => wr(i) + blueR.on[i] + LW / 2, i => kerbY(blueR.on[i]) + 0.004, i => kerbY(blueR.on[i]) + 0.004, { mask: i => blueR.m[i] }),
-    strip(track, i => -wl(i) - blueL.on[i] - LW / 2, i => -wl(i) - blueL.on[i] + LW / 2, i => kerbY(blueL.on[i]) + 0.004, i => kerbY(blueL.on[i]) + 0.004, { mask: i => blueL.m[i] }),
+    strip(track, i => wr(i) + blueR.on[i] - LW / 2, i => wr(i) + blueR.on[i] + LW / 2, i => kerbYR(i, blueR.on[i]) + 0.004, i => kerbYR(i, blueR.on[i]) + 0.004, { mask: i => blueR.m[i] }),
+    strip(track, i => -wl(i) - blueL.on[i] - LW / 2, i => -wl(i) - blueL.on[i] + LW / 2, i => kerbYL(i, blueL.on[i]) + 0.004, i => kerbYL(i, blueL.on[i]) + 0.004, { mask: i => blueL.m[i] }),
   ];
   const blueGeo = [
-    strip(track, i => wr(i) + blueR.on[i] + LW / 2, i => wr(i) + blueR.on[i] + LW / 2 + 0.15, i => kerbY(blueR.on[i] + 0.2) + 0.004, i => kerbY(blueR.on[i] + 0.3) + 0.004, { mask: i => blueR.m[i] }),
-    strip(track, i => -wl(i) - blueL.on[i] - LW / 2 - 0.15, i => -wl(i) - blueL.on[i] - LW / 2, i => kerbY(blueL.on[i] + 0.3) + 0.004, i => kerbY(blueL.on[i] + 0.2) + 0.004, { mask: i => blueL.m[i] }),
+    strip(track, i => wr(i) + blueR.on[i] + LW / 2, i => wr(i) + blueR.on[i] + LW / 2 + 0.15, i => kerbYR(i, blueR.on[i] + 0.2) + 0.004, i => kerbYR(i, blueR.on[i] + 0.3) + 0.004, { mask: i => blueR.m[i] }),
+    strip(track, i => -wl(i) - blueL.on[i] - LW / 2 - 0.15, i => -wl(i) - blueL.on[i] - LW / 2, i => kerbYL(i, blueL.on[i] + 0.3) + 0.004, i => kerbYL(i, blueL.on[i] + 0.2) + 0.004, { mask: i => blueL.m[i] }),
   ];
   // the part of the kerb inside a moved white line is painted black (T9 / T10)
   const blackGeo = [
-    strip(track, wr, i => wr(i) + blueR.on[i] - LW / 2, c(0.008), i => kerbY(blueR.on[i]) + 0.003, { mask: i => blueR.m[i] && blueR.on[i] > 0.3 }),
-    strip(track, i => -wl(i) - blueL.on[i] + LW / 2, i => -wl(i), i => kerbY(blueL.on[i]) + 0.003, c(0.008), { mask: i => blueL.m[i] && blueL.on[i] > 0.3 }),
+    strip(track, wr, i => wr(i) + blueR.on[i] - LW / 2, c(0.008), i => kerbYR(i, blueR.on[i]) + 0.003, { mask: i => blueR.m[i] && blueR.on[i] > 0.3 }),
+    strip(track, i => -wl(i) - blueL.on[i] + LW / 2, i => -wl(i), i => kerbYL(i, blueL.on[i]) + 0.003, c(0.008), { mask: i => blueL.m[i] && blueL.on[i] > 0.3 }),
   ];
-  // kerbs (raised 4 cm at their outer edge), 2 m wide, inside of each corner + exit on the outside
-  const kerbGeo = [
-    strip(track, wr, i => wr(i) + KERB_W, c(0.006), c(0.04), { mask: i => kerbR[i], vLen: 2.0, uFixed: [0, 1] }),
-    strip(track, i => -wl(i) - KERB_W, i => -wl(i), c(0.04), c(0.006), { mask: i => kerbL[i], vLen: 2.0, uFixed: [0, 1] }),
-  ];
-  add(mergeGeometries(kerbGeo), M.kerb, 'RBR_Kerbs');
+  // kerbs with real profiles (style data): flat, raised and sawtooth, 2 m wide; red / white blocks along the track
+  {
+    const matOf = { flat: M.kerbFlat, raised: M.kerbRaised, sawtooth: M.kerbSaw };
+    KTYPES.forEach((t, ti) => {
+      const P = KS.profiles[t], W = P[P.length - 1][0], g = [];
+      for (let k = 1; k < P.length; k++) {
+        const u0 = P[k - 1][0], u1 = P[k][0], h0 = P[k - 1][1], h1 = P[k][1];
+        g.push(strip(track, i => wr(i) + u0, i => wr(i) + u1, c(h0), c(h1), { mask: i => kerbR[i] && kerbTypeR[i] === ti, vLen: 2 * KS.stripe, uFixed: [u0 / W, u1 / W] }));
+        g.push(strip(track, i => -wl(i) - u1, i => -wl(i) - u0, c(h1), c(h0), { mask: i => kerbL[i] && kerbTypeL[i] === ti, vLen: 2 * KS.stripe, uFixed: [u1 / W, u0 / W] }));
+      }
+      // small outer face down to the ground
+      g.push(wallStrip(track, i => wr(i) + W, c(P[P.length - 1][1]), c(-0.02), { mask: i => kerbR[i] && kerbTypeR[i] === ti, vLen: 2 * KS.stripe, uFixed: [1, 1] }));
+      g.push(wallStrip(track, i => -wl(i) - W, c(-0.02), c(P[P.length - 1][1]), { mask: i => kerbL[i] && kerbTypeL[i] === ti, vLen: 2 * KS.stripe, uFixed: [1, 1] }));
+      add(mergeGeometries(g), matOf[t], 'RBR_Kerbs_' + t, { receive: true });
+    });
+  }
   // yellow sausage kerbs just behind the T1 / T3 exit kerbs (ridge 0.5 m wide, 12 cm high)
   {
-    const SA = KERB_W + 0.35, SB = SA + 0.25, SC = SB + 0.25, SH = 0.12;
+    const SA = KERB_W + 0.35, SB = SA + KS.sausage.width / 2, SC = SB + KS.sausage.width / 2, SH = KS.sausage.height;
     const g = [
       strip(track, i => wr(i) + SA, i => wr(i) + SB, c(0.03), c(SH), { mask: i => sausR.m[i] }),
       strip(track, i => wr(i) + SB, i => wr(i) + SC, c(SH), c(0.03), { mask: i => sausR.m[i] }),
@@ -311,6 +394,15 @@ export function createRedBullRing() {
       strip(track, i => -wl(i) - SC, i => -wl(i) - SB, c(0.03), c(SH), { mask: i => sausL.m[i] }),
     ];
     add(mergeGeometries(g.map(x => { x.deleteAttribute('uv'); return x; })), M.sausage, 'RBR_Kerbs_Sausage', { cast: true });
+    /** kerb / sausage height (m) under a point found with track.locate: used by the drive mode so the car bumps over kerbs */
+    root.userData.kerbAt = (L) => {
+      const right = L.lat > 0, i = L.i, u = Math.abs(L.lat) - (right ? L.wr : L.wl);
+      if (u < 0) return 0;
+      let h = 0;
+      if (right ? kerbR[i] : kerbL[i]) h = kerbHeight(KS, KTYPES[right ? kerbTypeR[i] : kerbTypeL[i]], u, L.sp || 0);
+      if ((right ? sausR.m[i] : sausL.m[i]) && u > SA && u < SC) h = Math.max(h, SH * (1 - Math.abs(u - SB) / (SB - SA)));
+      return h;
+    };
   }
   add(mergeGeometries(blueGeo.map(g => { g.deleteAttribute('uv'); return g; })), M.blue, 'RBR_White_Lines_Blue');
   add(mergeGeometries(blackGeo.map(g => { g.deleteAttribute('uv'); return g; })), M.kerbBlack, 'RBR_Kerbs_Black');
@@ -489,44 +581,97 @@ export function createRedBullRing() {
     wallMaskR[i] = nearPit(xr, zr, PW / 2 - 0.3) ? 0 : 1;
     wallMaskL[i] = nearPit(xl, zl, PW / 2 - 0.3) ? 0 : 1;
   }
-  const WH = 1.05, WT = 0.5, FH = 4.0;
+  const WH = BS.wallHeight, WT = 0.5, FH = FS.height;
   const mR = i => wallMaskR[i], mL = i => wallMaskL[i];
-  const wallGeo = mergeGeometries([
-    wallStrip(track, barRi, c(-0.3), c(WH), { mask: mR }),
+  // concrete walls: textured faces (panel joints, splash zone), plain top
+  add(mergeGeometries([
+    wallStrip(track, barRi, c(-0.3), c(WH), { mask: mR, vLen: 4, uFixed: [0, 1] }),
+    wallStrip(track, i => barRi(i) + WT, c(WH), c(-0.3), { mask: mR, vLen: 4, uFixed: [1, 0] }),
+    wallStrip(track, barLi, c(WH), c(-0.3), { mask: mL, vLen: 4, uFixed: [1, 0] }),
+    wallStrip(track, i => barLi(i) - WT, c(-0.3), c(WH), { mask: mL, vLen: 4, uFixed: [0, 1] }),
+  ]), M.wallConcrete, 'RBR_Concrete_Walls', { cast: false });
+  add(mergeGeometries([
     strip(track, barRi, i => barRi(i) + WT, c(WH), c(WH), { mask: mR }),
-    wallStrip(track, i => barRi(i) + WT, c(WH), c(-0.3), { mask: mR }),
-    wallStrip(track, barLi, c(WH), c(-0.3), { mask: mL }),
     strip(track, i => barLi(i) - WT, barLi, c(WH), c(WH), { mask: mL }),
-    wallStrip(track, i => barLi(i) - WT, c(-0.3), c(WH), { mask: mL }),
-  ].map(g => { g.deleteAttribute('uv'); return g; }));
-  add(wallGeo, M.concrete, 'RBR_Concrete_Walls', { cast: false });
+  ].map(g => { g.deleteAttribute('uv'); return g; })), M.concrete, 'RBR_Concrete_Wall_Tops', { cast: false });
+  // tyre walls (OSM) in front of the concrete; TecPro-style blocks at the big stops (style data), belted tyres elsewhere
+  const tyreMR = i => (D.tyreR ? D.tyreR[i] : D.gravR[i] > 2) && mR(i), tyreML = i => (D.tyreL ? D.tyreL[i] : D.gravL[i] > 2) && mL(i);
+  const nearBigStop = new Uint8Array(n);
+  for (let i = 0; i < n; i++) { const sp = track.spOf(i); nearBigStop[i] = (BS.tecproTurns || []).some(t => { const d = ((turnSpK[t - 1] - sp) % track.length + track.length) % track.length; return d < 40 || d > track.length - 160; }) ? 1 : 0; }
+  const beltR = i => tyreMR(i) && !nearBigStop[i], beltL = i => tyreML(i) && !nearBigStop[i];
+  // sponsor wraps: walls facing the track and the tyre-wall belts. Right-hand side runs the texture backwards so the
+  // lettering reads left to right from the track on both sides.
+  const wrapV = BS.wrapLength * BS.sponsors.length;
   add(mergeGeometries([
-    wallStrip(track, i => barRi(i) + WT / 2, c(WH), c(WH + FH), { mask: mR, vLen: 1.6, uFixed: [0, FH / 1.6] }),
-    wallStrip(track, i => barLi(i) - WT / 2, c(WH + FH), c(WH), { mask: mL, vLen: 1.6, uFixed: [FH / 1.6, 0] }),
-  ]), M.fence, 'RBR_Debris_Fence', { receive: false });
-  // tyre walls in front of the concrete where there is a gravel trap
+    wallStrip(track, i => barRi(i) - 0.02, c(0.12), c(WH - 0.08), { mask: i => mR(i) && !tyreMR(i), vLen: -wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barLi(i) + 0.02, c(0.12), c(WH - 0.08), { mask: i => mL(i) && !tyreML(i), vLen: wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barRi(i) - 0.72, c(0.02), c(1.0), { mask: beltR, vLen: -wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barLi(i) + 0.72, c(0.02), c(1.0), { mask: beltL, vLen: wrapV, uFixed: [0, 1] }),
+  ]), M.sponsor, 'RBR_Sponsor_Wraps');
   add(mergeGeometries([
-    wallStrip(track, i => barRi(i) - 0.7, c(-0.05), c(1.0), { mask: i => (D.tyreR ? D.tyreR[i] : D.gravR[i] > 2) && mR(i), vLen: 2.4, uFixed: [0, 0.5] }),
-    wallStrip(track, i => barLi(i) + 0.7, c(1.0), c(-0.05), { mask: i => (D.tyreL ? D.tyreL[i] : D.gravL[i] > 2) && mL(i), vLen: 2.4, uFixed: [0.5, 0] }),
-  ]), M.tyres, 'RBR_Tyre_Walls');
-  // fence posts (instanced)
+    strip(track, i => barRi(i) - 0.72, barRi, c(1.0), c(1.0), { mask: beltR, vLen: 1.0, uFixed: [0, 1] }),
+    strip(track, barLi, i => barLi(i) + 0.72, c(1.0), c(1.0), { mask: beltL, vLen: 1.0, uFixed: [0, 1] }),
+  ]), M.tyreTop, 'RBR_Tyre_Walls');
   {
-    const postGeo = new THREE.BoxGeometry(0.12 * DM, (FH + 0.3) * DM, 0.12 * DM);
-    const mats = [];
-    const m4 = new THREE.Matrix4();
-    let acc = 0;
-    for (let i = 0; i < n; i++) {
-      acc += track.ds; if (acc < 6) continue; acc = 0;
-      for (const side of [1, -1]) {
-        if (!(side > 0 ? mR(i) : mL(i))) continue;
-        const lat = side > 0 ? barRi(i) + WT / 2 : barLi(i) - WT / 2;
-        m4.makeTranslation((track.x[i] + track.rx(i) * lat) * DM, (track.y[i] + WH + (FH + 0.3) / 2) * DM, (track.z[i] + track.rz(i) * lat) * DM);
-        mats.push(m4.clone());
+    const T = BS.tecpro, mats = [], cols = [], m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), cc = new THREE.Color();
+    const geo = new THREE.BoxGeometry(T.length * 0.96 * DM, T.height * DM, T.depth * DM); geo.translate(0, T.height / 2 * DM, 0);
+    for (const side of [1, -1]) {
+      let acc = 0, k = 0;
+      for (let i = 0; i < n; i++) {
+        acc += track.ds; if (acc < T.length) continue; acc = 0;
+        if (!nearBigStop[i] || !(side > 0 ? tyreMR(i) : tyreML(i))) continue;
+        const lat = side > 0 ? barRi(i) - T.depth / 2 - 0.05 : barLi(i) + T.depth / 2 + 0.05;
+        q.setFromAxisAngle(up, Math.atan2(-track.tz[i], track.tx[i]));
+        m4.compose(new THREE.Vector3((track.x[i] + track.rx(i) * lat) * DM, (track.y[i] - 0.02) * DM, (track.z[i] + track.rz(i) * lat) * DM), q, new THREE.Vector3(1, 1, 1));
+        mats.push(m4.clone()); cols.push(cc.set(T.colors[k++ % T.colors.length]).clone());
       }
     }
-    const inst = new THREE.InstancedMesh(postGeo, M.steel, mats.length);
-    mats.forEach((m, k) => inst.setMatrixAt(k, m));
-    inst.name = 'RBR_Fence_Posts'; inst.computeBoundingSphere(); root.add(inst);
+    if (mats.length) {
+      const inst = new THREE.InstancedMesh(geo, M.tecpro, mats.length);
+      mats.forEach((m, k) => { inst.setMatrixAt(k, m); inst.setColorAt(k, cols[k]); });
+      inst.name = 'RBR_TecPro'; inst.castShadow = true; inst.receiveShadow = true; inst.computeBoundingSphere(); root.add(inst);
+    }
+  }
+  // debris catch fence on the walls: mesh panel, angled top section leaning toward the track, cables, posts
+  {
+    const ovx = FS.overhang * Math.cos(FS.overhangAngle), ovy = FS.overhang * Math.sin(FS.overhangAngle);
+    const fR = i => barRi(i) + WT / 2, fL = i => barLi(i) - WT / 2, top = WH + FH, rep = 0.8;
+    add(mergeGeometries([
+      wallStrip(track, fR, c(WH), c(top), { mask: mR, vLen: rep, uFixed: [0, FH / rep] }),
+      wallStrip(track, fL, c(top), c(WH), { mask: mL, vLen: rep, uFixed: [FH / rep, 0] }),
+      strip(track, i => fR(i) - ovx, fR, c(top + ovy), c(top), { mask: mR, vLen: rep, uFixed: [FS.overhang / rep, 0] }),
+      strip(track, fL, i => fL(i) + ovx, c(top), c(top + ovy), { mask: mL, vLen: rep, uFixed: [0, FS.overhang / rep] }),
+    ]), M.fence, 'RBR_Debris_Fence', { receive: false });
+    const cab = [];
+    for (const h of FS.cables) {
+      cab.push(wallStrip(track, fR, c(WH + h), c(WH + h + 0.025), { mask: mR }), wallStrip(track, fL, c(WH + h + 0.025), c(WH + h), { mask: mL }));
+    }
+    cab.push(wallStrip(track, i => fR(i) - ovx, c(top + ovy - 0.03), c(top + ovy), { mask: mR }), wallStrip(track, i => fL(i) + ovx, c(top + ovy), c(top + ovy - 0.03), { mask: mL }));
+    add(mergeGeometries(cab.map(g => { g.deleteAttribute('uv'); return g; })), M.cable, 'RBR_Fence_Cables', { receive: false });
+    // posts every postSpacing metres, with the bent top arm
+    const postGeo = new THREE.BoxGeometry(0.1 * DM, (FH + 0.3) * DM, 0.1 * DM); postGeo.translate(0, (FH + 0.3) / 2 * DM, 0);
+    const armGeo = new THREE.BoxGeometry(0.08 * DM, FS.overhang * DM, 0.08 * DM); armGeo.translate(0, FS.overhang / 2 * DM, 0);
+    const mats = [], arms = [];
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    let acc = 0;
+    for (let i = 0; i < n; i++) {
+      acc += track.ds; if (acc < FS.postSpacing) continue; acc = 0;
+      for (const side of [1, -1]) {
+        if (!(side > 0 ? mR(i) : mL(i))) continue;
+        const lat = side > 0 ? fR(i) : fL(i);
+        const x = (track.x[i] + track.rx(i) * lat) * DM, z = (track.z[i] + track.rz(i) * lat) * DM;
+        m4.makeTranslation(x, (track.y[i] + WH - 0.3) * DM, z); mats.push(m4.clone());
+        // arm: tilt from vertical toward the track (rotate about the track tangent)
+        const yaw = Math.atan2(-track.tz[i], track.tx[i]);
+        e.set(-side * (Math.PI / 2 - FS.overhangAngle), yaw, 0, 'YXZ'); q.setFromEuler(e);
+        m4.compose(new THREE.Vector3(x, (track.y[i] + top) * DM, z), q, new THREE.Vector3(1, 1, 1)); arms.push(m4.clone());
+      }
+    }
+    for (const [geo, list, name] of [[postGeo, mats, 'RBR_Fence_Posts'], [armGeo, arms, 'RBR_Fence_Arms']]) {
+      const inst = new THREE.InstancedMesh(geo, M.steel, list.length);
+      list.forEach((m, k) => inst.setMatrixAt(k, m));
+      inst.name = name; inst.computeBoundingSphere(); root.add(inst);
+    }
   }
 
   // ---------------------------------------------------------------- 5. terrain (inner 20 m grid + outer 100 m grid + far ridge ring)
@@ -737,11 +882,8 @@ export function createRedBullRing() {
     const ax = -nz, az = nx; // right-hand along-board axis when looking at the face
     const P = (a, hh) => [x + ax * a * -1 + nx * 0.06, y0 + hh, z + az * a * -1 + nz * 0.06];
     signs.add([P(-w / 2, 0), P(w / 2, 0), P(w / 2, h), P(-w / 2, h)], atlas.uv[key]);
-    if (back) posts.push(boxAt(w + 0.1, h + 0.1, 0.1, x, y0 + h / 2, z, ax, az));
-    if (post && y0 > 0.3) {
-      const base = terrainBase(x, z);
-      for (const e of [-0.4, 0.4]) posts.push(boxAt(0.15, y0 - base + 0.3, 0.15, x + ax * e * w, (y0 + base) / 2, z + az * e * w));
-    }
+    if (back && !post) posts.push(boxAt(w + 0.1, h + 0.1, 0.1, x, y0 + h / 2, z, ax, az));
+    if (post) posts.push(...frameParts(boxAt, { x, z, y0, w, h, ax: -ax, az: -az, nx, nz, ground: terrainBase(x, z) - 0.05 }));
   };
   const terrainBase = (x, z) => { const L = track.locate(x, z, -1); return Math.abs(L.lat) < Math.max(L.barR, L.barL) + 6 ? L.y : Math.min(L.y, terrain.height(x, z)); };
   // turn number boards (outside of each corner, behind the barrier)
@@ -755,20 +897,21 @@ export function createRedBullRing() {
     const lat = out > 0 ? F.barR + 2.5 : -(F.barL + 2.5);
     const x = F.x + F.rx * lat, z = F.z + F.rz * lat;
     // face the approaching cars, angled towards the track
-    board('T' + (k + 1), x, z, F.y + 2.2, 4.0, 1.0, -F.tx - F.rx * out * 0.8, -F.tz - F.rz * out * 0.8);
+    const TB = STYLE.signs.turnBoard;
+    board('T' + (k + 1), x, z, F.y + TB.bottom, TB.width, TB.height, -F.tx - F.rx * out * 0.8, -F.tz - F.rz * out * 0.8);
     root.userData.turns.push({ n: k + 1, sp, x: F.x, z: F.z, y: F.y, right });
-    // braking boards before the three big stops
-    if ([1, 3, 4].includes(k + 1)) {
-      for (const [key, dist] of [['B300', 300], ['B200', 200], ['B100', 100]]) {
+    // braking distance boards (style data) on the outside of the approach, on their own frames
+    const BB = STYLE.signs.brakingBoards;
+    if (BB.turns.includes(k + 1)) {
+      for (const dist of BB.distances) {
         const B = track.at(sp - 45 - dist);
-        const bl = out > 0 ? B.wr + KERB_W + 1.2 : -(B.wl + KERB_W + 1.2);
-        board(key, B.x + B.rx * bl, B.z + B.rz * bl, B.y + 0.25, 2.4, 0.6, -B.tx, -B.tz, { post: false });
-        posts.push(boxAt(0.12, 0.3, 0.12, B.x + B.rx * bl, B.y + 0.12, B.z + B.rz * bl));
+        const bl = out > 0 ? B.wr + KERB_W + 1.6 : -(B.wl + KERB_W + 1.6);
+        board('B' + dist, B.x + B.rx * bl, B.z + B.rz * bl, B.y + BB.bottom, BB.width, BB.height, -B.tx, -B.tz);
       }
     }
   });
   // hoardings on the debris fence along the main straight + key corners (text only)
-  const hoard = ['RBR', 'SPIELBERG', 'GRANDPRIX', 'STYRIA', 'SRE'];
+  const hoard = ['RBR', ...STYLE.barriers.sponsors.map(sp => 'SP_' + sp.name.toUpperCase().replace(/\W/g, '')), 'SPIELBERG', 'GRANDPRIX', 'SRE'];
   let hk = 0;
   const hoardRange = (sp0, sp1, side, stepM = 26) => {
     for (let sp = sp0; sp < sp1; sp += stepM) {
@@ -776,7 +919,7 @@ export function createRedBullRing() {
       const iF = F.i;
       if (side > 0 ? !wallMaskR[iF] : !wallMaskL[iF]) continue;
       const lat = side > 0 ? F.barR + 0.1 : -(F.barL + 0.1);
-      board(hoard[hk++ % hoard.length], F.x + F.rx * lat, F.z + F.rz * lat, F.y + 1.25, 7.2, 1.8, -F.rx * side, -F.rz * side, { post: false });
+      board(hoard[hk++ % hoard.length], F.x + F.rx * lat, F.z + F.rz * lat, F.y + STYLE.signs.billboard.bottom, STYLE.signs.billboard.width, STYLE.signs.billboard.height, -F.rx * side, -F.rz * side, { post: false });
     }
   };
   hoardRange(-420, 380, -1);
