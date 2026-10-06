@@ -26,6 +26,7 @@ import { materials as defaultMaterials } from '../materials.js';
 import { createDriverHelmet, helmetTexture } from './driver_helmet.js';
 import { sweepGeometry } from './sweep_section.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { fabricMaterial, dyed, createSuitTorsoTexture, createSuitLimbTexture, createPatchAtlas, patchMaterial, buildTorso, makeSuitLimb, poseSuitLimb } from './driver_suit.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -103,196 +104,9 @@ export function computeDriverPose(settings = DRIVER_DEFAULTS) {
 }
 
 // =========================================================================
-// 3. FABRIC TEXTURES (race suit, gloves, boots)
-//    Colour maps carry the stitched panel layout, piping, elastic cuffs and sponsor patches.
-//    Normal maps (made from a height field) carry the Nomex weave, stitch lines and the fold
-//    and crease wrinkles at the waist, shoulders, elbows and knees (ref D2).
+// 3. FABRIC: materials, colour maps, patches, displaced suit geometry live in driver_suit.js
 // =========================================================================
-
-const SPONSORS = { chest: ['ORACLE', 'Mobil 1'], belt: 'TAG HEUER', arm: ['ORACLE', 'Bybit'], leg: ['Mobil 1', 'Red Bull'] };
-
-function makeCanvas(w, h) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; return cv; }
-function texFrom(cv, srgb = true) {
-  const t = new THREE.CanvasTexture(cv); if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8; t.wrapS = THREE.RepeatWrapping; return t;
-}
-
-/** Small sponsor patch, rotated (rot in radians) about its centre. */
-function patch(g, x, y, w, h, text, { bg = '#ffffff', fg = '#18245e', rot = 0, font = '800', border = null } = {}) {
-  g.save(); g.translate(x, y); g.rotate(rot);
-  g.fillStyle = bg; const r = Math.min(w, h) * 0.18;
-  g.beginPath(); g.roundRect ? g.roundRect(-w / 2, -h / 2, w, h, r) : g.rect(-w / 2, -h / 2, w, h); g.fill();
-  if (border) { g.strokeStyle = border; g.lineWidth = Math.max(1.5, h * 0.06); g.stroke(); }
-  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
-  let size = h * 0.62; g.font = `${font} ${size}px Arial, Helvetica, sans-serif`;
-  while (g.measureText(text).width > w * 0.86 && size > 4) { size -= 1; g.font = `${font} ${size}px Arial, Helvetica, sans-serif`; }
-  g.fillText(text, 0, h * 0.04); g.restore();
-}
-/** Dashed stitch line. */
-function stitch(g, x0, y0, x1, y1, col = 'rgba(255,255,255,0.35)', dash = 5) {
-  g.save(); g.strokeStyle = col; g.lineWidth = 1.4; g.setLineDash([dash, dash * 0.8]);
-  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.restore();
-}
-/** Ribbed elastic cuff band between canvas rows y0..y1. */
-function ribbedCuff(g, w, y0, y1, col) {
-  g.fillStyle = col; g.fillRect(0, y0, w, y1 - y0);
-  g.fillStyle = 'rgba(0,0,0,0.28)'; for (let x = 0; x < w; x += 6) g.fillRect(x, y0, 2, y1 - y0);
-}
-
-/**
- * Height field -> tangent-space normal map. heightFn(x, y) returns 0..1 (x, y in pixels).
- * Includes a fine plain-weave Nomex texture everywhere.
- */
-function normalMapFrom(w, h, heightFn, strength = 2.2) {
-  const H = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const weave = 0.03 * (((x >> 1) + (y >> 1)) & 1 ? 1 : -1) + 0.02 * Math.sin(x * 1.9) * Math.sin(y * 1.7);
-    H[y * w + x] = heightFn(x, y) + weave;
-  }
-  const cv = makeCanvas(w, h), g = cv.getContext('2d'), img = g.createImageData(w, h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const xl = H[y * w + ((x - 1 + w) % w)], xr = H[y * w + ((x + 1) % w)];
-    const yu = H[Math.max(0, y - 1) * w + x], yd = H[Math.min(h - 1, y + 1) * w + x];
-    let nx = (xl - xr) * strength, ny = (yd - yu) * strength, nz = 1; // canvas y down = texture v down
-    const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
-    const i = (y * w + x) * 4;
-    img.data[i] = (nx * 0.5 + 0.5) * 255; img.data[i + 1] = (ny * 0.5 + 0.5) * 255; img.data[i + 2] = (nz * 0.5 + 0.5) * 255; img.data[i + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  return texFrom(cv, false);
-}
-
-/** Wavy crease folds around a row yc (pixels): count folds spread over +-spread, depth amp. */
-function creaseField(yc, spread, count, amp, seed, w) {
-  const folds = [];
-  for (let k = 0; k < count; k++) {
-    const r = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; const fr = r - Math.floor(r);
-    folds.push({ y: yc + (k / Math.max(1, count - 1) - 0.5) * 2 * spread + (fr - 0.5) * spread * 0.4, ph: fr * 6.28, f: (2 + Math.floor(fr * 3)) * Math.PI * 2 / w, a: 4 + fr * 6, s: 3 + fr * 3, d: amp * (0.6 + 0.4 * fr) });
-  }
-  return (x, y) => {
-    let v = 0;
-    for (const F of folds) {
-      const yy = y - F.y - F.a * Math.sin(x * F.f + F.ph);
-      const side = 0.55 + 0.45 * Math.sin(x * Math.PI * 2 / w * 2 + F.ph); // folds fade round the limb
-      v += F.d * side * Math.exp(-(yy * yy) / (F.s * F.s));
-    }
-    return v;
-  };
-}
-
-// Torso map: u round the body (0 = spine, 0.25 / 0.75 = sides, 0.5 = chest), v seat (0) to collar (1).
-const TORSO_W = 1024, TORSO_H = 512;
-export function createSuitTorsoTexture(suit) {
-  const w = TORSO_W, h = TORSO_H, cv = makeCanvas(w, h), g = cv.getContext('2d');
-  const Y = (v) => h * (1 - v);
-  g.fillStyle = suit.base; g.fillRect(0, 0, w, h);
-  // side panels from the hips up under each arm, edged with yellow piping and stitching
-  [0.25, 0.75].forEach((c) => {
-    g.fillStyle = suit.panel; g.fillRect(w * (c - 0.05), 0, w * 0.1, h);
-    g.fillStyle = suit.accent; g.fillRect(w * (c - 0.056), 0, w * 0.006, h); g.fillRect(w * (c + 0.05), 0, w * 0.006, h);
-    stitch(g, w * (c - 0.062), 0, w * (c - 0.062), h); stitch(g, w * (c + 0.062), 0, w * (c + 0.062), h);
-  });
-  // yoke seam across the chest and back, waist band
-  stitch(g, 0, Y(0.8), w, Y(0.8));
-  g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, Y(0.2), w, h * 0.06);
-  stitch(g, 0, Y(0.2), w, Y(0.2)); stitch(g, 0, Y(0.14), w, Y(0.14));
-  // short stand-up collar edge (the collar itself is a separate part)
-  g.fillStyle = suit.accent; g.fillRect(0, 0, w, h * 0.03);
-  // front zip with a cover flap
-  g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(w * 0.497, Y(0.97), w * 0.006, h * 0.75);
-  stitch(g, w * 0.488, Y(0.97), w * 0.488, Y(0.22), 'rgba(255,255,255,0.25)', 4);
-  // chest: big team logo across both sides of the zip, sponsor patches on each breast
-  g.save(); g.translate(w * 0.5, Y(0.6)); g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = '900 50px "Arial Black", Impact, sans-serif'; g.lineWidth = 7; g.strokeStyle = suit.accent; g.fillStyle = suit.panel;
-  g.strokeText(suit.logo || '', 0, 0); g.fillText(suit.logo || '', 0, 0); g.restore();
-  patch(g, w * 0.43, Y(0.78), 70, 22, SPONSORS.chest[0], { bg: '#ffffff', fg: '#c8102e' });
-  patch(g, w * 0.57, Y(0.78), 70, 22, SPONSORS.chest[1], { bg: '#ffffff', fg: '#0b3b8c' });
-  patch(g, w * 0.5, Y(0.44), 90, 20, 'Visa', { bg: suit.base, fg: '#ffffff', border: suit.accent });
-  // belt sponsor front and back
-  patch(g, w * 0.5, Y(0.17), 110, 22, SPONSORS.belt, { bg: '#ffffff', fg: '#111111' });
-  patch(g, w * 0.0, Y(0.17), 110, 22, SPONSORS.belt, { bg: '#ffffff', fg: '#111111' }); patch(g, w * 1.0, Y(0.17), 110, 22, SPONSORS.belt, { bg: '#ffffff', fg: '#111111' });
-  // back: team logo between the shoulder blades
-  [0, w].forEach((x) => { g.save(); g.translate(x, Y(0.62)); g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 40px "Arial Black", Impact, sans-serif'; g.lineWidth = 6; g.strokeStyle = suit.accent; g.fillStyle = suit.panel; g.strokeText(suit.logo || '', 0, 0); g.fillText(suit.logo || '', 0, 0); g.restore(); });
-  return texFrom(cv);
-}
-let _torsoNormal = null;
-function torsoNormal() {
-  if (_torsoNormal) return _torsoNormal;
-  const w = 512, h = 256;
-  const waist = creaseField(h * 0.78, 20, 6, 0.9, 1, w), belly = creaseField(h * 0.62, 22, 3, 0.25, 2, w), shoulder = creaseField(h * 0.13, 10, 3, 0.4, 3, w);
-  const seams = [0.188, 0.312, 0.688, 0.812].map((u) => u * w);
-  return (_torsoNormal = normalMapFrom(w, h, (x, y) => {
-    let v = waist(x, y) + belly(x, y) + shoulder(x, y);
-    for (const sx of seams) v -= 0.35 * Math.exp(-((x - sx) ** 2) / 1.5);
-    v -= 0.3 * Math.exp(-((y - h * 0.2) ** 2) / 1.5);
-    return v;
-  }));
-}
-
-/**
- * Limb map (arm or leg): u round the limb, v from the shoulder / hip (0) to the wrist / ankle (1).
- * Side stripes at u 0.25 and 0.75, sponsor patches, ribbed elastic cuff at the end.
- */
-const LIMB_W = 512, LIMB_H = 1024;
-export function createSuitLimbTexture(suit, kind) {
-  const w = LIMB_W, h = LIMB_H, cv = makeCanvas(w, h), g = cv.getContext('2d');
-  const Y = (v) => h * v; // v measured from the canvas top (flipY is turned off for limb maps)
-  g.fillStyle = suit.base; g.fillRect(0, 0, w, h);
-  [0.25, 0.75].forEach((c) => {
-    g.fillStyle = suit.panel; g.fillRect(w * (c - 0.045), 0, w * 0.09, h);
-    g.fillStyle = suit.accent; g.fillRect(w * (c - 0.05), 0, w * 0.008, h); g.fillRect(w * (c + 0.042), 0, w * 0.008, h);
-    stitch(g, w * (c - 0.058), 0, w * (c - 0.058), h); stitch(g, w * (c + 0.058), 0, w * (c + 0.058), h);
-  });
-  stitch(g, w * 0.5, 0, w * 0.5, h, 'rgba(255,255,255,0.2)'); // inside-leg / under-arm seam
-  const cuffFrom = kind === 'arm' ? 0.9 : 0.93;
-  ribbedCuff(g, w, Y(cuffFrom), Y(cuffFrom + 0.06), suit.base);
-  g.fillStyle = suit.accent; g.fillRect(0, Y(cuffFrom) - 3, w, 3);
-  const names = kind === 'arm' ? SPONSORS.arm : SPONSORS.leg;
-  const pv = kind === 'arm' ? [0.22, 0.68] : [0.25, 0.7];
-  // patches face outward on both sides of the limb (u 0.125 / 0.375 sit either side of the stripe)
-  [0.0, 0.5].forEach((u0) => {
-    patch(g, w * (u0 + 0.0), Y(pv[0]), 70, 34, names[0], { bg: '#ffffff', fg: names[0] === 'ORACLE' ? '#c8102e' : '#0b3b8c', rot: 0 });
-    patch(g, w * (u0 + 0.0), Y(pv[1]), 70, 30, names[1], { bg: suit.base, fg: '#ffffff', border: suit.accent });
-  });
-  patch(g, w * 1.0, Y(pv[0]), 70, 34, names[0], { bg: '#ffffff', fg: names[0] === 'ORACLE' ? '#c8102e' : '#0b3b8c' });
-  patch(g, w * 1.0, Y(pv[1]), 70, 30, names[1], { bg: suit.base, fg: '#ffffff', border: suit.accent });
-  const t = texFrom(cv); t.flipY = false; return t;
-}
-const _limbNormal = {};
-function limbNormal(kind, jointV) {
-  const key = kind + jointV.toFixed(3);
-  if (_limbNormal[key]) return _limbNormal[key];
-  const w = 256, h = 512;
-  const joint = creaseField(h * jointV, kind === 'arm' ? 30 : 34, 7, 1.0, kind === 'arm' ? 4 : 5, w);
-  const root = creaseField(h * 0.06, 12, 3, 0.35, 6, w);
-  const cuffFrom = kind === 'arm' ? 0.9 : 0.93;
-  const t = normalMapFrom(w, h, (x, y) => {
-    let v = joint(x, y) + root(x, y);
-    for (const sx of [0.192, 0.308, 0.692, 0.808, 0.5].map((u) => u * w)) v -= 0.3 * Math.exp(-((x - sx) ** 2) / 1.2);
-    const yc = y / h; if (yc > cuffFrom && yc < cuffFrom + 0.06) v += 0.25 * Math.abs(Math.sin(x * 0.55)); // ribbing
-    return v;
-  });
-  t.flipY = false;
-  return (_limbNormal[key] = t);
-}
-
-/** Plain fabric (gloves, boots, collar): weave + a little stitching noise. */
-const _plainNormal = {};
-function fabricNormal(kind = 'nomex') {
-  if (_plainNormal[kind]) return _plainNormal[kind];
-  const w = 256, h = 256;
-  return (_plainNormal[kind] = normalMapFrom(w, h, (x, y) => kind === 'suede'
-    ? 0.15 * Math.sin(x * 0.9 + Math.sin(y * 0.7) * 2) * Math.sin(y * 1.1)
-    : 0, kind === 'suede' ? 1.4 : 2.0));
-}
-
-function fabricMat(name, colour, extra = {}) {
-  return new THREE.MeshPhysicalMaterial({
-    name, color: colour, roughness: 0.93, metalness: 0, clearcoat: 0,
-    sheen: 0.6, sheenRoughness: 0.75, sheenColor: new THREE.Color(0x8890a0),
-    normalScale: new THREE.Vector2(1.0, 1.0), ...extra,
-  });
-}
+export { createSuitTorsoTexture, createSuitLimbTexture } from './driver_suit.js';
 
 // =========================================================================
 // 4. GEOMETRY HELPERS
@@ -357,65 +171,6 @@ function placeAlong(mesh, a, b, rollRef) {
     mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, z));
   } else mesh.quaternion.setFromUnitVectors(V3(0, 1, 0), d);
   return len;
-}
-
-/**
- * One continuous sleeve / trouser leg from the shoulder (hip) through the elbow (knee) to the wrist
- * (ankle): no separate tubes and ball joints. The centre line rounds off through the joint; the
- * mesh is rebuilt in place each frame by poseLimb (about 750 vertices, cheap).
- * prof(s) -> [half width across the bend plane, half depth in the bend plane], s 0..1 along.
- */
-function makeLimbMesh(name, mat, prof, NS = 40, ring = 24) {
-  const R = ring + 1, nV = (NS + 1) * R + 2;
-  const pos = new Float32Array(nV * 3), uv = new Float32Array(nV * 2), idx = [];
-  for (let i = 0; i <= NS; i++) for (let j = 0; j <= ring; j++) { uv[(i * R + j) * 2] = j / ring; uv[(i * R + j) * 2 + 1] = i / NS; }
-  // winding gives outward faces for the ring order used in poseLimb (x = -sin, y = -cos)
-  for (let i = 0; i < NS; i++) for (let j = 0; j < ring; j++) { const a = i * R + j, b = a + 1, c = a + R, d = c + 1; idx.push(a, c, b, b, c, d); }
-  const c0 = (NS + 1) * R, c1 = c0 + 1;
-  for (let j = 0; j < ring; j++) { idx.push(c0, j, j + 1); idx.push(c1, NS * R + j + 1, NS * R + j); }
-  uv[c0 * 2] = 0.5; uv[c1 * 2] = 0.5; uv[c1 * 2 + 1] = 1;
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
-  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
-  const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = true; m.frustumCulled = false;
-  m.userData.limb = { NS, ring, prof };
-  return m;
-}
-const _ta = new THREE.Vector3(), _tb = new THREE.Vector3(), _tc = new THREE.Vector3(), _tt = new THREE.Vector3(), _tn = new THREE.Vector3();
-function poseLimb(mesh, A, B, C, hint, rBend, flip = 1) {
-  const { NS, ring, prof } = mesh.userData.limb, R = ring + 1;
-  const d1 = _ta.subVectors(B, A), L1 = d1.length(); d1.normalize();
-  const d2 = _tb.subVectors(C, B), L2 = d2.length(); d2.normalize();
-  const a = _tn.crossVectors(d1, d2);
-  if (a.lengthSq() < 1e-6) a.crossVectors(d1, hint);
-  a.normalize().multiplyScalar(flip);
-  const r = Math.min(rBend, 0.45 * L1, 0.45 * L2), L = L1 + L2;
-  const P1 = B.clone().addScaledVector(d1, -r), P2 = B.clone().addScaledVector(d2, r);
-  const pos = mesh.geometry.attributes.position.array;
-  const c = _tc, t = _tt, bb = new THREE.Vector3();
-  for (let i = 0; i <= NS; i++) {
-    const s = i / NS, l = s * L;
-    if (l <= L1 - r) { c.copy(A).addScaledVector(d1, l); t.copy(d1); }
-    else if (l >= L1 + r) { c.copy(B).addScaledVector(d2, l - L1); t.copy(d2); }
-    else {
-      const u = (l - (L1 - r)) / (2 * r), w0 = (1 - u) * (1 - u), w1 = 2 * (1 - u) * u, w2 = u * u;
-      c.set(0, 0, 0).addScaledVector(P1, w0).addScaledVector(B, w1).addScaledVector(P2, w2);
-      t.subVectors(B, P1).multiplyScalar(2 * (1 - u)).addScaledVector(bb.subVectors(P2, B), 2 * u).normalize();
-    }
-    bb.crossVectors(t, a).normalize();
-    const [ra, rb] = prof(s);
-    for (let j = 0; j <= ring; j++) {
-      const ph = (j / ring) * Math.PI * 2, k = (i * R + j) * 3;
-      const x = -Math.sin(ph) * ra, y = -Math.cos(ph) * rb; // minus: keeps patch lettering readable (not mirrored)
-      pos[k] = c.x + a.x * x + bb.x * y; pos[k + 1] = c.y + a.y * x + bb.y * y; pos[k + 2] = c.z + a.z * x + bb.z * y;
-    }
-  }
-  const c0 = (NS + 1) * R;
-  pos[c0 * 3] = A.x; pos[c0 * 3 + 1] = A.y; pos[c0 * 3 + 2] = A.z;
-  pos[c0 * 3 + 3] = C.x; pos[c0 * 3 + 4] = C.y; pos[c0 * 3 + 5] = C.z;
-  mesh.geometry.attributes.position.needsUpdate = true;
-  mesh.geometry.computeVertexNormals();
-  mesh.geometry.computeBoundingSphere();
 }
 
 /**
@@ -534,19 +289,23 @@ export function createArticulatedDriver(options = {}) {
   // ---- materials (own instances so team changes never touch the car)
   // matte Nomex fabric everywhere on the suit; dark suede-like gloves; fabric boots with rubber soles
   const jointV = { arm: S.body.upperArm / (S.body.upperArm + S.body.forearm), leg: S.body.thigh / (S.body.thigh + S.body.shin) };
-  const suitTorsoMat = fabricMat('Driver_RaceSuit_Torso', 0xffffff, { map: createSuitTorsoTexture(S.suit), normalMap: torsoNormal() });
-  const armMat = fabricMat('Driver_RaceSuit_Sleeve', 0xffffff, { map: createSuitLimbTexture(S.suit, 'arm'), normalMap: limbNormal('arm', jointV.arm) });
-  const legMat = fabricMat('Driver_RaceSuit_Leg', 0xffffff, { map: createSuitLimbTexture(S.suit, 'leg'), normalMap: limbNormal('leg', jointV.leg) });
-  const suitMat = fabricMat('Driver_RaceSuit_Fabric', S.suit.base, { normalMap: fabricNormal() });
-  const suitPanelMat = fabricMat('Driver_RaceSuit_Panel', S.suit.panel, { normalMap: fabricNormal() });
-  const gloveMat = fabricMat('Driver_Glove_Suede', S.glove, { normalMap: fabricNormal('suede'), roughness: 0.97, sheen: 0.8, sheenColor: new THREE.Color(0x5a5e66) });
-  const bootMat = fabricMat('Driver_Boot_Fabric', S.boot, { normalMap: fabricNormal(), sheen: 0.5 });
+  const suitTorsoMat = fabricMaterial('Driver_RaceSuit_Torso', 0xffffff, { map: createSuitTorsoTexture(S.suit), size: [9, 5.2] });
+  const armMat = fabricMaterial('Driver_RaceSuit_Sleeve', 0xffffff, { map: createSuitLimbTexture(S.suit, 'arm'), size: [2.4, 5.35] });
+  const legMat = fabricMaterial('Driver_RaceSuit_Leg', 0xffffff, { map: createSuitLimbTexture(S.suit, 'leg'), size: [3.6, 8.25] });
+  const suitMat = fabricMaterial('Driver_RaceSuit_Fabric', dyed(S.suit.base), { size: [2.9, 1.45] });
+  const suitPanelMat = fabricMaterial('Driver_RaceSuit_Panel', dyed(S.suit.panel), { size: [3.8, 0.2] });
+  const pipingMat = fabricMaterial('Driver_RaceSuit_Piping', dyed(S.suit.accent), { size: [0.1, 4], side: THREE.DoubleSide });
+  const seamMat = fabricMaterial('Driver_RaceSuit_Seam', dyed(S.suit.base), { size: [0.1, 9], side: THREE.DoubleSide });
+  let atlas = createPatchAtlas(S.suit);
+  const patchMat = patchMaterial(atlas.tex);
+  const gloveMat = fabricMaterial('Driver_Glove_Suede', S.glove, { kind: 'suede', size: [1, 0.5], sheenColor: 0x6a6e76 });
+  const bootMat = fabricMaterial('Driver_Boot_Fabric', S.boot, { size: [2.4, 1.6], sheenColor: 0x70747c });
   const soleMat = new THREE.MeshStandardMaterial({ name: 'Driver_Boot_Sole', color: 0x2a2c30, roughness: 0.9 });
-  const laceMat = fabricMat('Driver_Boot_Laces', 0xd9dade, { sheen: 0.2 });
+  const laceMat = fabricMaterial('Driver_Boot_Laces', 0xd9dade, { size: [0.4, 0.05], sheenColor: 0xffffff });
   const beltMat = new THREE.MeshStandardMaterial({ name: 'Driver_Harness_Webbing', color: 0x6d7178, roughness: 0.9 });
   const metal = mats.titaniumBright || new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 0.9, roughness: 0.3 });
   const carbon = mats.carbonGlossAero || mats.carbonGloss;
-  const nomex = fabricMat('Driver_Balaclava', 0x15161a, { normalMap: fabricNormal() });
+  const nomex = fabricMaterial('Driver_Balaclava', 0x15161a, { size: [3, 1], sheenColor: 0x50545c });
   const add = (parent, geo, mat, name) => { const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = true; parent.add(m); return m; };
 
   const nodes = { arms: {}, legs: {} };
@@ -558,7 +317,9 @@ export function createArticulatedDriver(options = {}) {
     [0.34, 1.37, 0.9, 0.0], [0.52, 1.48, 0.98, 0.05], [0.7, 1.62, 1.05, 0.08], [0.86, 1.72, 0.95, 0.04],
     [0.96, 1.34, 0.74, 0.0], [1.04, 0.62, 0.55, 0.02],
   ].map(([t, ra, rb, off]) => ({ c: P.hip.clone().addScaledVector(P.u, t * T).addScaledVector(P.n, off), a: V3(0, 1, 0), b: P.n.clone(), ra, rb, p: 2.3 }));
-  add(root, loftSections(tSecs, 40), suitTorsoMat, 'Driver_RaceSuit_Torso');
+  // dense displaced loft with real fold geometry, raised piping and raised patches (driver_suit.js)
+  const torso = buildTorso(tSecs, { mat: suitTorsoMat, pipingMat, seamMat, patchMat, cells: atlas.cells });
+  [torso.mesh, torso.piping, torso.seams, torso.patches].forEach((m) => root.add(m));
 
   // ---- neck (balaclava) from C7 up to the helmet
   const neckTop = P.head.clone().add(V3(0.2, 0, -0.75));
@@ -621,7 +382,8 @@ export function createArticulatedDriver(options = {}) {
     const sn = s > 0 ? 'L' : 'R'; // +Y is the driver's left (same as the helmet)
     const sh = P.shoulder.clone().add(V3(0, s * S.body.shoulderHalf, 0));
     add(root, new THREE.SphereGeometry(0.46, 24, 16), suitMat, `Driver_RaceSuit_Shoulder_${sn}`).position.copy(sh);
-    const sleeve = makeLimbMesh(`Driver_RaceSuit_Arm_${sn}`, armMat, armProf); root.add(sleeve);
+    const armParts = makeSuitLimb(`Driver_RaceSuit_Arm_${sn}`, { mat: armMat, pipingMat, patchMat, cells: atlas.cells, prof: armProf, jointS: jointV.arm, kind: 'arm' });
+    const sleeve = armParts.mesh; root.add(sleeve, armParts.piping, armParts.patches);
     const cuff = add(root, limbGeometry(0.85, (t) => [0.37 - 0.1 * t, 0.35 - 0.09 * t]), gloveMat, `Driver_Glove_Gauntlet_${sn}`);
     const cuffRim = add(root, new THREE.TorusGeometry(0.275, 0.03, 8, 28), gloveMat, `Driver_Glove_GauntletRim_${sn}`);
     nodes.arms[s] = { sh, sleeve, cuff, cuffRim };
@@ -680,7 +442,8 @@ export function createArticulatedDriver(options = {}) {
       const calf = Math.sin(Math.PI * Math.min(1, f * 1.7));
       return [0.44 - 0.14 * f + 0.03 * calf, 0.44 - 0.14 * f + 0.06 * calf];
     };
-    const leg = makeLimbMesh(`Driver_RaceSuit_Leg_${sn}`, legMat, legProf, 44, 24); root.add(leg);
+    const legParts = makeSuitLimb(`Driver_RaceSuit_Leg_${sn}`, { mat: legMat, pipingMat, patchMat, cells: atlas.cells, prof: legProf, jointS: jointV.leg, kind: 'leg' });
+    const leg = legParts.mesh; root.add(leg, legParts.piping, legParts.patches);
     // boot: built in a foot frame (x = heel to toe, z = up from the sole) at the ankle
     const boot = new THREE.Group(); boot.name = `Driver_Boot_${sn}`;
     const bootSecs = [
@@ -753,7 +516,8 @@ export function createArticulatedDriver(options = {}) {
     if (suitTorsoMat.map) suitTorsoMat.map.dispose();
     suitTorsoMat.map = createSuitTorsoTexture(S.suit); suitTorsoMat.needsUpdate = true;
     [[armMat, 'arm'], [legMat, 'leg']].forEach(([m, k]) => { if (m.map) m.map.dispose(); m.map = createSuitLimbTexture(S.suit, k); m.needsUpdate = true; });
-    suitMat.color.set(S.suit.base); suitPanelMat.color.set(S.suit.panel);
+    suitMat.color.set(dyed(S.suit.base)); suitPanelMat.color.set(dyed(S.suit.panel)); pipingMat.color.set(dyed(S.suit.accent)); seamMat.color.set(dyed(S.suit.base));
+    atlas.tex.dispose(); atlas = createPatchAtlas(S.suit); patchMat.map = atlas.tex; patchMat.needsUpdate = true;
     gloveMat.color.set(S.glove); bootMat.color.set(S.boot);
     const shell = helmet.getObjectByName('Helmet_OuterShell');
     if (shell && S.helmet?.colours) {
@@ -788,7 +552,7 @@ export function updateDriverKinematics(driver, state = {}, steeringWheel = null,
     A.handCentre.getWorldPosition(_c); driver.worldToLocal(_c);
     const hint = V3(S.pose.elbowHint[0], s * S.pose.elbowHint[1], S.pose.elbowHint[2]);
     const E = solveTwoLinkArmIK(A.sh, _w, S.body.upperArm, S.body.forearm, hint);
-    poseLimb(A.sleeve, A.sh, E, _w, hint, 0.5);
+    poseSuitLimb(A.sleeve, A.sh, E, _w, hint, 0.5);
     // gauntlet: from just before the wrist toward the hand
     const dirWH = _c.clone().sub(_w).normalize();
     const cuffStart = _w.clone().addScaledVector(_w.clone().sub(E).normalize(), -0.55);
@@ -820,7 +584,7 @@ export function updateDriverKinematics(driver, state = {}, steeringWheel = null,
     const ankle = ball.clone().addScaledVector(P.f, -0.95).addScaledVector(P.sole, -0.35);
     const hint = V3(S.pose.kneeHint[0], s * S.pose.kneeHint[1], S.pose.kneeHint[2]);
     const K = solveTwoLinkArmIK(L.hip, ankle, S.body.thigh, S.body.shin, hint);
-    poseLimb(L.leg, L.hip, K, ankle, hint, 0.75);
+    poseSuitLimb(L.leg, L.hip, K, ankle, hint, 0.75);
     // boot frame: x = heel to toe (f), z = up out of the instep (-sole)
     const x = P.f.clone(), z = P.sole.clone().negate(), y = new THREE.Vector3().crossVectors(z, x);
     L.boot.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
