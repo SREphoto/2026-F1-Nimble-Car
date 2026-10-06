@@ -133,6 +133,52 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
 6. **Car-side note.** A pit stop could also change the tyres in the tyre panel (`cad/tyre_states.js`). That is a car
    file, so it is left for the car side.
 
+7. **Reference photos (round 4 folder).** Samuel added pit lane and garage photos in `/workspace/f1-audit/refs/round4/pitlane/`
+   (P1 to P9 and G1 to G15). What they show, to build next:
+   - Pit lane (P1, P2, P8, P9): light concrete floor with a red fast-lane strip (done in round 3), yellow textured arrows
+     and box markings, air rigs, wheel guns with hoses, tyre stacks, team privacy screens, nose and wing on stands, and
+     the pit boom gantry over each box.
+   - Pit lane edge (P3, P7, P8): retractable rope barriers on chrome stanchions between the working lane and the garages.
+   - Pit wall (P4): team pit stands with monitors, bar stools and a sloped roof, in front of the tall mesh catch fence
+     on steel posts (the fence and posts are done in round 3), with grandstands and a curved canopy roof behind.
+   - Pit building (P5 to P8): two storeys over the garages, a glass balcony with slanted windows, concrete floor slabs,
+     glass balustrades, a yellow band and pillars, and the round multi-storey tower at the end of the building.
+   - Garage inside (G1 to G15): glossy light grey epoxy floor with car position markings, wall panels and cabinets in
+     the team colour, an aluminium truss overhead with a hanging light canopy over the car, cable trays and tube
+     lights, car stands, gas bottles, an engineer desk with laptop and monitors, bar stools, flight cases, tyre racks,
+     and the open door to the pit lane.
+8. **Garage goals.** The car can drive in and out of its garage, our car can be parked inside on stands, and every
+   garage takes its colours from that team's livery in `/workspace/f1-teams/teams_liveries.json` (the `colors` field),
+   so one garage builder serves all 11 teams. Put the garage contents (positions and sizes) in a style data file like
+   `cad/track/styles/red_bull_ring_style.js`, not in the builder.
+
+## Round 3 (October 5, 2026): trackside quality
+
+### Done
+- **Style data and shared builders.** Everything that sets the look of the trackside (asphalt colours, kerb profiles,
+  kerb types per corner, sponsor colours, TecPro blocks, sign sizes, fence height, pit lane colours) is in
+  `cad/track/styles/red_bull_ring_style.js`. The texture and shape builders that read it are in `cad/track/trackside.js`
+  and work for any circuit.
+- **Track surface.** Asphalt with fine grain, a little bump, and seams; a darker rubbered racing line that follows the
+  race line and gets darker in the corners; repair patches; and a "Wet sheen" button in the track panel that makes the
+  surface shinier (look only).
+- **Kerbs.** Three cross-section profiles (flat, raised, sawtooth) with real height, red and white blocks, and the yellow
+  sausage kerbs behind the T1 and T3 exits. The car body and wheels now move up when a wheel runs over a kerb
+  (look only, the lap physics are unchanged).
+- **Barriers.** Textured concrete walls with sponsor wraps (Red Bull, Pirelli, Aramco, Rolex, DHL, text and colours
+  only), tyre walls with sponsor belts, and blue and white TecPro blocks at the T1, T3 and T4 stops.
+- **Signs.** Corner number boards and braking boards (300, 200, 100, 50 m at T1, T3 and T4) on framed legs, sponsor
+  billboards, and a sharper sign texture.
+- **Fencing.** Debris fence about 3.6 m above the wall, with a see-through mesh that still reads as mesh far away,
+  three cables, posts every 4 m and an angled top section. The pit wall uses the same fence with posts.
+- **Pit lane.** Light concrete slabs and a red fast-lane strip along the pit wall side.
+
+### Left to do
+- Armco guard rail builder is ready in the style data but unused, because the Red Bull Ring map has none.
+- TecPro positions are a reasonable guess for the big stops, not checked against photos.
+- Kerb bumps are visual only. Real grip or speed loss on kerbs would need a physics change.
+- Yellow arrows and the rest of the pit lane and garage list in item 7 of the garage plan above.
+
 ## Sources
 
 - FIA / Red Bull Ring media kit 2022: 4.318 km, 10 corners (3 left, 7 right), 12 % up, 9.3 % down, width 12 to 13 m.

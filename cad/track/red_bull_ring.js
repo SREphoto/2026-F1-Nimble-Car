@@ -22,7 +22,7 @@ import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
 import { buildBullSculpture } from './rbr_bull.js';
 import { createPitStopStation } from '../pit_stop_crew.js';
 import { RED_BULL_RING_STYLE as STYLE } from './styles/red_bull_ring_style.js';
-import { makeAsphaltTextures, makeRubberTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts } from './trackside.js';
+import { makeAsphaltTextures, makeRubberTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts, makePitConcreteTexture } from './trackside.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -256,6 +256,8 @@ export function createRedBullRing() {
     concrete: new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.85 }),
     concreteDark: new THREE.MeshStandardMaterial({ color: 0x8d9197, roughness: 0.9 }),
     steel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.45, metalness: 0.7 }),
+    pitConcrete: new THREE.MeshStandardMaterial({ map: makePitConcreteTexture(STYLE.pitLane), roughness: 0.8 }),
+    fastLane: new THREE.MeshStandardMaterial({ color: STYLE.pitLane.fastLane.color, roughness: 0.7 }),
     fence: new THREE.MeshStandardMaterial({ map: fenceTex, alphaToCoverage: true, alphaTest: 0.04, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.6 }),
     cable: new THREE.MeshStandardMaterial({ color: 0x8d949b, roughness: 0.4, metalness: 0.8, side: THREE.DoubleSide }),
     tyres: new THREE.MeshStandardMaterial({ map: tex.tyres, roughness: 0.95, side: THREE.DoubleSide }),
@@ -440,10 +442,16 @@ export function createRedBullRing() {
   }
   const bSide = pitSide[Math.floor(pit.n / 2)] * -1; // garages on the side away from the track
   add(mergeGeometries([
-    strip(pit, c(-PW / 2), c(PW / 2), c(0.0), c(0.0), { vLen: 12, uLen: 12 }),
+    strip(pit, c(-PW / 2), c(PW / 2), c(0.0), c(0.0), { vLen: STYLE.pitLane.slab, uLen: STYLE.pitLane.slab }),
     // paddock apron between pit lane and garages
-    strip(pit, bSide > 0 ? c(PW / 2) : c(-PW / 2 - 8), bSide > 0 ? c(PW / 2 + 8) : c(-PW / 2), c(-0.01), c(-0.01), { vLen: 12, uLen: 12 }),
-  ]), M.asphalt, 'RBR_PitLane');
+    strip(pit, bSide > 0 ? c(PW / 2) : c(-PW / 2 - 8), bSide > 0 ? c(PW / 2 + 8) : c(-PW / 2), c(-0.01), c(-0.01), { vLen: STYLE.pitLane.slab, uLen: STYLE.pitLane.slab }),
+  ]), M.pitConcrete, 'RBR_PitLane');
+  {
+    // red fast-lane strip along the pit wall side of the lane (style data)
+    const FL = STYLE.pitLane.fastLane, a = -bSide * (PW / 2 - FL.from), b = -bSide * (PW / 2 - FL.from - FL.width);
+    const g = strip(pit, c(Math.min(a, b)), c(Math.max(a, b)), c(0.004), c(0.004)); g.deleteAttribute('uv');
+    add(g, M.fastLane, 'RBR_PitLane_FastLane');
+  }
   lines.push(
     strip(pit, c(-PW / 2), c(-PW / 2 + 0.2), c(0.005), c(0.005)),
     strip(pit, c(PW / 2 - 0.2), c(PW / 2), c(0.005), c(0.005)),
@@ -544,8 +552,20 @@ export function createRedBullRing() {
       wallStrip(pit, c(lo), c(1.05), c(-0.3), { mask: pm }),
     ].map(g => { g.deleteAttribute('uv'); return g; })), M.concrete, 'RBR_Pit_Wall', { cast: true });
     add(mergeGeometries([
-      wallStrip(pit, c(wl), c(1.05), c(3.6), { mask: pm, vLen: 1.6, uFixed: [0, 2.55 / 1.6] }),
+      wallStrip(pit, c(wl), c(1.05), c(1.05 + FS.height), { mask: pm, vLen: 0.8, uFixed: [0, FS.height / 0.8] }),
     ]), M.fence, 'RBR_Pit_Wall_Fence', { receive: false });
+    add(mergeGeometries(FS.cables.map(h => { const g = wallStrip(pit, c(wl), c(1.05 + h), c(1.05 + h + 0.025), { mask: pm }); g.deleteAttribute('uv'); return g; })), M.cable, 'RBR_Pit_Wall_Fence_Cables', { receive: false });
+    {
+      const postGeo = new THREE.BoxGeometry(0.1 * DM, (FS.height + 0.3) * DM, 0.1 * DM); postGeo.translate(0, (FS.height + 0.3) / 2 * DM, 0);
+      const list = [], m4 = new THREE.Matrix4();
+      let acc = 0;
+      for (let j = 1; j < pit.n; j++) {
+        acc += pit.s[j] - pit.s[j - 1]; if (acc < FS.postSpacing || !pm(j)) continue; acc = 0;
+        const P = pitAt(pit.s[j]);
+        m4.makeTranslation((P.x + P.rx * wl) * DM, (P.y + 0.75) * DM, (P.z + P.rz * wl) * DM); list.push(m4.clone());
+      }
+      if (list.length) { const inst = new THREE.InstancedMesh(postGeo, M.steel, list.length); list.forEach((m, k) => inst.setMatrixAt(k, m)); inst.name = 'RBR_Pit_Wall_Fence_Posts'; inst.computeBoundingSphere(); root.add(inst); }
+    }
   }
   root.userData.pitInfo = { PW, bSide, pbS0, pbS1, lineIn: pitLineIn, lineOut: pitLineOut, boxS, boxLat: bSide * (PW / 2 - 2.75), wallJ: pitWallJ, wallLat: -bSide * (PW / 2 + 0.25) };
   lines.push(paint.geometry());

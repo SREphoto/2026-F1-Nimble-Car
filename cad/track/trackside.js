@@ -159,3 +159,13 @@ export function frameParts(boxAt, { x, z, y0, w, h, ax, az, nx, nz, ground, legs
   }
   return parts;
 }
+
+/** pit lane floor: light concrete slabs (one slab per tile, joints on the edges), fine speckle and tyre marks */
+export function makePitConcreteTexture(P) {
+  const c = canvas(256, 256), x = c.getContext('2d'), r = rng(9);
+  x.fillStyle = P.concrete; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 5000; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '70,70,72' : '255,255,255'},${0.04 + r() * 0.07})`; x.fillRect(r() * 256, r() * 256, 1.2, 1.2); }
+  for (let i = 0; i < 6; i++) { x.fillStyle = `rgba(40,40,42,${0.03 + r() * 0.05})`; x.fillRect(40 + r() * 170, 0, 8 + r() * 14, 256); }  // faint tyre marks along the lane
+  x.fillStyle = 'rgba(70,72,76,0.55)'; x.fillRect(0, 0, 256, 2); x.fillRect(0, 0, 2, 256);                          // slab joints
+  return tex(c, { aniso: 8 });
+}

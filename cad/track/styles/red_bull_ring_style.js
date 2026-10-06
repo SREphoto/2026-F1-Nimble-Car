@@ -48,5 +48,6 @@ export const RED_BULL_RING_STYLE = {
     turnBoard: { width: 4.0, height: 1.0, bottom: 1.8 },
     billboard: { width: 7.2, height: 1.8, bottom: 1.25 },
   },
+  pitLane: { concrete: '#c4c6c8', slab: 6, fastLane: { color: '#b3262b', from: 0.3, width: 1.0 } },  // light concrete, red strip along the pit wall side
   fence: { height: 3.6, overhang: 0.7, overhangAngle: 0.55, postSpacing: 4.0, cables: [0.2, 1.6, 3.0] },
 };
