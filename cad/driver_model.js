@@ -550,11 +550,13 @@ export function createArticulatedDriver(options = {}) {
   {
     const harness = new THREE.Group(); harness.name = 'Driver_Harness_Assembly';
     const onChest = (t, y, extra = 0.06) => {
-      // point on the front of the torso at spine fraction t, lateral y
-      const sec = tSecs.reduce((best, s2) => Math.abs((s2.c.clone().sub(P.hip).dot(P.u) / T) - t) < Math.abs((best.c.clone().sub(P.hip).dot(P.u) / T) - t) ? s2 : best);
-      const k = Math.min(1, Math.abs(y) / sec.ra);
-      const depth = sec.rb * Math.pow(Math.max(0, 1 - Math.pow(k, 2.3)), 1 / 2.3);
-      return P.hip.clone().addScaledVector(P.u, t * T).addScaledVector(P.n, depth + extra + (sec === tSecs[0] ? 0 : 0)).add(V3(0, y, 0));
+      // point on the front of the (displaced) suit surface at spine fraction t, lateral y, lifted by extra
+      const ts = tSecs.map((q) => q.c.clone().sub(P.hip).dot(P.u) / T), n = ts.length;
+      let v = 0; if (t <= ts[0]) v = 0; else if (t >= ts[n - 1]) v = 1;
+      else for (let i = 0; i < n - 1; i++) if (t >= ts[i] && t <= ts[i + 1]) { v = (i + (t - ts[i]) / (ts[i + 1] - ts[i])) / (n - 1); break; }
+      let lo = 0.25, hi = 0.75; // front half: lateral position falls from +ra (u .25) to -ra (u .75)
+      for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (torso.surface(v, mid).y > y) lo = mid; else hi = mid; }
+      return torso.surface(v, (lo + hi) / 2, extra);
     };
     const buckle = onChest(0.32, 0, 0.1);
     const cam = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.07, 28), metal);
