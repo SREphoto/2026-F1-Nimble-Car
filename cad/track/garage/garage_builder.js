@@ -21,6 +21,7 @@ import { GARAGE_LAYOUT, REGULATIONS } from './garage_data.js';
 import { GARAGE_TEAM_COLORS } from './garage_team_colors.js';
 
 export const REFLECT_LAYER = 5;   // objects seen in the floor mirror (garage, car, lights)
+export const SHELL_LAYER = 6;     // room shell and pit building: the only casters for the outside sunlight shadow
 let rectInit = false;
 
 function canvasTex(w, h, draw, { aniso = 8, repeat = false } = {}) {
@@ -270,6 +271,11 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0xb8bcc2, multisample: 4 });
     mirror.rotation.x = -Math.PI / 2; mirror.position.set(XM, 0.0, 0); mirror.name = 'Garage_Floor_Mirror';
     mirror.camera.layers.set(REFLECT_LAYER);
+    // render the mirror image once per screen frame: three.js would redo it inside the transmission pass of the car's
+    // glass parts, which doubles the work for the same picture
+    const drawMirror = mirror.onBeforeRender; let fresh = false;
+    mirror.onBeforeRender = function (...args) { if (fresh) return; fresh = true; requestAnimationFrame(() => (fresh = false)); drawMirror.apply(this, args); };
+    g.userData.refreshMirror = () => { fresh = false; };
     g.add(mirror);
   }
   // soft contact shadow under the car
@@ -562,7 +568,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   for (const [mat, list] of parts) {
     const withUv = list.every(x => x.attributes.uv);
     const m = new THREE.Mesh(mergeGeometries(list.map(x => { const n = x.index ? x.toNonIndexed() : x; if (!withUv && n.attributes.uv) n.deleteAttribute('uv'); return n; })), mat);
-    m.receiveShadow = true; m.castShadow = ![M.tube, M.canopyPanel, M.fence, M.glass].includes(mat); m.name = 'Garage_Shell'; g.add(m);
+    m.receiveShadow = true; m.castShadow = ![M.tube, M.canopyPanel, M.fence, M.glass].includes(mat); m.name = 'Garage_Shell'; m.layers.enable(SHELL_LAYER); g.add(m);
   }
   for (const [mat, list] of quads) { const m = new THREE.Mesh(mergeGeometries(list), mat); m.name = 'Garage_Boards'; m.receiveShadow = true; g.add(m); }
 
@@ -580,6 +586,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const sun = new THREE.DirectionalLight(0xfff1dc, 2.4);
   sun.position.set(X0 - 260, 300, -140); sun.target.position.set(X0 - 40, 0, 0); sun.castShadow = true;
   Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 10, far: 1000 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
+  sun.shadow.camera.layers.set(SHELL_LAYER);   // sunlight only needs the walls, roof and facade to cast shadows (keeps the car out of this pass)
   lights.push(sun, sun.target);
   lights.forEach(l => g.add(l));
   g.userData.lights = lights;

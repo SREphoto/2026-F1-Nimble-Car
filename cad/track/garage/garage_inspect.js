@@ -174,7 +174,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     if (legacyEnv) legacyEnv.visible = false;
     scene.fog = null;
     // the garage brings its own lights: switch the scene's sun and fill lights off while inside
-    scene.traverse(o => { if (o.isLight && !garage.userData.lights.includes(o) && o.visible) { st.saved.lights.push([o, o.intensity]); o.intensity = 0; } });
+    scene.traverse(o => { if (o.isLight && !garage.userData.lights.includes(o) && o.visible) { st.saved.lights.push([o, o.intensity, o.castShadow]); o.intensity = 0; o.castShadow = false; } });
     // the car is seen in the floor mirror, and paint and metal reflect the garage (environment captured without the car)
     carModel.traverse(o => o.layers.enable(builder.REFLECT_LAYER));
     scene.environment = garage.userData.captureEnv(renderer, scene, [carModel]);
@@ -191,7 +191,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     carModel.traverse(o => o.layers.disable(builder.REFLECT_LAYER));
     garage.userData.dispose(); garage = null;
     scene.environment = st.saved.env ?? null;
-    st.saved.lights.forEach(([o, i]) => (o.intensity = i));
+    st.saved.lights.forEach(([o, i, cs]) => { o.intensity = i; o.castShadow = cs; });
     scene.fog = st.saved.fog;
     if (legacyEnv) legacyEnv.visible = st.saved.legacy ?? true;
     camera.near = st.saved.near; camera.far = st.saved.far; camera.updateProjectionMatrix();
