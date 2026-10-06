@@ -67,7 +67,10 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   $('garage-exit').addEventListener('click', () => exitGarageInspect());
   $('btn-garage')?.addEventListener('click', () => (st.active ? exitGarageInspect() : enterGarageInspect()));
   $('btn-regulations')?.addEventListener('click', () => openRegs(true));
-  window.addEventListener('f1:team-changed', (e) => garage?.userData.setTeam(e.detail?.teamId));
+  window.addEventListener('f1:team-changed', (e) => { garage?.userData.setTeam(e.detail?.teamId); changed(); });
+
+  /** something in the garage changed: redraw the shadows and the floor mirror once (both are kept while nothing changes) */
+  const changed = () => { renderer.shadowMap.needsUpdate = true; garage?.userData.refreshMirror?.(); };
 
   // ---------------------------------------------------------------- car helpers (visibility and position only)
   const subs = () => carModel.children.slice(0, PART_ORDER.length);
@@ -83,24 +86,24 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     }
     st.wheels = on; wheelGroups().forEach(w => (w.visible = on));
     if (garage) garage.userData.stands.visible = !on;
-    carModel.position.y = on ? 0 : L.stands.raise;
+    carModel.position.y = on ? 0 : L.stands.raise; changed();
     $('garage-wheels').classList.toggle('active', on); $('garage-wheels').textContent = on ? 'Wheels on' : 'Wheels off';
   }
   function setBody(on) {
-    st.body = on; const b = subs()[PART_ORDER.indexOf('bodywork')]; if (b) b.visible = on;
+    st.body = on; const b = subs()[PART_ORDER.indexOf('bodywork')]; if (b) b.visible = on; changed();
     $('garage-body').classList.toggle('active', on); $('garage-body').textContent = on ? 'Bodywork on' : 'Bodywork off';
   }
 
   // ---------------------------------------------------------------- selection
   // selected part: a thin light outline (back faces pushed out along the normals) and a faint additive glow on top.
   // Both share the part's geometry and leave its own materials alone, so the real livery stays visible.
-  const outlineMat = new THREE.MeshBasicMaterial({ color: 0x9be8ff, side: THREE.BackSide, transparent: true, opacity: 0.85, depthWrite: false });
-  outlineMat.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(objectNormal) * 0.045;'); };
-  const glowMat = new THREE.MeshBasicMaterial({ color: 0x3fc8ff, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const outlineMat = new THREE.MeshBasicMaterial({ color: 0xbff0ff, side: THREE.BackSide, transparent: true, opacity: 0.9, depthWrite: false });
+  outlineMat.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(objectNormal) * 0.12;'); };
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0x3fc8ff, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   const overlays = [];
   function clearSel() {
     overlays.forEach(o => o.removeFromParent()); overlays.length = 0;
-    st.sel = null; card.style.display = 'none';
+    st.sel = null; card.style.display = 'none'; changed();
   }
   function select(key, obj) {
     clearSel();
@@ -112,7 +115,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       const m = new THREE.Mesh(o.geometry, mat); m.userData.garageOverlay = true; m.raycast = () => {}; m.renderOrder = 3; o.add(m); overlays.push(m);
     }
     const box = new THREE.Box3(); groups.forEach(gr => box.expandByObject(gr));
-    box.getCenter(st.selCentre); st.sel = key;
+    box.getCenter(st.selCentre); st.sel = key; changed();
     card.innerHTML = `<button type="button" class="x" aria-label="Close">✕</button><h3>${info.name}</h3><div>${info.text}</div><ul>${info.facts.map(f => `<li>${f}</li>`).join('')}</ul>`;
     card.querySelector('.x').addEventListener('click', clearSel);
     card.style.display = 'block';
@@ -178,6 +181,9 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     // the car is seen in the floor mirror, and paint and metal reflect the garage (environment captured without the car)
     carModel.traverse(o => o.layers.enable(builder.REFLECT_LAYER));
     scene.environment = garage.userData.captureEnv(renderer, scene, [carModel]);
+    // the garage is still unless something is toggled, so shadows are drawn once and redrawn only on a change
+    st.saved.exposure = renderer.toneMappingExposure; renderer.toneMappingExposure = 1.0;   // indoor exposure
+    st.saved.shadowAuto = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false; changed();
     camera.near = 0.2; camera.far = 1500; camera.updateProjectionMatrix();
     camera.position.set(-56, 19, 15); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
     document.body.classList.add('garage-mode');
@@ -191,6 +197,8 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     carModel.traverse(o => o.layers.disable(builder.REFLECT_LAYER));
     garage.userData.dispose(); garage = null;
     scene.environment = st.saved.env ?? null;
+    renderer.toneMappingExposure = st.saved.exposure ?? renderer.toneMappingExposure;
+    renderer.shadowMap.autoUpdate = st.saved.shadowAuto ?? true; renderer.shadowMap.needsUpdate = true;
     st.saved.lights.forEach(([o, i, cs]) => { o.intensity = i; o.castShadow = cs; });
     scene.fog = st.saved.fog;
     if (legacyEnv) legacyEnv.visible = st.saved.legacy ?? true;
@@ -232,7 +240,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     }
   }
 
-  const api = { get garage() { return garage; }, enterGarageInspect, exitGarageInspect, update, openRegulations: () => openRegs(true), get active() { return st.active; }, select: (key) => { const i = PART_ORDER.indexOf(key); select(key, key === 'wheels' ? null : subs()[i]); }, setWheels, setBody, zoomToDesk, quality: QUALITY, setReflections: (on) => garage?.userData.setReflections(on) };
+  const api = { get garage() { return garage; }, enterGarageInspect, exitGarageInspect, update, openRegulations: () => openRegs(true), get active() { return st.active; }, select: (key) => { const i = PART_ORDER.indexOf(key); select(key, key === 'wheels' ? null : subs()[i]); }, setWheels, setBody, zoomToDesk, quality: QUALITY, setReflections: (on) => { garage?.userData.setReflections(on); changed(); }, changed };
   window.enterGarageInspect = enterGarageInspect; window.exitGarageInspect = exitGarageInspect; window.garageInspect = api;
   return api;
 }

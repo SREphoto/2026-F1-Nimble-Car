@@ -141,7 +141,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   }, { repeat: true });
   ceilTex.repeat.set(D / 30, 2 * W / 30);
   const concreteTex = canvasTex(256, 256, (x, w, h) => {
-    const r = rng(5); x.fillStyle = '#bfc1c3'; x.fillRect(0, 0, w, h);
+    const r = rng(5); x.fillStyle = '#a4a7aa'; x.fillRect(0, 0, w, h);
     for (let i = 0; i < 1600; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '70,70,70' : '255,255,255'},${0.05 + r() * 0.06})`; x.fillRect(r() * w, r() * h, 2, 2); }
     x.fillStyle = 'rgba(60,62,66,0.5)'; x.fillRect(0, 0, w, 2); x.fillRect(0, 0, 2, h);
   }, { repeat: true });
@@ -271,11 +271,19 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0xb8bcc2, multisample: 4 });
     mirror.rotation.x = -Math.PI / 2; mirror.position.set(XM, 0.0, 0); mirror.name = 'Garage_Floor_Mirror';
     mirror.camera.layers.set(REFLECT_LAYER);
-    // render the mirror image once per screen frame: three.js would redo it inside the transmission pass of the car's
-    // glass parts, which doubles the work for the same picture
-    const drawMirror = mirror.onBeforeRender; let fresh = false;
-    mirror.onBeforeRender = function (...args) { if (fresh) return; fresh = true; requestAnimationFrame(() => (fresh = false)); drawMirror.apply(this, args); };
-    g.userData.refreshMirror = () => { fresh = false; };
+    // the mirror image is only redrawn when the view changed (camera moved, wheels or bodywork toggled, part picked), and
+    // at most once per screen frame (three.js would otherwise redo it inside the transmission pass of the car's glass).
+    // A still view keeps the last image, which is identical, so nothing is lost.
+    const drawMirror = mirror.onBeforeRender; let fresh = false, dirty = true; const lastM = new Float64Array(32);
+    mirror.onBeforeRender = function (renderer, scene, cam, ...rest) {
+      if (fresh) return;
+      const a = cam.matrixWorld.elements, b = cam.projectionMatrix.elements; let same = !dirty;
+      for (let i = 0; same && i < 16; i++) same = Math.abs(a[i] - lastM[i]) < 1e-7 && Math.abs(b[i] - lastM[16 + i]) < 1e-7;
+      if (same) return;
+      fresh = true; requestAnimationFrame(() => (fresh = false)); lastM.set(a); lastM.set(b, 16); dirty = false;
+      drawMirror.call(this, renderer, scene, cam, ...rest);
+    };
+    g.userData.refreshMirror = () => { fresh = false; dirty = true; };
     g.add(mirror);
   }
   // soft contact shadow under the car
@@ -574,16 +582,16 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
 
   // ---------------------------------------------------------------- lights: soft area lights, a shadow casting spot over the car, sun outside
   const lights = [];
-  const hemi = new THREE.HemisphereLight(0xf2f5ff, 0x6c7076, 0.45); lights.push(hemi);
+  const hemi = new THREE.HemisphereLight(0xf2f5ff, 0x5c6066, 0.28); lights.push(hemi);
   const area = (w, h, x, y, z, I) => { const r = new THREE.RectAreaLight(0xf4f7ff, I, w, h); r.position.set(x, y, z); r.lookAt(x, 0, z); lights.push(r); return r; };
-  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 7.0);                         // the canopy panel
-  for (const z of [-25, 25]) area(TL.x1 - TL.x0, 9, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 3.2);   // tube light rows
+  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 6.0);                         // the canopy panel
+  for (const z of [-25, 25]) area(TL.x1 - TL.x0, 9, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 2.3);   // tube light rows
   area(30, 10, 92, TL.y - 0.4, 0, 2.2);                                     // over the desk
   const spot = new THREE.SpotLight(0xffffff, 1.6, 0, 0.95, 1.0, 0);
   spot.position.set(CX, C.y - 0.5, 0); spot.target.position.set(CX, 0, 0); spot.castShadow = true;
   spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 60;
   lights.push(spot, spot.target);
-  const sun = new THREE.DirectionalLight(0xfff1dc, 2.4);
+  const sun = new THREE.DirectionalLight(0xfff1dc, 1.5);
   sun.position.set(X0 - 260, 300, -140); sun.target.position.set(X0 - 40, 0, 0); sun.castShadow = true;
   Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 10, far: 1000 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   sun.shadow.camera.layers.set(SHELL_LAYER);   // sunlight only needs the walls, roof and facade to cast shadows (keeps the car out of this pass)

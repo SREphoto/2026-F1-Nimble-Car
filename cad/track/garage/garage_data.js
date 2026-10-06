@@ -11,7 +11,7 @@ export const GARAGE_LAYOUT = {
   brick: { pale: '#ddd6c8', grey: '#8d8f93' },
   floor: {
     color: '#d3d6da', roughness: 0.32, clearcoat: 1.0, clearcoatRoughness: 0.06,   // glossy light grey epoxy
-    reflect: 0.2,                                         // share of the mirror image mixed into the floor (high quality)
+    reflect: 0.15,                                         // share of the mirror image mixed into the floor (high quality)
     lanes: { z0: 11.5, z1: 19, x0: -75, x1: 56, color: '#8e939a', chevron: '#e9ebee' },   // grey chevron parking lanes beside the car
     signs: [                                              // painted floor direction signs [text, x, z, rotation]
       ['PADDOCK  ▶', 96, -22, Math.PI / 2], ['TELEMETRY ROOM  ▶', 88, -22, Math.PI / 2], ['ENGINE ROOM  ▶', 80, -22, Math.PI / 2],
