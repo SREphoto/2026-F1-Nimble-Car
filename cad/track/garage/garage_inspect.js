@@ -7,7 +7,6 @@
  * and moves the whole car group up onto the stands.
  */
 import * as THREE from 'three';
-import { buildGarage } from './garage_builder.js';
 import { GARAGE_LAYOUT, GARAGE_PARTS, PART_ORDER, REGULATIONS } from './garage_data.js';
 
 const CSS = `
@@ -33,8 +32,8 @@ const CSS = `
 `;
 
 export function initGarageInspect({ scene, camera, controls, renderer, carModel, trackMode, legacyEnv, getTeamId = () => 'red-bull' }) {
-  const garage = buildGarage(GARAGE_LAYOUT, getTeamId());
-  garage.visible = false; scene.add(garage);
+  // the garage is only built when you go in (the builder module is loaded on first use) and is disposed when you leave
+  let garage = null, builder = null;
   const L = GARAGE_LAYOUT;
   const st = { active: false, wasCircuit: false, saved: null, wheels: true, body: true, sel: null, selCentre: new THREE.Vector3(), keys: new Set(), tween: null };
 
@@ -65,14 +64,14 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   $('garage-exit').addEventListener('click', () => exitGarageInspect());
   $('btn-garage')?.addEventListener('click', () => (st.active ? exitGarageInspect() : enterGarageInspect()));
   $('btn-regulations')?.addEventListener('click', () => openRegs(true));
-  window.addEventListener('f1:team-changed', (e) => garage.userData.setTeam(e.detail?.teamId));
+  window.addEventListener('f1:team-changed', (e) => garage?.userData.setTeam(e.detail?.teamId));
 
   // ---------------------------------------------------------------- car helpers (visibility and position only)
   const subs = () => carModel.children.slice(0, PART_ORDER.length);
   const wheelGroups = () => { const out = []; carModel.traverse(o => { if (o.name && o.name.startsWith('Wheel_Visual_')) out.push(o); }); return out; };
   function setWheels(on) {
     st.wheels = on; wheelGroups().forEach(w => (w.visible = on));
-    garage.userData.stands.visible = !on;
+    if (garage) garage.userData.stands.visible = !on;
     carModel.position.y = on ? 0 : L.stands.raise;
     $('garage-wheels').classList.toggle('active', on); $('garage-wheels').textContent = on ? 'Wheels on' : 'Wheels off';
   }
@@ -138,16 +137,23 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   }
 
   // ---------------------------------------------------------------- enter / exit
-  function enterGarageInspect() {
+  let entering = null;
+  async function enterGarageInspect() {
     if (st.active) return;
+    if (entering) return entering;
+    $('btn-garage')?.classList.add('active');
+    entering = (async () => {
+      builder = builder || await import('./garage_builder.js');
+      garage = builder.buildGarage(GARAGE_LAYOUT, getTeamId());
+      scene.add(garage);
+    })();
+    try { await entering; } finally { entering = null; }
     st.active = true;
     st.wasCircuit = !!trackMode?.mode?.circuit;
     st.saved = { pos: camera.position.clone(), target: controls.target.clone(), near: camera.near, far: camera.far, fog: scene.fog, legacy: legacyEnv?.visible };
     trackMode?.applyCircuit?.(false);          // stops driving and parks the car level at the origin
     if (legacyEnv) legacyEnv.visible = false;
     scene.fog = null;
-    garage.userData.setTeam(getTeamId());
-    garage.visible = true;
     camera.near = 0.2; camera.far = 1500; camera.updateProjectionMatrix();
     camera.position.set(-56, 19, 15); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
     document.body.classList.add('garage-mode');
@@ -158,7 +164,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     if (!st.active) return;
     clearSel(); setWheels(true); setBody(true); openRegs(false);
     st.active = false; st.tween = null; st.keys.clear();
-    garage.visible = false;
+    garage.userData.dispose(); garage = null;
     scene.fog = st.saved.fog;
     if (legacyEnv) legacyEnv.visible = st.saved.legacy ?? true;
     camera.near = st.saved.near; camera.far = st.saved.far; camera.updateProjectionMatrix();
@@ -199,7 +205,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     }
   }
 
-  const api = { garage, enterGarageInspect, exitGarageInspect, update, openRegulations: () => openRegs(true), get active() { return st.active; }, select: (key) => { const i = PART_ORDER.indexOf(key); select(key, key === 'wheels' ? null : subs()[i]); }, setWheels, setBody, zoomToDesk };
+  const api = { get garage() { return garage; }, enterGarageInspect, exitGarageInspect, update, openRegulations: () => openRegs(true), get active() { return st.active; }, select: (key) => { const i = PART_ORDER.indexOf(key); select(key, key === 'wheels' ? null : subs()[i]); }, setWheels, setBody, zoomToDesk };
   window.enterGarageInspect = enterGarageInspect; window.exitGarageInspect = exitGarageInspect; window.garageInspect = api;
   return api;
 }

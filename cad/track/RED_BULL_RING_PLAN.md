@@ -116,7 +116,7 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
   carries on with the Autopilot lap. The Red Bull box position (about 460 m into the pit lane) is an estimate from the
   FIA garage order. A lap with a stop takes about 1:40 instead of 1:18.6; normal Autopilot laps are unchanged.
 
-### Garage plan (not built yet)
+### Garage plan (partly built, see "Garage inspect" below)
 1. **Layout.** 32 garage fronts along the pit building, in the 2026 Austrian GP order from the pit entry (FIA garage
    plan, in `/workspace/f1-pits-garage/data/pit_garage_spec.json`): FIA (3), FOM (1), marshals and walkway (1),
    McLaren, Mercedes (with a walkway), Red Bull, Ferrari, Williams, Racing Bulls, walkway, Aston Martin, Haas, Audi,
@@ -132,6 +132,30 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
    page still loads quickly.
 6. **Car-side note.** A pit stop could also change the tyres in the tyre panel (`cad/tyre_states.js`). That is a car
    file, so it is left for the car side.
+
+## Garage inspect (October 5, 2026, branch `track/rbr-garage-inspect`)
+
+### Built
+- One shared team garage in `cad/track/garage/` that takes the colours of the chosen team (from
+  `/workspace/f1-teams/teams_liveries.json`, copied into `garage_team_colors.js`). Layout, props, part texts and the
+  regulations list are data in `garage_data.js`.
+- Contents from the reference photos (G1 to G15): glossy grey floor with car box, chevrons and floor signs, red PIT-LANE
+  strip, team colour wall panels over a black band, pale and grey brick, aluminium truss with a light canopy, tube
+  lights, cable trays, tyre trolleys with labelled blankets, flight cases, helmet shelf, extinguishers, gas bottle cart,
+  fuel drums, bar stools, director chairs, racing seat, pillars with TVs, engineers' desk with a monitor wall and laptop,
+  rolled-up door, and front and rear stands with a centre jack when the wheels are off.
+- Garage button (replaces the part explorer panel), walk and orbit, click a part for an info card, Wheels on/off,
+  Bodywork on/off, Exit Garage back to driving.
+- Regulations on the desk monitor and a printed sheet, both clickable, plus a Regulations button on the main screen.
+  The regulations side panel is removed.
+- The garage is built only when you press Garage and all of its memory is freed when you leave. Every repeated prop is
+  one shared shape drawn many times.
+
+### Still to do
+- Place the garage in the Red Bull Ring pit building so the car can drive in and out from the pit lane (items 1, 2 and 4
+  of the garage plan above).
+- Pit lane items from P1 to P9: yellow arrows, air rigs, wheel guns, pit boom, privacy screens, rope barriers on chrome
+  stanchions, pit wall stands, the pit building balcony and the round tower.
 
 ## Sources
 
