@@ -103,7 +103,7 @@ export const F1_TEAMS = {
     swatch: ['#18245e', '#f6c200', '#d8102c'],
     driverNames: 'Verstappen (1) · Hadjar (6)',
     driverNumber: 1,
-    driverGlove: { color: 0x18245e, roughness: 0.82 },
+    driverGlove: { color: 0x141518, roughness: 0.95 }, // black Nomex gloves (refs round4 D2, D3)
     driverHelmetColours: { base: '#18245e', crown: '#f6c200', stripe: '#d0021b', accent: '#ffffff' },
     showDecals: true,
     description: 'Authentic 2026 Matte Racing Navy with Sun Yellow airbox, Bull Crimson accents, and official partner decals.'
@@ -497,6 +497,10 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
           }
         }
       }
+    });
+    // Driver rig (cad/driver_model.js): suit texture, gloves, boots and helmet from the team settings
+    carModel.traverse(obj => {
+      if (obj.name === 'Assembly_Articulated_Driver' && typeof obj.userData.applyTeam === 'function') obj.userData.applyTeam(team);
     });
   }
 

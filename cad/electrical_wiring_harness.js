@@ -210,9 +210,11 @@ export function createElectricalHarness(options = {}) {
   for (let i = 0; i <= 100; i++) {
     const t = i / 100;
     const angle = t * numCoils * Math.PI * 2;
-    const x = 9.8 + t * 0.8;
+    // from the dash forward of the wheel back to its rear hub (the wheel face is at x ~9.5; the
+    // coil used to stick out through the screen once the wheel moved back to x 9.0)
+    const x = 7.4 + t * 0.95;
     const y = Math.cos(angle) * 0.09;
-    const z = 4.4 + Math.sin(angle) * 0.09;
+    const z = 4.6 - t * 0.12 + Math.sin(angle) * 0.09;
     coilPoints.push(new THREE.Vector3(x, y, z));
   }
   const coilSpline = new THREE.CatmullRomCurve3(coilPoints);

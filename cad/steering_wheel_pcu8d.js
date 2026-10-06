@@ -38,6 +38,55 @@ import { materials } from '../materials.js';
  * 1. Procedural High-DPI Silkscreen Texture Generators
  */
 
+// Fine 2x2 twill carbon at real scale (about 2.5 mm tows), dark with a gloss clear coat (ref D3).
+// The wheel's carbon parts get box-projected UVs in wheel units (dm) so the weave is the same size
+// on every face instead of one stretched tile per face.
+const TWILL_TILE_DM = 0.4; // one texture tile = 16 tows
+let _twillTex = null;
+function fineTwillTexture() {
+  if (_twillTex) return _twillTex;
+  const N = 16, px = 16, cv = document.createElement('canvas');
+  cv.width = cv.height = N * px;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#060708'; g.fillRect(0, 0, cv.width, cv.height);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const horiz = ((i + j) % 4) < 2; // 2x2 twill: diagonal steps
+    const x = i * px, y = j * px;
+    const gr = horiz ? g.createLinearGradient(x, y, x, y + px) : g.createLinearGradient(x, y, x + px, y);
+    gr.addColorStop(0, '#08090b'); gr.addColorStop(0.5, '#23262c'); gr.addColorStop(1, '#08090b');
+    g.fillStyle = gr; g.fillRect(x + 0.5, y + 0.5, px - 1, px - 1);
+  }
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.repeat.set(1 / TWILL_TILE_DM, 1 / TWILL_TILE_DM);
+  return (_twillTex = t);
+}
+function boxProjectUVs(geo) {
+  const pos = geo.attributes.position; if (!pos) return;
+  if (!geo.attributes.normal) geo.computeVertexNormals();
+  const nrm = geo.attributes.normal, uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(nrm.getX(i)), ay = Math.abs(nrm.getY(i)), az = Math.abs(nrm.getZ(i));
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (az >= ax && az >= ay) { uv[2 * i] = x; uv[2 * i + 1] = y; }
+    else if (ax >= ay) { uv[2 * i] = y; uv[2 * i + 1] = z; }
+    else { uv[2 * i] = x; uv[2 * i + 1] = z; }
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+}
+function applyFineCarbon(root, glossSrc, matteSrc) {
+  const gloss = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Carbon_FineTwill_Gloss', color: 0xffffff, map: fineTwillTexture(), roughness: 0.42, metalness: 0.15, clearcoat: 1.0, clearcoatRoughness: 0.06 });
+  const matte = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Carbon_FineTwill_Satin', color: 0xd0d0d0, map: fineTwillTexture(), roughness: 0.6, metalness: 0.1, clearcoat: 0.3, clearcoatRoughness: 0.35 });
+  const done = new Set();
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material === glossSrc ? gloss : o.material === matteSrc ? matte : null;
+    if (!m) return;
+    if (!done.has(o.geometry)) { boxProjectUVs(o.geometry); done.add(o.geometry); }
+    o.material = m;
+  });
+}
+
 // Procedural Faceplate Silkscreen for the 3 Lower Rotary Dials
 function createRotaryFaceplateTexture() {
   const w = 1024;
@@ -360,7 +409,8 @@ export function createSteeringWheelPCU8D(options = {}) {
   // Materials Palette
   const carbonTwill = materials.carbonGlossAero || materials.carbonGloss;
   const carbonMatte = materials.carbonMatteStructural || materials.carbonMatte;
-  const gripSilicone = materials.rubberSeal || new THREE.MeshStandardMaterial({ color: 0x141820, roughness: 0.85 });
+  // matte grey alcantara grips (refs round4/wheel W3, W6)
+  const gripSilicone = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Grip_Alcantara', color: 0x5f6268, roughness: 0.98, metalness: 0, sheen: 0.7, sheenRoughness: 0.8, sheenColor: new THREE.Color(0x9a9ea6) });
   const anodizedRed = materials.anodizedRed;
   const anodizedBlue = materials.anodizedBlue;
   const anodizedGold = materials.goldActuator;
@@ -513,6 +563,7 @@ export function createSteeringWheelPCU8D(options = {}) {
     // Glowing LED lens
     const ledGeo = new THREE.SphereGeometry(0.024, 12, 12);
     const led = new THREE.Mesh(ledGeo, ledMat);
+    led.name = `ShiftLED_${i}`;
     led.position.set(lx, lz, 0.185);
     shiftGroup.add(led);
   }
@@ -531,6 +582,7 @@ export function createSteeringWheelPCU8D(options = {}) {
 
       const sLedGeo = new THREE.SphereGeometry(0.020, 10, 10);
       const sLed = new THREE.Mesh(sLedGeo, materials.ledAmber);
+      sLed.name = `StatusLED_${side < 0 ? 'L' : 'R'}_${j}`;
       sLed.position.set(sx, sy, 0.178);
       shiftGroup.add(sLed);
     }
@@ -651,8 +703,9 @@ export function createSteeringWheelPCU8D(options = {}) {
   // G. AUTHENTIC PHYSICAL PUSH BUTTONS & SILKSCREEN LABELS
   // Matching media_1790508290842.jpg
   // -------------------------------------------------------------
-  function createButton(x, y, radius, color, label, textColor = '#ffffff') {
+  function createButton(x, y, radius, color, label, textColor = '#ffffff', id = label) {
     const btnGroup = new THREE.Group();
+    btnGroup.name = `Btn_${id}`; // ids are used by cad/wheel_button_map.json
     btnGroup.position.set(x, y, 0.16);
 
     // Bezel ring
@@ -671,6 +724,7 @@ export function createSteeringWheelPCU8D(options = {}) {
     const cap = new THREE.Mesh(capGeo, capMat);
     cap.rotation.x = Math.PI / 2;
     cap.position.z = 0.03;
+    cap.name = `Btn_${id}_Cap`;
     btnGroup.add(cap);
 
     // Silkscreen Text Decal
@@ -701,31 +755,31 @@ export function createSteeringWheelPCU8D(options = {}) {
 
   // --- Left Button Cluster ---
   // Top Outer: Black button
-  root.add(createButton(-1.25, 0.65, 0.08, 0x141820, ''));
+  root.add(createButton(-1.25, 0.65, 0.08, 0x141820, 'N', '#ffffff', 'N'));
   // Top Inner 1: Purple (+10)
-  root.add(createButton(-0.95, 0.62, 0.075, 0x8a2be2, '+10'));
+  root.add(createButton(-0.95, 0.62, 0.075, 0x8a2be2, '+10', '#ffffff', 'PLUS10'));
   // Top Inner 2: Orange (DR)
-  root.add(createButton(-0.68, 0.52, 0.08, 0xff7700, 'DR'));
+  root.add(createButton(-0.68, 0.52, 0.08, 0xff7700, 'DR', '#ffffff', 'DRINK'));
   // Mid Left: White push button
-  root.add(createButton(-0.92, -0.20, 0.07, 0xf0f4f8, ''));
+  root.add(createButton(-0.92, -0.20, 0.07, 0xf0f4f8, 'OK', '#111111', 'OK'));
   // Mid Lower Left: Red button with white X
-  root.add(createButton(-0.92, -0.42, 0.075, 0xd90429, '✕'));
+  root.add(createButton(-0.92, -0.42, 0.075, 0xd90429, '✕', '#ffffff', 'BACK'));
   // Bottom Left Outer: Black button (BB-)
-  root.add(createButton(-0.95, -0.68, 0.08, 0x181e26, 'BB-'));
+  root.add(createButton(-0.95, -0.68, 0.08, 0x181e26, 'BB-', '#ffffff', 'BB_MINUS'));
 
   // --- Right Button Cluster ---
   // Top Inner 1: Yellow (PL - Pit Lane Limiter)
-  root.add(createButton(0.68, 0.52, 0.08, 0xf6b800, 'PL', '#000000'));
+  root.add(createButton(0.68, 0.52, 0.08, 0xf6b800, 'PL', '#000000', 'PL'));
   // Top Inner 2: Purple (+1)
-  root.add(createButton(0.95, 0.62, 0.075, 0x8a2be2, '+1'));
+  root.add(createButton(0.95, 0.62, 0.075, 0x8a2be2, '+1', '#ffffff', 'PLUS1'));
   // Top Outer: Light Blue (OT - Overtake)
-  root.add(createButton(1.25, 0.65, 0.08, 0x00b4d8, 'OT'));
+  root.add(createButton(1.25, 0.65, 0.08, 0x00b4d8, 'OT', '#ffffff', 'OT'));
   // Mid Right 1: Cyan (OT)
-  root.add(createButton(0.92, -0.15, 0.075, 0x00d4e8, 'OT', '#000000'));
+  root.add(createButton(0.92, -0.15, 0.075, 0x00d4e8, 'X', '#000000', 'AERO'));
   // Mid Right 2: Green (Radio / Phone icon)
-  root.add(createButton(0.92, -0.40, 0.075, 0x00c853, '📞'));
+  root.add(createButton(0.92, -0.40, 0.075, 0x00c853, '📞', '#ffffff', 'RADIO'));
   // Bottom Right Outer: Black button (BB+)
-  root.add(createButton(0.95, -0.68, 0.08, 0x181e26, 'BB+'));
+  root.add(createButton(0.95, -0.68, 0.08, 0x181e26, 'BB+', '#ffffff', 'BB_PLUS'));
 
   // -------------------------------------------------------------
   // H. REAR ASSEMBLY: QUICK-RELEASE HUB & CARBON PADDLES
@@ -814,5 +868,6 @@ export function createSteeringWheelPCU8D(options = {}) {
 
   root.add(rearGroup);
 
+  applyFineCarbon(root, carbonTwill, carbonMatte);
   return root;
 }

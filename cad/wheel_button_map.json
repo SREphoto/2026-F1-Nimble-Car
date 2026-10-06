@@ -1,0 +1,47 @@
+{
+  "_doc": "PCU-8D steering wheel control map (cad/wheel_controls.js). mesh = object name in the wheel; type: button | rotary | thumbwheel | paddle; action = handler name; for rotary/thumbwheel, setting = key in settings and step per click. Click to press, right-click or scroll to turn a dial or thumbwheel backwards.",
+  "settings": {
+    "brakeBias":     { "label": "BBAL",   "value": 56.0, "min": 50.0, "max": 62.0, "step": 0.5, "unit": "%", "decimals": 1 },
+    "brakeMigration":{ "label": "BMIG",   "value": 4,    "min": 1,    "max": 10,   "step": 1 },
+    "engineBraking": { "label": "EB",     "value": 6,    "min": 1,    "max": 11,   "step": 1 },
+    "diffEntry":     { "label": "DIFF EN","value": 6,    "min": 1,    "max": 12,   "step": 1 },
+    "diffMid":       { "label": "DIFF MID","value": 6,   "min": 1,    "max": 12,   "step": 1 },
+    "diffExit":      { "label": "DIFF EX","value": 6,    "min": 1,    "max": 12,   "step": 1 },
+    "strat":         { "label": "STRAT",  "value": 3,    "min": 1,    "max": 12,   "step": 1 },
+    "ersDeploy":     { "label": "ERS",    "value": 4,    "min": 1,    "max": 8,    "step": 1 },
+    "harvest":       { "label": "HARV",   "value": 3,    "min": 1,    "max": 6,    "step": 1 }
+  },
+  "mfsItems": ["brakeBias", "brakeMigration", "engineBraking", "diffEntry", "diffMid", "diffExit", "strat", "ersDeploy", "harvest"],
+  "controls": [
+    { "mesh": "Btn_N",        "type": "button", "action": "neutral",        "hint": "Neutral" },
+    { "mesh": "Btn_PLUS10",   "type": "button", "action": "mfsJump",        "hint": "+10: jump 10 menu items", "arg": 10 },
+    { "mesh": "Btn_PLUS1",    "type": "button", "action": "mfsJump",        "hint": "+1: next menu item", "arg": 1 },
+    { "mesh": "Btn_DRINK",    "type": "button", "action": "toggle",         "hint": "Drink pump", "arg": "drink" },
+    { "mesh": "Btn_OK",       "type": "button", "action": "mfsStep",        "hint": "OK: raise the selected menu item", "arg": 1 },
+    { "mesh": "Btn_BACK",     "type": "button", "action": "mfsStep",        "hint": "Cancel: lower the selected menu item", "arg": -1 },
+    { "mesh": "Btn_BB_MINUS", "type": "button", "action": "adjust",         "hint": "Brake bias rearward", "arg": ["brakeBias", -1] },
+    { "mesh": "Btn_BB_PLUS",  "type": "button", "action": "adjust",         "hint": "Brake bias forward", "arg": ["brakeBias", 1] },
+    { "mesh": "Btn_PL",       "type": "button", "action": "toggle",         "hint": "Pit lane speed limiter (80 km/h)", "arg": "pitLimiter" },
+    { "mesh": "Btn_OT",       "type": "button", "action": "toggle",         "hint": "Overtake mode (extra ERS deployment)", "arg": "overtake" },
+    { "mesh": "Btn_AERO",     "type": "button", "action": "aero",           "hint": "Active aero X-mode / Z-mode" },
+    { "mesh": "Btn_RADIO",    "type": "button", "action": "toggle",         "hint": "Team radio", "arg": "radio" },
+    { "mesh": "Rotary_Knob_STRAT", "type": "rotary", "setting": "strat",     "hint": "Power unit strategy", "stepAngle": 22.5 },
+    { "mesh": "Rotary_Knob_SYS",   "type": "rotary", "setting": "diffMid",   "hint": "Differential (mid corner)", "stepAngle": 22.5 },
+    { "mesh": "Rotary_Knob_CTRL",  "type": "rotary", "setting": "ersDeploy", "hint": "ERS deployment mode", "stepAngle": 30 },
+    { "mesh": "Thumbwheel_Entry_Red",       "type": "thumbwheel", "setting": "diffEntry",     "hint": "Differential entry", "axis": "y" },
+    { "mesh": "Thumbwheel_UpperRight_Blue", "type": "thumbwheel", "setting": "harvest",       "hint": "ERS harvest level", "axis": "y" },
+    { "mesh": "Thumbwheel_BMIG_Gold",       "type": "thumbwheel", "setting": "brakeMigration","hint": "Brake migration", "axis": "y" },
+    { "mesh": "Thumbwheel_BBAL_Gold",       "type": "thumbwheel", "setting": "brakeBias",     "hint": "Brake bias", "axis": "y" },
+    { "mesh": "Thumbwheel_Silver_Vertical", "type": "thumbwheel", "setting": "diffExit",      "hint": "Differential exit", "axis": "y" },
+    { "mesh": "Thumbwheel_EB_Green",        "type": "thumbwheel", "setting": "engineBraking", "hint": "Engine braking", "axis": "y" },
+    { "mesh": "Paddle_Shift_Up_RH",   "type": "paddle", "action": "gearUp",   "hint": "Upshift" },
+    { "mesh": "Paddle_Shift_Down_LH", "type": "paddle", "action": "gearDown", "hint": "Downshift" },
+    { "mesh": "Paddle_Clutch_LH",     "type": "paddle", "action": "clutch",   "hint": "Clutch (hold)" },
+    { "mesh": "Paddle_Clutch_RH",     "type": "paddle", "action": "clutch",   "hint": "Clutch (hold)" }
+  ],
+  "screen": {
+    "mesh": "UI_LCD_PCU8D_Display",
+    "pages": ["RACE", "TYRES", "ERS", "SETUP"],
+    "fps": 15
+  }
+}

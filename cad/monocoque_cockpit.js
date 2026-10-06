@@ -388,7 +388,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // -------------------------------------------------------------
   const steeringGroup = new THREE.Group();
   steeringGroup.name = "Pivot_Steering_Wheel_Assembly";
-  steeringGroup.position.set(8.2, 0, 4.2);
+  steeringGroup.position.set(9.0, 0, 4.2); // D1: elbows bent about 110 deg with the hands at 9 and 3
 
   // Telescopic carbon steering column
   const colGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 20);
@@ -432,7 +432,8 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // Complete human driver with organic anatomy, Richard Mille gloves,
   // FIA 8856-2018 waffle boots, 6-point harness, and dynamic 60fps IK rig.
   // -------------------------------------------------------------
-  const driverGroup = createArticulatedDriver({ materials: mats });
+  // Gloves are attached to the wheel (they turn with it); the arms follow by IK each frame.
+  const driverGroup = createArticulatedDriver({ materials: mats, steeringWheel: pcu8dWheel });
   root.add(driverGroup);
   root.userData.driverModel = driverGroup;
   root.userData.updateDriver = (state, pedalAssembly) => {
@@ -444,7 +445,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // -------------------------------------------------------------
   const pedalGroup = new THREE.Group();
   pedalGroup.name = "Body_PedalSled_Assembly";
-  pedalGroup.position.set(2.5, 0, 1.36); // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
+  pedalGroup.position.set(1.3, 0, 1.36); // forward so the legs reach them with the knees slightly bent (D1) // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
 
   // Dual Aluminum Slider Guide Rails
   // (inboard of the tub's curved lower corners (tub floor z 1.24 at y 0.7), they used to poke through at y +-1.2)
@@ -520,6 +521,10 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   fireGroup.add(headMesh);
 
   root.add(fireGroup);
+
+  // first pose: hands on the grips, feet on the pedal pads
+  root.updateMatrixWorld(true);
+  updateDriverKinematics(driverGroup, {}, pcu8dWheel, pedalGroup);
 
   return root;
 }
