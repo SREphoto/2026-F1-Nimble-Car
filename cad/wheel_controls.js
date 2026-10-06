@@ -227,7 +227,7 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
 
   // ---- per frame
   let acc = 1, lastSig = '';
-  const ledC = (i) => (i < 5 ? 0x00e676 : i < 10 ? 0xff334b : 0x9d4edd);
+  const ledC = (i) => { const n = shiftLeds ? shiftLeds.count : 15; return i < n * 0.4 ? 0x00e676 : i < n * 0.7 ? 0xff334b : 0x5a6bff; }; // W3: green, red, blue
   function update(dt = 0.016) {
     const car = api.getCar?.() || {};
     for (const c of controls) {
@@ -239,7 +239,7 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
       else if (c.type === 'paddle') { const side = /RH$/.test(c.mesh) ? 1 : -1; const pull = c.held ? 1 : k; c.obj.rotation.y = c.base.rot.y - side * 0.14 * pull; }
     }
     // shift lights from rpm (flash at the limiter), flank LEDs show flags
-    const rpm = car.rpm || 0, lit = Math.floor(THREE.MathUtils.clamp((rpm - 4000) / 8500, 0, 1) * 15), flash = rpm > 12200 && (performance.now() % 200) < 100;
+    const rpm = car.rpm || 0, lit = Math.floor(THREE.MathUtils.clamp((rpm - 4000) / 8500, 0, 1) * (shiftLeds ? shiftLeds.count : 15)), flash = rpm > 12200 && (performance.now() % 200) < 100;
     if (shiftLeds) {
       const blink = (performance.now() % 500) < 250;
       for (let i = 0; i < shiftLeds.count; i++) shiftLeds.setColorAt(i, _col.setHex(S.flags.pitLimiter ? (blink && i % 2 === 0 ? 0xffb300 : 0x111418) : flash ? 0x2f7bff : i < lit ? ledC(i) : 0x111418));

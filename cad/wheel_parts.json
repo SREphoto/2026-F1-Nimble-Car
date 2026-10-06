@@ -1,0 +1,836 @@
+{
+ "_doc": "PCU-8D style steering wheel inventory, part by part, measured on refs round4/wheel W1-W6 (W4 front view for x/y, W5 top view for depths, W6 rear for hub and paddles, W3 for colours and silkscreen). Units dm, wheel-local: X across (W4 image right = +X), Y up, Z out of the display face toward the driver. Built by cad/steering_wheel_pcu8d.js; control ids match cad/wheel_button_map.json.",
+ "scale": {
+  "overallWidth": 2.9,
+  "overallHeight": 1.663,
+  "pxPerDm_W4": 258.62
+ },
+ "body": {
+  "id": "Chassis_Carbon_Monocoque",
+  "ref": [
+   "W2",
+   "W4",
+   "W5",
+   "W6"
+  ],
+  "material": "carbonTwill",
+  "outline": [
+   [
+    0.0,
+    0.6767
+   ],
+   [
+    0.348,
+    0.6921
+   ],
+   [
+    0.812,
+    0.6999
+   ],
+   [
+    1.0827,
+    0.6921
+   ],
+   [
+    1.1909,
+    0.6612
+   ],
+   [
+    1.2528,
+    0.5916
+   ],
+   [
+    1.2837,
+    0.4833
+   ],
+   [
+    1.2953,
+    0.29
+   ],
+   [
+    1.1677,
+    0.2823
+   ],
+   [
+    1.102,
+    0.2823
+   ],
+   [
+    0.8352,
+    0.2823
+   ],
+   [
+    0.8197,
+    0.2513
+   ],
+   [
+    0.8197,
+    0.0116
+   ],
+   [
+    1.1677,
+    0.0116
+   ],
+   [
+    1.1677,
+    -0.29
+   ],
+   [
+    0.8197,
+    -0.29
+   ],
+   [
+    0.8159,
+    -0.5993
+   ],
+   [
+    0.7965,
+    -0.6689
+   ],
+   [
+    0.7424,
+    -0.696
+   ],
+   [
+    0.5413,
+    -0.6999
+   ],
+   [
+    0.348,
+    -0.6921
+   ],
+   [
+    0.0,
+    -0.6921
+   ],
+   [
+    -0.348,
+    -0.6921
+   ],
+   [
+    -0.5413,
+    -0.6999
+   ],
+   [
+    -0.7424,
+    -0.696
+   ],
+   [
+    -0.7965,
+    -0.6689
+   ],
+   [
+    -0.8159,
+    -0.5993
+   ],
+   [
+    -0.8197,
+    -0.29
+   ],
+   [
+    -1.1677,
+    -0.29
+   ],
+   [
+    -1.1677,
+    0.0116
+   ],
+   [
+    -0.8197,
+    0.0116
+   ],
+   [
+    -0.8197,
+    0.2513
+   ],
+   [
+    -0.8352,
+    0.2823
+   ],
+   [
+    -1.102,
+    0.2823
+   ],
+   [
+    -1.1677,
+    0.2823
+   ],
+   [
+    -1.2953,
+    0.29
+   ],
+   [
+    -1.2837,
+    0.4833
+   ],
+   [
+    -1.2528,
+    0.5916
+   ],
+   [
+    -1.1909,
+    0.6612
+   ],
+   [
+    -1.0827,
+    0.6921
+   ],
+   [
+    -0.812,
+    0.6999
+   ],
+   [
+    -0.348,
+    0.6921
+   ]
+  ],
+  "thickness": 0.24,
+  "edgeRadius": 0.035,
+  "note": "one carbon shell: top wing bar running out over the grips, centre body with side towers, necks into the grips, windows between wing / body / grip"
+ },
+ "consoleLip": {
+  "id": "Console_Lower_Lip",
+  "ref": [
+   "W5"
+  ],
+  "from": [
+   -0.5336,
+   -0.3364
+  ],
+  "to": [
+   0.5336,
+   -0.6921
+  ],
+  "height": 0.035,
+  "note": "raised rim of the lower dial tray"
+ },
+ "grips": {
+  "id": "Grip",
+  "ref": [
+   "W2",
+   "W3",
+   "W5",
+   "W6"
+  ],
+  "material": "alcantaraGrey",
+  "note": "sculpted alcantara grips, deeper than the body (W5), flaring outward toward the bottom (W2)",
+  "sections": [
+   [
+    0.29,
+    1.334,
+    1.102,
+    0.3,
+    0.0
+   ],
+   [
+    0.1933,
+    1.3843,
+    1.0943,
+    0.33,
+    0.0
+   ],
+   [
+    0.0193,
+    1.4307,
+    1.0981,
+    0.35,
+    0.0
+   ],
+   [
+    -0.1353,
+    1.4539,
+    1.1059,
+    0.37,
+    0.0
+   ],
+   [
+    -0.29,
+    1.4461,
+    1.1213,
+    0.37,
+    0.0
+   ],
+   [
+    -0.4447,
+    1.4229,
+    1.1523,
+    0.36,
+    -0.01
+   ],
+   [
+    -0.5993,
+    1.3997,
+    1.1445,
+    0.35,
+    -0.01
+   ],
+   [
+    -0.754,
+    1.3843,
+    1.1213,
+    0.34,
+    -0.015
+   ],
+   [
+    -0.87,
+    1.3765,
+    1.1059,
+    0.33,
+    -0.02
+   ],
+   [
+    -0.9396,
+    1.3611,
+    1.1059,
+    0.31,
+    -0.02
+   ],
+   [
+    -0.9744,
+    1.3147,
+    1.1407,
+    0.22,
+    -0.02
+   ]
+  ],
+  "sectionFormat": "[y, outer x, inner x, depth, z offset] in dm for the +X grip; the -X grip is mirrored"
+ },
+ "gripShoulders": {
+  "id": "Grip_Shoulder",
+  "ref": [
+   "W2",
+   "W5"
+  ],
+  "material": "carbonTwill",
+  "centre": [
+   1.2373,
+   0.4137
+  ],
+  "radii": [
+   0.1005,
+   0.1779,
+   0.15
+  ],
+  "note": "bulbous carbon ends where the wing bar meets the grips (W5 top view)"
+ },
+ "bezel": {
+  "id": "Display_Bezel",
+  "ref": [
+   "W3",
+   "W4"
+  ],
+  "material": "anodisedGrey",
+  "outline": [
+   [
+    0.0,
+    0.5839
+   ],
+   [
+    0.5027,
+    0.5839
+   ],
+   [
+    0.5993,
+    0.4988
+   ],
+   [
+    0.5993,
+    0.4524
+   ],
+   [
+    0.5375,
+    0.4137
+   ],
+   [
+    0.5375,
+    -0.2436
+   ],
+   [
+    0.4911,
+    -0.29
+   ],
+   [
+    0.0,
+    -0.29
+   ],
+   [
+    -0.4911,
+    -0.29
+   ],
+   [
+    -0.5375,
+    -0.2436
+   ],
+   [
+    -0.5375,
+    0.4137
+   ],
+   [
+    -0.5993,
+    0.4524
+   ],
+   [
+    -0.5993,
+    0.4988
+   ],
+   [
+    -0.5027,
+    0.5839
+   ]
+  ],
+  "screen": {
+   "centre": [
+    0.0077,
+    0.1779
+   ],
+   "size": [
+    0.9087,
+    0.5491
+   ]
+  },
+  "height": 0.04,
+  "recess": 0.025
+ },
+ "screen": {
+  "id": "UI_LCD_PCU8D_Display",
+  "ref": [
+   "W3"
+  ],
+  "canvas": [
+   1024,
+   640
+  ]
+ },
+ "shiftLEDs": {
+  "id": "ShiftLEDs",
+  "ref": [
+   "W3",
+   "W4"
+  ],
+  "count": 10,
+  "from": [
+   -0.3093,
+   0.5027
+  ],
+  "to": [
+   0.3248,
+   0.5027
+  ],
+  "radius": 0.022,
+  "colours": "green 4, red 3, blue 3 (W3)"
+ },
+ "statusLEDs": {
+  "id": "StatusLEDs",
+  "ref": [
+   "W4"
+  ],
+  "radius": 0.016,
+  "positions": [
+   [
+    -0.5181,
+    0.4137
+   ],
+   [
+    -0.5181,
+    0.3403
+   ],
+   [
+    -0.5181,
+    0.2668
+   ],
+   [
+    0.522,
+    0.4137
+   ],
+   [
+    0.522,
+    0.3403
+   ],
+   [
+    0.522,
+    0.2668
+   ]
+  ]
+ },
+ "buttons": [
+  {
+   "id": "N",
+   "at": [
+    -1.1213,
+    0.4524
+   ],
+   "d": 0.1392,
+   "colour": "#15181d",
+   "label": "N",
+   "text": "#ffffff"
+  },
+  {
+   "id": "PLUS10",
+   "at": [
+    -0.928,
+    0.4447
+   ],
+   "d": 0.1315,
+   "colour": "#7b3fd0",
+   "label": "+10",
+   "text": "#ffffff"
+  },
+  {
+   "id": "DRINK",
+   "at": [
+    -0.7347,
+    0.3867
+   ],
+   "d": 0.1392,
+   "colour": "#f07a1e",
+   "label": "DR",
+   "text": "#ffffff"
+  },
+  {
+   "id": "PL",
+   "at": [
+    0.7347,
+    0.3867
+   ],
+   "d": 0.1392,
+   "colour": "#e8d21a",
+   "label": "PL",
+   "text": "#111111"
+  },
+  {
+   "id": "PLUS1",
+   "at": [
+    0.928,
+    0.4447
+   ],
+   "d": 0.1315,
+   "colour": "#7b3fd0",
+   "label": "+1",
+   "text": "#ffffff"
+  },
+  {
+   "id": "OT",
+   "at": [
+    1.1213,
+    0.4524
+   ],
+   "d": 0.1392,
+   "colour": "#1f6fe0",
+   "label": "OT",
+   "text": "#ffffff"
+  },
+  {
+   "id": "OK",
+   "at": [
+    -0.6109,
+    -0.116
+   ],
+   "d": 0.1315,
+   "colour": "#eef1f4",
+   "label": "OK",
+   "text": "#111111"
+  },
+  {
+   "id": "BACK",
+   "at": [
+    -0.6187,
+    -0.3209
+   ],
+   "d": 0.1315,
+   "colour": "#d8202a",
+   "label": "✕",
+   "text": "#ffffff"
+  },
+  {
+   "id": "BB_MINUS",
+   "at": [
+    -0.6573,
+    -0.5529
+   ],
+   "d": 0.1315,
+   "colour": "#15181d",
+   "label": "BB-",
+   "text": "#ffffff"
+  },
+  {
+   "id": "AERO",
+   "at": [
+    0.6109,
+    -0.116
+   ],
+   "d": 0.1315,
+   "colour": "#1f86e8",
+   "label": "X",
+   "text": "#ffffff"
+  },
+  {
+   "id": "RADIO",
+   "at": [
+    0.6187,
+    -0.3209
+   ],
+   "d": 0.1315,
+   "colour": "#1fb86a",
+   "label": "☎",
+   "text": "#ffffff"
+  },
+  {
+   "id": "BB_PLUS",
+   "at": [
+    0.6573,
+    -0.5529
+   ],
+   "d": 0.1315,
+   "colour": "#15181d",
+   "label": "BB+",
+   "text": "#ffffff"
+  }
+ ],
+ "thumbwheels": [
+  {
+   "id": "Thumbwheel_Entry_Red",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    -1.2528,
+    0.2397
+   ],
+   "axis": "y",
+   "d": 0.1701,
+   "w": 0.0928,
+   "colour": "#c4161c",
+   "label": "ENTRY",
+   "note": "on the grip top, rolled sideways"
+  },
+  {
+   "id": "Thumbwheel_UpperRight_Blue",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    1.2605,
+    0.2397
+   ],
+   "axis": "y",
+   "d": 0.1701,
+   "w": 0.0928,
+   "colour": "#1452c8"
+  },
+  {
+   "id": "Thumbwheel_BMIG_Gold",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    -0.7269,
+    0.1663
+   ],
+   "axis": "x",
+   "d": 0.1547,
+   "w": 0.0773,
+   "colour": "#d1a12a",
+   "label": "BMIG"
+  },
+  {
+   "id": "Thumbwheel_BBAL_Gold",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    0.7269,
+    0.1663
+   ],
+   "axis": "x",
+   "d": 0.1547,
+   "w": 0.0773,
+   "colour": "#b9894a",
+   "label": "BBAL"
+  },
+  {
+   "id": "Thumbwheel_Silver_Vertical",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    -0.754,
+    -0.1663
+   ],
+   "axis": "x",
+   "d": 0.1624,
+   "w": 0.0773,
+   "colour": "#c9ccd1"
+  },
+  {
+   "id": "Thumbwheel_EB_Green",
+   "ref": [
+    "W3",
+    "W4"
+   ],
+   "at": [
+    0.754,
+    -0.1663
+   ],
+   "axis": "x",
+   "d": 0.1624,
+   "w": 0.0773,
+   "colour": "#1e9e4a",
+   "label": "EB"
+  }
+ ],
+ "rotaries": [
+  {
+   "id": "Rotary_Knob_STRAT",
+   "at": [
+    -0.3171,
+    -0.5027
+   ],
+   "d": 0.1933,
+   "scale": "STRAT"
+  },
+  {
+   "id": "Rotary_Knob_SYS",
+   "at": [
+    0.0,
+    -0.4833
+   ],
+   "d": 0.1933,
+   "scale": "SYS"
+  },
+  {
+   "id": "Rotary_Knob_CTRL",
+   "at": [
+    0.3287,
+    -0.5027
+   ],
+   "d": 0.1933,
+   "scale": "CTRL"
+  }
+ ],
+ "hub": {
+  "id": "Rear_QuickRelease_Hub",
+  "ref": [
+   "W5",
+   "W6"
+  ],
+  "material": "titanium",
+  "cone": {
+   "frontD": 0.4,
+   "backD": 0.62,
+   "depth": 0.22
+  },
+  "flange": {
+   "d": 0.95,
+   "t": 0.05,
+   "boreD": 0.42
+  },
+  "note": "conical hub flaring into a machined flange disc with a large bore (W6)"
+ },
+ "paddles": [
+  {
+   "id": "Paddle_Shift_Up_RH",
+   "side": 1,
+   "pivot": [
+    0.3,
+    0.2
+   ],
+   "blade": {
+    "x": 0.92,
+    "yTop": 0.46,
+    "yBot": -0.1,
+    "w": 0.27
+   }
+  },
+  {
+   "id": "Paddle_Shift_Down_LH",
+   "side": -1,
+   "pivot": [
+    -0.3,
+    0.2
+   ],
+   "blade": {
+    "x": -0.92,
+    "yTop": 0.46,
+    "yBot": -0.1,
+    "w": 0.27
+   }
+  },
+  {
+   "id": "Paddle_Clutch_RH",
+   "side": 1,
+   "pivot": [
+    0.3,
+    -0.3
+   ],
+   "blade": {
+    "x": 0.86,
+    "yTop": -0.16,
+    "yBot": -0.89,
+    "w": 0.25
+   }
+  },
+  {
+   "id": "Paddle_Clutch_LH",
+   "side": -1,
+   "pivot": [
+    -0.3,
+    -0.3
+   ],
+   "blade": {
+    "x": -0.86,
+    "yTop": -0.16,
+    "yBot": -0.89,
+    "w": 0.25
+   }
+  }
+ ],
+ "silkscreen": {
+  "ref": [
+   "W3"
+  ],
+  "labels": [
+   {
+    "text": "ENTRY",
+    "at": [
+     -1.2141,
+     0.3287
+    ],
+    "size": 0.03,
+    "colour": "#ffffff",
+    "rot": 12
+   },
+   {
+    "text": "BMIG",
+    "at": [
+     -0.7269,
+     0.0541
+    ],
+    "size": 0.026,
+    "colour": "#ffffff"
+   },
+   {
+    "text": "BBAL",
+    "at": [
+     0.7269,
+     0.0541
+    ],
+    "size": 0.026,
+    "colour": "#ffffff"
+   },
+   {
+    "text": "EB",
+    "at": [
+     0.754,
+     -0.0503
+    ],
+    "size": 0.03,
+    "colour": "#21c45a"
+   }
+  ]
+ }
+}
