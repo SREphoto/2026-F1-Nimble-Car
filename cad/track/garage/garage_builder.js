@@ -245,7 +245,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     facade: std({ color: 0xd2d4d6, roughness: 0.75 }),
     facadeDark: std({ color: 0x3b3f45, roughness: 0.6, metalness: 0.3 }),
     fence: std({ color: 0x9aa3ad, roughness: 0.45, metalness: 0.7, transparent: true, opacity: 0.35, side: THREE.DoubleSide }),
-    shadow: new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthWrite: false, opacity: 0.55, alphaMap: canvasTex(128, 128, (x, w, h) => { const gr = x.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.55, '#8a8a8a'); gr.addColorStop(1, '#000000'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    shadow: new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthWrite: false, opacity: 0.75, alphaMap: canvasTex(128, 128, (x, w, h) => { const gr = x.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.55, '#8a8a8a'); gr.addColorStop(1, '#000000'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
   };
   M.shadow.alphaMap.colorSpace = THREE.NoColorSpace;
   g.userData.materials = M;
@@ -268,7 +268,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(D, 2 * W), M.floor); floor.rotation.x = -Math.PI / 2; floor.position.set(XM, 0.03, 0); floor.receiveShadow = true; floor.name = 'Garage_Floor'; floor.renderOrder = 1; g.add(floor);
   let mirror = null;
   if (high) {
-    mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0xb8bcc2, multisample: 4 });
+    mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0x8f9298, multisample: 4 });
     mirror.rotation.x = -Math.PI / 2; mirror.position.set(XM, 0.0, 0); mirror.name = 'Garage_Floor_Mirror';
     mirror.camera.layers.set(REFLECT_LAYER);
     // the mirror image is only redrawn when the view changed (camera moved, wheels or bodywork toggled, part picked), and

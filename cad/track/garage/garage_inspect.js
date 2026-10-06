@@ -98,7 +98,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   // selected part: a thin light outline (back faces pushed out along the normals) and a faint additive glow on top.
   // Both share the part's geometry and leave its own materials alone, so the real livery stays visible.
   const outlineMat = new THREE.MeshBasicMaterial({ color: 0xbff0ff, side: THREE.BackSide, transparent: true, opacity: 0.9, depthWrite: false });
-  outlineMat.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(objectNormal) * 0.12;'); };
+  outlineMat.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * 0.12;'); };
   const glowMat = new THREE.MeshBasicMaterial({ color: 0x3fc8ff, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   const overlays = [];
   function clearSel() {
@@ -179,7 +179,9 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     // the garage brings its own lights: switch the scene's sun and fill lights off while inside
     scene.traverse(o => { if (o.isLight && !garage.userData.lights.includes(o) && o.visible) { st.saved.lights.push([o, o.intensity, o.castShadow]); o.intensity = 0; o.castShadow = false; } });
     // the car is seen in the floor mirror, and paint and metal reflect the garage (environment captured without the car)
-    carModel.traverse(o => o.layers.enable(builder.REFLECT_LAYER));
+    // the floor mirror sees the car, except see-through parts (the steering wheel screen glass): those would make three.js
+    // draw the whole scene a second time for the mirror, and they are too small to notice in a floor reflection
+    carModel.traverse(o => { const m = o.material; if (m && [].concat(m).some(x => x.transmission > 0)) return; o.layers.enable(builder.REFLECT_LAYER); });
     scene.environment = garage.userData.captureEnv(renderer, scene, [carModel]);
     // the garage is still unless something is toggled, so shadows are drawn once and redrawn only on a change
     st.saved.exposure = renderer.toneMappingExposure; renderer.toneMappingExposure = 1.0;   // indoor exposure
