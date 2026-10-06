@@ -82,16 +82,16 @@ export function createRain(scene, maxDrops) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 3));
   g.setAttribute('aEnd', new THREE.BufferAttribute(end, 1));
-  const box = new THREE.Vector3(24 * DM, 16 * DM, 24 * DM);
+  const box = new THREE.Vector3(18 * DM, 13 * DM, 18 * DM);
   const m = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, fog: false,
-    uniforms: { uTime: { value: 0 }, uCam: { value: new THREE.Vector3() }, uBox: { value: box }, uVel: { value: new THREE.Vector3(0, -9 * DM, 0) }, uLen: { value: 0.07 }, uCol: { value: new THREE.Color(0.86, 0.9, 0.96) }, uAlpha: { value: 0.35 } },
+    uniforms: { uTime: { value: 0 }, uCam: { value: new THREE.Vector3() }, uBox: { value: box }, uVel: { value: new THREE.Vector3(0, -9 * DM, 0) }, uLen: { value: 0.11 }, uCol: { value: new THREE.Color(0.86, 0.9, 0.96) }, uAlpha: { value: 0.35 } },
     vertexShader: `attribute vec3 aSeed; attribute float aEnd; uniform float uTime, uLen; uniform vec3 uCam, uBox, uVel; varying float vA;
       void main(){ vec3 v = uVel * (0.85 + 0.3 * aSeed.y);
         vec3 p = mod(aSeed * uBox + v * uTime - uCam + uBox * 0.5, uBox) - uBox * 0.5 + uCam;
         p -= v * uLen * aEnd;
         vec4 mv = viewMatrix * vec4(p, 1.0);
-        vA = (1.0 - aEnd * 0.7) * (1.0 - smoothstep(uBox.x * 0.25, uBox.x * 0.5, length(p - uCam)));
+        vA = (1.0 - aEnd * 0.5) * (1.0 - smoothstep(uBox.x * 0.25, uBox.x * 0.5, length(p - uCam)));
         gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 uCol; uniform float uAlpha; varying float vA; void main(){ gl_FragColor = vec4(uCol, vA * uAlpha); }`,
   });
@@ -109,7 +109,7 @@ export function createRain(scene, maxDrops) {
       m.uniforms.uTime.value += dt;
       // rain angle follows the wind; heavier rain falls a little faster
       m.uniforms.uVel.value.set(W.wind.x * 0.8 * DM, -(7.5 + 2.5 * W.rain) * DM, W.wind.z * 0.8 * DM).multiplyScalar(scale);
-      m.uniforms.uAlpha.value = 0.4 + 0.45 * W.rain;
+      m.uniforms.uAlpha.value = Math.min(1, 0.55 + 0.5 * W.rain);
     },
   };
 }

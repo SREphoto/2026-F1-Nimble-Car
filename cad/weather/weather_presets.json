@@ -6,7 +6,7 @@
     "cloudy":     { "label": "Cloudy",     "cloud": 0.55, "rain": 0,    "windKmh": 14, "windFrom": 270, "fog": 0.05, "water": 0 },
     "overcast":   { "label": "Overcast",   "cloud": 0.95, "rain": 0,    "windKmh": 18, "windFrom": 250, "fog": 0.15, "water": 0 },
     "light_rain": { "label": "Light rain", "cloud": 0.9,  "rain": 0.25, "windKmh": 16, "windFrom": 240, "fog": 0.25, "water": 0.3 },
-    "heavy_rain": { "label": "Heavy rain", "cloud": 1.0,  "rain": 0.75, "windKmh": 25, "windFrom": 230, "fog": 0.6,  "water": 0.75 },
+    "heavy_rain": { "label": "Heavy rain", "cloud": 1.0,  "rain": 0.85, "windKmh": 25, "windFrom": 230, "fog": 0.6,  "water": 0.75 },
     "storm":      { "label": "Storm",      "cloud": 1.0,  "rain": 1.0,  "windKmh": 48, "windFrom": 210, "fog": 0.85, "water": 0.95 }
   },
   "rainLevels": [ { "upTo": 0.02, "label": "none" }, { "upTo": 0.3, "label": "light" }, { "upTo": 0.65, "label": "medium" }, { "upTo": 1.01, "label": "heavy" } ],
@@ -33,8 +33,8 @@
   "quality": {
     "note": "high is the default and the intended look; medium and low are optional fallbacks for slow machines. Effects are only built while the weather needs them.",
     "low":    { "rainDrops": 3000,  "cloudLayers": 1, "lensDrops": false, "treeSway": false, "puddles": 40 },
-    "medium": { "rainDrops": 9000,  "cloudLayers": 2, "lensDrops": true,  "treeSway": true,  "puddles": 90 },
-    "high":   { "rainDrops": 28000, "cloudLayers": 3, "lensDrops": true,  "treeSway": true,  "puddles": 220 }
+    "medium": { "rainDrops": 14000,  "cloudLayers": 2, "lensDrops": true,  "treeSway": true,  "puddles": 90 },
+    "high":   { "rainDrops": 42000, "cloudLayers": 3, "lensDrops": true,  "treeSway": true,  "puddles": 220 }
   },
   "defaultQuality": "high",
   "transitionMinutes": 4,
