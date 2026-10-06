@@ -619,14 +619,16 @@ export function createRedBullRing() {
   const nearBigStop = new Uint8Array(n);
   for (let i = 0; i < n; i++) { const sp = track.spOf(i); nearBigStop[i] = (BS.tecproTurns || []).some(t => { const d = ((turnSpK[t - 1] - sp) % track.length + track.length) % track.length; return d < 40 || d > track.length - 160; }) ? 1 : 0; }
   const beltR = i => tyreMR(i) && !nearBigStop[i], beltL = i => tyreML(i) && !nearBigStop[i];
-  // sponsor wraps: walls facing the track and the tyre-wall belts. Right-hand side runs the texture backwards so the
-  // lettering reads left to right from the track on both sides.
+  // sponsor wraps: walls facing the track and the tyre-wall belts. The lettering in the sponsor texture runs towards
+  // lower v (u = up). Seen from the track, a wall on the right must read towards the start of the lap (lower s) and a
+  // wall on the left towards higher s, so v grows with s on the right and falls with s on the left. Only lateral side
+  // and lap direction matter, so this holds whichever way the centreline runs.
   const wrapV = BS.wrapLength * BS.sponsors.length;
   add(mergeGeometries([
-    wallStrip(track, i => barRi(i) - 0.02, c(0.12), c(WH - 0.08), { mask: i => mR(i) && !tyreMR(i), vLen: -wrapV, uFixed: [0, 1] }),
-    wallStrip(track, i => barLi(i) + 0.02, c(0.12), c(WH - 0.08), { mask: i => mL(i) && !tyreML(i), vLen: wrapV, uFixed: [0, 1] }),
-    wallStrip(track, i => barRi(i) - 0.72, c(0.02), c(1.0), { mask: beltR, vLen: -wrapV, uFixed: [0, 1] }),
-    wallStrip(track, i => barLi(i) + 0.72, c(0.02), c(1.0), { mask: beltL, vLen: wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barRi(i) - 0.02, c(0.12), c(WH - 0.08), { mask: i => mR(i) && !tyreMR(i), vLen: wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barLi(i) + 0.02, c(0.12), c(WH - 0.08), { mask: i => mL(i) && !tyreML(i), vLen: -wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barRi(i) - 0.72, c(0.02), c(1.0), { mask: beltR, vLen: wrapV, uFixed: [0, 1] }),
+    wallStrip(track, i => barLi(i) + 0.72, c(0.02), c(1.0), { mask: beltL, vLen: -wrapV, uFixed: [0, 1] }),
   ]), M.sponsor, 'RBR_Sponsor_Wraps');
   add(mergeGeometries([
     strip(track, i => barRi(i) - 0.72, barRi, c(1.0), c(1.0), { mask: beltR, vLen: 1.0, uFixed: [0, 1] }),
