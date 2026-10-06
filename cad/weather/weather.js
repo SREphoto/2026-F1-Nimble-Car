@@ -36,17 +36,20 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
   // (rain / clouds / puddles / lens drops). Mist is scene fog, so it costs nothing extra.
   const fx = {};
   const host = document.getElementById('viewport3d');
-  const offFor = { rain: 0, clouds: 0, wet: 0, lens: 0 };
-  function want(name, on, make, dt) {
-    if (on) { offFor[name] = 0; if (!fx[name]) { try { fx[name] = make(); } catch (e) { console.warn('[weather] ' + name + ' skipped', e); fx[name] = null; } } return; }
-    if (fx[name] && (offFor[name] += dt) > 2) { fx[name].dispose(); fx[name] = null; }   // 2 s grace so a passing change does not rebuild
+  const offSince = { rain: 0, clouds: 0, wet: 0, lens: 0 };
+  function want(name, on, make) {
+    const now = performance.now();
+    if (on) { offSince[name] = 0; if (!fx[name]) { try { fx[name] = make(); } catch (e) { console.warn('[weather] ' + name + ' skipped', e); fx[name] = null; } } return; }
+    if (!fx[name]) return;
+    if (!offSince[name]) offSince[name] = now;
+    else if (now - offSince[name] > 2000) { fx[name].dispose(); fx[name] = null; offSince[name] = 0; }   // 2 s grace so a passing change does not rebuild
   }
   function manageFx(dt) {
     const tm = trackMode;
-    want('clouds', W.cloud > 0.04, () => createClouds(scene, Q().cloudLayers), dt);
-    want('rain', W.rain > 0.01, () => createRain(scene, Q().rainDrops), dt);
-    want('wet', !!circuit && W.water > 0.08, () => createWetSurface(circuit.group, circuit, renderer, Q().puddles), dt);
-    want('lens', !!host && Q().lensDrops && W.rain > 0.03 && tm?.mode?.circuit && tm.mode.cam === 'chase', () => createLensDrops(host), dt);
+    want('clouds', W.cloud > 0.04, () => createClouds(scene, Q().cloudLayers));
+    want('rain', W.rain > 0.01, () => createRain(scene, Q().rainDrops));
+    want('wet', !!circuit && W.water > 0.08, () => createWetSurface(circuit.group, circuit, renderer, Q().puddles));
+    want('lens', !!host && Q().lensDrops && W.rain > 0.03 && tm?.mode?.circuit && tm.mode.cam === 'chase', () => createLensDrops(host));
   }
   function rebuildFx() { ['clouds', 'rain', 'wet', 'lens'].forEach(n => { fx[n]?.dispose(); fx[n] = null; }); }
   if (circuit) {
