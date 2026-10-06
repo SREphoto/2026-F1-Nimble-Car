@@ -20,6 +20,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RED_BULL_RING as D } from './red_bull_ring_data.js';
 import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
 import { buildBullSculpture } from './rbr_bull.js';
+import { createPitStopStation } from '../pit_stop_crew.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -458,6 +459,26 @@ export function createRedBullRing() {
   lines.push(paint.geometry());
   add(mergeGeometries(lines.map(g => { g.deleteAttribute('uv'); return g; })), M.line, 'RBR_White_Lines');
   add(yellowPaint.geometry(), M.yellow, 'RBR_Pit_Boxes');
+
+  // ---------------------------------------------------------------- 3b. 3D pit stop station (crew, gantry, jacks, tyre warmers)
+  const redBullBoxS = boxS.reduce((b, s) => (Math.abs(s - 463) < Math.abs(b - 463) ? s : b), boxS[0]);
+  const pitStation = createPitStopStation({ teamId: 'red-bull' });
+  const pbPt = pitAt(redBullBoxS);
+  const pbLat = bSide * (PW / 2 - 2.75);
+  // Pit box center in scene coordinates (multiplied by DM)
+  pitStation.position.set(
+    (pbPt.x + pbPt.rx * pbLat) * DM,
+    pbPt.y * DM,
+    (pbPt.z + pbPt.rz * pbLat) * DM
+  );
+  // Tangent = forward, Normal * (-bSide) = towards pit wall / positive Z
+  const fwd = new THREE.Vector3(pbPt.tx, 0, pbPt.tz).normalize();
+  const up = new THREE.Vector3(0, 1, 0);
+  const lat = new THREE.Vector3(pbPt.rx * (-bSide), 0, pbPt.rz * (-bSide)).normalize();
+  const stationBasis = new THREE.Matrix4().makeBasis(fwd, up, lat);
+  pitStation.quaternion.setFromRotationMatrix(stationBasis);
+  root.add(pitStation);
+  root.userData.pitStation = pitStation;
 
   // ---------------------------------------------------------------- 4. barriers: concrete wall + debris fence + tyre walls
   const barRi = i => D.barR[i], barLi = i => -D.barL[i];

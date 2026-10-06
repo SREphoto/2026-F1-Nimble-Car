@@ -505,6 +505,11 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
     updateLcd();
   }
 
+  // 5b. Dispatch event to update 3D pit crew team liveries
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('f1:team-changed', { detail: { teamId: team.id } }));
+  }
+
   // 6. Save selection to localStorage
   try {
     localStorage.setItem(STORAGE_KEY, team.id);

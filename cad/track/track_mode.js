@@ -157,6 +157,9 @@ export function initTrackMode(ctx) {
       carModel.rotateY(Math.asin(THREE.MathUtils.clamp(-b.cx, -1, 1)));
       carModel.translateZ(b.c0);
     }
+    if (mode.pitPhase === 'stop') {
+      carModel.position.y += 0.4 * DM; // Visually raised on jacks during 2.4s stop
+    }
     car.lat = Lf.lat; car.Lf = Lf;
     return Lf;
   }
@@ -396,6 +399,8 @@ export function initTrackMode(ctx) {
       setThrottle(0); setBrake(180);
       const prevT = mode.pitT;
       mode.pitT += dt;
+      // Animate pit gantry lights and mechanics jacks
+      circuit.group?.userData?.pitStation?.userData?.updatePitState?.('stop', mode.pitT);
       // Wheel gun pneumatic pop as jacks lift the car
       if (prevT === 0 && mode.pitT > 0) {
         soundEngine?.playShiftPop?.();
@@ -420,6 +425,7 @@ export function initTrackMode(ctx) {
       if (mode.pitT > 2.4) {
         mode.pitPhase = 'out';
         mode.pitTyresChanged = false;
+        circuit.group?.userData?.pitStation?.userData?.updatePitState?.('out', 0);
       }
       return;
     }
@@ -494,11 +500,24 @@ export function initTrackMode(ctx) {
       const c = carCentre();
       controls.target.copy(c);
       camera.position.set(c.x + 40, c.y + 20, c.z + 50); controls.update();
+    } else if (m === 'pit') {
+      const PI = circuit.group.userData.pitInfo;
+      const P = pitAt(BOX_S);
+      const pbLat = PI ? PI.bSide * (PI.PW / 2 - 2.75) : 0;
+      const cx = (P.x + P.rx * pbLat) * DM;
+      const cy = P.y * DM;
+      const cz = (P.z + P.rz * pbLat) * DM;
+      const bs = PI ? PI.bSide : 1;
+      const camX = cx - P.rx * bs * 6.5 * DM + P.tx * 1.5 * DM;
+      const camY = cy + 2.5 * DM;
+      const camZ = cz - P.rz * bs * 6.5 * DM + P.tz * 1.5 * DM;
+      controls.target.set(cx, cy + 1.2 * DM, cz);
+      camera.position.set(camX, camY, camZ); controls.update();
     }
     carCentre(lastCarPos);
     document.querySelectorAll('.rbr-cam').forEach(b => b.classList.toggle('active', b.dataset.cam === m));
   }
-  function cycleCam() { const order = ['chase', 'tv', 'orbit', 'overview']; setCam(order[(order.indexOf(mode.cam) + 1) % order.length]); }
+  function cycleCam() { const order = ['chase', 'tv', 'orbit', 'overview', 'pit']; setCam(order[(order.indexOf(mode.cam) + 1) % order.length]); }
 
   function updateCamera(dt) {
     const c = carCentre(new THREE.Vector3());
@@ -522,6 +541,8 @@ export function initTrackMode(ctx) {
     } else if (mode.cam === 'orbit') {
       const d = c.clone().sub(lastCarPos);
       camera.position.add(d); controls.target.add(d);
+    } else if (mode.cam === 'pit') {
+      controls.update();
     }
     lastCarPos.copy(c);
   }
@@ -606,6 +627,7 @@ export function initTrackMode(ctx) {
         <button type="button" class="rbr-btn rbr-cam" data-cam="tv">TV</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="orbit">Orbit car</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="overview">Overview</button>
+        <button type="button" class="rbr-btn rbr-cam" data-cam="pit" title="Focus camera on the Red Bull pit box and pit crew">Pit Box</button>
         <button type="button" id="rbr-classic" class="rbr-btn" title="Show the original finish-line studio set instead of the full circuit">Classic set</button>
       </div>
       <div class="rbr-tele"><span id="rbr-lap">Lap –</span><span id="rbr-time">0:00.000</span><span id="rbr-last">Last –</span><span id="rbr-best">Best –</span></div>
@@ -653,6 +675,11 @@ export function initTrackMode(ctx) {
   $('rbr-reset')?.addEventListener('click', () => { setAutopilot(false); setThrottle(0); setBrake(0); setSteer(0); parkOnGrid(); camState.init = false; });
   $('rbr-classic')?.addEventListener('click', () => applyCircuit(!mode.circuit));
   document.querySelectorAll('.rbr-cam').forEach(b => b.addEventListener('click', () => { if (!mode.circuit) applyCircuit(true); setCam(b.dataset.cam); }));
+
+  // Live team livery synchronization with 3D pit crew uniforms
+  window.addEventListener('f1:team-changed', (e) => {
+    circuit.group?.userData?.pitStation?.userData?.setTeam?.(e.detail.teamId);
+  });
 
   // mini-map
   const mapC = $('rbr-map'), mctx = mapC?.getContext('2d');
