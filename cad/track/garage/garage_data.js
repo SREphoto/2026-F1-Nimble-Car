@@ -8,31 +8,47 @@ export const GARAGE_LAYOUT = {
   x0: -75, x1: 115, halfWidth: 36, height: 46,           // 19 m deep, 7.2 m wide, 4.6 m high
   lowerBand: 11,                                          // black lower band on the walls (dm)
   panelTop: 34,                                           // team colour wall panels from the band up to here
-  brick: { pale: '#d9d4c8', grey: '#8d8f93' },
-  floor: { color: '#c9ccd0', roughness: 0.22, carBox: { x0: -14, x1: 50, halfWidth: 12 } },
+  brick: { pale: '#ddd6c8', grey: '#8d8f93' },
+  floor: {
+    color: '#d3d6da', roughness: 0.32, clearcoat: 1.0, clearcoatRoughness: 0.06,   // glossy light grey epoxy
+    reflect: 0.2,                                         // share of the mirror image mixed into the floor (high quality)
+    lanes: { z0: 11.5, z1: 19, x0: -75, x1: 56, color: '#8e939a', chevron: '#e9ebee' },   // grey chevron parking lanes beside the car
+    signs: [                                              // painted floor direction signs [text, x, z, rotation]
+      ['PADDOCK  ▶', 96, -22, Math.PI / 2], ['TELEMETRY ROOM  ▶', 88, -22, Math.PI / 2], ['ENGINE ROOM  ▶', 80, -22, Math.PI / 2],
+    ],
+  },
   pitLaneStrip: { color: '#c3262b', width: 6, text: 'PIT-LANE' },
-  truss: { y: 40, zs: [-13, 13], size: 1.6, canopy: { x0: -8, x1: 46, halfWidth: 11, y: 33 } },
-  tubeLights: { y: 43, xs: [-50, -20, 10, 40, 70, 100], length: 24 },
-  rollerDoor: { y: 38 },                                  // raised door rolled up over the opening
-  // props: kind, position [x, z], rotation (rad around y), optional count
+  truss: { y: 39, size: 2.4, seg: 10, runsX: [-13, 13], runsZ: [-40, 0, 40, 80] },     // aluminium box truss grid under the ceiling
+  canopy: { x0: -8, x1: 46, halfWidth: 11, y: 33, depth: 2.4 },                         // light canopy over the car
+  tubeLights: { y: 43.2, zs: [-29, -21, 21, 29], x0: -66, x1: 108, step: 16, length: 12 },
+  ducts: { zs: [-24, 24], y: 43, r: 2.0 },
+  cableTrays: { zs: [-32, 32], y: 41.5, width: 3.6 },
+  rollerDoor: { y: 38, windows: 6 },                      // door raised to 3.8 m, bottom slats with a row of windows
+  pitLane: { apron: 40, fastLane: 60, wall: 1.1, length: 340 },                          // outside the door (dm)
+  // props: kind, position [x, z], rotation (rad around y, local +z faces the room), optional count and step (dm)
   props: [
-    { kind: 'cabinet', at: [60, -33], rot: 0, count: 5, step: 9 },
-    { kind: 'cabinet', at: [60, 33], rot: Math.PI, count: 5, step: 9 },
-    { kind: 'tyreTrolley', at: [-40, -28], rot: 0, labels: ['LEFT FRONT', 'LEFT REAR'] },
-    { kind: 'tyreTrolley', at: [-40, 28], rot: 0, labels: ['RIGHT FRONT', 'RIGHT REAR'] },
-    { kind: 'flightCase', at: [20, -30], rot: 0, count: 3, step: 8 },
-    { kind: 'flightCase', at: [20, 30], rot: 0, count: 2, step: 8 },
-    { kind: 'helmetShelf', at: [104, -26], rot: Math.PI / 2 },
-    { kind: 'extinguisher', at: [-68, -33] }, { kind: 'extinguisher', at: [-68, 33] }, { kind: 'extinguisher', at: [108, 0] },
-    { kind: 'gasCart', at: [-55, 31], rot: 0 },
-    { kind: 'fuelDrum', at: [88, 31] }, { kind: 'fuelDrum', at: [92, 28] },
-    { kind: 'stool', at: [86, -6] }, { kind: 'stool', at: [86, 4] }, { kind: 'stool', at: [86, 14] },
-    { kind: 'directorChair', at: [70, -20], rot: 0.3 }, { kind: 'directorChair', at: [70, 20], rot: -0.3 },
-    { kind: 'racingSeat', at: [100, 26], rot: -Math.PI / 2 },
-    { kind: 'pillarTV', at: [-72, -33] }, { kind: 'pillarTV', at: [-72, 33] },
+    { kind: 'wallUnit', at: [42, -35], rot: 0, count: 6, step: 9.4 },
+    { kind: 'wallUnit', at: [92, 35], rot: Math.PI, count: 4, step: 9.4 },
+    { kind: 'helmetShelf', at: [58, -34.6], rot: 0 },
+    { kind: 'helmetShelf', at: [78, -34.6], rot: 0 },
+    { kind: 'tyreTrolley', at: [-46, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'tyreTrolley', at: [-30, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'tyreTrolley', at: [104, -27], rot: Math.PI / 2, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'flightCase', at: [6, -29], rot: 0 }, { kind: 'flightCase', at: [17, -29], rot: 0.08 },
+    { kind: 'lockerCase', at: [6, 28.5], rot: Math.PI },
+    { kind: 'drawerCase', at: [30, 29], rot: Math.PI },
+    { kind: 'flightCase', at: [-16, 29], rot: Math.PI },
+    { kind: 'extinguisherStand', at: [-70, -32], rot: 0.4 }, { kind: 'extinguisherStand', at: [-70, 32], rot: Math.PI - 0.4 }, { kind: 'extinguisherStand', at: [110, 31], rot: Math.PI },
+    { kind: 'gasCart', at: [-52, 26], rot: Math.PI - 0.5 },
+    { kind: 'fuelDrum', at: [100, 30] }, { kind: 'fuelDrum', at: [106, 25] },
+    { kind: 'barStool', at: [83, -6] }, { kind: 'barStool', at: [83, 14] }, { kind: 'barStool', at: [36, -22] }, { kind: 'barStool', at: [62, 22] },
+    { kind: 'directorChair', at: [86, 2], rot: Math.PI / 2 }, { kind: 'directorChair', at: [86, 9], rot: Math.PI / 2 }, { kind: 'directorChair', at: [72, -24], rot: 0.5 },
+    { kind: 'racingSeat', at: [104, -14], rot: -Math.PI / 2 },
+    { kind: 'pillarTV', at: [-71.5, -34] }, { kind: 'pillarTV', at: [-71.5, 34] },
   ],
-  desk: { at: [96, 4], length: 34, depth: 8, height: 7.5, monitorWall: { cols: 3, rows: 2, w: 9, h: 5.5 } },
-  stands: { front: -6, rear: 42, jack: 18, raise: 1.8 },  // car stands when the wheels are off (x positions, lift dm)
+  desk: { at: [96, 4], length: 34, depth: 8, height: 7.5, monitorWall: { cols: 4, rows: 2, w: 8, h: 5 } },
+  stands: { raise: 1.8 },                                 // the car is lifted 18 cm onto stands when the wheels are off
+  sponsors: ['SREdesigns', 'NIMBLE CAR 2026', 'APEX FUELS', 'TORQUE LABS', 'CARBONWORKS', 'GRIDLINE DATA'],   // made-up names, plain text only
 };
 
 /**
