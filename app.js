@@ -23,6 +23,7 @@ import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 import { initSessions } from './cad/game/session_ui.js';
 import { initGlobe } from './cad/game/globe.js';
+import { initWeather } from './cad/weather/weather.js';
 import { F1_TEAMS, applyTeamTheme, getSavedTeam, getCurrentTeam } from './teams.js';
 import { initWheelControls, loadWheelMap } from './cad/wheel_controls.js';
 
@@ -1078,6 +1079,8 @@ try {
 initSessions({ trackMode, tyreStates }).catch(err => console.error('Sessions failed to initialise:', err));
 initGlobe({ onLoadTrack: id => { if (id === 'red_bull_ring' && trackMode) { trackMode.applyCircuit(true); trackMode.setCam('overview'); } } })
   .catch(err => console.error('Globe failed to initialise:', err));
+// Weather: clouds, rain, wind, track water and grip (cad/weather/*, settings in weather_presets.json)
+initWeather({ scene, camera, renderer, sunLight, ambientLight, trackMode, tyreStates, state }).catch(err => console.error('Weather failed to initialise:', err));
 
 // Interactive PCU-8D wheel: every button, dial, thumbwheel and paddle is clickable and the LCD is a
 // touch screen (cad/wheel_controls.js, map in cad/wheel_button_map.json). Its settings live in state.wheel.
