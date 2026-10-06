@@ -22,6 +22,7 @@ export const HELMET_SPEC = {
   peak: { az: 58, el: 0.41, out: 0.09 },        // small lip above the visor
   pivot: { el: 0.10, r: 0.17 },                 // visor pivot covers on the temples
   chinVents: [{ az: 14, el: -0.62 }, { az: -14, el: -0.62 }],
+  topVents: [{ az: 22, el: 0.86 }, { az: -22, el: 0.86 }], // small raised air intakes on the crown (D3, D4)
   spoiler: { el: 0.62, halfSpan: 0.62, chord: 0.32, rise: 0.10 }, // rear aero spoiler on the crown
   hansPosts: { az: 128, el: -0.42 },            // anchor posts on the lower rear quarters
   colours: { base: '#18245e', crown: '#f6c200', stripe: '#d0021b', accent: '#ffffff' },
@@ -180,6 +181,11 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   // chin vents: two small dark slots on the chin bar
   S.chinVents.forEach((cvt, k) => {
     group.add(patch(d2r(cvt.az - 6), d2r(cvt.az + 6), cvt.el - 0.05, cvt.el + 0.05, 0.006, blackTrim, `Helmet_ChinVent_${k}`, 6, 2));
+  });
+  // top vents: small raised intakes on the crown, a dark slot in a shell-colour scoop
+  (S.topVents || []).forEach((tv, k) => {
+    group.add(patch(d2r(tv.az - 7), d2r(tv.az + 7), tv.el - 0.09, tv.el + 0.07, 0.01, blackTrim, `Helmet_TopVent_Scoop_${k}`, 6, 4, 0.035));
+    group.add(patch(d2r(tv.az - 5), d2r(tv.az + 5), tv.el - 0.1, tv.el - 0.075, 0.05, new THREE.MeshBasicMaterial({ color: 0x050505, side: THREE.DoubleSide }), `Helmet_TopVent_Slot_${k}`, 4, 1));
   });
   // rear spoiler: small wing on the crown, rising toward the back
   {
