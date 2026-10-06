@@ -1,0 +1,48 @@
+{
+  "note": "Weather settings for the game. cloud, rain and fog are 0..1, wind in km/h, windFrom in degrees (where the wind comes from, 0 = north, 90 = east), water = how wet the track starts (0 dry .. 1 standing water).",
+  "default": "clear",
+  "presets": {
+    "clear":      { "label": "Clear",      "cloud": 0.2,  "rain": 0,    "windKmh": 6,  "windFrom": 300, "fog": 0,    "water": 0 },
+    "cloudy":     { "label": "Cloudy",     "cloud": 0.55, "rain": 0,    "windKmh": 14, "windFrom": 270, "fog": 0.05, "water": 0 },
+    "overcast":   { "label": "Overcast",   "cloud": 0.95, "rain": 0,    "windKmh": 18, "windFrom": 250, "fog": 0.15, "water": 0 },
+    "light_rain": { "label": "Light rain", "cloud": 0.9,  "rain": 0.25, "windKmh": 16, "windFrom": 240, "fog": 0.25, "water": 0.3 },
+    "heavy_rain": { "label": "Heavy rain", "cloud": 1.0,  "rain": 0.75, "windKmh": 25, "windFrom": 230, "fog": 0.6,  "water": 0.75 },
+    "storm":      { "label": "Storm",      "cloud": 1.0,  "rain": 1.0,  "windKmh": 48, "windFrom": 210, "fog": 0.85, "water": 0.95 }
+  },
+  "rainLevels": [ { "upTo": 0.02, "label": "none" }, { "upTo": 0.3, "label": "light" }, { "upTo": 0.65, "label": "medium" }, { "upTo": 1.01, "label": "heavy" } ],
+  "track": {
+    "wetPerMinuteAtFullRain": 0.25,
+    "dryPerMinute": 0.035,
+    "wetLookAbove": 0.1,
+    "manualTimeScale": 10
+  },
+  "grip": {
+    "note": "Tyre grip against track water (0..1), piecewise linear. Slicks are scaled by the compound factor. Wear factors match cad/tyre_states.js.",
+    "slick": [[0, 1.0], [0.1, 0.84], [0.3, 0.6], [0.6, 0.47], [1, 0.4]],
+    "inter": [[0, 0.84], [0.12, 0.88], [0.35, 0.86], [0.6, 0.74], [1, 0.6]],
+    "wet":   [[0, 0.74], [0.3, 0.76], [0.6, 0.79], [1, 0.77]],
+    "slickCompound": { "soft": 1.03, "medium": 1.0, "hard": 0.97 },
+    "wear": { "new": 0.98, "laps": 1.0, "medium": 0.97, "heavy": 0.9, "blown": 0.6 }
+  },
+  "wind": {
+    "gustPct": 25,
+    "crossDriftPerMs2": 0.0015,
+    "note": "Head/tail wind changes air speed in the existing drag term; crosswind pushes the car sideways a little (m/s per (m/s)^2)."
+  },
+  "light": { "sunAtOvercast": 0.18, "ambientAtOvercast": 1.25, "skyAtOvercast": [0.62, 0.65, 0.7], "fogColour": "#8d969f", "fogDensityMax": 0.00042 },
+  "quality": {
+    "note": "high is the default and the intended look; medium and low are optional fallbacks for slow machines. Effects are only built while the weather needs them.",
+    "low":    { "rainDrops": 3000,  "cloudLayers": 1, "lensDrops": false, "treeSway": false, "puddles": 40 },
+    "medium": { "rainDrops": 9000,  "cloudLayers": 2, "lensDrops": true,  "treeSway": true,  "puddles": 90 },
+    "high":   { "rainDrops": 28000, "cloudLayers": 3, "lensDrops": true,  "treeSway": true,  "puddles": 220 }
+  },
+  "defaultQuality": "high",
+  "transitionMinutes": 4,
+  "forecasts": {
+    "note": "Per session: t = session minute (qualifying counts Q1+Q2+Q3 back to back), preset = which preset is reached at that time. Weather blends between entries.",
+    "FP1": [ { "t": 0, "preset": "cloudy" }, { "t": 20, "preset": "overcast" }, { "t": 30, "preset": "light_rain" }, { "t": 45, "preset": "cloudy" } ],
+    "FP2": [ { "t": 0, "preset": "clear" }, { "t": 40, "preset": "cloudy" } ],
+    "FP3": [ { "t": 0, "preset": "overcast" }, { "t": 15, "preset": "heavy_rain" }, { "t": 35, "preset": "light_rain" }, { "t": 55, "preset": "overcast" } ],
+    "Q":   [ { "t": 0, "preset": "cloudy" }, { "t": 14, "preset": "light_rain" }, { "t": 26, "preset": "overcast" }, { "t": 40, "preset": "cloudy" } ]
+  }
+}

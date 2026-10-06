@@ -24,7 +24,9 @@ import { applyLivery } from './cad/livery_decals.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 import { initSessions } from './cad/game/session_ui.js';
 import { initGlobe } from './cad/game/globe.js';
+import { initWeather } from './cad/weather/weather.js';
 import { F1_TEAMS, applyTeamTheme, getSavedTeam, getCurrentTeam } from './teams.js';
+import { initWheelControls, loadWheelMap } from './cad/wheel_controls.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -547,6 +549,24 @@ function toggleWireframe() {
 }
 btnWireframe?.addEventListener('click', toggleWireframe);
 
+// Render quality: High is the default (full detail, device pixel ratio up to 2, soft shadows).
+// Low is an optional fallback for slow machines: pixel ratio 1 and no shadow maps. Geometry,
+// materials and textures stay the same in both. Saved in localStorage; window.setQuality('low'|'high').
+const btnQuality = document.getElementById('btn-quality');
+function setQuality(q) {
+  state.quality = q === 'low' ? 'low' : 'high';
+  const low = state.quality === 'low';
+  renderer.setPixelRatio(low ? 1 : Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = !low; sunLight.castShadow = !low;
+  scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
+  handleResize();
+  try { localStorage.setItem('f1-quality', state.quality); } catch (e) { /* private mode */ }
+  if (btnQuality) { btnQuality.textContent = `Quality: ${low ? 'Low' : 'High'}`; btnQuality.classList.toggle('active', !low); }
+}
+window.setQuality = setQuality;
+btnQuality?.addEventListener('click', () => setQuality(state.quality === 'low' ? 'high' : 'low'));
+try { if (localStorage.getItem('f1-quality') === 'low') setQuality('low'); } catch (e) { /* ignore */ }
+
 const btnAudio = document.getElementById('btn-audio');
 function toggleAudio() {
   soundEngine.init();
@@ -635,7 +655,7 @@ const CAMERA_PRESETS = {
   CAM_SIDE: { pos: [14, 4.8, 76], target: [14, 3.2, 0] },
   CAM_TOP: { pos: [14, 88, 0.001], target: [14, 0, 0] },
   CAM_REAR: { pos: [56, 5.6, 0], target: [34, 5.2, 0] },
-  CAM_STEERING: { pos: [11.2, 5.6, 0], target: [8.2, 4.2, 0] },
+  CAM_STEERING: { pos: [12.0, 5.6, 0], target: [9.0, 4.2, 0] },
   CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
   CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
   CAM_EXPLODED: { pos: [-42, 38, 58], target: [14, 6.0, 0] },
@@ -918,7 +938,7 @@ const PART_TARGETS = {
   ALL: { target: [12, 3.2, 0], pos: [-38, 16, 42] },
   monocoque: { target: [12, 3.5, 0], pos: [-4, 12, 22] },
   cockpitAccessories: { target: [13, 6.2, 0], pos: [8, 12, 16] },
-  steering: { target: [8.2, 4.2, 0], pos: [11.2, 5.6, 0] },
+  steering: { target: [9.0, 4.2, 0], pos: [12.0, 5.6, 0] },
   brakes: { target: [0, 3.5, 8], pos: [-10, 8, 20] },
   electrical: { target: [18, 3.0, 0], pos: [18, 14, 18] },
   powertrain: { target: [24, 3.8, 0], pos: [18, 14, 20] },
@@ -956,7 +976,9 @@ function animate() {
   if (state.engineOn && !state.pyrofuseCut) {
     if (typeof state.gear === 'number' && state.gear > 0) {
       // Speed increases with throttle
-      const targetSpeed = state.throttle * 330.0;
+      const w = state.wheel?.flags;
+      let targetSpeed = state.throttle * (w?.overtake && state.batterySoc > 0.2 ? 345.0 : 330.0);
+      if (w?.pitLimiter) targetSpeed = Math.min(targetSpeed, 80);
       state.speedKmH = THREE.MathUtils.lerp(state.speedKmH, targetSpeed, 0.04);
       // RPM scales with speed and gear
       const targetRpm = 4500 + (state.speedKmH / 340) * 7500;
@@ -970,6 +992,14 @@ function animate() {
   } else {
     state.rpm = Math.max(0, state.rpm - 6000 * dt);
     state.speedKmH = Math.max(0, state.speedKmH - 30 * dt);
+  }
+
+  // Overtake mode spends battery while on throttle; harvest refills it slowly off throttle
+  if (state.wheel && state.engineOn) {
+    const w = state.wheel;
+    if (w.flags.overtake && state.throttle > 0.5) state.batterySoc = Math.max(0, state.batterySoc - 0.02 * dt * state.throttle);
+    else if (state.throttle < 0.1) state.batterySoc = Math.min(1, state.batterySoc + 0.002 * (w.values.harvest || 3) * dt);
+    if (state.batterySoc <= 0.2) w.flags.overtake = false;
   }
 
   // Red Bull Ring: on-track vehicle model (overrides speed/RPM while driving)
@@ -1018,6 +1048,7 @@ function animate() {
 
   // Update PCU-8D Display
   updateLcdDisplay();
+  wheelControls?.update(dt);
 
   if (!state.tourActive) {
     controls.update();
@@ -1058,6 +1089,27 @@ try {
 initSessions({ trackMode, tyreStates }).catch(err => console.error('Sessions failed to initialise:', err));
 initGlobe({ onLoadTrack: id => { if (id === 'red_bull_ring' && trackMode) { trackMode.applyCircuit(true); trackMode.setCam('overview'); } } })
   .catch(err => console.error('Globe failed to initialise:', err));
+// Weather: clouds, rain, wind, track water and grip (cad/weather/*, settings in weather_presets.json)
+initWeather({ scene, camera, renderer, sunLight, ambientLight, trackMode, tyreStates, state }).catch(err => console.error('Weather failed to initialise:', err));
+
+// Interactive PCU-8D wheel: every button, dial, thumbwheel and paddle is clickable and the LCD is a
+// touch screen (cad/wheel_controls.js, map in cad/wheel_button_map.json). Its settings live in state.wheel.
+let wheelControls = null;
+loadWheelMap().then((map) => {
+  const wheel = carModel?.getObjectByName('McLaren_PCU8D_FullAssembly');
+  wheelControls = initWheelControls({
+    wheel, camera, dom: renderer.domElement, map,
+    api: {
+      getCar: () => state,
+      setGear: (g) => setGear(g),
+      toggleAero: () => toggleAero(),
+      enabled: () => !trackMode?.mode?.driving,
+      getLap: () => { const c = trackMode?.car; return c ? { lap: c.lap, last: c.last, best: c.best } : {}; },
+      getTyres: () => window.tyreStates?.get?.().corners || {},
+    },
+  });
+  if (wheelControls) { state.wheel = wheelControls.state; window.wheelControls = wheelControls; }
+}).catch(err => console.error('Wheel controls failed to initialise:', err));
 
 animate();
 
