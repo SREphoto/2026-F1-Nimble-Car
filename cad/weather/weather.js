@@ -87,7 +87,7 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
       applied.sky.copy(sky.material.color);
     }
     lit.setRGB(1, 1, 1).multiplyScalar(0.55 + 0.45 * sunK);
-    dark.setRGB(0.42, 0.45, 0.5).multiplyScalar(0.55 + 0.45 * sunK);
+    dark.setRGB(0.3, 0.33, 0.38).multiplyScalar(0.55 + 0.45 * sunK);
   }
 
   // ---------------------------------------------------------------- forecast timeline (sessions)

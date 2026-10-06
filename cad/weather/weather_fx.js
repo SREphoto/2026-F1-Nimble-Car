@@ -39,13 +39,15 @@ export function createClouds(scene, layers = 2) {
   const mats = defs.map((d, k) => {
     const m = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
-      uniforms: { tNoise: { value: tex }, uCover: { value: 0 }, uOffset: { value: new THREE.Vector2(k * 0.37, k * 0.61) }, uScale: { value: d.s }, uLit: { value: new THREE.Color(1, 1, 1) }, uDark: { value: new THREE.Color(0.45, 0.48, 0.53) }, uFade: { value: 190000 }, uOpacity: { value: d.o } },
+      uniforms: { tNoise: { value: tex }, uCover: { value: 0 }, uOffset: { value: new THREE.Vector2(k * 0.37, k * 0.61) }, uScale: { value: d.s }, uLit: { value: new THREE.Color(1, 1, 1) }, uDark: { value: new THREE.Color(0.32, 0.35, 0.4) }, uFade: { value: 190000 }, uOpacity: { value: d.o } },
       vertexShader: `varying vec2 vW; varying float vD; void main(){ vec4 wp = modelMatrix * vec4(position,1.0); vW = wp.xz; vD = length(wp.xz - cameraPosition.xz); gl_Position = projectionMatrix * viewMatrix * wp; }`,
       fragmentShader: `uniform sampler2D tNoise; uniform float uCover, uScale, uFade, uOpacity; uniform vec2 uOffset; uniform vec3 uLit, uDark; varying vec2 vW; varying float vD;
         void main(){ vec2 p = vW * uScale + uOffset;
           float n = texture2D(tNoise, p).r * 0.62 + texture2D(tNoise, p * 2.7 + 0.3).r * 0.38;
-          float a = smoothstep(1.0 - uCover - 0.04, 1.0 - uCover + 0.32, n);
-          float thick = smoothstep(0.35, 0.95, n) * (0.4 + 0.6 * uCover);
+          n = clamp((n - 0.5) * 2.4 + 0.5, 0.0, 1.0);                       // stretch contrast: real gaps and dense cores
+          float a = smoothstep(1.0 - uCover - 0.05, 1.0 - uCover + 0.22, n);
+          float sunSide = texture2D(tNoise, p + vec2(0.012, 0.008)).r;       // a sample towards the sun: brighter edges, darker bellies
+          float thick = clamp(smoothstep(0.3, 1.0, n) * (0.45 + 0.55 * uCover) + (n - sunSide) * 1.5, 0.0, 1.0);
           vec3 col = mix(uLit, uDark, thick);
           float fade = 1.0 - smoothstep(uFade * 0.45, uFade, vD);
           gl_FragColor = vec4(col, a * fade * uOpacity); }`,

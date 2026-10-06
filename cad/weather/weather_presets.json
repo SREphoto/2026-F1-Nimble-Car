@@ -2,7 +2,7 @@
   "note": "Weather settings for the game. cloud, rain and fog are 0..1, wind in km/h, windFrom in degrees (where the wind comes from, 0 = north, 90 = east), water = how wet the track starts (0 dry .. 1 standing water).",
   "default": "clear",
   "presets": {
-    "clear":      { "label": "Clear",      "cloud": 0.08, "rain": 0,    "windKmh": 6,  "windFrom": 300, "fog": 0,    "water": 0 },
+    "clear":      { "label": "Clear",      "cloud": 0.2,  "rain": 0,    "windKmh": 6,  "windFrom": 300, "fog": 0,    "water": 0 },
     "cloudy":     { "label": "Cloudy",     "cloud": 0.55, "rain": 0,    "windKmh": 14, "windFrom": 270, "fog": 0.05, "water": 0 },
     "overcast":   { "label": "Overcast",   "cloud": 0.95, "rain": 0,    "windKmh": 18, "windFrom": 250, "fog": 0.15, "water": 0 },
     "light_rain": { "label": "Light rain", "cloud": 0.9,  "rain": 0.25, "windKmh": 16, "windFrom": 240, "fog": 0.25, "water": 0.3 },
