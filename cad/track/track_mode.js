@@ -196,6 +196,18 @@ export function initTrackMode(ctx) {
   }
   function ensureEngine() { if (!state.engineOn && !state.pyrofuseCut) $('btn-engine-start')?.click(); }
 
+  // ------------------------------------------------------------------ kerb bumps (visual only: lifts each wheel by the kerb height under it)
+  const kerbAt = circuit.group.userData.kerbAt;
+  const road = { fl: 0, fr: 0, rl: 0, rr: 0 };
+  function kerbRoad() {
+    if (!kerbAt) return null;
+    const fx = Math.cos(car.h), fz = Math.sin(car.h), rx = -fz, rz = fx, HALF = 0.8; // (rx, rz) is the car's +Y (left) side, same as tmp.r below
+    for (const [key, ax, side] of [['rl', 0, 1], ['rr', 0, -1], ['fl', WHEELBASE, 1], ['fr', WHEELBASE, -1]]) {
+      const L = track.locate(car.x + fx * ax + rx * side * HALF, car.z + fz * ax + rz * side * HALF, car.idx);
+      road[key] = kerbAt(L) * 10;   // m -> dm
+    }
+    return road;
+  }
   // ------------------------------------------------------------------ physics
   function step(dt) {
     const v = car.v;
@@ -236,7 +248,7 @@ export function initTrackMode(ctx) {
     const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45) * tyreGrip;
     if (Math.abs(nv * yaw) > grip) yaw = Math.sign(yaw) * grip / Math.max(1, Math.abs(nv));
     car.h += yaw * dt;
-    ride.update(dt, { aLong: (nv - v) / dt, aLat: nv * yaw, speed: Math.abs(nv) });
+    ride.update(dt, { aLong: (nv - v) / dt, aLat: nv * yaw, speed: Math.abs(nv), road: car.inPit ? null : kerbRoad() });
     car.x += Math.cos(car.h) * nv * dt;
     car.z += Math.sin(car.h) * nv * dt;
     // barriers
@@ -628,6 +640,7 @@ export function initTrackMode(ctx) {
         <button type="button" class="rbr-btn rbr-cam" data-cam="orbit">Orbit car</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="overview">Overview</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="pit" title="Focus camera on the Red Bull pit box and pit crew">Pit Box</button>
+        <button type="button" id="rbr-wet" class="rbr-btn" title="Give the track surface a slight wet shine (look only, grip is unchanged)">Wet sheen</button>
         <button type="button" id="rbr-classic" class="rbr-btn" title="Show the original finish-line studio set instead of the full circuit">Classic set</button>
       </div>
       <div class="rbr-tele"><span id="rbr-lap">Lap –</span><span id="rbr-time">0:00.000</span><span id="rbr-last">Last –</span><span id="rbr-best">Best –</span></div>
@@ -674,6 +687,7 @@ export function initTrackMode(ctx) {
   $('rbr-pit')?.addEventListener('click', () => requestPitStop(!mode.pitReq));
   $('rbr-reset')?.addEventListener('click', () => { setAutopilot(false); setThrottle(0); setBrake(0); setSteer(0); parkOnGrid(); camState.init = false; });
   $('rbr-classic')?.addEventListener('click', () => applyCircuit(!mode.circuit));
+  $('rbr-wet')?.addEventListener('click', (e) => { const on = !e.currentTarget.classList.contains('active'); e.currentTarget.classList.toggle('active', on); circuit.group.userData.setWet?.(on ? 1 : 0); });
   document.querySelectorAll('.rbr-cam').forEach(b => b.addEventListener('click', () => { if (!mode.circuit) applyCircuit(true); setCam(b.dataset.cam); }));
 
   // Live team livery synchronization with 3D pit crew uniforms
