@@ -29,8 +29,11 @@ function noiseTexture(size = 256) {
 }
 
 // ------------------------------------------------------------------ clouds: big horizontal layers that follow the camera
+let NOISE = null;   // shared, built once on first use
+const disposeTree = o => o.traverse(c => { c.geometry?.dispose(); (Array.isArray(c.material) ? c.material : [c.material]).forEach(m => m?.dispose?.()); });
+
 export function createClouds(scene, layers = 2) {
-  const tex = noiseTexture();
+  const tex = NOISE || (NOISE = noiseTexture());
   const group = new THREE.Group(); group.name = 'WX_Clouds'; scene.add(group);
   const defs = [{ h: 14000, s: 1 / 26000, o: 1 }, { h: 19000, s: 1 / 41000, o: 0.8 }, { h: 26000, s: 1 / 70000, o: 0.6 }].slice(0, layers);
   const mats = defs.map((d, k) => {
@@ -53,6 +56,7 @@ export function createClouds(scene, layers = 2) {
   });
   return {
     group,
+    dispose() { group.removeFromParent(); disposeTree(group); },
     update(dt, W, camera, lit, dark) {
       group.children.forEach(c => c.position.set(camera.position.x, c.userData.h, camera.position.z));
       mats.forEach((m, k) => {
@@ -76,10 +80,10 @@ export function createRain(scene, maxDrops) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 3));
   g.setAttribute('aEnd', new THREE.BufferAttribute(end, 1));
-  const box = new THREE.Vector3(36 * DM, 22 * DM, 36 * DM);
+  const box = new THREE.Vector3(24 * DM, 16 * DM, 24 * DM);
   const m = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, fog: false,
-    uniforms: { uTime: { value: 0 }, uCam: { value: new THREE.Vector3() }, uBox: { value: box }, uVel: { value: new THREE.Vector3(0, -9 * DM, 0) }, uLen: { value: 0.035 }, uCol: { value: new THREE.Color(0.75, 0.8, 0.88) }, uAlpha: { value: 0.35 } },
+    uniforms: { uTime: { value: 0 }, uCam: { value: new THREE.Vector3() }, uBox: { value: box }, uVel: { value: new THREE.Vector3(0, -9 * DM, 0) }, uLen: { value: 0.07 }, uCol: { value: new THREE.Color(0.86, 0.9, 0.96) }, uAlpha: { value: 0.35 } },
     vertexShader: `attribute vec3 aSeed; attribute float aEnd; uniform float uTime, uLen; uniform vec3 uCam, uBox, uVel; varying float vA;
       void main(){ vec3 v = uVel * (0.85 + 0.3 * aSeed.y);
         vec3 p = mod(aSeed * uBox + v * uTime - uCam + uBox * 0.5, uBox) - uBox * 0.5 + uCam;
@@ -95,6 +99,7 @@ export function createRain(scene, maxDrops) {
   scene.add(lines);
   return {
     lines,
+    dispose() { lines.removeFromParent(); g.dispose(); m.dispose(); },
     update(dt, W, scale = 1) {
       const n = Math.round(maxDrops * Math.min(1, W.rain * 1.15));
       lines.visible = n > 20;
@@ -102,7 +107,7 @@ export function createRain(scene, maxDrops) {
       m.uniforms.uTime.value += dt;
       // rain angle follows the wind; heavier rain falls a little faster
       m.uniforms.uVel.value.set(W.wind.x * 0.8 * DM, -(7.5 + 2.5 * W.rain) * DM, W.wind.z * 0.8 * DM).multiplyScalar(scale);
-      m.uniforms.uAlpha.value = 0.22 + 0.25 * W.rain;
+      m.uniforms.uAlpha.value = 0.4 + 0.45 * W.rain;
     },
   };
 }
@@ -126,23 +131,27 @@ export function createFlags(group, track) {
   };
   const flagGeo = new THREE.PlaneGeometry(3, 2, 16, 4).translate(1.5, -1, 0);
   const poleGeo = new THREE.CylinderGeometry(0.06, 0.08, 9, 6).translate(0, 4.5, 0);
-  const poleMat = new THREE.MeshLambertMaterial({ color: 0xb8bcc2 });
-  const flags = [];
-  for (const sp of [-140, -95, -50, 260, 305]) {
-    const F = track.at((sp + track.length) % track.length);
-    const lat = -(F.barL + 5);
-    const p = new THREE.Group();
-    p.position.set((F.x + F.rx * lat) * DM, F.y * DM, (F.z + F.rz * lat) * DM); p.scale.setScalar(DM);
-    p.add(new THREE.Mesh(poleGeo, poleMat));
-    const fl = new THREE.Mesh(flagGeo, mat); fl.position.y = 8.9; fl.frustumCulled = false; p.add(fl);
-    root.add(p); flags.push(fl);
-  }
+  const SPOTS = [-140, -95, -50, 260, 305];
+  // one draw call for all poles, one for all flags
+  const poles = new THREE.InstancedMesh(poleGeo, new THREE.MeshLambertMaterial({ color: 0xb8bcc2 }), SPOTS.length);
+  const cloth = new THREE.InstancedMesh(flagGeo, mat, SPOTS.length);
+  cloth.frustumCulled = false;
+  const base = SPOTS.map(sp => { const F = track.at((sp + track.length) % track.length); const lat = -(F.barL + 5); return new THREE.Vector3((F.x + F.rx * lat) * DM, F.y * DM, (F.z + F.rz * lat) * DM); });
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(DM, DM, DM), up = new THREE.Vector3(0, 1, 0), tp = new THREE.Vector3();
+  base.forEach((b, i) => poles.setMatrixAt(i, m4.compose(b, q.identity(), sc)));
+  poles.computeBoundingSphere();
+  root.add(poles, cloth);
+  let lastYaw = null;
   return {
+    dispose() { root.removeFromParent(); disposeTree(root); tex.dispose(); },
     update(dt, W) {
       uni.uTime.value += dt;
       uni.uWind.value = THREE.MathUtils.clamp(W.windKmh * W.gust / 45, 0, 1);
       const yaw = Math.atan2(-W.wind.z, W.wind.x);          // flag's +x points downwind
-      flags.forEach(f => { f.rotation.y = yaw; });
+      if (lastYaw !== null && Math.abs(yaw - lastYaw) < 1e-3) return;
+      lastYaw = yaw; q.setFromAxisAngle(up, yaw);
+      base.forEach((b, i) => cloth.setMatrixAt(i, m4.compose(tp.copy(b).setY(b.y + 8.9 * DM), q, sc)));
+      cloth.instanceMatrix.needsUpdate = true;
     },
   };
 }
@@ -196,10 +205,10 @@ export function createWetSurface(group, circuit, renderer, nPuddles) {
   const env = pm.fromScene(es, 0.02).texture; pm.dispose();
 
   // puddles: soft-edged discs near the track edges
-  const disc = new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2);
-  const a = []; for (let i = 0; i < disc.attributes.position.count; i++) a.push(1, 1, 1, i === 0 ? 1 : 0);
+  const disc = new THREE.RingGeometry(0, 1, 24, 3).rotateX(-Math.PI / 2);
+  const a = []; for (let i = 0; i < disc.attributes.position.count; i++) { const rr = Math.hypot(disc.attributes.position.getX(i), disc.attributes.position.getZ(i)); a.push(1, 1, 1, rr < 0.7 ? 1 : 0); }
   disc.setAttribute('color', new THREE.Float32BufferAttribute(a, 4));
-  const pMat = new THREE.MeshStandardMaterial({ color: 0x15181c, roughness: 0.03, metalness: 0.1, envMap: env, envMapIntensity: 1.3, transparent: true, vertexColors: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const pMat = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.04, metalness: 0.65, envMap: env, envMapIntensity: 1.2, transparent: true, vertexColors: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   const puddles = new THREE.InstancedMesh(disc, pMat, nPuddles); puddles.name = 'WX_Puddles';
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   let r = 99;
@@ -239,8 +248,9 @@ export function createWetSurface(group, circuit, renderer, nPuddles) {
   group.add(line);
 
   return {
+    dispose() { puddles.removeFromParent(); line.removeFromParent(); disc.dispose(); pMat.dispose(); lg.dispose(); lMat.dispose(); env.dispose(); },
     update(W, dryLine) {
-      const pa = THREE.MathUtils.smoothstep(W.water, 0.35, 0.75);
+      const pa = THREE.MathUtils.smoothstep(W.water, 0.25, 0.6);
       puddles.visible = pa > 0.01; pMat.opacity = pa * 0.92;
       line.visible = dryLine > 0.01; lMat.opacity = dryLine;
     },
@@ -255,6 +265,7 @@ export function createLensDrops(host) {
   const g = cv.getContext('2d'); const drops = [];
   let t = 0;
   return {
+    dispose() { cv.remove(); },
     update(dt, rain, speed, show) {
       cv.style.display = show && rain > 0.03 ? 'block' : 'none';
       if (cv.style.display === 'none') { drops.length = 0; return; }

@@ -18,8 +18,9 @@ const lerpCurve = (pts, x) => { for (let i = 1; i < pts.length; i++) if (x <= pt
 const angLerp = (a, b, t) => a + ((((b - a) % 360) + 540) % 360 - 180) * t;
 
 export async function initWeather({ scene, camera, renderer, sunLight, ambientLight, trackMode, tyreStates, state }) {
-  const cfg = await fetch(url('./weather_presets.json')).then(r => r.json());
   const q = new URLSearchParams(location.search);
+  if (q.get('wx') === 'off') { console.info('[weather] off (?wx=off)'); return null; }
+  const cfg = await fetch(url('./weather_presets.json')).then(r => r.json());
   let quality = cfg.quality[q.get('wq')] ? q.get('wq') : cfg.defaultQuality;
   const Q = () => cfg.quality[quality];
   const circuit = trackMode?.circuit;
@@ -31,25 +32,33 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
   const initial = cfg.presets[q.get('wx')] ? q.get('wx') : null;
 
   // ---------------------------------------------------------------- effects
+  // Effects are created only while the weather needs them and disposed when it no longer does
+  // (rain / clouds / puddles / lens drops). Mist is scene fog, so it costs nothing extra.
   const fx = {};
-  function buildFx() {
-    fx.clouds?.group.removeFromParent(); fx.rain?.lines.removeFromParent();
-    fx.clouds = createClouds(scene, Q().cloudLayers);
-    fx.rain = createRain(scene, Q().rainDrops);
+  const host = document.getElementById('viewport3d');
+  const offFor = { rain: 0, clouds: 0, wet: 0, lens: 0 };
+  function want(name, on, make, dt) {
+    if (on) { offFor[name] = 0; if (!fx[name]) { try { fx[name] = make(); } catch (e) { console.warn('[weather] ' + name + ' skipped', e); fx[name] = null; } } return; }
+    if (fx[name] && (offFor[name] += dt) > 2) { fx[name].dispose(); fx[name] = null; }   // 2 s grace so a passing change does not rebuild
   }
-  buildFx();
+  function manageFx(dt) {
+    const tm = trackMode;
+    want('clouds', W.cloud > 0.04, () => createClouds(scene, Q().cloudLayers), dt);
+    want('rain', W.rain > 0.01, () => createRain(scene, Q().rainDrops), dt);
+    want('wet', !!circuit && W.water > 0.08, () => createWetSurface(circuit.group, circuit, renderer, Q().puddles), dt);
+    want('lens', !!host && Q().lensDrops && W.rain > 0.03 && tm?.mode?.circuit && tm.mode.cam === 'chase', () => createLensDrops(host), dt);
+  }
+  function rebuildFx() { ['clouds', 'rain', 'wet', 'lens'].forEach(n => { fx[n]?.dispose(); fx[n] = null; }); }
   if (circuit) {
     try { fx.flags = createFlags(circuit.group, circuit.track); } catch (e) { console.warn('[weather] flags skipped', e); }
     fx.trees = patchTrees(circuit.group);
-    fx.wet = createWetSurface(circuit.group, circuit, renderer, cfg.quality.high.puddles);
   }
-  const host = document.getElementById('viewport3d');
-  fx.lens = host ? createLensDrops(host) : null;
 
   // ---------------------------------------------------------------- light, sky and fog (multiply whatever the app last set)
   const base = { sun: null, amb: null, fogC: new THREE.Color(), fogD: null, sky: new THREE.Color(1, 1, 1) };
   const applied = { sun: -1, amb: -1, fogD: -1, fogC: new THREE.Color(-1, 0, 0), sky: new THREE.Color(-1, 0, 0) };
   const sky = circuit?.group?.userData?.sky;
+  const fills = []; scene.traverse(o => { if (o.isDirectionalLight && o !== sunLight) fills.push({ l: o, base: o.intensity, applied: -1 }); });   // app fill / bounce lights
   const fogColour = new THREE.Color(cfg.light.fogColour), tmpC = new THREE.Color();
   const lit = new THREE.Color(), dark = new THREE.Color();
   function applyLight() {
@@ -57,6 +66,7 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
     const sunK = THREE.MathUtils.lerp(1, L.sunAtOvercast, Math.pow(cov, 1.6)) * (1 - 0.35 * W.rain);
     const ambK = THREE.MathUtils.lerp(1, L.ambientAtOvercast, cov) * (1 - 0.25 * W.rain);
     if (sunLight) { if (sunLight.intensity !== applied.sun) base.sun = sunLight.intensity; sunLight.intensity = applied.sun = base.sun * sunK; sunLight.castShadow = sunK > 0.22; }
+    fills.forEach(f => { if (f.l.intensity !== f.applied) f.base = f.l.intensity; f.l.intensity = f.applied = f.base * THREE.MathUtils.lerp(1, 0.45, cov) * (1 - 0.3 * W.rain); });
     if (ambientLight) { if (ambientLight.intensity !== applied.amb) base.amb = ambientLight.intensity; ambientLight.intensity = applied.amb = base.amb * ambK; }
     const circuitOn = trackMode?.mode?.circuit;
     if (scene.fog && circuitOn) {
@@ -153,16 +163,17 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
     const T = cfg.track, prev = W.water;
     W.water = THREE.MathUtils.clamp(W.water + simMinutes * (W.rain * T.wetPerMinuteAtFullRain - (W.rain < 0.03 ? T.dryPerMinute * (1.2 - 0.5 * W.cloud) * (1 + W.windKmh / 40) : 0)), 0, 1);
     const drying = W.water < prev || W.rain < 0.05;
-    const dl = drying && W.water > 0.04 ? THREE.MathUtils.clamp((0.8 - W.water) / 0.5, 0, 1) * 0.9 : 0;
+    const dl = drying && W.water > 0.04 ? THREE.MathUtils.clamp((0.85 - W.water) / 0.45, 0, 1) * 0.9 : 0;
     st.dryLine += (dl - st.dryLine) * k;
     applyLight();
-    fx.clouds.update(dt, W, camera, lit, dark);
-    fx.rain.update(dt, W);
+    manageFx(dt);
+    fx.clouds?.update(dt, W, camera, lit, dark);
+    fx.rain?.update(dt, W);
     fx.flags?.update(dt, W);
     fx.trees?.update(dt, W, Q().treeSway);
     fx.wet?.update(W, st.dryLine);
     const tm = trackMode;
-    fx.lens?.update(dt, W.rain, Math.abs(tm?.car?.v || 0), Q().lensDrops && tm?.mode?.circuit && tm.mode.cam === 'chase');
+    fx.lens?.update(dt, W.rain, Math.abs(tm?.car?.v || 0), tm?.mode?.circuit && tm.mode.cam === 'chase');
     if ((cornerT += dt) > 0.25) { cornerT = 0; updateGrip(); renderPanel(); } else state.tyreGrip = +st.grip.toFixed(3);
     windOnCar(dt);
   }
@@ -216,7 +227,7 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
 
   // ---------------------------------------------------------------- API + loop
   const api = {
-    config: cfg, W, target, status: st,
+    config: cfg, W, target, status: st, fx,
     setPreset(name, instant = false) {
       const p = cfg.presets[name]; if (!p) return;
       st.source = 'manual'; st.preset = name; KEYS.forEach(n => { target[n] = p[n]; if (instant) W[n] = p[n]; });
@@ -225,7 +236,7 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
     },
     set(o) { st.source = 'manual'; KEYS.forEach(n => { if (n in o) target[n] = o[n]; }); if ('water' in o) W.water = o.water; },
     setSource(s) { st.source = s; },
-    setQuality(qn) { if (!cfg.quality[qn]) return; quality = qn; buildFx(); },
+    setQuality(qn) { if (!cfg.quality[qn]) return; quality = qn; rebuildFx(); },
     update,
   };
   if (initial) api.setPreset(initial, true);
