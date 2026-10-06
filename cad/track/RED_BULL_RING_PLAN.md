@@ -151,6 +151,21 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
    garage takes its colours from that team's livery in `/workspace/f1-teams/teams_liveries.json` (the `colors` field),
    so one garage builder serves all 11 teams. Put the garage contents (positions and sizes) in a style data file like
    `cad/track/styles/red_bull_ring_style.js`, not in the builder.
+9. **More garage details (G4 to G15).** Wheeled flight cases; tyre trolleys with blankets labelled LEFT FRONT, RIGHT
+   FRONT and so on; painted floor direction signs; a red PIT-LANE strip across the garage door; grey chevron parking
+   markings; helmet shelves; wall panels in the team colour over a black lower band; fire extinguishers; a racing seat;
+   director chairs and bar stools; pale and grey brick walls; a gas bottle cart; red fuel drums; the engineers' desk with
+   a wall of monitors; pillars in the team colour with a TV; a roller door with windows; and the car with its wheels off
+   on front and rear stands plus a centre jack.
+10. **Garage inspect mode.** Replace the 9-part explorer side panel with one Garage button that moves you into our team
+    garage. Inside you can orbit and walk, click parts on the car to highlight them with a floating info card, turn the
+    wheels on or off and the bodywork on or off, and an Exit Garage button takes you back to driving. Part names and
+    texts go in a reusable data file, with `enterGarageInspect()` and `exitGarageInspect()` hooks, and no changes to the
+    car or driver model files.
+11. **Regulations in the garage.** Remove the "2026 Regulations Compliance" panel (`#panel-lab`). Show the regulations
+    on a monitor at the engineers' desk and on a printed sheet on the desk. Clicking either one moves the camera to the
+    desk and opens a readable overlay. A small Regulations button on the main screen opens the same overlay. The
+    Telemetry & Controls panel stays as it is.
 
 ## Round 3 (October 5, 2026): trackside quality
 
