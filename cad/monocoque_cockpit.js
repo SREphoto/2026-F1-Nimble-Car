@@ -445,7 +445,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // -------------------------------------------------------------
   const pedalGroup = new THREE.Group();
   pedalGroup.name = "Body_PedalSled_Assembly";
-  pedalGroup.position.set(1.3, 0, 1.36); // forward so the legs reach them with the knees slightly bent (D1) // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
+  pedalGroup.position.set(2.0, 0, 1.36); // knees bent about 130 deg with the knees up (D1 / D2) // rails sit on top of the tub floor (floor skin Z 1.15-1.2 here), not through it
 
   // Dual Aluminum Slider Guide Rails
   // (inboard of the tub's curved lower corners (tub floor z 1.24 at y 0.7), they used to poke through at y +-1.2)

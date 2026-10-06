@@ -85,8 +85,9 @@ export function driverSettingsFromTeam(team) {
 // 2. POSE (all joint positions, car frame)
 // =========================================================================
 
-/** Wheel-local glove layout (PCU-8D grips: axis along local Y at x = +-1.64, z 0.04, radii 0.24 x 0.28). */
-export const GLOVE_ON_WHEEL = { gripX: 1.64, gripZ: 0.04, gripRx: 0.24, gripRz: 0.28, handY: -0.05, wrist: [1.98, -0.13, 0.42] };
+/** Wheel-local glove layout on the rebuilt PCU-8D (cad/wheel_parts.json): grip axis along local Y at
+ *  x = +-1.276, z 0, half width 0.17 x half depth 0.185; F = front face z; hand centre height handY. */
+export const GLOVE_ON_WHEEL = { gripX: 1.276, gripZ: 0, gripRx: 0.17, gripRz: 0.185, handY: -0.2, F: 0.12 };
 
 export function computeDriverPose(settings = DRIVER_DEFAULTS) {
   const B = settings.body, P = settings.pose;
@@ -177,6 +178,105 @@ function placeAlong(mesh, a, b, rollRef) {
  * Merge a group's direct child meshes that share one material into a single mesh (same geometry
  * and look, one draw call). Only static parts (fingers on a glove, laces, straps) are merged.
  */
+/**
+ * A gloved hand round a vertical wheel grip, every finger in three phalanges with knuckle joints
+ * (W1, D3, D4). Wheel-local frame: grip axis along Y, face +Z toward the driver; s = side (+-1).
+ * phi on the grip section: 0 = outer side, +90 deg = front (driver side), -90 deg = back.
+ * Fingers start at the knuckles on the outer side and wrap round the back of the grip toward the
+ * paddles; the thumb lies across the front of the grip onto the wheel face. Returns a group with
+ * userData.wrist / userData.knuckle (IK targets).
+ */
+function buildGlovedHand(s, G, gloveMat, padMat) {
+  const hand = new THREE.Group();
+  const gx = G.gripX, rx = G.gripRx, rz = G.gripRz, rbar = (rx + rz) / 2;
+  const gp = (phi, y, off) => V3(s * (gx + (rx + off) * Math.cos(phi)), y, G.gripZ + (rz + off) * Math.sin(phi));
+  const add = (geo, mat, name) => { const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = true; hand.add(m); return m; };
+  const capsule = (A, B, r0, r1, mat, name) => {
+    const L = A.distanceTo(B), g = new THREE.CylinderGeometry(r1, r0, L, 14, 1, true);
+    const m = add(g, mat, name); m.position.copy(A).lerp(B, 0.5); m.quaternion.setFromUnitVectors(V3(0, 1, 0), B.clone().sub(A).normalize()); return m;
+  };
+  const ball = (P, r, mat, name, sc) => { const m = add(new THREE.SphereGeometry(r, 16, 12), mat, name); m.position.copy(P); if (sc) m.scale.copy(sc); return m; };
+  // fingers: [y offset from handY, radius, phalanx lengths (dm, gloved), splay]
+  const FING = [[0.27, 0.083, [0.45, 0.27, 0.22], 0.05], [0.09, 0.087, [0.49, 0.3, 0.23], 0.0], [-0.09, 0.083, [0.46, 0.29, 0.22], -0.03], [-0.26, 0.072, [0.36, 0.22, 0.19], -0.07]];
+  const phi0 = THREE.MathUtils.degToRad(32), mcps = [];
+  FING.forEach(([dy, fr, Ls, splay], k) => {
+    const y0 = G.handY + dy;
+    // knuckles stand off the grip by the palm thickness; the later joints hug the alcantara. Each
+    // joint is found by walking round the grip until the phalanx length is reached (true chords).
+    const offs = [0.13, fr * 0.92, fr * 0.86, fr * 0.8];
+    // where the grip joins the body (neck, wheel_parts.json) the tips stop on the back of the neck
+    const phiMin = (y0 < 0.03 && y0 > -0.31) ? -Math.PI * 0.95 : -Math.PI * 1.2;
+    let phi = phi0, y = y0;
+    const J = [gp(phi, y, offs[0])];
+    Ls.forEach((L, i) => {
+      const prev = J[J.length - 1]; let q = prev;
+      y += splay * L;
+      for (let n = 0; n < 400 && q.distanceTo(prev) < L && phi > phiMin; n++) { phi -= 0.01; q = gp(phi, y, offs[i + 1]); }
+      if (q.distanceTo(prev) < 0.06) q = prev.clone().add(V3(0, 0, -0.06)); // never a zero-length phalanx
+      J.push(q);
+    });
+    mcps.push(J[0]);
+    const r = [fr * 1.05, fr, fr * 0.93, fr * 0.86];
+    for (let i = 0; i < 3; i++) capsule(J[i], J[i + 1], r[i], r[i + 1], gloveMat, `Driver_Glove_Phalanx_${k}_${i}`);
+    for (let i = 0; i < 4; i++) ball(J[i], r[i] * (i === 0 ? 1.08 : 1.04), gloveMat, `Driver_Glove_Joint_${k}_${i}`);
+    // raised knuckle pad on the back of the proximal phalanx
+    const mid = J[0].clone().lerp(J[1], 0.45), out = mid.clone().sub(V3(s * gx, mid.y, G.gripZ)).setY(0).normalize();
+    const pad = ball(mid.clone().addScaledVector(out, fr * 0.72), fr * 0.62, padMat, `Driver_Glove_KnucklePad_${k}`, V3(1, 0.75, 1));
+    pad.quaternion.setFromUnitVectors(V3(0, 0, 1), out);
+  });
+  // back of the hand: loft from the wrist to the knuckle line
+  const kc = mcps.reduce((a, b) => a.add(b), V3(0, 0, 0)).multiplyScalar(1 / mcps.length);
+  const axisOut = V3(s * 0.45, -0.35, 0.82).normalize(); // knuckles -> wrist (toward the forearm)
+  const wrist = kc.clone().addScaledVector(axisOut, 1.0);
+  const across = mcps[0].clone().sub(mcps[3]).normalize();
+  const nrm = new THREE.Vector3().crossVectors(axisOut, across).normalize();
+  const outward = V3(s, 0, 0.6).normalize(); if (nrm.dot(outward) < 0) nrm.negate();
+  {
+    const NS = 14, ring = 24, pos = [], uv = [], idx = [];
+    for (let i = 0; i <= NS; i++) {
+      const t = i / NS; // 0 knuckles -> 1 wrist
+      const c = kc.clone().addScaledVector(axisOut, t * 1.02).addScaledVector(nrm, -0.05 + 0.02 * Math.sin(Math.PI * t));
+      const hw = THREE.MathUtils.lerp(0.4, 0.29, t) + 0.03 * Math.sin(Math.PI * Math.min(1, t * 1.5));
+      const ht = THREE.MathUtils.lerp(0.12, 0.16, t) + 0.025 * Math.sin(Math.PI * t);
+      for (let j = 0; j <= ring; j++) {
+        const a = (j / ring) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+        const p = c.clone().addScaledVector(across, Math.sign(ca) * Math.pow(Math.abs(ca), 0.75) * hw).addScaledVector(nrm, Math.sign(sa) * Math.pow(Math.abs(sa), 0.85) * ht);
+        pos.push(p.x, p.y, p.z); uv.push(j / ring * 1.5, t);
+      }
+    }
+    const R = ring + 1;
+    for (let i = 0; i < NS; i++) for (let j = 0; j < ring; j++) { const a = i * R + j, b = a + 1, c = a + R, d = c + 1; idx.push(a, b, c, b, d, c); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    // outward winding
+    g.computeVertexNormals();
+    const n0 = new THREE.Vector3().fromBufferAttribute(g.attributes.normal, Math.round(ring / 4)), p0 = new THREE.Vector3().fromBufferAttribute(g.attributes.position, Math.round(ring / 4));
+    if (n0.dot(p0.clone().sub(kc)) < 0) { const ix = g.index.array; for (let t = 0; t < ix.length; t += 3) { const q = ix[t + 1]; ix[t + 1] = ix[t + 2]; ix[t + 2] = q; } g.computeVertexNormals(); }
+    add(g, gloveMat, 'Driver_Glove_BackOfHand');
+    ball(wrist.clone().addScaledVector(axisOut, -0.02), 0.22, gloveMat, 'Driver_Glove_WristCap', V3(1.15, 0.7, 1)).quaternion.setFromUnitVectors(V3(0, 1, 0), nrm);
+  }
+  // thumb: base on the inner side of the hand, across the front of the grip onto the wheel face
+  {
+    const F = G.F, tr = 0.092;
+    // CMC on the index side of the palm near the wrist; MCP on the front of the grip; tip resting
+    // on the face just inboard of the grip, by the thumbwheels (W1)
+    const T0 = kc.clone().lerp(wrist, 0.5).add(V3(-s * 0.06, 0.24, -0.06));
+    const T1 = V3(s * (gx + 0.03), G.handY + 0.24, G.gripZ + rz + tr + 0.02);
+    const T2 = V3(s * (gx - rx + 0.02), G.handY + 0.29, G.gripZ + rz + tr * 0.6);
+    const T3 = V3(s * (gx - rx - 0.15), G.handY + 0.32, F + tr * 0.95);
+    capsule(T0, T1, 0.13, tr * 1.05, gloveMat, 'Driver_Glove_Thumb_Metacarpal');
+    capsule(T1, T2, tr * 1.05, tr, gloveMat, 'Driver_Glove_Thumb_Proximal');
+    capsule(T2, T3, tr, tr * 0.88, gloveMat, 'Driver_Glove_Thumb_Distal');
+    ball(T0, 0.13, gloveMat, 'Driver_Glove_Thenar', V3(1.1, 1, 0.9)); ball(T1, tr * 1.1, gloveMat, 'Driver_Glove_Thumb_MCP');
+    ball(T2, tr * 1.04, gloveMat, 'Driver_Glove_Thumb_IP'); ball(T3, tr * 0.88, gloveMat, 'Driver_Glove_Thumb_Tip');
+    const tp = ball(T1.clone().lerp(T2, 0.5).add(V3(0, 0, tr * 0.7)), tr * 0.55, padMat, 'Driver_Glove_ThumbPad', V3(1, 0.7, 1));
+    void tp;
+  }
+  const wristMark = new THREE.Object3D(); wristMark.name = `Driver_Glove_WristTarget_${s > 0 ? 'L' : 'R'}`; wristMark.position.copy(wrist); hand.add(wristMark);
+  const knuckle = new THREE.Object3D(); knuckle.name = `Driver_Glove_HandCentre_${s > 0 ? 'L' : 'R'}`; knuckle.position.copy(kc); hand.add(knuckle);
+  hand.userData.wrist = wristMark; hand.userData.knuckle = knuckle;
+  return hand;
+}
+
 function mergeChildren(group, mat, name) {
   const parts = group.children.filter((o) => o.isMesh && o.material === mat);
   if (parts.length < 2) return null;
@@ -312,10 +412,12 @@ export function createArticulatedDriver(options = {}) {
 
   // ---- torso: one smooth loft from the seat to the neck, cross-sections square to the spine
   const T = S.body.torso;
+  // D1 / D2 volume: deep rib cage and chest, broad shoulders, the chest standing up off the seat back
+  // (the lower back lies in the seat, the chest rises more steeply toward the collar)
   const tSecs = [
-    [-0.1, 1.05, 0.62, -0.02], [-0.03, 1.42, 0.86, -0.08], [0.06, 1.52, 0.94, -0.1], [0.18, 1.46, 0.93, -0.06],
-    [0.34, 1.37, 0.9, 0.0], [0.52, 1.48, 0.98, 0.05], [0.7, 1.62, 1.05, 0.08], [0.86, 1.72, 0.95, 0.04],
-    [0.96, 1.34, 0.74, 0.0], [1.04, 0.62, 0.55, 0.02],
+    [-0.1, 1.08, 0.66, -0.02], [-0.03, 1.48, 0.92, -0.08], [0.06, 1.58, 1.0, -0.11], [0.18, 1.5, 0.98, -0.1],
+    [0.34, 1.42, 0.98, -0.04], [0.52, 1.56, 1.1, 0.06], [0.7, 1.72, 1.2, 0.16], [0.86, 1.82, 1.08, 0.13],
+    [0.96, 1.4, 0.8, 0.04], [1.04, 0.64, 0.56, 0.02],
   ].map(([t, ra, rb, off]) => ({ c: P.hip.clone().addScaledVector(P.u, t * T).addScaledVector(P.n, off), a: V3(0, 1, 0), b: P.n.clone(), ra, rb, p: 2.3 }));
   // dense displaced loft with real fold geometry, raised piping and raised patches (driver_suit.js)
   const torso = buildTorso(tSecs, { mat: suitTorsoMat, pipingMat, seamMat, patchMat, cells: atlas.cells });
@@ -375,13 +477,13 @@ export function createArticulatedDriver(options = {}) {
   //      dark glove gauntlet pulled over the sleeve end
   const armProf = (s) => {
     const k = s / jointV.arm, f = (s - jointV.arm) / (1 - jointV.arm);
-    if (s < jointV.arm) return [0.45 - 0.13 * k + 0.035 * Math.sin(Math.PI * k), 0.43 - 0.13 * k];
-    return [0.32 + 0.045 * Math.sin(Math.PI * Math.min(1, f * 1.6)) - 0.08 * f, 0.3 - 0.06 * f];
+    if (s < jointV.arm) return [0.5 - 0.14 * k + 0.045 * Math.sin(Math.PI * k), 0.48 - 0.14 * k + 0.02 * Math.sin(Math.PI * k)];
+    return [0.35 + 0.05 * Math.sin(Math.PI * Math.min(1, f * 1.6)) - 0.09 * f, 0.33 - 0.07 * f];
   };
   [1, -1].forEach((s) => {
     const sn = s > 0 ? 'L' : 'R'; // +Y is the driver's left (same as the helmet)
     const sh = P.shoulder.clone().add(V3(0, s * S.body.shoulderHalf, 0));
-    add(root, new THREE.SphereGeometry(0.46, 24, 16), suitMat, `Driver_RaceSuit_Shoulder_${sn}`).position.copy(sh);
+    add(root, new THREE.SphereGeometry(0.52, 28, 18), suitMat, `Driver_RaceSuit_Shoulder_${sn}`).position.copy(sh);
     const armParts = makeSuitLimb(`Driver_RaceSuit_Arm_${sn}`, { mat: armMat, pipingMat, patchMat, cells: atlas.cells, prof: armProf, jointS: jointV.arm, kind: 'arm' });
     const sleeve = armParts.mesh; root.add(sleeve, armParts.piping, armParts.patches);
     const cuff = add(root, limbGeometry(0.85, (t) => [0.37 - 0.1 * t, 0.35 - 0.09 * t]), gloveMat, `Driver_Glove_Gauntlet_${sn}`);
@@ -394,41 +496,15 @@ export function createArticulatedDriver(options = {}) {
   const G = GLOVE_ON_WHEEL;
   const wheel = options.steeringWheel || null;
   const hands = new THREE.Group(); hands.name = 'Driver_Glove_Hands';
+  const padMat = fabricMaterial('Driver_Glove_KnucklePads', 0x2b2e34, { kind: 'suede', size: [0.3, 0.2], sheenColor: 0x80848c });
   [1, -1].forEach((s) => {
     const sn = s > 0 ? 'L' : 'R'; // +Y is the driver's left (same as the helmet)
-    const hand = new THREE.Group(); hand.name = `Driver_Glove_Hand_${sn}`;
-    const gx = s * G.gripX, gy = G.handY, gz = G.gripZ;
-    // back of the hand: a flattened rounded pad outside the grip, toward the driver
-    const backHand = add(hand, new THREE.SphereGeometry(1, 24, 16), gloveMat, `Driver_Glove_Back_${sn}`);
-    backHand.scale.set(0.17, 0.42, 0.34); backHand.position.set(gx + s * 0.38, gy, gz + 0.17); backHand.rotation.y = s * 0.35;
-    // four fingers wrapping the grip: from the knuckles outside, round the far side, ending inboard
-    const fingers = [[0.27, 0.075, -165], [0.09, 0.08, -172], [-0.1, 0.077, -165], [-0.28, 0.068, -145]];
-    fingers.forEach(([dy, r, end], k) => {
-      const pts = [];
-      const rx = G.gripRx + r * 0.95, rz = G.gripRz + r * 0.95;
-      pts.push(V3(gx + s * 0.4, gy + dy, gz + 0.2));
-      for (let a = 15; a >= end; a -= 20) {
-        const ar = THREE.MathUtils.degToRad(a);
-        pts.push(V3(gx + s * rx * Math.cos(ar), gy + dy * (1 - 0.05 * k), gz + rz * Math.sin(ar)));
-      }
-      const fg = add(hand, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, r, 10, false), gloveMat, `Driver_Glove_Finger_${k}_${sn}`);
-      fg.userData.finger = k;
-      const tip = add(hand, new THREE.SphereGeometry(r, 10, 8), gloveMat, `Driver_Glove_FingerTip_${k}_${sn}`);
-      tip.position.copy(pts[pts.length - 1]);
-    });
-    // thumb: from the base of the palm across the front of the grip onto the wheel face
-    const th = [V3(gx + s * 0.36, gy + 0.08, gz + 0.36), V3(gx + s * 0.2, gy + 0.2, gz + 0.42), V3(gx - s * 0.05, gy + 0.3, gz + 0.36), V3(gx - s * 0.26, gy + 0.36, gz + 0.27)];
-    add(hand, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(th), 20, 0.09, 10, false), gloveMat, `Driver_Glove_Thumb_${sn}`);
-    add(hand, new THREE.SphereGeometry(0.09, 10, 8), gloveMat, `Driver_Glove_ThumbTip_${sn}`).position.copy(th[3]);
-    // wrist marker: where the forearm ends (IK target)
-    const wristMark = new THREE.Object3D(); wristMark.name = `Driver_Glove_WristTarget_${sn}`;
-    wristMark.position.set(s * G.wrist[0], G.wrist[1], G.wrist[2]);
-    hand.add(wristMark);
-    const knuckle = new THREE.Object3D(); knuckle.name = `Driver_Glove_HandCentre_${sn}`;
-    knuckle.position.set(gx + s * 0.34, gy, gz + 0.18); hand.add(knuckle);
+    const hand = buildGlovedHand(s, G, gloveMat, padMat);
+    hand.name = `Driver_Glove_Hand_${sn}`;
     mergeChildren(hand, gloveMat, `Driver_Glove_Hand_${sn}_Mesh`);
+    mergeChildren(hand, padMat, `Driver_Glove_KnucklePads_${sn}`);
     hands.add(hand);
-    nodes.arms[s].wristMark = wristMark; nodes.arms[s].handCentre = knuckle;
+    nodes.arms[s].wristMark = hand.userData.wrist; nodes.arms[s].handCentre = hand.userData.knuckle;
   });
   if (wheel) wheel.add(hands); else { hands.position.set(9.0, 0, 4.2); root.add(hands); }
   nodes.hands = hands;
@@ -438,7 +514,7 @@ export function createArticulatedDriver(options = {}) {
     const sn = s > 0 ? 'L' : 'R'; // +Y is the driver's left (same as the helmet)
     const legProf = (t) => {
       const k = t / jointV.leg, f = (t - jointV.leg) / (1 - jointV.leg);
-      if (t < jointV.leg) return [0.68 - 0.24 * k, 0.64 - 0.2 * k + 0.04 * Math.sin(Math.PI * k)];
+      if (t < jointV.leg) return [0.76 - 0.28 * k, 0.72 - 0.24 * k + 0.05 * Math.sin(Math.PI * k)];
       const calf = Math.sin(Math.PI * Math.min(1, f * 1.7));
       return [0.44 - 0.14 * f + 0.03 * calf, 0.44 - 0.14 * f + 0.06 * calf];
     };
