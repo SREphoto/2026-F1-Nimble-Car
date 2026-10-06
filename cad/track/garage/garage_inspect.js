@@ -134,7 +134,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (st.keys.delete(k) && st.active) e.stopImmediatePropagation(); }, true);
   function zoomToDesk() {
     const v = garage.userData.deskView;
-    st.tween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...v.pos), t1: new THREE.Vector3(...v.target), done: () => openRegs(true) };
+    st.tween = { start: performance.now(), t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...v.pos), t1: new THREE.Vector3(...v.target), done: () => openRegs(true) };
   }
 
   // ---------------------------------------------------------------- enter / exit
@@ -149,7 +149,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     garage.userData.setTeam(getTeamId());
     garage.visible = true;
     camera.near = 0.2; camera.far = 1500; camera.updateProjectionMatrix();
-    camera.position.set(-48, 17, 34); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
+    camera.position.set(-56, 19, 15); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
     document.body.classList.add('garage-mode');
     const hud = document.getElementById('rbr-hud'); if (hud) hud.style.display = 'none';
     bar.classList.add('on'); $('btn-garage')?.classList.add('active');
@@ -176,7 +176,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     dt = Math.min(dt, 0.05);
     if (!st.wheels) carModel.position.y = L.stands.raise;
     if (st.tween) {
-      const T = st.tween; T.t = Math.min(1, T.t + dt / 0.8); const e = T.t * T.t * (3 - 2 * T.t);
+      const T = st.tween; T.t = Math.min(1, (performance.now() - T.start) / 800); /* real time, ends on time at any frame rate */ const e = T.t * T.t * (3 - 2 * T.t);
       camera.position.lerpVectors(T.p0, T.p1, e); controls.target.lerpVectors(T.t0, T.t1, e); controls.update();
       if (T.t >= 1) { st.tween = null; T.done?.(); }
     } else if (st.keys.size) {
