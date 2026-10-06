@@ -136,6 +136,7 @@ export const SIGN_CELLS = [
   { key: 'B100', text: '100', bg: '#ffffff', fg: '#111111' },
   { key: 'B200', text: '200', bg: '#ffffff', fg: '#111111' },
   { key: 'B300', text: '300', bg: '#ffffff', fg: '#111111' },
+  { key: 'B50', text: '50', bg: '#ffffff', fg: '#111111' },
   { key: 'SRE', text: 'SREdesigns', bg: '#0c1626', fg: '#00d4e8', sub: '2026 NIMBLE CAR' },
   { key: 'GRANDPRIX', text: 'GRAND PRIX', bg: '#c8102e', fg: '#ffffff', sub: 'SPIELBERG 2026' },
   { key: 'DRSDET', text: 'DRS', bg: '#111111', fg: '#ffffff', sub: 'DETECTION' },
@@ -148,17 +149,21 @@ export const SIGN_CELLS = [
 const TURN_NAME = { 1: 'NIKI LAUDA', 3: 'REMUS', 4: 'RAUCH', 9: 'JOCHEN RINDT' };
 for (let i = 1; i <= 10; i++) SIGN_CELLS.push({ key: 'T' + i, text: String(i), bg: '#0b1630', fg: '#ffffff', sub: TURN_NAME[i] || 'TURN', turn: true });
 
-export function makeSignAtlas() {
+/** extraCells: more cells from circuit style data, e.g. sponsor billboards { key, text, bg, fg, accent } */
+export function makeSignAtlas(extraCells = []) {
+  const CELLS = [...SIGN_CELLS, ...extraCells];
   const cw = 512, ch = 128, cols = 4;
-  const rows = Math.ceil(SIGN_CELLS.length / cols);
+  const rows = Math.ceil(CELLS.length / cols);
   const c = document.createElement('canvas');
   c.width = cw * cols; c.height = ch * rows;
   const ctx = c.getContext('2d');
   const uv = {};
-  SIGN_CELLS.forEach((cell, idx) => {
+  CELLS.forEach((cell, idx) => {
     const x = (idx % cols) * cw, y = Math.floor(idx / cols) * ch;
     ctx.fillStyle = cell.bg; ctx.fillRect(x, y, cw, ch);
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 6; ctx.strokeRect(x + 4, y + 4, cw - 8, ch - 8);
+    const dist = /^B\d+$/.test(cell.key);
+    ctx.strokeStyle = dist ? '#111111' : 'rgba(255,255,255,0.35)'; ctx.lineWidth = dist ? 10 : 6; ctx.strokeRect(x + 6, y + 6, cw - 12, ch - 12);
+    if (cell.accent) { ctx.fillStyle = cell.accent; ctx.fillRect(x, y + ch - 16, cw, 16); }
     ctx.fillStyle = cell.fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     if (cell.ring) {
       ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, cw, ch);
@@ -172,12 +177,12 @@ export function makeSignAtlas() {
       ctx.font = 'bold 56px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + 50);
       ctx.font = 'bold 26px sans-serif'; ctx.globalAlpha = 0.85; ctx.fillText(cell.sub, x + cw / 2, y + 100); ctx.globalAlpha = 1;
     } else {
-      ctx.font = `bold ${cell.text.length > 6 ? 64 : 92}px sans-serif`; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 6, cw - 30);
+      ctx.font = `bold ${cell.text.length > 6 ? 64 : 100}px "Helvetica Neue", Arial, sans-serif`; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 6, cw - 40);
     }
     uv[cell.key] = [x / c.width, 1 - (y + ch) / c.height, (x + cw) / c.width, 1 - y / c.height];
   });
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
+  tex.anisotropy = 16; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
   return { tex, uv };
 }
