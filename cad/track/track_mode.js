@@ -293,7 +293,7 @@ export function initTrackMode(ctx) {
     }
     car.pitS = car.inPit ? Lp.s : -1;
     car.pitLat = Lp.lat;
-    car.pitLimiter = car.inPit && Lp.s >= PI.lineIn && Lp.s <= PI.lineOut;
+    car.pitLimiter = (car.inPit && Lp.s >= PI.lineIn && Lp.s <= PI.lineOut) || !!state.wheel?.flags?.pitLimiter; // PL button on the wheel
   }
   /** pit lane walls for one corner point of the car. true = the point was handled by the pit lane (skip track barriers) */
   function pitBarrier(x, z) {

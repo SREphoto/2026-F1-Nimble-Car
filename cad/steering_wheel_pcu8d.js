@@ -1,212 +1,76 @@
 /**
- * steering_wheel_pcu8d.js — McLaren Applied PCU-8D Formula 1 Steering Wheel
+ * steering_wheel_pcu8d.js — PCU-8D style Formula 1 steering wheel, built part by part
  * SREdesigns - Samuel R Erwin III
- * 
- * Exhaustive 3D Procedural CAD Model matching User Reference Images:
- * - media_1790508291563.jpg (CAD Wireframe Topology)
- * - media_1790508291529.jpg (Rear Assembly with Quick-Release & Dual Paddles)
- * - media_1790508291547.jpg (Top Profile & Protrusion Depth)
- * - media_1790508290842.jpg (Photorealistic Color, Silkscreen & LCD UI)
- * 
- * Structural & Kinematic Architecture:
- * 1. Carbon Monocoque Main Body: Chamfered carbon twill shell, screen well, lower console tray, bottom guide fins
- * 2. Ergonomic Silicone Hand Grips: Left & right sculpted grips with thumb rests and finger swells
- * 3. 4.3" High-DPI PCU-8D Color LCD Display: Real-time telemetry, gear box, speed, tire temps, battery SoC
- * 4. 15-LED Shift Light Arch: 5 Green, 5 Red, 5 Blue LEDs with counter-bored bezels
- * 5. 6 Flanking Status Warning LEDs: 3 Left, 3 Right amber/white marshal indicators
- * 6. 3 Lower Multi-Position Rotary Dials: STRAT (Yellow 1-16), SYS/REVS (Multi-color), CTRL/TRQ (Multi-color)
- * 7. Knurled Thumbwheels:
- *    - Upper Left: Red horizontal knurled wheel ('ENTRY')
- *    - Upper Right: Blue horizontal knurled wheel
- *    - Mid Left: Gold horizontal knurled wheel ('BMIG')
- *    - Mid Right: Gold horizontal knurled wheel ('BBAL')
- *    - Lower Left: Silver vertical knurled thumbwheel
- *    - Lower Right: Green vertical knurled thumbwheel ('EB')
- * 8. Push Buttons with Authentic Silkscreen Labels:
- *    - Left: Black (+10 purple, DR orange, X red, White push, BB- black)
- *    - Right: PL yellow, +1 purple, OT blue, OT cyan, Radio green, BB+ black
- * 9. Rear Quick-Release Hub & Dual Carbon Paddles:
- *    - CNC Machined quick-release collar with splined center bore
- *    - Upper single-finger contoured carbon shift paddles (Up/Down)
- *    - Lower dual-stage carbon clutch launch paddles with finger loops
+ *
+ * Exact-twin rebuild from the round-4 wheel references (W1 hands, W2 3/4 wire, W3 3/4 textured,
+ * W4 front wire, W5 top wire, W6 rear with paddles). Every part, its position and size come from
+ * cad/wheel_parts.json (measured on W4 at 2.90 dm overall width; depths from W5, rear from W6,
+ * colours and silkscreen from W3):
+ *   carbon shell (top wing bar over the grips, centre body, side towers, necks, windows),
+ *   sculpted alcantara grips, grey display bezel with stepped corners, LCD, 10 shift LEDs,
+ *   6 status LEDs, 12 octagonal push buttons, 6 knurled thumbwheels, 3 rotaries with teardrop
+ *   pointers on a silkscreened tray, conical quick-release hub with flange, 4 lobed carbon paddles.
+ * Object names match cad/wheel_button_map.json (Btn_<id>, Rotary_Knob_*, Thumbwheel_*, Paddle_*,
+ * UI_LCD_PCU8D_Display, ShiftLEDs, StatusLEDs) so cad/wheel_controls.js drives them.
+ * Wheel-local frame: X across (driver's view: +X on the right), Y up, Z out of the face (toward
+ * the driver). Units dm.
  */
 
 import * as THREE from 'three';
 import { materials } from '../materials.js';
-
+import WHEEL_PARTS from './wheel_parts.json' with { type: 'json' };
+export { WHEEL_PARTS };
 /**
  * 1. Procedural High-DPI Silkscreen Texture Generators
  */
 
-// Procedural Faceplate Silkscreen for the 3 Lower Rotary Dials
-function createRotaryFaceplateTexture() {
-  const w = 1024;
-  const h = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-
-  // Dark matte carbon background
-  ctx.fillStyle = '#0a0d12';
-  ctx.fillRect(0, 0, w, h);
-
-  // Carbon twill weave micro-pattern
-  ctx.strokeStyle = '#12161f';
-  ctx.lineWidth = 2;
-  for (let i = 0; i < w + h; i += 8) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i - h, h);
-    ctx.stroke();
+// Fine 2x2 twill carbon at real scale (about 2.5 mm tows), dark with a gloss clear coat (ref D3).
+// The wheel's carbon parts get box-projected UVs in wheel units (dm) so the weave is the same size
+// on every face instead of one stretched tile per face.
+const TWILL_TILE_DM = 0.4; // one texture tile = 16 tows
+let _twillTex = null;
+function fineTwillTexture() {
+  if (_twillTex) return _twillTex;
+  const N = 16, px = 16, cv = document.createElement('canvas');
+  cv.width = cv.height = N * px;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#060708'; g.fillRect(0, 0, cv.width, cv.height);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const horiz = ((i + j) % 4) < 2; // 2x2 twill: diagonal steps
+    const x = i * px, y = j * px;
+    const gr = horiz ? g.createLinearGradient(x, y, x, y + px) : g.createLinearGradient(x, y, x + px, y);
+    gr.addColorStop(0, '#08090b'); gr.addColorStop(0.5, '#23262c'); gr.addColorStop(1, '#08090b');
+    g.fillStyle = gr; g.fillRect(x + 0.5, y + 0.5, px - 1, px - 1);
   }
-
-  // -------------------------------------------------------------
-  // DIAL 1 (LEFT): "STRAT" (Yellow Arc with Numbers 1 to 16)
-  // -------------------------------------------------------------
-  const d1X = 180;
-  const d1Y = 260;
-  const r1 = 135;
-
-  // "STRAT" Banner at top
-  ctx.save();
-  ctx.translate(d1X, d1Y - 145);
-  ctx.fillStyle = '#f6b800';
-  ctx.font = '900 32px "Arial Black", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('STRAT', 0, 0);
-  ctx.restore();
-
-  // Yellow Calibration Arc
-  ctx.strokeStyle = '#f6b800';
-  ctx.lineWidth = 26;
-  ctx.beginPath();
-  ctx.arc(d1X, d1Y, r1, Math.PI * 0.75, Math.PI * 2.25);
-  ctx.stroke();
-
-  // Number ticks 1 to 16
-  for (let n = 1; n <= 16; n++) {
-    const t = (n - 1) / 15;
-    const ang = Math.PI * 0.75 + t * Math.PI * 1.5;
-    const nx = d1X + Math.cos(ang) * (r1 + 2);
-    const ny = d1Y + Math.sin(ang) * (r1 + 2);
-
-    ctx.fillStyle = '#0a0d12';
-    ctx.font = 'bold 18px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${n}`, nx, ny);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.repeat.set(1 / TWILL_TILE_DM, 1 / TWILL_TILE_DM);
+  return (_twillTex = t);
+}
+function boxProjectUVs(geo) {
+  const pos = geo.attributes.position; if (!pos) return;
+  if (!geo.attributes.normal) geo.computeVertexNormals();
+  const nrm = geo.attributes.normal, uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(nrm.getX(i)), ay = Math.abs(nrm.getY(i)), az = Math.abs(nrm.getZ(i));
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (az >= ax && az >= ay) { uv[2 * i] = x; uv[2 * i + 1] = y; }
+    else if (ax >= ay) { uv[2 * i] = y; uv[2 * i + 1] = z; }
+    else { uv[2 * i] = x; uv[2 * i + 1] = z; }
   }
-
-  // -------------------------------------------------------------
-  // DIAL 2 (CENTER): "SYS" / "REVS" / "DASH" / "BRIG" / "VOL"
-  // Multi-color segmented arc (Red, Orange, Blue, Green)
-  // -------------------------------------------------------------
-  const d2X = 512;
-  const d2Y = 260;
-  const r2 = 135;
-
-  // Header Labels
-  ctx.fillStyle = '#00d4e8';
-  ctx.font = 'bold 22px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('WET', d2X - 70, d2Y - 145);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('SYS', d2X, d2Y - 145);
-  ctx.fillStyle = '#d90429';
-  ctx.fillText('DEF', d2X + 70, d2Y - 145);
-
-  // Segment 1: Red (top-left)
-  ctx.strokeStyle = '#d90429';
-  ctx.lineWidth = 26;
-  ctx.beginPath();
-  ctx.arc(d2X, d2Y, r2, Math.PI * 0.75, Math.PI * 1.15);
-  ctx.stroke();
-
-  // Segment 2: Blue (top-center)
-  ctx.strokeStyle = '#0077ff';
-  ctx.beginPath();
-  ctx.arc(d2X, d2Y, r2, Math.PI * 1.15, Math.PI * 1.6);
-  ctx.stroke();
-
-  // Segment 3: Green (top-right)
-  ctx.strokeStyle = '#00c853';
-  ctx.beginPath();
-  ctx.arc(d2X, d2Y, r2, Math.PI * 1.6, Math.PI * 1.95);
-  ctx.stroke();
-
-  // Segment 4: Orange (bottom)
-  ctx.strokeStyle = '#ff6d00';
-  ctx.beginPath();
-  ctx.arc(d2X, d2Y, r2, Math.PI * 1.95, Math.PI * 2.25);
-  ctx.stroke();
-
-  // Dial 2 Text labels
-  const sysLabels = ['BRIG', 'DISP', 'DASH', 'REVS', 'VOL', 'CRUZ'];
-  sysLabels.forEach((lbl, idx) => {
-    const t = idx / (sysLabels.length - 1);
-    const ang = Math.PI * 0.8 + t * Math.PI * 1.4;
-    const lx = d2X + Math.cos(ang) * (r2 - 42);
-    const ly = d2Y + Math.sin(ang) * (r2 - 42);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(lbl, lx, ly);
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+}
+function applyFineCarbon(root, glossSrc, matteSrc) {
+  const gloss = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Carbon_FineTwill_Gloss', color: 0xffffff, map: fineTwillTexture(), roughness: 0.42, metalness: 0.15, clearcoat: 1.0, clearcoatRoughness: 0.06 });
+  const matte = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Carbon_FineTwill_Satin', color: 0xd0d0d0, map: fineTwillTexture(), roughness: 0.6, metalness: 0.1, clearcoat: 0.3, clearcoatRoughness: 0.35 });
+  const done = new Set();
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material === glossSrc ? gloss : o.material === matteSrc ? matte : null;
+    if (!m) return;
+    if (!done.has(o.geometry)) { boxProjectUVs(o.geometry); done.add(o.geometry); }
+    o.material = m;
   });
-
-  // -------------------------------------------------------------
-  // DIAL 3 (RIGHT): "CTRL" / "TRQ" / "SHIFT" / "BW"
-  // Multi-color segmented arc (Teal, Green, Red, Yellow)
-  // -------------------------------------------------------------
-  const d3X = 844;
-  const d3Y = 260;
-  const r3 = 135;
-
-  ctx.fillStyle = '#f6b800';
-  ctx.font = 'bold 22px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('SHIFT', d3X - 60, d3Y - 145);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('CTRL', d3X, d3Y - 145);
-  ctx.fillStyle = '#00d4e8';
-  ctx.fillText('TRQ', d3X + 60, d3Y - 145);
-
-  // Segment 1: Teal
-  ctx.strokeStyle = '#00b4d8';
-  ctx.lineWidth = 26;
-  ctx.beginPath();
-  ctx.arc(d3X, d3Y, r3, Math.PI * 0.75, Math.PI * 1.25);
-  ctx.stroke();
-
-  // Segment 2: Red
-  ctx.strokeStyle = '#d90429';
-  ctx.beginPath();
-  ctx.arc(d3X, d3Y, r3, Math.PI * 1.25, Math.PI * 1.7);
-  ctx.stroke();
-
-  // Segment 3: Green
-  ctx.strokeStyle = '#00e676';
-  ctx.beginPath();
-  ctx.arc(d3X, d3Y, r3, Math.PI * 1.7, Math.PI * 2.25);
-  ctx.stroke();
-
-  // Numbers 1-12
-  for (let n = 1; n <= 12; n++) {
-    const t = (n - 1) / 11;
-    const ang = Math.PI * 0.78 + t * Math.PI * 1.44;
-    const nx = d3X + Math.cos(ang) * r3;
-    const ny = d3Y + Math.sin(ang) * r3;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${n}`, nx, ny);
-  }
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.anisotropy = 16;
-  return tex;
 }
 
 // Procedural High-DPI PCU-8D LCD Telemetry Screen Texture
@@ -350,469 +214,279 @@ function createLcdScreenTexture(data = {}) {
 }
 
 
+
+// Silkscreened dial tray (W3): coloured scales and labels round each rotary, drawn in wheel units
+function createDialTrayTexture(rotaries, x0, y0, x1, y1) {
+  const PX = 1100, w = Math.round((x1 - x0) * PX), h = Math.round((y1 - y0) * PX);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, w, h);
+  const toC = (x, y) => [(x - x0) * PX, (y1 - y) * PX];
+  const scales = {
+    STRAT: { arcs: [['#f6b800', 0.75, 2.25]], nums: 16, numCol: '#0a0d12', head: [['STRAT', '#f6b800', 0]] },
+    SYS: { arcs: [['#d90429', 0.75, 1.15], ['#2f6bff', 1.15, 1.6], ['#00c853', 1.6, 1.95], ['#ff6d00', 1.95, 2.25]], nums: 16, numCol: '#ffffff', head: [['WET', '#00d4e8', -0.6], ['SYS', '#ffffff', 0], ['DEF', '#d90429', 0.6]], words: ['BRIG', 'DISP', 'DASH', 'REVS', 'VOL', 'CRUZ'] },
+    CTRL: { arcs: [['#00b4d8', 0.75, 1.25], ['#d90429', 1.25, 1.7], ['#00e676', 1.7, 2.25]], nums: 12, numCol: '#ffffff', head: [['SHIFT', '#f6b800', -0.55], ['CTRL', '#ffffff', 0], ['TRQ', '#00d4e8', 0.55]], words: ['GW', 'INT', 'CTRL', 'TRQ'] },
+  };
+  rotaries.forEach((r) => {
+    const sc = scales[r.scale]; const [cx, cy] = toC(r.at[0], r.at[1]); const R = (r.d / 2 + 0.035) * PX, lw = 0.03 * PX;
+    sc.arcs.forEach(([col, a0, a1]) => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.arc(cx, cy, R, Math.PI * a0, Math.PI * a1); g.stroke(); });
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let n = 1; n <= sc.nums; n++) {
+      const a = Math.PI * (0.75 + 1.5 * (n - 1) / (sc.nums - 1));
+      g.fillStyle = sc.numCol; g.font = `bold ${Math.round(lw * 0.62)}px Arial, sans-serif`;
+      g.fillText(String(n), cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+    }
+    (sc.words || []).forEach((wd, k, arr) => {
+      const a = Math.PI * (0.62 + 0.76 * k / Math.max(1, arr.length - 1)); const rr = R + lw * 1.25;
+      g.fillStyle = '#ffffff'; g.font = `bold ${Math.round(lw * 0.5)}px Arial, sans-serif`;
+      g.fillText(wd, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    });
+    sc.head.forEach(([t, col, dx]) => { g.fillStyle = col; g.font = `900 ${Math.round(lw * 0.75)}px "Arial Black", Arial, sans-serif`; g.fillText(t, cx + dx * R, cy - R - lw * 1.1); });
+  });
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  return tex;
+}
+
+// Shape with every corner filleted (radius r, clamped to half of the shorter neighbouring edge)
+function filletShape(pts, r, target = new THREE.Shape()) {
+  const n = pts.length, V = (p) => new THREE.Vector2(p[0], p[1]);
+  for (let i = 0; i < n; i++) {
+    const p = V(pts[i]), a = V(pts[(i - 1 + n) % n]), b = V(pts[(i + 1) % n]);
+    const da = a.clone().sub(p), db = b.clone().sub(p);
+    const ra = Math.min(r, da.length() * 0.45), rb = Math.min(r, db.length() * 0.45);
+    const pa = p.clone().add(da.normalize().multiplyScalar(ra)), pb = p.clone().add(db.normalize().multiplyScalar(rb));
+    if (i === 0) target.moveTo(pa.x, pa.y); else target.lineTo(pa.x, pa.y);
+    target.quadraticCurveTo(p.x, p.y, pb.x, pb.y);
+  }
+  target.closePath();
+  return target;
+}
+// Knurled disc: radius alternates every other facet (fine straight knurl), axis along Y
+function knurledDisc(r, w, n = 48) {
+  const geo = new THREE.CylinderGeometry(r, r, w, n, 1);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i), rr = Math.hypot(x, z); if (rr < r * 0.5) continue;
+    const k = Math.round((Math.atan2(z, x) + Math.PI) / (2 * Math.PI) * n) % 2;
+    const f = k ? 0.93 : 1; pos.setX(i, x * f); pos.setZ(i, z * f);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+// Lobed paddle blade (W6): two rounded lobes joined by a waist, height h, width w, in the XY plane
+function paddleBladeShape(w, h) {
+  const s = new THREE.Shape(), hw = w / 2, hh = h / 2, waist = hw * 0.62;
+  s.moveTo(0, -hh);
+  s.bezierCurveTo(hw * 1.15, -hh, hw * 1.1, -hh * 0.35, waist, -hh * 0.05);
+  s.bezierCurveTo(hw * 1.1, hh * 0.3, hw * 1.15, hh, 0, hh);
+  s.bezierCurveTo(-hw * 1.15, hh, -hw * 1.1, hh * 0.3, -waist, hh * 0.05);
+  s.bezierCurveTo(-hw * 1.1, -hh * 0.35, -hw * 1.15, -hh, 0, -hh);
+  return s;
+}
+function labelTexture(text, colour, px = 128, font = '900 64px "Arial Black", Arial, sans-serif') {
+  const cv = document.createElement('canvas'); cv.width = px * 2; cv.height = px;
+  const g = cv.getContext('2d'); g.fillStyle = colour; g.textAlign = 'center'; g.textBaseline = 'middle';
+  let size = 72; g.font = font.replace('64px', size + 'px');
+  while (g.measureText(text).width > cv.width * 0.9 && size > 12) { size -= 4; g.font = font.replace('64px', size + 'px'); }
+  g.fillText(text, cv.width / 2, cv.height / 2 + 2);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
 /**
- * 2. Main PCU-8D Steering Wheel Constructor
+ * 2. Main constructor: builds every part listed in cad/wheel_parts.json
  */
 export function createSteeringWheelPCU8D(options = {}) {
+  const W = options.parts || WHEEL_PARTS;
   const root = new THREE.Group();
   root.name = 'McLaren_Applied_PCU8D_Steering_Wheel';
+  root.userData.parts = W;
 
-  // Materials Palette
   const carbonTwill = materials.carbonGlossAero || materials.carbonGloss;
   const carbonMatte = materials.carbonMatteStructural || materials.carbonMatte;
-  const gripSilicone = materials.rubberSeal || new THREE.MeshStandardMaterial({ color: 0x141820, roughness: 0.85 });
-  const anodizedRed = materials.anodizedRed;
-  const anodizedBlue = materials.anodizedBlue;
-  const anodizedGold = materials.goldActuator;
-  const titaniumMetal = materials.titaniumBright;
+  const alcantara = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Grip_Alcantara', color: 0x484b50, roughness: 0.97, metalness: 0, sheen: 0.45, sheenRoughness: 0.8, sheenColor: new THREE.Color(0x7c8086) });
+  alcantara.userData.envMapIntensity = 0.6;
+  const bezelGrey = new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Bezel_Anodised', color: 0x5c5f64, roughness: 0.42, metalness: 0.65, clearcoat: 0.2 });
+  const blackAnod = new THREE.MeshStandardMaterial({ name: 'PCU8D_Black_Anodised', color: 0x0d0e10, roughness: 0.4, metalness: 0.5 });
+  const titanium = materials.titaniumBright || new THREE.MeshStandardMaterial({ color: 0xb8bcc2, metalness: 0.9, roughness: 0.32 });
+  const add = (parent, geo, mat, name) => { const m = new THREE.Mesh(geo, mat); if (name) m.name = name; m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
+  const Bd = W.body, T = Bd.thickness, F = T / 2; // F = z of the front face
+  root.userData.frontZ = F;
 
-  // -------------------------------------------------------------
-  // A. MAIN CARBON FIBER MONOCOQUE CHASSIS
-  // Exact profile matching media_1790508291563.jpg & media_1790508290842.jpg
-  // Dimensions: Width ~ 2.8 dm (280mm), Height ~ 1.8 dm (180mm), Depth ~ 0.32 dm (32mm)
-  // -------------------------------------------------------------
-  const chassisShape = new THREE.Shape();
-  // Top horizontal arch with central dip
-  chassisShape.moveTo(-1.25, 0.75);
-  chassisShape.quadraticCurveTo(0, 0.82, 1.25, 0.75);
-  chassisShape.quadraticCurveTo(1.42, 0.72, 1.45, 0.52);
-  // Right grip inner cutout
-  chassisShape.lineTo(1.45, 0.25);
-  chassisShape.quadraticCurveTo(1.18, 0.15, 1.15, -0.25);
-  chassisShape.quadraticCurveTo(1.18, -0.65, 1.45, -0.72);
-  chassisShape.lineTo(1.42, -0.92);
-  // Bottom chassis edge with right guide fin
-  chassisShape.lineTo(0.95, -0.92);
-  chassisShape.lineTo(0.85, -1.22); // Right bottom pointed guide tab
-  chassisShape.lineTo(0.72, -0.92);
-  chassisShape.quadraticCurveTo(0, -0.85, -0.72, -0.92);
-  chassisShape.lineTo(-0.85, -1.22); // Left bottom pointed guide tab
-  chassisShape.lineTo(-0.95, -0.92);
-  // Left grip inner cutout
-  chassisShape.lineTo(-1.42, -0.92);
-  chassisShape.quadraticCurveTo(-1.18, -0.65, -1.15, -0.25);
-  chassisShape.quadraticCurveTo(-1.18, 0.15, -1.45, 0.25);
-  chassisShape.lineTo(-1.45, 0.52);
-  chassisShape.quadraticCurveTo(-1.42, 0.72, -1.25, 0.75);
-  chassisShape.closePath();
-
-  // Central LCD Display Hole
-  const lcdHole = new THREE.Path();
-  const hw = 0.62;
-  const hh = 0.40;
-  const hy = 0.18;
-  lcdHole.moveTo(-hw, hy - hh);
-  lcdHole.lineTo(hw, hy - hh);
-  lcdHole.lineTo(hw, hy + hh);
-  lcdHole.lineTo(-hw, hy + hh);
-  lcdHole.closePath();
-  chassisShape.holes.push(lcdHole);
-
-  const chassisExtrude = {
-    steps: 2,
-    depth: 0.32,
-    bevelEnabled: true,
-    bevelThickness: 0.04,
-    bevelSize: 0.04,
-    bevelSegments: 4
-  };
-  const chassisGeo = new THREE.ExtrudeGeometry(chassisShape, chassisExtrude);
-  chassisGeo.center();
-  const chassisMesh = new THREE.Mesh(chassisGeo, carbonTwill);
-  chassisMesh.castShadow = true;
-  chassisMesh.receiveShadow = true;
-  chassisMesh.name = 'Chassis_Carbon_Monocoque';
-  root.add(chassisMesh);
-
-  // -------------------------------------------------------------
-  // B. ERGONOMIC SILICONE HAND GRIPS (Left & Right)
-  // Sculpted grips matching media_1790508291563.jpg & media_1790508290842.jpg
-  // -------------------------------------------------------------
-  [-1, 1].forEach((side) => {
-    const isLeft = side < 0;
-    const gripGroup = new THREE.Group();
-    gripGroup.name = `Ergonomic_HandGrip_${isLeft ? 'Left' : 'Right'}`;
-
-    // Main sculpted grip column
-    const gripCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(side * 1.35, 0.52, 0.02),
-      new THREE.Vector3(side * 1.38, 0.10, 0.04), // Thumb rest bulge
-      new THREE.Vector3(side * 1.36, -0.35, 0.02), // Palm swell
-      new THREE.Vector3(side * 1.32, -0.85, 0.00),
-      new THREE.Vector3(side * 1.30, -1.25, -0.02)  // Bottom flared end
-    ]);
-
-    const gripGeo = new THREE.TubeGeometry(gripCurve, 32, 0.20, 16, false);
-    gripGeo.scale(1.2, 1.0, 1.4); // Flatten slightly laterally for authentic anatomical grip
-    const gripMesh = new THREE.Mesh(gripGeo, gripSilicone);
-    gripMesh.castShadow = true;
-    gripGroup.add(gripMesh);
-
-    // Silicone Index Finger Notches
-    for (let f = 0; f < 3; f++) {
-      const fGeo = new THREE.BoxGeometry(0.12, 0.14, 0.32);
-      const fMesh = new THREE.Mesh(fGeo, gripSilicone);
-      fMesh.position.set(side * 1.48, -0.2 - f * 0.28, -0.12);
-      gripGroup.add(fMesh);
-    }
-
-    root.add(gripGroup);
-  });
-
-  // -------------------------------------------------------------
-  // C. 4.3" PCU-8D COLOR LCD DISPLAY WITH RECESSED FRAME
-  // -------------------------------------------------------------
-  const lcdTex = createLcdScreenTexture(options);
-  const lcdMat = new THREE.MeshBasicMaterial({ map: lcdTex });
-  const lcdGeo = new THREE.PlaneGeometry(1.20, 0.76);
-  const lcdMesh = new THREE.Mesh(lcdGeo, lcdMat);
-  lcdMesh.position.set(0, 0.18, 0.14); // Flush in recessed well
-  lcdMesh.name = 'UI_LCD_PCU8D_Display';
-  root.add(lcdMesh);
-
-  // Anti-reflective Protective Glass Lens
-  const glassGeo = new THREE.PlaneGeometry(1.22, 0.78);
-  const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
-    transmission: 0.95,
-    roughness: 0.06,
-    ior: 1.52,
-    reflectivity: 0.5
-  });
-  const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-  glassMesh.position.set(0, 0.18, 0.145);
-  root.add(glassMesh);
-
-  // -------------------------------------------------------------
-  // D. 15-LED SHIFT LIGHT ARRAY & 6 FLANKING STATUS LEDS
-  // Matching media_1790508291563.jpg & media_1790508290842.jpg
-  // -------------------------------------------------------------
-  const shiftGroup = new THREE.Group();
-  shiftGroup.name = 'ShiftLights_15LED_Array';
-
-  const numShiftLeds = 15;
-  const archW = 1.05;
-  const ledSpacing = archW / (numShiftLeds - 1);
-
-  for (let i = 0; i < numShiftLeds; i++) {
-    const lx = -archW / 2 + i * ledSpacing;
-    // Slight curved arch rise in center
-    const lz = 0.65 + (1.0 - Math.pow(lx / (archW / 2), 2.0)) * 0.04;
-
-    let ledMat = materials.ledGreen; // First 5: Green (Entry / Low RPM)
-    if (i >= 5 && i < 10) ledMat = materials.ledRed;   // Middle 5: Red (Optimum Powerband)
-    if (i >= 10) ledMat = materials.ledBlue;          // Last 5: Blue (Upshift Flash)
-
-    // Outer counter-bored bezel
-    const bezelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.04, 16);
-    const bezel = new THREE.Mesh(bezelGeo, carbonMatte);
-    bezel.rotation.x = Math.PI / 2;
-    bezel.position.set(lx, lz, 0.17);
-    shiftGroup.add(bezel);
-
-    // Glowing LED lens
-    const ledGeo = new THREE.SphereGeometry(0.024, 12, 12);
-    const led = new THREE.Mesh(ledGeo, ledMat);
-    led.position.set(lx, lz, 0.185);
-    shiftGroup.add(led);
+  // ---- A. carbon shell (one extrusion of the measured outline with rounded edges)
+  {
+    const bev = Bd.edgeRadius;
+    const geo = new THREE.ExtrudeGeometry(filletShape(Bd.outline, 0.03), { depth: T - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev * 0.9, bevelSegments: 5, curveSegments: 6 });
+    geo.translate(0, 0, -(T - 2 * bev) / 2);
+    add(root, geo, carbonTwill, 'Chassis_Carbon_Monocoque');
+    // raised rim of the lower dial tray (W5)
+    const L = W.consoleLip, [lx0, ly0] = L.from, [lx1, ly1] = L.to;
+    const rim = new THREE.Shape(); filletShape([[lx0, ly0], [lx1, ly0], [lx1, ly1], [lx0, ly1]], 0.05, rim);
+    const hole = new THREE.Path(); filletShape([[lx0 + 0.035, ly0 - 0.03], [lx1 - 0.035, ly0 - 0.03], [lx1 - 0.035, ly1 + 0.03], [lx0 + 0.035, ly1 + 0.03]], 0.035, hole);
+    rim.holes.push(hole);
+    const rg = new THREE.ExtrudeGeometry(rim, { depth: L.height, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 2 });
+    rg.translate(0, 0, F - 0.01);
+    add(root, rg, carbonTwill, 'Console_Lower_Lip');
   }
 
-  // 6 Flanking Display Status LEDs (3 Left, 3 Right)
-  [-1, 1].forEach((side) => {
-    for (let j = 0; j < 3; j++) {
-      const sy = 0.32 - j * 0.16;
-      const sx = side * 0.72;
-
-      const sBezelGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.03, 12);
-      const sBezel = new THREE.Mesh(sBezelGeo, carbonMatte);
-      sBezel.rotation.x = Math.PI / 2;
-      sBezel.position.set(sx, sy, 0.165);
-      shiftGroup.add(sBezel);
-
-      const sLedGeo = new THREE.SphereGeometry(0.020, 10, 10);
-      const sLed = new THREE.Mesh(sLedGeo, materials.ledAmber);
-      sLed.position.set(sx, sy, 0.178);
-      shiftGroup.add(sLed);
-    }
-  });
-
-  root.add(shiftGroup);
-
-  // -------------------------------------------------------------
-  // E. 3 LOWER MULTI-POSITION ROTARY DIALS WITH TEARDROP POINTERS
-  // Matching media_1790508291563.jpg & media_1790508290842.jpg
-  // -------------------------------------------------------------
-  const rotaryGroup = new THREE.Group();
-  rotaryGroup.name = 'Lower_Rotary_Console_Tray';
-
-  // Silkscreen Calibration Faceplate Quad
-  const rfTex = createRotaryFaceplateTexture();
-  const rfMat = new THREE.MeshStandardMaterial({
-    map: rfTex,
-    roughness: 0.4,
-    metalness: 0.2
-  });
-  const rfGeo = new THREE.PlaneGeometry(1.45, 0.65);
-  const rfMesh = new THREE.Mesh(rfGeo, rfMat);
-  rfMesh.position.set(0, -0.55, 0.165);
-  rotaryGroup.add(rfMesh);
-
-  // 3 Physical Rotary Knobs with Teardrop Pointers
-  [-0.48, 0, 0.48].forEach((rx, idx) => {
-    const knobGroup = new THREE.Group();
-    knobGroup.position.set(rx, -0.55, 0.17);
-    knobGroup.name = `Rotary_Knob_${['STRAT', 'SYS', 'CTRL'][idx]}`;
-
-    // Circular Base Hub
-    const baseGeo = new THREE.CylinderGeometry(0.16, 0.18, 0.08, 24);
-    const baseMesh = new THREE.Mesh(baseGeo, carbonMatte);
-    baseMesh.rotation.x = Math.PI / 2;
-    knobGroup.add(baseMesh);
-
-    // Teardrop Pointer Body
-    const pointerShape = new THREE.Shape();
-    pointerShape.moveTo(-0.06, -0.12);
-    pointerShape.lineTo(0.06, -0.12);
-    pointerShape.lineTo(0.04, 0.18); // Pointed top
-    pointerShape.lineTo(0, 0.24);
-    pointerShape.lineTo(-0.04, 0.18);
-    pointerShape.closePath();
-
-    const pointerExtrude = { steps: 1, depth: 0.12, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 3 };
-    const pointerGeo = new THREE.ExtrudeGeometry(pointerShape, pointerExtrude);
-    pointerGeo.center();
-    const pointerMesh = new THREE.Mesh(pointerGeo, materials.siliconeSeal || carbonMatte);
-    pointerMesh.position.set(0, 0, 0.08);
-    knobGroup.add(pointerMesh);
-
-    // Raised White Alignment Line on Pointer
-    const lineGeo = new THREE.BoxGeometry(0.015, 0.22, 0.04);
-    const lineMesh = new THREE.Mesh(lineGeo, materials.oracleWhite || titaniumMetal);
-    lineMesh.position.set(0, 0.02, 0.15);
-    knobGroup.add(lineMesh);
-
-    rotaryGroup.add(knobGroup);
-  });
-
-  root.add(rotaryGroup);
-
-  // -------------------------------------------------------------
-  // F. KNURLED THUMBWHEELS & ROTARY ENCODERS
-  // Matching media_1790508291563.jpg & media_1790508290842.jpg
-  // -------------------------------------------------------------
-  // 1. Upper Left: Red Horizontal Thumbwheel ('ENTRY')
-  const ulWheelGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.18, 20);
-  const ulWheel = new THREE.Mesh(ulWheelGeo, anodizedRed);
-  ulWheel.rotation.z = Math.PI / 2;
-  ulWheel.position.set(-1.18, 0.42, 0.15);
-  ulWheel.name = 'Thumbwheel_Entry_Red';
-  root.add(ulWheel);
-
-  // 2. Upper Right: Blue Horizontal Thumbwheel
-  const urWheelGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.18, 20);
-  const urWheel = new THREE.Mesh(urWheelGeo, anodizedBlue);
-  urWheel.rotation.z = Math.PI / 2;
-  urWheel.position.set(1.18, 0.42, 0.15);
-  urWheel.name = 'Thumbwheel_UpperRight_Blue';
-  root.add(urWheel);
-
-  // 3. Mid Left: Gold Horizontal Thumbwheel ('BMIG')
-  const mlWheelGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.16, 20);
-  const mlWheel = new THREE.Mesh(mlWheelGeo, anodizedGold);
-  mlWheel.rotation.z = Math.PI / 2;
-  mlWheel.position.set(-1.15, 0.15, 0.14);
-  mlWheel.name = 'Thumbwheel_BMIG_Gold';
-  root.add(mlWheel);
-
-  // 4. Mid Right: Gold Horizontal Thumbwheel ('BBAL')
-  const mrWheelGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.16, 20);
-  const mrWheel = new THREE.Mesh(mrWheelGeo, anodizedGold);
-  mrWheel.rotation.z = Math.PI / 2;
-  mrWheel.position.set(1.15, 0.15, 0.14);
-  mrWheel.name = 'Thumbwheel_BBAL_Gold';
-  root.add(mrWheel);
-
-  // 5. Lower Left: Silver Vertical Knurled Thumbwheel
-  const llWheelGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.16, 20);
-  const llWheel = new THREE.Mesh(llWheelGeo, titaniumMetal);
-  llWheel.position.set(-1.12, -0.22, 0.14);
-  llWheel.name = 'Thumbwheel_Silver_Vertical';
-  root.add(llWheel);
-
-  // 6. Lower Right: Green Vertical Knurled Thumbwheel ('EB' - Engine Braking)
-  const greenMat = new THREE.MeshStandardMaterial({ color: 0x00c853, roughness: 0.35, metalness: 0.6 });
-  const lrWheelGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.16, 20);
-  const lrWheel = new THREE.Mesh(lrWheelGeo, greenMat);
-  lrWheel.position.set(1.12, -0.22, 0.14);
-  lrWheel.name = 'Thumbwheel_EB_Green';
-  root.add(lrWheel);
-
-  // -------------------------------------------------------------
-  // G. AUTHENTIC PHYSICAL PUSH BUTTONS & SILKSCREEN LABELS
-  // Matching media_1790508290842.jpg
-  // -------------------------------------------------------------
-  function createButton(x, y, radius, color, label, textColor = '#ffffff') {
-    const btnGroup = new THREE.Group();
-    btnGroup.position.set(x, y, 0.16);
-
-    // Bezel ring
-    const bezelGeo = new THREE.CylinderGeometry(radius * 1.25, radius * 1.25, 0.04, 16);
-    const bezel = new THREE.Mesh(bezelGeo, carbonMatte);
-    bezel.rotation.x = Math.PI / 2;
-    btnGroup.add(bezel);
-
-    // Depressible colored cap
-    const capGeo = new THREE.CylinderGeometry(radius, radius, 0.06, 16);
-    const capMat = new THREE.MeshStandardMaterial({
-      color: color,
-      roughness: 0.45,
-      metalness: 0.15
+  // ---- B. sculpted alcantara grips (lofted rounded sections)
+  [1, -1].forEach((side) => {
+    const secs = W.grips.sections, ring = 28, pos = [], idx = [];
+    secs.forEach(([y, xo, xi, d, zo]) => {
+      const cx = side * (xo + xi) / 2, rx = Math.abs(xo - xi) / 2, rz = d / 2;
+      for (let j = 0; j <= ring; j++) {
+        const a = (j / ring) * Math.PI * 2, c = Math.cos(a), s2 = Math.sin(a);
+        const e = 0.7; // superellipse: rounded-rectangle section
+        const px = Math.sign(c) * Math.pow(Math.abs(c), e) * rx, pz = Math.sign(s2) * Math.pow(Math.abs(s2), e) * rz;
+        pos.push(cx + px, y, zo + pz);
+      }
     });
-    const cap = new THREE.Mesh(capGeo, capMat);
-    cap.rotation.x = Math.PI / 2;
-    cap.position.z = 0.03;
-    btnGroup.add(cap);
+    const R = ring + 1;
+    for (let i = 0; i < secs.length - 1; i++) for (let j = 0; j < ring; j++) { const a = i * R + j, b = a + 1, c = a + R, d = c + 1; idx.push(a, b, c, b, d, c); }
+    // caps
+    [0, secs.length - 1].forEach((i, k) => { const [y, xo, xi, , zo] = secs[i]; const ci = pos.length / 3; pos.push(side * (xo + xi) / 2, y + (k ? -0.012 : 0.01), zo); for (let j = 0; j < ring; j++) { const a = i * R + j; k ? idx.push(ci, a, a + 1) : idx.push(ci, a + 1, a); } });
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx);
+    geo.computeVertexNormals();
+    // UVs: around x along (dm) for the alcantara nap
+    const uv = new Float32Array((pos.length / 3) * 2); for (let i = 0; i < pos.length / 3; i++) { uv[i * 2] = Math.atan2(pos[i * 3 + 2], pos[i * 3] - side * 1.27) * 0.2; uv[i * 2 + 1] = pos[i * 3 + 1]; }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    add(root, geo, alcantara, `Ergonomic_HandGrip_${side > 0 ? 'Right' : 'Left'}`);
+  });
 
-    // Silkscreen Text Decal
-    if (label) {
-      const cv = document.createElement('canvas');
-      cv.width = 128;
-      cv.height = 128;
-      const ctx = cv.getContext('2d');
-      ctx.fillStyle = 'rgba(0,0,0,0)';
-      ctx.fillRect(0, 0, 128, 128);
-
-      ctx.fillStyle = textColor;
-      ctx.font = '900 64px "Arial Black", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(label, 64, 64);
-
-      const tTex = new THREE.CanvasTexture(cv);
-      const tMat = new THREE.MeshBasicMaterial({ map: tTex, transparent: true });
-      const tGeo = new THREE.PlaneGeometry(radius * 1.6, radius * 1.6);
-      const tMesh = new THREE.Mesh(tGeo, tMat);
-      tMesh.position.z = 0.062;
-      btnGroup.add(tMesh);
-    }
-
-    return btnGroup;
+  // ---- B2. bulbous carbon shoulders where the wing bar meets each grip (W5)
+  if (W.gripShoulders) {
+    const gs = W.gripShoulders, sg = new THREE.SphereGeometry(1, 28, 18);
+    [1, -1].forEach((side) => { const m = add(root, sg, carbonTwill, `Grip_Shoulder_${side > 0 ? 'Right' : 'Left'}`); m.position.set(side * Math.abs(gs.centre[0]), gs.centre[1], 0); m.scale.set(...gs.radii); });
   }
 
-  // --- Left Button Cluster ---
-  // Top Outer: Black button
-  root.add(createButton(-1.25, 0.65, 0.08, 0x141820, ''));
-  // Top Inner 1: Purple (+10)
-  root.add(createButton(-0.95, 0.62, 0.075, 0x8a2be2, '+10'));
-  // Top Inner 2: Orange (DR)
-  root.add(createButton(-0.68, 0.52, 0.08, 0xff7700, 'DR'));
-  // Mid Left: White push button
-  root.add(createButton(-0.92, -0.20, 0.07, 0xf0f4f8, ''));
-  // Mid Lower Left: Red button with white X
-  root.add(createButton(-0.92, -0.42, 0.075, 0xd90429, '✕'));
-  // Bottom Left Outer: Black button (BB-)
-  root.add(createButton(-0.95, -0.68, 0.08, 0x181e26, 'BB-'));
+  // ---- C. grey display bezel with stepped top corners, LCD and glass
+  {
+    const Bz = W.bezel, [scx, scy] = Bz.screen.centre, [sw, sh] = Bz.screen.size;
+    const shape = filletShape(Bz.outline, 0.015);
+    const hole = new THREE.Path(); filletShape([[scx - sw / 2, scy - sh / 2], [scx + sw / 2, scy - sh / 2], [scx + sw / 2, scy + sh / 2], [scx - sw / 2, scy + sh / 2]], 0.02, hole);
+    shape.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: Bz.height - 0.012, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2 });
+    geo.translate(0, 0, F - 0.004);
+    add(root, geo, bezelGrey, 'Display_Bezel');
+    // dark inner frame lip round the glass
+    const lip = new THREE.Shape(); filletShape([[scx - sw / 2 - 0.012, scy - sh / 2 - 0.012], [scx + sw / 2 + 0.012, scy - sh / 2 - 0.012], [scx + sw / 2 + 0.012, scy + sh / 2 + 0.012], [scx - sw / 2 - 0.012, scy + sh / 2 + 0.012]], 0.025, lip);
+    const lipHole = new THREE.Path(); filletShape([[scx - sw / 2, scy - sh / 2], [scx + sw / 2, scy - sh / 2], [scx + sw / 2, scy + sh / 2], [scx - sw / 2, scy + sh / 2]], 0.015, lipHole); lip.holes.push(lipHole);
+    const lg = new THREE.ExtrudeGeometry(lip, { depth: 0.01, bevelEnabled: false }); lg.translate(0, 0, F + Bz.height - Bz.recess);
+    add(root, lg, blackAnod, 'Display_Inner_Frame');
+    const lcd = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: createLcdScreenTexture(options), toneMapped: false }));
+    lcd.position.set(scx, scy, F + Bz.height - Bz.recess + 0.002); lcd.name = 'UI_LCD_PCU8D_Display'; root.add(lcd);
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Display_Glass', color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0, clearcoat: 1, depthWrite: false }));
+    glass.position.set(scx, scy, F + Bz.height - Bz.recess + 0.008); glass.name = 'Display_Glass'; root.add(glass);
+  }
+  const bezelTop = F + W.bezel.height;
 
-  // --- Right Button Cluster ---
-  // Top Inner 1: Yellow (PL - Pit Lane Limiter)
-  root.add(createButton(0.68, 0.52, 0.08, 0xf6b800, 'PL', '#000000'));
-  // Top Inner 2: Purple (+1)
-  root.add(createButton(0.95, 0.62, 0.075, 0x8a2be2, '+1'));
-  // Top Outer: Light Blue (OT - Overtake)
-  root.add(createButton(1.25, 0.65, 0.08, 0x00b4d8, 'OT'));
-  // Mid Right 1: Cyan (OT)
-  root.add(createButton(0.92, -0.15, 0.075, 0x00d4e8, 'OT', '#000000'));
-  // Mid Right 2: Green (Radio / Phone icon)
-  root.add(createButton(0.92, -0.40, 0.075, 0x00c853, '📞'));
-  // Bottom Right Outer: Black button (BB+)
-  root.add(createButton(0.95, -0.68, 0.08, 0x181e26, 'BB+'));
+  // ---- D. shift and status LEDs (instanced; cad/wheel_controls.js colours them per instance)
+  {
+    const S = W.shiftLEDs, n = S.count, ledPos = [];
+    for (let i = 0; i < n; i++) ledPos.push([S.from[0] + (S.to[0] - S.from[0]) * i / (n - 1), S.from[1]]);
+    const st = W.statusLEDs.positions;
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2), one = new THREE.Vector3(1, 1, 1);
+    const bez = new THREE.InstancedMesh(new THREE.CylinderGeometry(S.radius * 1.45, S.radius * 1.6, 0.016, 16), blackAnod, n + st.length); bez.name = 'ShiftLED_Bezels';
+    [...ledPos, ...st].forEach(([x, y], k) => bez.setMatrixAt(k, m4.compose(new THREE.Vector3(x, y, bezelTop + 0.004), q, one)));
+    root.add(bez);
+    const ledMat = new THREE.MeshBasicMaterial({ name: 'PCU8D_LED', toneMapped: false });
+    const dome = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2); dome.rotateX(Math.PI / 2);
+    const leds = new THREE.InstancedMesh(dome, ledMat, n); leds.name = 'ShiftLEDs';
+    const c = new THREE.Color();
+    ledPos.forEach(([x, y], i) => { leds.setMatrixAt(i, m4.compose(new THREE.Vector3(x, y, bezelTop + 0.01), new THREE.Quaternion(), new THREE.Vector3(S.radius, S.radius, S.radius * 0.7))); leds.setColorAt(i, c.setHex(i < n * 0.4 ? 0x00e676 : i < n * 0.7 ? 0xff334b : 0x5a6bff)); });
+    root.add(leds);
+    const r2 = W.statusLEDs.radius, sl = new THREE.InstancedMesh(dome, ledMat, st.length); sl.name = 'StatusLEDs';
+    st.forEach(([x, y], i) => { sl.setMatrixAt(i, m4.compose(new THREE.Vector3(x, y, bezelTop + 0.008), new THREE.Quaternion(), new THREE.Vector3(r2, r2, r2 * 0.7))); sl.setColorAt(i, c.setHex(0xe8eef4)); });
+    root.add(sl);
+  }
 
-  // -------------------------------------------------------------
-  // H. REAR ASSEMBLY: QUICK-RELEASE HUB & CARBON PADDLES
-  // Matching media_1790508291529.jpg (Rear View)
-  // -------------------------------------------------------------
-  const rearGroup = new THREE.Group();
-  rearGroup.position.set(0, 0, -0.18);
-  rearGroup.name = 'Rear_QuickRelease_And_Paddles';
+  // ---- E. push buttons: round black bezel, octagonal faceted coloured cap, printed label
+  {
+    const capGeoCache = new Map(), capMats = new Map();
+    const capGeo = (r) => {
+      if (capGeoCache.has(r)) return capGeoCache.get(r);
+      const pts = [new THREE.Vector2(r, 0), new THREE.Vector2(r, 0.018), new THREE.Vector2(r * 0.86, 0.036), new THREE.Vector2(r * 0.55, 0.047), new THREE.Vector2(0, 0.05)]; // bottom -> top: outward faces
+      const g = new THREE.LatheGeometry(pts, 8); g.rotateX(Math.PI / 2); g.rotateZ(Math.PI / 8); g.computeVertexNormals();
+      capGeoCache.set(r, g); return g;
+    };
+    W.buttons.forEach((b) => {
+      const r = b.d / 2, grp = new THREE.Group(); grp.name = `Btn_${b.id}`; grp.position.set(b.at[0], b.at[1], F);
+      const ring = add(grp, new THREE.CylinderGeometry(r * 1.22, r * 1.3, 0.03, 24), blackAnod, `Btn_${b.id}_Bezel`); ring.rotation.x = Math.PI / 2; ring.position.z = 0.012;
+      if (!capMats.has(b.colour)) capMats.set(b.colour, new THREE.MeshPhysicalMaterial({ name: 'PCU8D_ButtonCap', color: b.colour, roughness: 0.32, metalness: 0.05, clearcoat: 0.7, clearcoatRoughness: 0.15, flatShading: true }));
+      const cap = add(grp, capGeo(r), capMats.get(b.colour), `Btn_${b.id}_Cap`); cap.position.z = 0.02;
+      if (b.label) {
+        const lab = new THREE.Mesh(new THREE.PlaneGeometry(r * 1.5, r * 0.75), new THREE.MeshBasicMaterial({ map: labelTexture(b.label, b.text), transparent: true, depthWrite: false }));
+        lab.position.z = 0.072; lab.name = `Btn_${b.id}_Label`; grp.add(lab);
+      }
+      root.add(grp);
+    });
+  }
 
-  // 1. Precision CNC Machined Quick-Release Hub Collar
-  const qrCollarGeo = new THREE.CylinderGeometry(0.38, 0.44, 0.18, 32);
-  const qrCollar = new THREE.Mesh(qrCollarGeo, titaniumMetal);
-  qrCollar.rotation.x = Math.PI / 2;
-  rearGroup.add(qrCollar);
+  // ---- F. knurled thumbwheels in black housings (axis 'x': the thumb rolls them up / down)
+  {
+    const mats = new Map();
+    W.thumbwheels.forEach((t) => {
+      const grp = new THREE.Group(); grp.name = t.id;
+      const onGrip = t.axis === 'y';
+      grp.position.set(t.at[0], t.at[1], onGrip ? 0.14 : F + 0.005);
+      if (t.axis === 'x') grp.rotation.z = -Math.PI / 2; // group Y = wheel X; wheel_controls spins rotation.y
+      if (!mats.has(t.colour)) mats.set(t.colour, new THREE.MeshPhysicalMaterial({ name: 'PCU8D_Thumbwheel_Anodised', color: t.colour, roughness: 0.3, metalness: 0.75, clearcoat: 0.3 }));
+      add(grp, knurledDisc(t.d / 2, t.w), mats.get(t.colour), `${t.id}_Disc`);
+      root.add(grp);
+      // housing slot (static)
+      const hs = new THREE.Mesh(new THREE.BoxGeometry(t.axis === 'x' ? t.w + 0.04 : t.d * 0.95, t.axis === 'x' ? t.d * 0.92 : t.w + 0.04, 0.05), blackAnod);
+      hs.position.set(t.at[0], t.at[1], (onGrip ? 0.14 : F + 0.005) - t.d * 0.3); hs.name = `${t.id}_Housing`; root.add(hs);
+    });
+    // silkscreen labels on the carbon (W3)
+    W.silkscreen.labels.forEach((l) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(l.size * 5, l.size * 2.5), new THREE.MeshBasicMaterial({ map: labelTexture(l.text, l.colour), transparent: true, depthWrite: false }));
+      m.position.set(l.at[0], l.at[1], F + 0.003); if (l.rot) m.rotation.z = THREE.MathUtils.degToRad(l.rot); m.name = `Silkscreen_${l.text}`; root.add(m);
+    });
+  }
 
-  // Splined center bore
-  const boreGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.20, 24);
-  const bore = new THREE.Mesh(boreGeo, carbonMatte);
-  bore.rotation.x = Math.PI / 2;
-  bore.position.z = -0.01;
-  rearGroup.add(bore);
+  // ---- G. rotaries on the silkscreened tray
+  {
+    const R0 = W.rotaries;
+    const xs = R0.map((r) => r.at[0]), ys = R0.map((r) => r.at[1]), pad = 0.17;
+    const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad, y0 = Math.min(...ys) - pad * 0.8, y1 = Math.max(...ys) + pad * 1.05;
+    const tray = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, y1 - y0), new THREE.MeshBasicMaterial({ map: createDialTrayTexture(R0, x0, y0, x1, y1), transparent: true, depthWrite: false, toneMapped: false }));
+    tray.position.set((x0 + x1) / 2, (y0 + y1) / 2, F + 0.003); tray.name = 'Dial_Tray_Silkscreen'; root.add(tray);
+    const pointerShape = new THREE.Shape();
+    pointerShape.moveTo(0, 0.095); pointerShape.bezierCurveTo(0.03, 0.05, 0.062, -0.02, 0.05, -0.055);
+    pointerShape.bezierCurveTo(0.035, -0.085, -0.035, -0.085, -0.05, -0.055); pointerShape.bezierCurveTo(-0.062, -0.02, -0.03, 0.05, 0, 0.095);
+    const pointerGeo = new THREE.ExtrudeGeometry(pointerShape, { depth: 0.055, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.01, bevelSegments: 3 });
+    const knurl = knurledDisc(1, 1, 40);
+    const white = new THREE.MeshBasicMaterial({ name: 'PCU8D_Pointer_Line', color: 0xf2f4f6 });
+    R0.forEach((r) => {
+      const grp = new THREE.Group(); grp.name = r.id; grp.position.set(r.at[0], r.at[1], F + 0.01);
+      const base = add(grp, knurl, titanium, `${r.id}_KnurledRing`); base.rotation.x = Math.PI / 2; base.scale.set(r.d / 2, 0.045, r.d / 2); base.position.z = 0.022;
+      const ptr = add(grp, pointerGeo, blackAnod, `${r.id}_Pointer`); ptr.position.z = 0.045; ptr.scale.setScalar(r.d / 0.2 * 1.05);
+      const line = add(grp, new THREE.BoxGeometry(0.012, 0.085, 0.004), white, `${r.id}_PointerLine`); line.position.set(0, 0.03, 0.045 + 0.08 * r.d / 0.2 * 1.05);
+      root.add(grp);
+    });
+  }
 
-  // 2. Upper Carbon Shift Rocker Paddles (Up/Down Shift - media_1790508291529.jpg)
-  [-1, 1].forEach((side) => {
-    const isLeft = side < 0;
-    const shiftPaddleGroup = new THREE.Group();
-    shiftPaddleGroup.position.set(side * 0.75, 0.22, -0.08);
-    shiftPaddleGroup.name = `Paddle_Shift_${isLeft ? 'Down_LH' : 'Up_RH'}`;
+  // ---- H. rear: conical quick-release hub with machined flange, lobed carbon paddles
+  {
+    const H = W.hub, rear = new THREE.Group(); rear.name = 'Rear_QuickRelease_And_Paddles'; root.add(rear);
+    const cone = add(rear, new THREE.CylinderGeometry(H.cone.frontD / 2, H.cone.backD / 2, H.cone.depth, 32, 1, true), titanium, 'QR_Hub_Cone');
+    cone.rotation.x = -Math.PI / 2; cone.position.z = -F - H.cone.depth / 2;
+    const fl = new THREE.Shape(); fl.absarc(0, 0, H.flange.d / 2, 0, Math.PI * 2, false);
+    const bore = new THREE.Path(); bore.absarc(0, 0, H.flange.boreD / 2, 0, Math.PI * 2, true); fl.holes.push(bore);
+    const fg = new THREE.ExtrudeGeometry(fl, { depth: H.flange.t, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 2, curveSegments: 48 });
+    fg.translate(0, 0, -F - H.cone.depth - H.flange.t);
+    add(rear, fg, titanium, 'QR_Hub_Flange');
+    const boreIn = add(rear, new THREE.CylinderGeometry(H.flange.boreD / 2, H.flange.boreD / 2 * 0.9, H.cone.depth + H.flange.t, 32, 1, true), carbonMatte, 'QR_Hub_Bore');
+    boreIn.material = blackAnod; boreIn.rotation.x = -Math.PI / 2; boreIn.position.z = -F - (H.cone.depth + H.flange.t) / 2;
+    W.paddles.forEach((p) => {
+      const grp = new THREE.Group(); grp.name = p.id; grp.position.set(p.pivot[0], p.pivot[1], -F - 0.06); rear.add(grp);
+      const b = p.blade, h = b.yTop - b.yBot, bx = b.x - p.pivot[0], by = (b.yTop + b.yBot) / 2 - p.pivot[1];
+      const bg = new THREE.ExtrudeGeometry(paddleBladeShape(b.w, h), { depth: 0.022, bevelEnabled: true, bevelThickness: 0.007, bevelSize: 0.007, bevelSegments: 2, curveSegments: 16 });
+      const blade = add(grp, bg, carbonTwill, `${p.id}_Blade`); blade.position.set(bx, by, -0.05);
+      const armLen = Math.abs(bx) - b.w * 0.3;
+      const arm = add(grp, new THREE.BoxGeometry(armLen, 0.1, 0.05), carbonTwill, `${p.id}_Arm`); arm.position.set(Math.sign(bx) * armLen / 2, 0, -0.025);
+    });
+  }
 
-    // Carbon hinge arm
-    const armGeo = new THREE.BoxGeometry(0.55, 0.12, 0.08);
-    const arm = new THREE.Mesh(armGeo, carbonMatte);
-    arm.position.x = side * 0.25;
-    shiftPaddleGroup.add(arm);
-
-    // Contoured single-finger carbon paddle blade
-    const bladeShape = new THREE.Shape();
-    bladeShape.moveTo(0, -0.32);
-    bladeShape.lineTo(0.18, -0.28);
-    bladeShape.quadraticCurveTo(0.24, 0, 0.18, 0.28);
-    bladeShape.lineTo(0, 0.32);
-    bladeShape.quadraticCurveTo(-0.06, 0, 0, -0.32);
-    bladeShape.closePath();
-
-    const bladeExtrude = { steps: 1, depth: 0.03, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 2 };
-    const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, bladeExtrude);
-    bladeGeo.center();
-    const bladeMesh = new THREE.Mesh(bladeGeo, carbonTwill);
-    bladeMesh.position.set(side * 0.52, 0, -0.04);
-    shiftPaddleGroup.add(bladeMesh);
-
-    rearGroup.add(shiftPaddleGroup);
-  });
-
-  // 3. Lower Dual-Stage Carbon Clutch Launch Paddles (media_1790508291529.jpg)
-  [-1, 1].forEach((side) => {
-    const isLeft = side < 0;
-    const clutchPaddleGroup = new THREE.Group();
-    clutchPaddleGroup.position.set(side * 0.75, -0.38, -0.08);
-    clutchPaddleGroup.name = `Paddle_Clutch_${isLeft ? 'LH' : 'RH'}`;
-
-    // Carbon hinge arm
-    const armGeo = new THREE.BoxGeometry(0.55, 0.10, 0.08);
-    const arm = new THREE.Mesh(armGeo, carbonMatte);
-    arm.position.x = side * 0.25;
-    clutchPaddleGroup.add(arm);
-
-    // Contoured multi-finger carbon clutch blade
-    const bladeShape = new THREE.Shape();
-    bladeShape.moveTo(0, -0.42);
-    bladeShape.lineTo(0.20, -0.38);
-    bladeShape.quadraticCurveTo(0.28, 0, 0.20, 0.38);
-    bladeShape.lineTo(0, 0.42);
-    bladeShape.quadraticCurveTo(-0.08, 0, 0, -0.42);
-    bladeShape.closePath();
-
-    const bladeExtrude = { steps: 1, depth: 0.03, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 2 };
-    const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, bladeExtrude);
-    bladeGeo.center();
-    const bladeMesh = new THREE.Mesh(bladeGeo, carbonTwill);
-    bladeMesh.position.set(side * 0.52, 0, -0.04);
-    clutchPaddleGroup.add(bladeMesh);
-
-    rearGroup.add(clutchPaddleGroup);
-  });
-
-  root.add(rearGroup);
-
+  applyFineCarbon(root, carbonTwill, carbonMatte);
   return root;
 }

@@ -431,6 +431,9 @@ export function createFullCarAssembly(options = {}) {
         subassemblies.monocoque.children.forEach(child => {
           child.visible = (child.name === 'Pivot_Steering_Wheel_Assembly');
         });
+        // the driver's gloves ride on the wheel; hide them so the wheel shows on its own
+        const hands = subassemblies.monocoque.getObjectByName('Driver_Glove_Hands');
+        if (hands) hands.visible = false;
       }
       return;
     }
@@ -439,6 +442,8 @@ export function createFullCarAssembly(options = {}) {
       subassemblies.monocoque.children.forEach(child => {
         child.visible = true;
       });
+      const hands = subassemblies.monocoque.getObjectByName('Driver_Glove_Hands');
+      if (hands) hands.visible = true;
     }
 
     Object.keys(subassemblies).forEach(key => {

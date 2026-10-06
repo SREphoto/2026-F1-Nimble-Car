@@ -116,7 +116,7 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
   carries on with the Autopilot lap. The Red Bull box position (about 460 m into the pit lane) is an estimate from the
   FIA garage order. A lap with a stop takes about 1:40 instead of 1:18.6; normal Autopilot laps are unchanged.
 
-### Garage plan (not built yet)
+### Garage plan (partly built, see "Garage inspect" below)
 1. **Layout.** 32 garage fronts along the pit building, in the 2026 Austrian GP order from the pit entry (FIA garage
    plan, in `/workspace/f1-pits-garage/data/pit_garage_spec.json`): FIA (3), FOM (1), marshals and walkway (1),
    McLaren, Mercedes (with a walkway), Red Bull, Ferrari, Williams, Racing Bulls, walkway, Aston Martin, Haas, Audi,
@@ -133,66 +133,29 @@ Ranked by how much each one improves the look and the drive. "Done" items are on
 6. **Car-side note.** A pit stop could also change the tyres in the tyre panel (`cad/tyre_states.js`). That is a car
    file, so it is left for the car side.
 
-7. **Reference photos (round 4 folder).** Samuel added pit lane and garage photos in `/workspace/f1-audit/refs/round4/pitlane/`
-   (P1 to P9 and G1 to G15). What they show, to build next:
-   - Pit lane (P1, P2, P8, P9): light concrete floor with a red fast-lane strip (done in round 3), yellow textured arrows
-     and box markings, air rigs, wheel guns with hoses, tyre stacks, team privacy screens, nose and wing on stands, and
-     the pit boom gantry over each box.
-   - Pit lane edge (P3, P7, P8): retractable rope barriers on chrome stanchions between the working lane and the garages.
-   - Pit wall (P4): team pit stands with monitors, bar stools and a sloped roof, in front of the tall mesh catch fence
-     on steel posts (the fence and posts are done in round 3), with grandstands and a curved canopy roof behind.
-   - Pit building (P5 to P8): two storeys over the garages, a glass balcony with slanted windows, concrete floor slabs,
-     glass balustrades, a yellow band and pillars, and the round multi-storey tower at the end of the building.
-   - Garage inside (G1 to G15): glossy light grey epoxy floor with car position markings, wall panels and cabinets in
-     the team colour, an aluminium truss overhead with a hanging light canopy over the car, cable trays and tube
-     lights, car stands, gas bottles, an engineer desk with laptop and monitors, bar stools, flight cases, tyre racks,
-     and the open door to the pit lane.
-8. **Garage goals.** The car can drive in and out of its garage, our car can be parked inside on stands, and every
-   garage takes its colours from that team's livery in `/workspace/f1-teams/teams_liveries.json` (the `colors` field),
-   so one garage builder serves all 11 teams. Put the garage contents (positions and sizes) in a style data file like
-   `cad/track/styles/red_bull_ring_style.js`, not in the builder.
-9. **More garage details (G4 to G15).** Wheeled flight cases; tyre trolleys with blankets labelled LEFT FRONT, RIGHT
-   FRONT and so on; painted floor direction signs; a red PIT-LANE strip across the garage door; grey chevron parking
-   markings; helmet shelves; wall panels in the team colour over a black lower band; fire extinguishers; a racing seat;
-   director chairs and bar stools; pale and grey brick walls; a gas bottle cart; red fuel drums; the engineers' desk with
-   a wall of monitors; pillars in the team colour with a TV; a roller door with windows; and the car with its wheels off
-   on front and rear stands plus a centre jack.
-10. **Garage inspect mode.** Replace the 9-part explorer side panel with one Garage button that moves you into our team
-    garage. Inside you can orbit and walk, click parts on the car to highlight them with a floating info card, turn the
-    wheels on or off and the bodywork on or off, and an Exit Garage button takes you back to driving. Part names and
-    texts go in a reusable data file, with `enterGarageInspect()` and `exitGarageInspect()` hooks, and no changes to the
-    car or driver model files.
-11. **Regulations in the garage.** Remove the "2026 Regulations Compliance" panel (`#panel-lab`). Show the regulations
-    on a monitor at the engineers' desk and on a printed sheet on the desk. Clicking either one moves the camera to the
-    desk and opens a readable overlay. A small Regulations button on the main screen opens the same overlay. The
-    Telemetry & Controls panel stays as it is.
+## Garage inspect (October 5, 2026, branch `track/rbr-garage-inspect`)
 
-## Round 3 (October 5, 2026): trackside quality
+### Built
+- One shared team garage in `cad/track/garage/` that takes the colours of the chosen team (from
+  `/workspace/f1-teams/teams_liveries.json`, copied into `garage_team_colors.js`). Layout, props, part texts and the
+  regulations list are data in `garage_data.js`.
+- Contents from the reference photos (G1 to G15): glossy grey floor with car box, chevrons and floor signs, red PIT-LANE
+  strip, team colour wall panels over a black band, pale and grey brick, aluminium truss with a light canopy, tube
+  lights, cable trays, tyre trolleys with labelled blankets, flight cases, helmet shelf, extinguishers, gas bottle cart,
+  fuel drums, bar stools, director chairs, racing seat, pillars with TVs, engineers' desk with a monitor wall and laptop,
+  rolled-up door, and front and rear stands with a centre jack when the wheels are off.
+- Garage button (replaces the part explorer panel), walk and orbit, click a part for an info card, Wheels on/off,
+  Bodywork on/off, Exit Garage back to driving.
+- Regulations on the desk monitor and a printed sheet, both clickable, plus a Regulations button on the main screen.
+  The regulations side panel is removed.
+- The garage is built only when you press Garage and all of its memory is freed when you leave. Every repeated prop is
+  one shared shape drawn many times.
 
-### Done
-- **Style data and shared builders.** Everything that sets the look of the trackside (asphalt colours, kerb profiles,
-  kerb types per corner, sponsor colours, TecPro blocks, sign sizes, fence height, pit lane colours) is in
-  `cad/track/styles/red_bull_ring_style.js`. The texture and shape builders that read it are in `cad/track/trackside.js`
-  and work for any circuit.
-- **Track surface.** Asphalt with fine grain, a little bump, and seams; a darker rubbered racing line that follows the
-  race line and gets darker in the corners; repair patches; and a "Wet sheen" button in the track panel that makes the
-  surface shinier (look only).
-- **Kerbs.** Three cross-section profiles (flat, raised, sawtooth) with real height, red and white blocks, and the yellow
-  sausage kerbs behind the T1 and T3 exits. The car body and wheels now move up when a wheel runs over a kerb
-  (look only, the lap physics are unchanged).
-- **Barriers.** Textured concrete walls with sponsor wraps (Red Bull, Pirelli, Aramco, Rolex, DHL, text and colours
-  only), tyre walls with sponsor belts, and blue and white TecPro blocks at the T1, T3 and T4 stops.
-- **Signs.** Corner number boards and braking boards (300, 200, 100, 50 m at T1, T3 and T4) on framed legs, sponsor
-  billboards, and a sharper sign texture.
-- **Fencing.** Debris fence about 3.6 m above the wall, with a see-through mesh that still reads as mesh far away,
-  three cables, posts every 4 m and an angled top section. The pit wall uses the same fence with posts.
-- **Pit lane.** Light concrete slabs and a red fast-lane strip along the pit wall side.
-
-### Left to do
-- Armco guard rail builder is ready in the style data but unused, because the Red Bull Ring map has none.
-- TecPro positions are a reasonable guess for the big stops, not checked against photos.
-- Kerb bumps are visual only. Real grip or speed loss on kerbs would need a physics change.
-- Yellow arrows and the rest of the pit lane and garage list in item 7 of the garage plan above.
+### Still to do
+- Place the garage in the Red Bull Ring pit building so the car can drive in and out from the pit lane (items 1, 2 and 4
+  of the garage plan above).
+- Pit lane items from P1 to P9: yellow arrows, air rigs, wheel guns, pit boom, privacy screens, rope barriers on chrome
+  stanchions, pit wall stands, the pit building balcony and the round tower.
 
 ## Sources
 
