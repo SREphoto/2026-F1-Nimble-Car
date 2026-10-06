@@ -17,6 +17,7 @@ export const RIDE_SPEC = {
   maxTravel: 0.35,       // bump-stop / droop limit per corner (dm)
   response: 9.0,         // how fast the body follows the target (1/s), critically damped
   visualGain: 1.0,       // scale everything (raise to exaggerate for a game camera)
+  roadLift: 0.6,         // share of the average road bump (kerbs) that lifts the whole body, the rest goes into the springs
 };
 
 export function createRideModel(spec = RIDE_SPEC) {
@@ -46,8 +47,9 @@ export function createRideModel(spec = RIDE_SPEC) {
      * @param aLong m/s^2 along the car's forward direction (+ = accelerating, - = braking)
      * @param aLat  m/s^2 toward car +Y (the inside of the turn)
      * @param speed m/s
+     * @param road  optional { fl, fr, rl, rr } height of the road under each wheel above the flat track (dm), e.g. kerbs
      */
-    update(dt, { aLong = 0, aLat = 0, speed = 0 } = {}) {
+    update(dt, { aLong = 0, aLat = 0, speed = 0, road = null } = {}) {
       const q = Math.min(1.6, (speed / S.refSpeed) ** 2);
       // braking (aLong < 0): nose down, tail up -> dz grows toward the rear (positive slope)
       follow('slope', -S.pitchPerG * (aLong / g), dt);
@@ -67,6 +69,13 @@ export function createRideModel(spec = RIDE_SPEC) {
       if (worst > S.maxTravel) { const f = S.maxTravel / worst; body.c0 *= f; body.cx *= f; body.cy *= f; }
       // the tyres stay on the road, so each wheel moves the opposite way to the body above it
       for (const key of Object.keys(travel)) travel[key] = -dz(...S.corners[key]);
+      // road bumps (kerbs): each wheel is pushed up; part of it lifts the body, the rest is spring travel
+      if (road) {
+        let lift = 0;
+        for (const key of Object.keys(travel)) lift += (road[key] || 0) * S.roadLift / 4;
+        body.c0 += lift;
+        for (const key of Object.keys(travel)) travel[key] = Math.min(S.maxTravel, travel[key] + (road[key] || 0) - lift);
+      }
       return travel;
     },
   };
