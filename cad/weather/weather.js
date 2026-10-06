@@ -236,7 +236,7 @@ export async function initWeather({ scene, camera, renderer, sunLight, ambientLi
     },
     set(o) { st.source = 'manual'; KEYS.forEach(n => { if (n in o) target[n] = o[n]; }); if ('water' in o) W.water = o.water; },
     setSource(s) { st.source = s; },
-    setQuality(qn) { if (!cfg.quality[qn]) return; quality = qn; rebuildFx(); },
+    setQuality(qn) { if (!cfg.quality[qn] || qn === quality) return; quality = qn; rebuildFx(); },
     update,
   };
   if (initial) api.setPreset(initial, true);

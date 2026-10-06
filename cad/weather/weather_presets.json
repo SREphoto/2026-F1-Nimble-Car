@@ -31,11 +31,12 @@
   },
   "light": { "sunAtOvercast": 0.18, "ambientAtOvercast": 1.25, "skyAtOvercast": [0.62, 0.65, 0.7], "fogColour": "#8d969f", "fogDensityMax": 0.00042 },
   "quality": {
+    "note": "high is the default and the intended look; medium and low are optional fallbacks for slow machines. Effects are only built while the weather needs them.",
     "low":    { "rainDrops": 3000,  "cloudLayers": 1, "lensDrops": false, "treeSway": false, "puddles": 40 },
     "medium": { "rainDrops": 9000,  "cloudLayers": 2, "lensDrops": true,  "treeSway": true,  "puddles": 90 },
-    "high":   { "rainDrops": 20000, "cloudLayers": 3, "lensDrops": true,  "treeSway": true,  "puddles": 160 }
+    "high":   { "rainDrops": 28000, "cloudLayers": 3, "lensDrops": true,  "treeSway": true,  "puddles": 220 }
   },
-  "defaultQuality": "medium",
+  "defaultQuality": "high",
   "transitionMinutes": 4,
   "forecasts": {
     "note": "Per session: t = session minute (qualifying counts Q1+Q2+Q3 back to back), preset = which preset is reached at that time. Weather blends between entries.",
