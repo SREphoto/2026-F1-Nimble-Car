@@ -49,7 +49,7 @@ export const DRIVER_DEFAULTS = {
     neckToHead: [-0.55, 1.65],     // C7 to head centre (x, z): the neck leans forward, head upright
     hipZ: 1.55,                    // hip joint height: seat pan on the tub floor
     footPitch: 1.22,               // rad from horizontal: soles face the pedals, toes up (D1)
-    elbowHint: [0, 0.22, -1],      // elbows drop down and slightly out (y is mirrored per side)
+    elbowHint: [0, 0.75, -0.65],   // elbows bowed out and down (D3, W1; y is mirrored per side)
     kneeHint: [0, 0.12, 1],        // knees rise (D1)
   },
   suit: { base: '#18245e', panel: '#d0021b', accent: '#f6c200', trim: '#ffffff', logo: 'Red Bull' },
@@ -198,7 +198,7 @@ function buildGlovedHand(s, G, gloveMat, padMat) {
   const ball = (P, r, mat, name, sc) => { const m = add(new THREE.SphereGeometry(r, 16, 12), mat, name); m.position.copy(P); if (sc) m.scale.copy(sc); return m; };
   // fingers: [y offset from handY, radius, phalanx lengths (dm, gloved), splay]
   const FING = [[0.27, 0.083, [0.45, 0.27, 0.22], 0.05], [0.09, 0.087, [0.49, 0.3, 0.23], 0.0], [-0.09, 0.083, [0.46, 0.29, 0.22], -0.03], [-0.26, 0.072, [0.36, 0.22, 0.19], -0.07]];
-  const phi0 = THREE.MathUtils.degToRad(32), mcps = [];
+  const phi0 = THREE.MathUtils.degToRad(14), mcps = []; // knuckles on the outer side, facing out
   FING.forEach(([dy, fr, Ls, splay], k) => {
     const y0 = G.handY + dy;
     // knuckles stand off the grip by the palm thickness; the later joints hug the alcantara. Each
@@ -226,7 +226,7 @@ function buildGlovedHand(s, G, gloveMat, padMat) {
   });
   // back of the hand: loft from the wrist to the knuckle line
   const kc = mcps.reduce((a, b) => a.add(b), V3(0, 0, 0)).multiplyScalar(1 / mcps.length);
-  const axisOut = V3(s * 0.45, -0.35, 0.82).normalize(); // knuckles -> wrist (toward the forearm)
+  const axisOut = V3(s * 0.78, -0.25, 0.58).normalize(); // knuckles -> wrist: wrists bow OUT away from the wheel centre (D3, W1)
   const wrist = kc.clone().addScaledVector(axisOut, 1.0);
   const across = mcps[0].clone().sub(mcps[3]).normalize();
   const nrm = new THREE.Vector3().crossVectors(axisOut, across).normalize();
