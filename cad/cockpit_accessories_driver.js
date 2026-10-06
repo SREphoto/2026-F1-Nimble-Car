@@ -384,7 +384,7 @@ export function createCockpitAccessories(options = {}) {
   // FIA GPS Transponder Antenna (Mushroom dome)
   const gpsDomeGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.08, 16);
   const gpsDomeMesh = new THREE.Mesh(gpsDomeGeo, materials.carbonMatte);
-  gpsDomeMesh.position.set(9.4, 0, 4.6);
+  gpsDomeMesh.position.set(6.5, 0, 4.98); // on the tub top ahead of the wheel (at x 9.4 it floated in front of the wheel screen)
   sensorsGroup.add(gpsDomeMesh);
 
   // Vanity Cover / Access Hatch with 4x Camloc Fasteners

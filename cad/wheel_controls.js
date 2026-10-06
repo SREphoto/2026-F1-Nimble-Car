@@ -38,8 +38,8 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
     const ctl = { ...c, obj, base: { pos: obj.position.clone(), rot: obj.rotation.clone() }, anim: 0, held: false, spin: 0, glowMats: [] };
     obj.traverse((o) => {
       if (!o.isMesh) return;
-      if (o.material && 'emissive' in o.material) { o.material = o.material.clone(); ctl.glowMats.push(o.material); o.material.userData.emissive0 = o.material.emissive.clone(); }
       o.userData.wheelControl = ctl; targets.push(o);
+      if (o.material && 'emissive' in o.material) ctl.glowMats.push(o);
     });
     if (c.type === 'thumbwheel') obj.rotation.order = 'ZYX';
     if (c.type === 'rotary') ctl.detent = (S.values[c.setting] - map.settings[c.setting].min);
@@ -48,14 +48,14 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
   const screen = wheel.getObjectByName(map.screen?.mesh || 'UI_LCD_PCU8D_Display');
   if (screen) targets.push(screen);
 
-  // ---- LEDs: own materials so they can light up from rpm and flags
-  const leds = [];
-  for (let i = 0; i < 15; i++) { const m = wheel.getObjectByName(`ShiftLED_${i}`); if (m) { m.material = new THREE.MeshBasicMaterial({ color: 0x111418 }); leds.push(m); } }
-  const status = {};
-  ['L', 'R'].forEach((s) => { for (let j = 0; j < 3; j++) { const m = wheel.getObjectByName(`StatusLED_${s}_${j}`); if (m) { m.material = new THREE.MeshBasicMaterial({ color: 0x111418 }); status[`${s}${j}`] = m; } } });
+  // ---- LEDs: two instanced meshes in the wheel (ShiftLEDs 15, StatusLEDs 6), coloured per instance
+  const shiftLeds = wheel.getObjectByName('ShiftLEDs'), statusLeds = wheel.getObjectByName('StatusLEDs');
+  const STATUS_KEYS = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'];
+  const _col = new THREE.Color();
 
   // ---- touch screen canvas
-  const W = 1024, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  // layout in 1024 x 640 units at full resolution; redrawn only when its content changes
+  const W = 1024, H = 640, RES = 1, cv = document.createElement('canvas'); cv.width = W * RES; cv.height = H * RES;
   const g = cv.getContext('2d');
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
   if (screen) { screen.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }); }
@@ -123,7 +123,13 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
     if (!hit) return null;
     return hit;
   }
-  function setGlow(ctl, on) { if (ctl) ctl.glowMats.forEach((m) => m.emissive.copy(on ? new THREE.Color(0x3a5a88) : m.userData.emissive0)); }
+  // hover glow: swap to a glowing copy of the part's material, made once per material and shared
+  const glowCache = new Map();
+  const glowOf = (m) => { let gm = glowCache.get(m); if (!gm) { gm = m.clone(); gm.emissive = new THREE.Color(0x3a5a88); gm.emissiveIntensity = 1; glowCache.set(m, gm); } return gm; };
+  function setGlow(ctl, on) {
+    if (!ctl) return;
+    ctl.glowMats.forEach((o) => { if (on) { o.userData.mat0 = o.material; o.material = glowOf(o.material); } else if (o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } });
+  }
   function onMove(e) {
     const h = pick(e), ctl = h?.object.userData.wheelControl || null;
     const onScreen = h && h.object === screen;
@@ -165,6 +171,7 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
   const tCol = (t) => (t < 85 ? col.blue : t < 105 ? col.green : col.red);
   function draw() {
     const car = api.getCar?.() || {}, lap = api.getLap?.() || {}, tyres = api.getTyres?.() || {};
+    g.setTransform(RES, 0, 0, RES, 0, 0);
     g.fillStyle = col.bg; g.fillRect(0, 0, W, H);
     // status strip
     const page = map.screen.pages[S.page];
@@ -219,7 +226,7 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
   }
 
   // ---- per frame
-  let acc = 1;
+  let acc = 1, lastSig = '';
   const ledC = (i) => (i < 5 ? 0x00e676 : i < 10 ? 0xff334b : 0x9d4edd);
   function update(dt = 0.016) {
     const car = api.getCar?.() || {};
@@ -233,11 +240,21 @@ export function initWheelControls({ wheel, camera, dom, api = {}, map }) {
     }
     // shift lights from rpm (flash at the limiter), flank LEDs show flags
     const rpm = car.rpm || 0, lit = Math.floor(THREE.MathUtils.clamp((rpm - 4000) / 8500, 0, 1) * 15), flash = rpm > 12200 && (performance.now() % 200) < 100;
-    leds.forEach((m, i) => m.material.color.setHex(S.flags.pitLimiter ? ((performance.now() % 500) < 250 && (i % 2 === 0) ? 0xffb300 : 0x111418) : flash ? 0x2f7bff : i < lit ? ledC(i) : 0x111418));
+    if (shiftLeds) {
+      const blink = (performance.now() % 500) < 250;
+      for (let i = 0; i < shiftLeds.count; i++) shiftLeds.setColorAt(i, _col.setHex(S.flags.pitLimiter ? (blink && i % 2 === 0 ? 0xffb300 : 0x111418) : flash ? 0x2f7bff : i < lit ? ledC(i) : 0x111418));
+      shiftLeds.instanceColor.needsUpdate = true;
+    }
     const flagLed = { L0: S.flags.pitLimiter ? 0xffb300 : 0, L1: S.flags.radio ? 0x00e676 : 0, L2: S.flags.drink ? 0xff8a00 : 0, R0: S.flags.overtake ? 0x33b5ff : 0, R1: car.aeroMode === 'X_MODE' ? 0xffb300 : 0, R2: (car.batterySoc ?? 1) < 0.25 ? 0xff334b : 0 };
-    for (const [k, m] of Object.entries(status)) m.material.color.setHex(flagLed[k] || 0x111418);
+    if (statusLeds) { STATUS_KEYS.forEach((k, i) => statusLeds.setColorAt(i, _col.setHex(flagLed[k] || 0x111418))); statusLeds.instanceColor.needsUpdate = true; }
     if (S.popup) { S.popup.t -= dt; if (S.popup.t <= 0) S.popup = null; }
-    acc += dt; if (acc >= 1 / (map.screen.fps || 15)) { acc = 0; draw(); }
+    acc += dt;
+    if (acc >= 1 / (map.screen.fps || 10)) {
+      acc = 0;
+      // only redraw and re-upload the screen when what it shows has changed
+      const sig = [S.page, S.mfsIndex, S.popup && S.popup.value, JSON.stringify(S.values), JSON.stringify(S.flags), car.gear, Math.round(car.speedKmH || 0), Math.round((car.rpm || 0) / 50), Math.round((car.batterySoc ?? 0) * 100), car.aeroMode, Math.round((car.throttle || 0) * 20), Math.round((car.brakeKgf || 0) / 8)].join('|');
+      if (sig !== lastSig) { lastSig = sig; draw(); }
+    }
   }
   draw();
   return {

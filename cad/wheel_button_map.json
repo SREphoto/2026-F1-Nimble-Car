@@ -42,6 +42,6 @@
   "screen": {
     "mesh": "UI_LCD_PCU8D_Display",
     "pages": ["RACE", "TYRES", "ERS", "SETUP"],
-    "fps": 15
+    "fps": 10
   }
 }

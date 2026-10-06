@@ -547,6 +547,24 @@ function toggleWireframe() {
 }
 btnWireframe?.addEventListener('click', toggleWireframe);
 
+// Render quality: High is the default (full detail, device pixel ratio up to 2, soft shadows).
+// Low is an optional fallback for slow machines: pixel ratio 1 and no shadow maps. Geometry,
+// materials and textures stay the same in both. Saved in localStorage; window.setQuality('low'|'high').
+const btnQuality = document.getElementById('btn-quality');
+function setQuality(q) {
+  state.quality = q === 'low' ? 'low' : 'high';
+  const low = state.quality === 'low';
+  renderer.setPixelRatio(low ? 1 : Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = !low; sunLight.castShadow = !low;
+  scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
+  handleResize();
+  try { localStorage.setItem('f1-quality', state.quality); } catch (e) { /* private mode */ }
+  if (btnQuality) { btnQuality.textContent = `Quality: ${low ? 'Low' : 'High'}`; btnQuality.classList.toggle('active', !low); }
+}
+window.setQuality = setQuality;
+btnQuality?.addEventListener('click', () => setQuality(state.quality === 'low' ? 'high' : 'low'));
+try { if (localStorage.getItem('f1-quality') === 'low') setQuality('low'); } catch (e) { /* ignore */ }
+
 const btnAudio = document.getElementById('btn-audio');
 function toggleAudio() {
   soundEngine.init();

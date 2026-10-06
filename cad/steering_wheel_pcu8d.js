@@ -540,53 +540,36 @@ export function createSteeringWheelPCU8D(options = {}) {
   const shiftGroup = new THREE.Group();
   shiftGroup.name = 'ShiftLights_15LED_Array';
 
+  // 15 shift LEDs + 3 status LEDs each side, drawn as two instanced meshes (one draw call for the
+  // lenses, one for the bezels). cad/wheel_controls.js lights them per instance (setColorAt):
+  // ShiftLEDs instances 0-14 left to right, StatusLEDs 0-2 left (top down), 3-5 right.
   const numShiftLeds = 15;
   const archW = 1.05;
   const ledSpacing = archW / (numShiftLeds - 1);
-
+  const ledPos = [], statusPos = [];
   for (let i = 0; i < numShiftLeds; i++) {
     const lx = -archW / 2 + i * ledSpacing;
-    // Slight curved arch rise in center
-    const lz = 0.65 + (1.0 - Math.pow(lx / (archW / 2), 2.0)) * 0.04;
-
-    let ledMat = materials.ledGreen; // First 5: Green (Entry / Low RPM)
-    if (i >= 5 && i < 10) ledMat = materials.ledRed;   // Middle 5: Red (Optimum Powerband)
-    if (i >= 10) ledMat = materials.ledBlue;          // Last 5: Blue (Upshift Flash)
-
-    // Outer counter-bored bezel
-    const bezelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.04, 16);
-    const bezel = new THREE.Mesh(bezelGeo, carbonMatte);
-    bezel.rotation.x = Math.PI / 2;
-    bezel.position.set(lx, lz, 0.17);
-    shiftGroup.add(bezel);
-
-    // Glowing LED lens
-    const ledGeo = new THREE.SphereGeometry(0.024, 12, 12);
-    const led = new THREE.Mesh(ledGeo, ledMat);
-    led.name = `ShiftLED_${i}`;
-    led.position.set(lx, lz, 0.185);
-    shiftGroup.add(led);
+    ledPos.push([lx, 0.65 + (1.0 - Math.pow(lx / (archW / 2), 2.0)) * 0.04]); // slight arch
   }
-
-  // 6 Flanking Display Status LEDs (3 Left, 3 Right)
-  [-1, 1].forEach((side) => {
-    for (let j = 0; j < 3; j++) {
-      const sy = 0.32 - j * 0.16;
-      const sx = side * 0.72;
-
-      const sBezelGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.03, 12);
-      const sBezel = new THREE.Mesh(sBezelGeo, carbonMatte);
-      sBezel.rotation.x = Math.PI / 2;
-      sBezel.position.set(sx, sy, 0.165);
-      shiftGroup.add(sBezel);
-
-      const sLedGeo = new THREE.SphereGeometry(0.020, 10, 10);
-      const sLed = new THREE.Mesh(sLedGeo, materials.ledAmber);
-      sLed.name = `StatusLED_${side < 0 ? 'L' : 'R'}_${j}`;
-      sLed.position.set(sx, sy, 0.178);
-      shiftGroup.add(sLed);
-    }
+  [-1, 1].forEach((side) => { for (let j = 0; j < 3; j++) statusPos.push([side * 0.72, 0.32 - j * 0.16]); });
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  const bezels = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 0.04, 16), carbonMatte, ledPos.length + statusPos.length);
+  bezels.name = 'ShiftLED_Bezels';
+  [...ledPos, ...statusPos].forEach(([x, y], k) => bezels.setMatrixAt(k, m4.compose(new THREE.Vector3(x, y, 0.17), q, new THREE.Vector3(1, 1, 1))));
+  shiftGroup.add(bezels);
+  const ledMat = new THREE.MeshBasicMaterial({ name: 'PCU8D_LED', toneMapped: false });
+  const shiftLeds = new THREE.InstancedMesh(new THREE.SphereGeometry(0.024, 12, 10), ledMat, ledPos.length);
+  shiftLeds.name = 'ShiftLEDs';
+  const c = new THREE.Color();
+  ledPos.forEach(([x, y], i) => {
+    shiftLeds.setMatrixAt(i, m4.makeTranslation(x, y, 0.185));
+    shiftLeds.setColorAt(i, c.setHex(i < 5 ? 0x00e676 : i < 10 ? 0xff334b : 0x3d6bff)); // green / red / blue
   });
+  shiftGroup.add(shiftLeds);
+  const statusLeds = new THREE.InstancedMesh(new THREE.SphereGeometry(0.02, 10, 8), ledMat, statusPos.length);
+  statusLeds.name = 'StatusLEDs';
+  statusPos.forEach(([x, y], i) => { statusLeds.setMatrixAt(i, m4.makeTranslation(x, y, 0.178)); statusLeds.setColorAt(i, c.setHex(0xffb300)); });
+  shiftGroup.add(statusLeds);
 
   root.add(shiftGroup);
 

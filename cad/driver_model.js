@@ -25,6 +25,7 @@ import * as THREE from 'three';
 import { materials as defaultMaterials } from '../materials.js';
 import { createDriverHelmet, helmetTexture } from './driver_helmet.js';
 import { sweepGeometry } from './sweep_section.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -368,9 +369,10 @@ function makeLimbMesh(name, mat, prof, NS = 40, ring = 24) {
   const R = ring + 1, nV = (NS + 1) * R + 2;
   const pos = new Float32Array(nV * 3), uv = new Float32Array(nV * 2), idx = [];
   for (let i = 0; i <= NS; i++) for (let j = 0; j <= ring; j++) { uv[(i * R + j) * 2] = j / ring; uv[(i * R + j) * 2 + 1] = i / NS; }
-  for (let i = 0; i < NS; i++) for (let j = 0; j < ring; j++) { const a = i * R + j, b = a + 1, c = a + R, d = c + 1; idx.push(a, b, c, b, d, c); }
+  // winding gives outward faces for the ring order used in poseLimb (x = -sin, y = -cos)
+  for (let i = 0; i < NS; i++) for (let j = 0; j < ring; j++) { const a = i * R + j, b = a + 1, c = a + R, d = c + 1; idx.push(a, c, b, b, c, d); }
   const c0 = (NS + 1) * R, c1 = c0 + 1;
-  for (let j = 0; j < ring; j++) { idx.push(c0, j + 1, j); idx.push(c1, NS * R + j, NS * R + j + 1); }
+  for (let j = 0; j < ring; j++) { idx.push(c0, j, j + 1); idx.push(c1, NS * R + j + 1, NS * R + j); }
   uv[c0 * 2] = 0.5; uv[c1 * 2] = 0.5; uv[c1 * 2 + 1] = 1;
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
@@ -414,6 +416,26 @@ function poseLimb(mesh, A, B, C, hint, rBend, flip = 1) {
   mesh.geometry.attributes.position.needsUpdate = true;
   mesh.geometry.computeVertexNormals();
   mesh.geometry.computeBoundingSphere();
+}
+
+/**
+ * Merge a group's direct child meshes that share one material into a single mesh (same geometry
+ * and look, one draw call). Only static parts (fingers on a glove, laces, straps) are merged.
+ */
+function mergeChildren(group, mat, name) {
+  const parts = group.children.filter((o) => o.isMesh && o.material === mat);
+  if (parts.length < 2) return null;
+  const geos = parts.map((m) => {
+    m.updateMatrix(); let g = m.geometry.index ? m.geometry : m.geometry; g = g.clone().applyMatrix4(m.matrix);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    return g.index ? g : g.setIndex([...Array(g.attributes.position.count).keys()]);
+  });
+  const merged = mergeGeometries(geos, false);
+  if (!merged) return null;
+  parts.forEach((m) => { group.remove(m); m.geometry.dispose(); });
+  geos.forEach((g) => g.dispose());
+  const mesh = new THREE.Mesh(merged, mat); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true;
+  group.add(mesh); return mesh;
 }
 
 /** Flat strap along points; width lies along widthHint(t, tangent, point). */
@@ -488,6 +510,7 @@ export function createCarbonBeadSeatShell(materials = defaultMaterials, settings
     const lip = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.06, 8, false), mat);
     lip.name = `Driver_Seat_RolledLip_${s > 0 ? 'R' : 'L'}`; seat.add(lip);
   });
+  mergeChildren(seat, mat, 'Driver_Seat_CarbonShell_Mesh');
   return seat;
 }
 
@@ -534,7 +557,7 @@ export function createArticulatedDriver(options = {}) {
     [-0.1, 1.05, 0.62, -0.02], [-0.03, 1.42, 0.86, -0.08], [0.06, 1.52, 0.94, -0.1], [0.18, 1.46, 0.93, -0.06],
     [0.34, 1.37, 0.9, 0.0], [0.52, 1.48, 0.98, 0.05], [0.7, 1.62, 1.05, 0.08], [0.86, 1.72, 0.95, 0.04],
     [0.96, 1.34, 0.74, 0.0], [1.04, 0.62, 0.55, 0.02],
-  ].map(([t, ra, rb, off]) => ({ c: P.hip.clone().addScaledVector(P.u, t * T).addScaledVector(P.n, off), a: V3(0, -1, 0), b: P.n.clone(), ra, rb, p: 2.3 }));
+  ].map(([t, ra, rb, off]) => ({ c: P.hip.clone().addScaledVector(P.u, t * T).addScaledVector(P.n, off), a: V3(0, 1, 0), b: P.n.clone(), ra, rb, p: 2.3 }));
   add(root, loftSections(tSecs, 40), suitTorsoMat, 'Driver_RaceSuit_Torso');
 
   // ---- neck (balaclava) from C7 up to the helmet
@@ -641,6 +664,7 @@ export function createArticulatedDriver(options = {}) {
     hand.add(wristMark);
     const knuckle = new THREE.Object3D(); knuckle.name = `Driver_Glove_HandCentre_${sn}`;
     knuckle.position.set(gx + s * 0.34, gy, gz + 0.18); hand.add(knuckle);
+    mergeChildren(hand, gloveMat, `Driver_Glove_Hand_${sn}_Mesh`);
     hands.add(hand);
     nodes.arms[s].wristMark = wristMark; nodes.arms[s].handCentre = knuckle;
   });
@@ -678,6 +702,7 @@ export function createArticulatedDriver(options = {}) {
     });
     const tongue = add(boot, new THREE.BoxGeometry(0.7, 0.2, 0.03), bootMat, `Driver_Boot_Tongue_${sn}`);
     tongue.position.set(0.45, 0, topZ(0.45) - 0.01); tongue.rotation.y = 0.2;
+    mergeChildren(boot, laceMat, `Driver_Boot_Laces_${sn}`); mergeChildren(boot, bootMat, `Driver_Boot_Upper_${sn}`);
     root.add(boot);
     nodes.legs[s] = { leg, boot, hip: P.hip.clone().add(V3(0, s * S.body.hipHalf, 0)) };
   });
@@ -712,9 +737,12 @@ export function createArticulatedDriver(options = {}) {
       harness.add(strap([tail0, tail0.clone().add(V3(0.05, s * 0.08, -0.6)), tail0.clone().add(V3(0.1, s * 0.06, -1.2))], 0.3, 0.03, () => V3(1, 0, 0), beltMat, `Driver_Harness_Tail_${sn}`));
     });
     harness.add(strap([P.hip.clone().add(V3(-0.6, 0, -0.75)), P.hip.clone().add(V3(-0.75, 0, -0.1)), onChest(0.12, 0, 0.12), buckle], 0.3, 0.035, () => V3(0, 1, 0), beltMat, 'Driver_Harness_Crotch'));
+    mergeChildren(harness, beltMat, 'Driver_Harness_Webbing'); mergeChildren(harness, metal, 'Driver_Harness_Hardware');
     root.add(harness);
   }
 
+  // static parts that share a material: one mesh each (neck + HANS tethers, shoulders + collar)
+  mergeChildren(root, nomex, 'Driver_Neck_Balaclava'); mergeChildren(root, suitMat, 'Driver_RaceSuit_Shoulders_Collar');
   root.userData.rigNodes = nodes;
   root.userData.settings = S;
   root.userData.pose = P;
