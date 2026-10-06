@@ -10,7 +10,7 @@ export const GARAGE_LAYOUT = {
   panelTop: 34,                                           // team colour wall panels from the band up to here
   brick: { pale: '#ddd6c8', grey: '#8d8f93' },
   floor: {
-    color: '#b3b7bc', roughness: 0.42, clearcoat: 1.0, clearcoatRoughness: 0.1,   // glossy light grey epoxy
+    color: '#9a9ea3', roughness: 0.42, clearcoat: 1.0, clearcoatRoughness: 0.1,   // glossy light grey epoxy
     reflect: 0.15,                                         // share of the mirror image mixed into the floor (high quality)
     lanes: { z0: 11.5, z1: 19, x0: -75, x1: 56, color: '#80858c', chevron: '#e2e4e7' },   // grey chevron parking lanes beside the car
     signs: [                                              // painted floor direction signs [text, x, z, rotation]
@@ -34,7 +34,7 @@ export const GARAGE_LAYOUT = {
     { kind: 'tyreTrolley', at: [-46, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
     { kind: 'tyreTrolley', at: [-30, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
     { kind: 'tyreTrolley', at: [104, -27], rot: Math.PI / 2, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
-    { kind: 'flightCase', at: [6, -29], rot: 0 }, { kind: 'flightCase', at: [17, -29], rot: 0.08 },
+    { kind: 'flightCase', at: [-13, -29], rot: 0 }, { kind: 'flightCase', at: [-60, -29], rot: 0.08 },
     { kind: 'lockerCase', at: [6, 28.5], rot: Math.PI },
     { kind: 'drawerCase', at: [30, 29], rot: Math.PI },
     { kind: 'flightCase', at: [-16, 29], rot: Math.PI },

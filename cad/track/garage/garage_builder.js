@@ -141,7 +141,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   }, { repeat: true });
   ceilTex.repeat.set(D / 30, 2 * W / 30);
   const concreteTex = canvasTex(256, 256, (x, w, h) => {
-    const r = rng(5); x.fillStyle = '#a4a7aa'; x.fillRect(0, 0, w, h);
+    const r = rng(5); x.fillStyle = '#86898c'; x.fillRect(0, 0, w, h);
     for (let i = 0; i < 1600; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '70,70,70' : '255,255,255'},${0.05 + r() * 0.06})`; x.fillRect(r() * w, r() * h, 2, 2); }
     x.fillStyle = 'rgba(60,62,66,0.5)'; x.fillRect(0, 0, w, 2); x.fillRect(0, 0, 2, h);
   }, { repeat: true });
@@ -205,7 +205,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   // ---------------------------------------------------------------- materials (shared)
   const std = (o) => new THREE.MeshStandardMaterial(o);
   const M = {
-    floor: new THREE.MeshPhysicalMaterial({ map: floorTex, roughness: F.roughness, metalness: 0.0, clearcoat: F.clearcoat, clearcoatRoughness: F.clearcoatRoughness, transparent: high, opacity: high ? 1 - F.reflect : 1 }),
+    floor: new THREE.MeshPhysicalMaterial({ map: floorTex, roughness: F.roughness, metalness: 0.0, clearcoat: F.clearcoat, clearcoatRoughness: F.clearcoatRoughness, envMapIntensity: 0.45, transparent: high, opacity: high ? 1 - F.reflect : 1 }),
     lane: std({ map: concreteTex, roughness: 0.85 }),
     asphalt: std({ color: 0x3d4045, roughness: 0.9 }),
     redLane: std({ color: 0xb3262b, roughness: 0.8 }),
@@ -584,14 +584,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const lights = [];
   const hemi = new THREE.HemisphereLight(0xf2f5ff, 0x5c6066, 0.28); lights.push(hemi);
   const area = (w, h, x, y, z, I) => { const r = new THREE.RectAreaLight(0xf4f7ff, I, w, h); r.position.set(x, y, z); r.lookAt(x, 0, z); lights.push(r); return r; };
-  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 6.0);                         // the canopy panel
-  for (const z of [-25, 25]) area(TL.x1 - TL.x0, 9, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 2.3);   // tube light rows
+  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 4.0);                         // the canopy panel
+  for (const z of [-25, 25]) area(TL.x1 - TL.x0, 9, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 1.5);   // tube light rows
   area(30, 10, 92, TL.y - 0.4, 0, 2.2);                                     // over the desk
   const spot = new THREE.SpotLight(0xffffff, 1.6, 0, 0.95, 1.0, 0);
   spot.position.set(CX, C.y - 0.5, 0); spot.target.position.set(CX, 0, 0); spot.castShadow = true;
   spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 60;
   lights.push(spot, spot.target);
-  const sun = new THREE.DirectionalLight(0xfff1dc, 1.5);
+  const sun = new THREE.DirectionalLight(0xfff1dc, 1.1);
   sun.position.set(X0 - 260, 300, -140); sun.target.position.set(X0 - 40, 0, 0); sun.castShadow = true;
   Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 10, far: 1000 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   sun.shadow.camera.layers.set(SHELL_LAYER);   // sunlight only needs the walls, roof and facade to cast shadows (keeps the car out of this pass)
