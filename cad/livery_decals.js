@@ -277,9 +277,10 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (!pod) { report.skipped.push('Sidepod: not found'); return; }
     const b = carBox(pod); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
     if (Math.sign(b.min.y + b.max.y) !== s) return;
+    // Real RB22: ORACLE climbs toward the rear with the sidepod (~22°), not flat to the floor.
     project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
-      origin: [b.min.x + L * 0.4, s * (absMaxY(b) + 5), b.min.z + H * 0.6], dir: [0, -s, 0],
-      up: [0, 0, 1], size: [L * 0.62, L * 0.62 / 4, 2.4], texture: tex.sidepod[s],
+      origin: [b.min.x + L * 0.42, s * (absMaxY(b) + 5), b.min.z + H * 0.58], dir: [0, -s, 0],
+      up: [0.40, 0, 1], size: [L * 0.58, L * 0.58 / 4.2, 2.5], texture: tex.sidepod[s],
     });
     // ROKT reads from the side of the car: artwork up points toward the centreline
     project(`Sidepod_ROKT_${sideName(s)}`, pod, {
