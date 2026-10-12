@@ -476,6 +476,16 @@ export function createTagHeuerDecalTexture() {
   return finalizeTexture(canvas);
 }
 
+/** Ford Racing (RB22 = Red Bull Ford): blue oval + RACING, for the engine cover flank. */
+export function createFordRacingTexture() {
+  const { canvas, ctx } = makeCanvas(1024, 512);
+  ctx.beginPath(); ctx.ellipse(512, 200, 420, 150, 0, 0, Math.PI * 2);
+  ctx.fillStyle = LIVERY.mobilBlue; ctx.fill(); ctx.lineWidth = 18; ctx.strokeStyle = LIVERY.white; ctx.stroke();
+  drawSmall(ctx, 'Ford', 512, 200, 640, 200, 'script');
+  drawSmall(ctx, 'RACING', 512, 440, 700, 90, 'heavy');
+  return finalizeTexture(canvas);
+}
+
 /** Chassis top ahead of the cockpit: Red Bull (reads from the driver's seat). */
 export function createRedBullTextTexture() {
   const { canvas, ctx } = makeCanvas(2048, 512);

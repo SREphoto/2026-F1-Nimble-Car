@@ -40,6 +40,7 @@ import {
   createHaloMarkTexture,
   createTagHeuerDecalTexture,
   createRedBullTextTexture,
+  createFordRacingTexture,
 } from './procedural_livery.js';
 
 const _v = new THREE.Vector3();
@@ -207,6 +208,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     halo1P: createHaloMarkTexture('1password'),
     tag: createTagHeuerDecalTexture(),
     redBull: createRedBullTextTexture(),
+    ford: createFordRacingTexture(),
+    chassisOracle: createHaloMarkTexture('oracle'),
   };
 
   // ---- Nose: yellow tip + partner stack + number on top, yellow/bull flanks ----
@@ -303,6 +306,11 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
         origin: [b.min.x + L * 0.56, s * (absMaxY(b) + 5), b.min.z + H * 0.3], dir: [0, -s, 0],
         up: [0, 0, 1], size: [L * 0.36, L * 0.09, absMaxY(b) * 1.2], texture: tex.redBull,
       });
+      // RB22 is Red Bull Ford: Ford Racing on the rear of the engine cover flank (no Honda, no Castrol).
+      project(`EngineCover_FordRacing_${sideName(s)}`, ec, {
+        origin: [b.min.x + L * 0.86, s * (absMaxY(b) + 5), b.min.z + H * 0.42], dir: [0, -s, 0],
+        up: [0, 0, 1], size: [L * 0.13, L * 0.065, absMaxY(b) * 1.2], texture: tex.ford, renderOrder: 2,
+      });
     });
     project('EngineCover_Top', ec, {
       origin: [b.min.x + L * 0.32, 0, b.max.z + 5], dir: [0, 0, -1], right: [-1, 0, 0],
@@ -354,6 +362,12 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     project('Chassis_RedBull', tubSkin, {
       origin: [b.min.x + L * 0.3, 0, b.max.z + 5], dir: [0, 0, -1], up: [-1, 0, 0],
       size: [3.0, 0.75, 1.2], texture: tex.redBull,
+    });
+    // RB22: small ORACLE on the chassis top ahead of the cockpit, letters across the car,
+    // flat on the ~5-8 deg chassis slope (projected straight down so it hugs the panel).
+    project('Chassis_ORACLE_Small', tubSkin, {
+      origin: [b.min.x + L * 0.14, 0, b.max.z + 5], dir: [0, 0, -1], up: [1, 0, 0],
+      size: [1.8, 0.45, 1.5], texture: tex.chassisOracle, renderOrder: 2,
     });
   }
 
