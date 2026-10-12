@@ -49,7 +49,7 @@ export const DRIVER_DEFAULTS = {
     neckToHead: [-0.55, 1.65],     // C7 to head centre (x, z): the neck leans forward, head upright
     hipZ: 1.55,                    // hip joint height: seat pan on the tub floor
     footPitch: 1.22,               // rad from horizontal: soles face the pedals, toes up (D1)
-    elbowHint: [0, 0.75, -0.65],   // elbows bowed out and down (D3, W1; y is mirrored per side)
+    elbowHint: [0, 0.18, -1],      // elbows down and only slightly out so they stay inside the tub walls (y is mirrored per side)
     kneeHint: [0, 0.12, 1],        // knees rise (D1)
   },
   suit: { base: '#18245e', panel: '#d0021b', accent: '#f6c200', trim: '#ffffff', logo: 'Red Bull' },

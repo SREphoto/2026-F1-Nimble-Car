@@ -97,7 +97,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
           // Open U-channel from +Y (Left Rim) to -Y (Right Rim) across the bottom
           const param = 1 - 2 * v;
           py = param * st.wRim;
-          const wallFactor = Math.pow(Math.abs(param), 2.2);
+          const wallFactor = Math.pow(Math.abs(param), 12.0); // near-vertical side walls with a flat floor, like a real tub: the elbows have room inside
           pz = st.zb + (st.zRim - st.zb) * wallFactor;
         }
 
@@ -130,9 +130,9 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   // 1B. Cockpit open U-channel (X = 7.6 to 16.6 dm: Open top for full driver visibility)
   const cockpitStations = [
     { x: 7.6,  w: 2.38, zb: 0.60, zRim: 5.12, wRim: 2.35 },
-    { x: 9.2,  w: 2.80, zb: 0.60, zRim: 4.72, wRim: 2.65 },
-    { x: 11.2, w: 3.12, zb: 0.60, zRim: 4.48, wRim: 2.88 },
-    { x: 13.5, w: 3.20, zb: 0.60, zRim: 4.56, wRim: 2.92 },
+    { x: 9.2,  w: 2.80, zb: 0.60, zRim: 4.72, wRim: 2.72 },
+    { x: 11.2, w: 3.12, zb: 0.60, zRim: 4.48, wRim: 3.00 },
+    { x: 13.5, w: 3.20, zb: 0.60, zRim: 4.56, wRim: 3.00 },
     { x: 15.2, w: 3.15, zb: 0.60, zRim: 4.78, wRim: 2.82 },
     { x: 16.6, w: 3.02, zb: 0.60, zRim: 5.32, wRim: 2.52 }
   ];
