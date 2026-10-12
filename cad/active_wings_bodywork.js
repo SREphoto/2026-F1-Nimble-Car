@@ -283,7 +283,7 @@ export function createActiveWingsBodywork(options = {}) {
   const NOSE_L = 9.0;   // lofted body length (dm)
   const TIP_L = 0.8;    // rounded tip length (dm) -> tip at X = -9.8
   const noseZc = u => 2.70 - 1.25 * Math.pow(u, 1.5);          // centreline 2.70 -> 1.45 dm
-  const noseRy = u => 1.75 - 0.63 * Math.pow(u, 1.0);          // half-width 1.75 -> 1.12 dm (wide)
+  const noseRy = u => 1.60 - 0.80 * Math.pow(u, 0.9);  // RB22: narrower, tapering to a slimmer tip          // half-width 1.75 -> 1.12 dm (wide)
   const noseRz = u => 1.50 - 1.12 * Math.pow(u, 0.75);         // half-height 1.50 -> 0.38 dm (flat)
   const noseShapeRing = (u, k, v) => {
     const th = v * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
@@ -577,14 +577,14 @@ export function createActiveWingsBodywork(options = {}) {
     const podStations = resampleStations([
       // inlet starts under the halo / mirrors (refs 08-11), leaving room ahead of it
       // for the bargeboard deflector and floor-edge fins
-      { x: 8.6,  yIn: 2.0, yOut: 5.6, zb: 0.62, zt: 3.7, uc: 0.30 },
-      { x: 10.4, yIn: 2.0, yOut: 6.1, zb: 0.62, zt: 3.95, uc: 0.40 },
-      { x: 13.5, yIn: 2.0, yOut: 6.2, zb: 0.62, zt: 3.9, uc: 0.45 },
-      { x: 16.5, yIn: 2.0, yOut: 6.0, zb: 0.62, zt: 3.7, uc: 0.45 },
-      { x: 19.5, yIn: 2.0, yOut: 5.4, zb: 0.62, zt: 3.35, uc: 0.40 },
-      { x: 23.0, yIn: 1.9, yOut: 4.4, zb: 0.62, zt: 2.8, uc: 0.30 },
-      { x: 26.5, yIn: 1.7, yOut: 3.1, zb: 0.62, zt: 2.0, uc: 0.2 },
-      { x: 29.6, yIn: 1.5, yOut: 2.3, zb: 0.62, zt: 1.1, uc: 0.1 }
+      { x: 8.6,  yIn: 2.0, yOut: 5.2, zb: 1.05, zt: 3.85, uc: 0.55 }, // RB22: narrow high letterbox inlet
+      { x: 10.4, yIn: 2.0, yOut: 5.8, zb: 0.95, zt: 3.95, uc: 0.70 },
+      { x: 13.5, yIn: 2.0, yOut: 5.7, zb: 0.80, zt: 3.6, uc: 0.72 },  // deep undercut
+      { x: 16.5, yIn: 2.0, yOut: 5.0, zb: 0.70, zt: 3.05, uc: 0.62 }, // steep downwash ramp
+      { x: 19.5, yIn: 2.0, yOut: 4.0, zb: 0.62, zt: 2.45, uc: 0.45 },
+      { x: 23.0, yIn: 1.9, yOut: 3.0, zb: 0.62, zt: 1.85, uc: 0.25 }, // short pod: tucked in early
+      { x: 26.5, yIn: 1.7, yOut: 2.3, zb: 0.62, zt: 1.35, uc: 0.12 },
+      { x: 29.6, yIn: 1.5, yOut: 1.9, zb: 0.62, zt: 0.95, uc: 0.05 }
     ], 8);
     const podRing = (st, v, off = 0) => {
       const th = v * Math.PI * 2;
