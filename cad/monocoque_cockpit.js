@@ -140,10 +140,10 @@ export function buildMonocoqueAndCockpit(scene, mats) {
 
   // 1C. Rear closed chassis (X = 16.6 to 22.0 dm: Fuel Cell to Bulkhead D-D)
   appendLoft([
-    { x: 16.6, w: 3.02, zb: 0.60, zt: 5.58 },
-    { x: 18.5, w: 2.90, zb: 0.60, zt: 5.75 },
-    { x: 20.2, w: 2.75, zb: 0.60, zt: 5.60 },
-    { x: 22.0, w: 2.60, zb: 0.60, zt: 5.40 }
+    { x: 16.6, w: 2.80, zb: 0.60, zt: 5.58 }, // fuel cell tapers hard so it stays inside the slim 2026-style engine cover
+    { x: 18.5, w: 2.70, zb: 0.60, zt: 5.75 },
+    { x: 20.2, w: 2.40, zb: 0.60, zt: 5.55 },
+    { x: 22.0, w: 2.05, zb: 0.60, zt: 5.25 }
   ], true, 24);
 
   const tubGeo = new THREE.BufferGeometry();
@@ -235,7 +235,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
   });
 
   // Bulkhead D-D (Rear fuel cell / engine interface bulkhead at X = 22.0 dm)
-  const bulkDGeo = new THREE.BoxGeometry(0.24, 4.9, 4.5); // fits inside tub section at D-D (Y ±2.6, Z 0.6-5.4)
+  const bulkDGeo = new THREE.BoxGeometry(0.24, 3.6, 4.5); // fits inside the slimmer engine cover at D-D (Y ±1.8, Z 0.75-5.25)
   const bulkD = new THREE.Mesh(bulkDGeo, mats.titaniumAnodized);
   bulkD.position.set(22.0, 0, 3.0);
   bulkD.name = "Body_Chassis_Bulkhead_DD";
@@ -266,7 +266,7 @@ export function buildMonocoqueAndCockpit(scene, mats) {
       // on the tub wall: the tub is an ellipse (Y = w cos t, Z = mid + h sin t), so the wall is
       // further inboard low down; the lower tubes used to float 0.4 dm off the side
       const wT = 3.18, midT = 2.55, hT = 1.95, cosT = Math.sqrt(Math.max(0, 1 - ((sz - midT) / hT) ** 2));
-      sips.position.set(13.5, Math.sign(sy) * (wT * cosT + 0.12), sz);
+      sips.position.set(11.0, Math.sign(sy) * 3.1, sz); // flush on the near-vertical tub wall, under the sidepod inlet (wRim ~2.97 at x 11)
       sips.name = `Body_SIPS_CrushTube_${sz > 2 ? "Upper" : "Lower"}_${sy > 0 ? "LH" : "RH"}`;
       tubGroup.add(sips);
     }

@@ -19,7 +19,7 @@
  * 
  * Universal Datum:
  * - Floor underside at Z = 0.43 dm; plank bolted beneath it, bottom face at Z = 0.30 dm (static ride height)
- * - Floor span: X in [4.5, 36.5] dm, Width: 15.0 dm (Y in [-7.5, 7.5] dm)
+ * - Floor span: X in [4.5, 36.5] dm, Width: 15.0 dm (Y in [-7.0, 7.5] dm)
  */
 
 import * as THREE from 'three';
@@ -37,19 +37,19 @@ export function createFloorAeroSurfaces(options = {}) {
   const floorGroup = new THREE.Group();
   floorGroup.name = 'Carbon_Underbody_Floor';
 
-  // Main Flat Floor Plate (X in [4.5, 28.5] dm, Y in [-7.5, 7.5] dm, Z = 0.45 dm)
+  // Main Flat Floor Plate (X in [4.5, 28.5] dm, Y in [-7.0, 7.5] dm, Z = 0.45 dm)
   const floorPlateShape = new THREE.Shape();
   floorPlateShape.moveTo(4.5, -5.2);
-  floorPlateShape.lineTo(7.5, -7.5);  // Forward floor width expansion
-  floorPlateShape.lineTo(26.5, -7.5); // Constant width section
-  floorPlateShape.lineTo(28.5, -6.5); // Taper ahead of rear tyre squirt cutout
+  floorPlateShape.lineTo(7.5, -7.0);  // Forward floor width expansion
+  floorPlateShape.lineTo(26.5, -7.0); // Constant width section
+  floorPlateShape.lineTo(28.5, -6.3); // Taper ahead of rear tyre squirt cutout
   floorPlateShape.lineTo(30.0, -5.4); // Narrow to pass inside the rear tyres (inner face Y = ±5.525)
   floorPlateShape.lineTo(36.5, -5.2); // Diffuser trailing edge
   floorPlateShape.lineTo(36.5, 5.2);
   floorPlateShape.lineTo(30.0, 5.4);
-  floorPlateShape.lineTo(28.5, 6.5);
-  floorPlateShape.lineTo(26.5, 7.5);
-  floorPlateShape.lineTo(7.5, 7.5);
+  floorPlateShape.lineTo(28.5, 6.3);
+  floorPlateShape.lineTo(26.5, 7.0);
+  floorPlateShape.lineTo(7.5, 7.0);
   floorPlateShape.lineTo(4.5, 5.2);
   floorPlateShape.closePath();
 
@@ -106,7 +106,7 @@ export function createFloorAeroSurfaces(options = {}) {
     // Longitudinal Raised Edge Wing (X = 9.0 to 26.5 dm, Y = ±7.45 dm)
     const edgeWingGeo = new THREE.BoxGeometry(17.5, 0.25, 0.12);
     const edgeWingMesh = new THREE.Mesh(edgeWingGeo, materials.carbonGloss);
-    edgeWingMesh.position.set(17.75, side * 7.45, 0.58);
+    edgeWingMesh.position.set(17.75, side * 6.95, 0.58);
     edgeGroup.add(edgeWingMesh);
 
     // Titanium Floor Edge Skid Pucks (5 per side)
@@ -114,7 +114,7 @@ export function createFloorAeroSurfaces(options = {}) {
       const pX = 11.0 + p * 3.5;
       const puckGeo = new THREE.BoxGeometry(0.65, 0.18, 0.04);
       const puckMesh = new THREE.Mesh(puckGeo, materials.titaniumBright);
-      puckMesh.position.set(pX, side * 7.52, 0.52);
+      puckMesh.position.set(pX, side * 7.02, 0.52);
       edgeGroup.add(puckMesh);
     }
 
@@ -132,7 +132,7 @@ export function createFloorAeroSurfaces(options = {}) {
       const fenceGeo = new THREE.ExtrudeGeometry(fenceShape, fenceExtrude);
       const fenceMesh = new THREE.Mesh(fenceGeo, materials.carbonGloss);
       fenceMesh.rotation.x = Math.PI / 2;
-      fenceMesh.position.set(fX, side * (fenceIdx === 0 ? 6.55 : 5.8), 0.45);
+      fenceMesh.position.set(fX, side * (fenceIdx === 0 ? 6.25 : 5.8), 0.45);
       fenceMesh.name = `TyreSquirt_Fence_${fenceIdx}_${side > 0 ? 'L' : 'R'}`;
       edgeGroup.add(fenceMesh);
     });
@@ -148,7 +148,7 @@ export function createFloorAeroSurfaces(options = {}) {
       const h = 1.45 - f * 0.12;
       const finGeo = new THREE.ExtrudeGeometry(finShape, { steps: 1, depth: h, bevelEnabled: false });
       const fin = new THREE.Mesh(finGeo, materials.carbonGloss);
-      fin.position.set(8.0 + f * 0.85, side * (7.05 - f * 0.05), 0.5);
+      fin.position.set(8.0 + f * 0.85, side * (6.6 - f * 0.05), 0.5);
       fin.rotation.z = side * 0.22; // leading edge toed in, trailing edge outboard
       fin.castShadow = true;
       fin.name = `Floor_Edge_Fin_${f + 1}_${side > 0 ? 'L' : 'R'}`;
@@ -160,9 +160,9 @@ export function createFloorAeroSurfaces(options = {}) {
     {
       const bbShape = new THREE.Shape();
       bbShape.moveTo(0, 0);
-      bbShape.lineTo(2.0, 0);
-      bbShape.lineTo(2.0, 2.55);
-      bbShape.quadraticCurveTo(0.9, 3.0, 0, 2.2);
+      bbShape.lineTo(1.5, 0);
+      bbShape.lineTo(1.5, 1.85);
+      bbShape.quadraticCurveTo(0.7, 2.2, 0, 1.6);
       bbShape.closePath();
       const bbGeo = new THREE.ExtrudeGeometry(bbShape, { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 1 });
       const bb = new THREE.Mesh(bbGeo, materials.carbonGloss);
@@ -173,8 +173,8 @@ export function createFloorAeroSurfaces(options = {}) {
       bb.name = `Bargeboard_Deflector_${side > 0 ? 'L' : 'R'}`;
       edgeGroup.add(bb);
       // Horizontal floor-edge "boomerang" strip joining the deflector foot to the fins
-      const strip = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 0.05), materials.carbonGloss);
-      strip.position.set(7.4, side * 6.6, 1.55);
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.6, 0.05), materials.carbonGloss);
+      strip.position.set(7.4, side * 6.2, 1.3);
       strip.rotation.x = side * 0.25;
       strip.name = `Floor_Edge_Boomerang_${side > 0 ? 'L' : 'R'}`;
       edgeGroup.add(strip);

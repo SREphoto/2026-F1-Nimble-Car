@@ -716,16 +716,16 @@ export function createActiveWingsBodywork(options = {}) {
   const ecStations = resampleStations([
     // front stations rise right up to the scoop underside (7.2-7.35 dm): no gap under the airbox
     { x: 15.6, hw: 2.2, zb: 3.6, zt: 7.5, k: 3.0 },
-    { x: 17.2, hw: 3.25, zb: 3.4, zt: 8.05, k: 3.0 }, // boxy shoulders enclose the tub top
-    { x: 19.2, hw: 3.2, zb: 3.0, zt: 8.45, k: 2.4 },
-    // flanks drop into the sidepod tops so no engine/cam hardware shows through the seam
-    { x: 21.5, hw: 3.0, zb: 2.6, zt: 7.6, k: 2.6 },
-    { x: 24.5, hw: 2.3, zb: 2.3, zt: 6.3, k: 2.0 },
-    { x: 27.5, hw: 1.95, zb: 2.2, zt: 5.45, k: 2.2 },
+    { x: 17.2, hw: 2.75, zb: 3.3, zt: 8.05, k: 3.0 }, // shoulders: slimmer, real 2026 covers are narrow behind the hoop
+    { x: 19.2, hw: 2.7, zb: 2.3, zt: 8.45, k: 2.4 },
+    // flanks drop right down onto the sidepod tops (pods are 1.85 dm high at x 23): no gap at x 21-24
+    { x: 21.5, hw: 2.55, zb: 1.8, zt: 7.4, k: 2.4 },
+    { x: 24.5, hw: 2.25, zb: 1.4, zt: 6.0, k: 2.8 },
+    { x: 27.5, hw: 2.05, zb: 1.2, zt: 5.2, k: 3.2 },
     // tail raised a little so the single exhaust downpipe stays inside the cover
-    { x: 30.5, hw: 1.6, zb: 2.2, zt: 4.8, k: 2.4 },
-    { x: 33.2, hw: 1.4, zb: 2.3, zt: 4.6, k: 2.6 },
-    { x: 34.6, hw: 1.1, zb: 2.5, zt: 4.35, k: 2.6 }
+    { x: 30.5, hw: 1.7, zb: 1.3, zt: 4.7, k: 3.0 },
+    { x: 33.2, hw: 1.3, zb: 2.0, zt: 4.5, k: 2.6 },
+    { x: 34.6, hw: 1.05, zb: 2.4, zt: 4.3, k: 2.6 }
   ], 8);
   const ecRing = (st, v, off = 0) => {
     // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
