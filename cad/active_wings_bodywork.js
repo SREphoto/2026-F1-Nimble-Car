@@ -283,7 +283,7 @@ export function createActiveWingsBodywork(options = {}) {
   const NOSE_L = 9.0;   // lofted body length (dm)
   const TIP_L = 0.8;    // rounded tip length (dm) -> tip at X = -9.8
   const noseZc = u => 2.70 - 1.25 * Math.pow(u, 1.5);          // centreline 2.70 -> 1.45 dm
-  const noseRy = u => 1.60 - 0.80 * Math.pow(u, 0.9);  // RB22: narrower, tapering to a slimmer tip          // half-width 1.75 -> 1.12 dm (wide)
+  const noseRy = u => 1.75 - 0.63 * Math.pow(u, 1.0);          // half-width 1.75 -> 1.12 dm (wide)
   const noseRz = u => 1.50 - 1.12 * Math.pow(u, 0.75);         // half-height 1.50 -> 0.38 dm (flat)
   const noseShapeRing = (u, k, v) => {
     const th = v * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
