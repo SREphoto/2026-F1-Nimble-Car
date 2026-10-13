@@ -129,7 +129,8 @@
   --team-name: "ALPINE F1";
 }
 
-[data-team="sauber"] {
+[data-team="sauber"],
+[data-team="audi"] {
   --team-primary: #52e252;
   --team-primary-rgb: 82, 226, 82;
   --team-secondary: #ffffff;

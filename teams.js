@@ -341,6 +341,47 @@ export const F1_TEAMS = {
   }
 };
 
+// ---------------------------------------------------------------------------------------------
+// Game data: data/team_liveries.json drives every team's paint and decals on the one shared body.
+// The hand-tuned UI themes above stay; the JSON fills in paint, drivers and the livery itself,
+// and adds teams that have no UI theme yet (Audi, Cadillac).
+// ---------------------------------------------------------------------------------------------
+const hex = (h) => parseInt(String(h).replace('#', ''), 16);
+const rgb = (h) => { const n = hex(h); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; };
+const FINISH = {
+  gloss: { roughness: 0.3, metalness: 0.12, clearcoat: 0.95, clearcoatRoughness: 0.05 },
+  satin: { roughness: 0.5, metalness: 0.15, clearcoat: 0.5, clearcoatRoughness: 0.2 },
+  matte: { roughness: 0.72, metalness: 0.05, clearcoat: 0.15, clearcoatRoughness: 0.5 },
+};
+export let LIVERY_DATA = null;
+try {
+  LIVERY_DATA = await fetch(new URL('./data/team_liveries.json', import.meta.url)).then((r) => (r.ok ? r.json() : null));
+} catch (e) { console.warn('team_liveries.json not loaded', e); }
+F1_TEAMS['audi'] = { ...F1_TEAMS['sauber'], id: 'audi' };
+delete F1_TEAMS['sauber'];
+(LIVERY_DATA?.teams || []).forEach((d) => {
+  const p = d.paint;
+  const base = F1_TEAMS[d.id] || {
+    id: d.id, shortName: d.name.toUpperCase(), brandTag: `${d.car} · ${d.powerUnit}`,
+    css: { primary: p.body, primaryRgb: rgb(p.body), secondary: p.accent, secondaryRgb: rgb(p.accent), tertiary: p.detail,
+      accentGlow: `rgba(${rgb(p.body)}, 0.45)`, surface: '#141416', surfaceHover: '#1e1e22', badgeBg: `rgba(${rgb(p.body)}, 0.18)`, textOnPrimary: '#000000' },
+    swatch: [p.body, p.detail, p.accent],
+    driverGlove: { color: hex(p.detail), roughness: 0.82 },
+    driverHelmetColours: { base: p.body, crown: '#ffffff', stripe: p.detail, accent: p.accent },
+    description: `${d.name} ${d.car}`,
+  };
+  F1_TEAMS[d.id] = {
+    ...base, ...(FINISH[p.finish] || FINISH.gloss),
+    name: d.name,
+    bodyColor: hex(p.body), accentColor: hex(p.accent), amberColor: hex(p.detail), stripeColor: hex(p.detail),
+    camo: p.camo || 0,
+    driverNames: d.drivers.map((x) => `${x.name.split(' ').slice(-1)[0]} (${x.no})`).join(' · '),
+    driverNumber: d.drivers[0]?.no ?? base.driverNumber,
+    showDecals: !!d.bespokeDecals,
+    livery: d,
+  };
+});
+
 const STORAGE_KEY = 'f1_nimble_team_theme';
 let activeTeam = F1_TEAMS['ferrari'];
 
@@ -357,6 +398,7 @@ export function getCurrentTeam() {
 export function getSavedTeam() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'sauber') return 'audi';
     if (saved && F1_TEAMS[saved]) {
       return saved;
     }
@@ -452,6 +494,10 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
     cp.needsUpdate = true;
   }
 
+  // Team livery decals from data/team_liveries.json (built the first time a team is picked)
+  try { carModel?.userData?.livery?.buildTeam?.(team); } catch (e) { console.warn('team livery build failed', e); }
+  if (carModel?.userData?.livery?.splitUniforms?.uCamo) carModel.userData.livery.splitUniforms.uCamo.value = team.camo || 0;
+
   // Update pinstripe uniform
   if (carModel?.userData?.livery?.splitUniforms?.uStripeColor) {
     carModel.userData.livery.splitUniforms.uStripeColor.value.setHex(team.stripeColor);
@@ -469,7 +515,7 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
       if (obj.isMesh && obj.name) {
         // Red Bull Decals toggle
         if (obj.name.startsWith('Livery_Decal_')) {
-          obj.visible = team.showDecals;
+          obj.visible = obj.userData.liveryTeam ? obj.userData.liveryTeam === team.id : team.showDecals;
         }
         // Driver Gloves (White for Mercedes, Black for McLaren/others)
         else if (obj.name.startsWith('Driver_Glove_') && !obj.name.includes('_Pad_') && team.driverGlove) {

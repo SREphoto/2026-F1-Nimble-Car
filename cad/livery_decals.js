@@ -41,6 +41,7 @@ import {
   createTagHeuerDecalTexture,
   createRedBullTextTexture,
   createFordRacingTexture,
+  createTeamDecalTexture,
 } from './procedural_livery.js';
 
 const _v = new THREE.Vector3();
@@ -70,8 +71,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   const t0 = (typeof performance !== 'undefined') ? performance.now() : 0;
   const report = { decals: 0, skipped: [], removedLegacy: 0, ms: 0 };
   carModel.updateMatrixWorld(true);
-  const carToWorld = carModel.matrixWorld.clone();
-  const worldToCar = carToWorld.clone().invert();
+  let carToWorld = carModel.matrixWorld.clone();
+  let worldToCar = carToWorld.clone().invert();
   const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.() || 8;
 
   // ---------------------------------------------------------------------
@@ -261,12 +262,14 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   });
 
   // ---- Front wing endplates: Mobil 1 ----
+  const frontEndplates = [];
   carModel.traverse((o) => {
     if (!o.isMesh || o.material !== carPaint) return;
     const b = carBox(o);
     const flagged = !!o.userData.fwEndplate; // S-shaped endplate wall leans, so its box is thick
     if (!(flagged || (b.max.x < -6 && (b.max.y - b.min.y) < 0.4 && (b.max.z - b.min.z) > 1.5))) return;
     const s = (b.min.y + b.max.y) > 0 ? 1 : -1;
+    frontEndplates.push(o);
     const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
     project(`FrontEndplate_Mobil1_${sideName(s)}`, o, {
       origin: [b.min.x + L * 0.5, s * (absMaxY(b) + 5), b.min.z + H * (flagged ? 0.42 : 0.6)], dir: [0, -s, 0],
@@ -283,8 +286,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     // Real RB22 (Austria GP + Samuel angle sheet): large ORACLE on the sidepod slopes DOWN toward the rear ~10°.
     // Artwork up leans toward the nose so letters stay upright and follow the panel; do not shear the glyphs.
     project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
-      origin: [b.min.x + L * 0.38, s * (absMaxY(b) + 5), b.min.z + H * 0.62], dir: [0, -s, 0],
-      up: [-0.176, 0, 1], size: [L * 0.50, L * 0.50 / 6.5, 2.2], texture: tex.sidepod[s],
+      origin: [b.min.x + L * 0.33, s * (absMaxY(b) + 5), b.min.z + H * 0.5], dir: [0, -s, 0], // lower + further forward: the RB22 pod ramps down steeply behind the inlet
+      up: [-0.176, 0, 1], size: [L * 0.46, L * 0.46 / 6.5, 2.2], texture: tex.sidepod[s],
     });
     // ROKT reads from the side of the car: artwork up points toward the centreline
     project(`Sidepod_ROKT_${sideName(s)}`, pod, {
@@ -403,6 +406,72 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     }
   }
 
+  // Everything projected above is the bespoke Red Bull RB22 livery.
+  carModel.traverse((o) => { if (o.isMesh && o.name.startsWith('Livery_Decal_') && !o.userData.liveryTeam) o.userData.liveryTeam = 'red-bull'; });
+
+  // ---------------------------------------------------------------------
+  // 3b. Data-driven team liveries (data/team_liveries.json), built lazily per team
+  // ---------------------------------------------------------------------
+  const pickSide = (meshes, s) => meshes.find((m) => { const b = carBox(m); return Math.sign(b.min.y + b.max.y) === s; });
+  const rearEndplates = sides.map((s) => {
+    const ep = byName(`RearWing_Endplate_${s > 0 ? 'Left' : 'Right'}`);
+    return ep && ep.children.find((c) => c.isMesh && c.material === carPaint);
+  }).filter(Boolean);
+  const pods = ['LH', 'RH'].map((t) => byName(`Sidepod_Body_${t}`)).filter(Boolean);
+  const targetFor = (t, s) => ({
+    nose, engineCover: ec, tub: tubSkin, rearWingMain: rwMain,
+    sidepod: pickSide(pods, s), frontEndplate: pickSide(frontEndplates, s), rearEndplate: pickSide(rearEndplates, s),
+  })[t];
+  const built = new Set();
+  function buildTeam(team) {
+    const data = team && team.livery;
+    if (!data || data.bespokeDecals || built.has(team.id)) return 0;
+    built.add(team.id);
+    carModel.updateMatrixWorld(true);
+    carToWorld = carModel.matrixWorld.clone();
+    worldToCar = carToWorld.clone().invert();
+    const before = report.decals;
+    (data.decals || []).forEach((spec, i) => {
+      const order = spec.kind === 'panel' ? 1 : 3;
+      const faceSides = spec.face === 'top' && !['sidepod'].includes(spec.target) ? [1] : sides;
+      faceSides.forEach((s) => {
+        const mesh = targetFor(spec.target, s);
+        if (!mesh) { report.skipped.push(`${team.id}#${i}: no ${spec.target}`); return; }
+        const b = carBox(mesh); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z; const Wy = b.max.y - b.min.y;
+        const { texture, aspect } = createTeamDecalTexture(spec, { frontIsLeft: frontIsLeft(s) });
+        const name = `Team_${team.id}_${i}_${spec.kind}_${sideName(s)}`;
+        let d;
+        if (spec.face === 'top') {
+          const span = spec.target === 'rearWingMain' ? Wy : L;
+          const w = span * spec.w; const h = spec.h ? span * spec.h : w / (aspect || 4);
+          const yc = spec.target === 'sidepod' ? (b.min.y + b.max.y) / 2 : 0;
+          const orient = spec.target === 'sidepod' ? { up: [0, -s, 0] }
+            : spec.target === 'nose' ? { up: [1, 0, 0] }
+            : spec.target === 'rearWingMain' ? { up: [-1, 0, 0] } : { right: [-1, 0, 0] };
+          d = project(name, mesh, { origin: [b.min.x + L * spec.x, yc, b.max.z + 5], dir: [0, 0, -1], ...orient,
+            size: [w, h, H * 1.2 + 0.5], texture, renderOrder: order });
+        } else {
+          const w = L * spec.w; const h = spec.h ? H * spec.h : w / (aspect || 4);
+          // tapered parts: if the requested height misses the part, slide down until the ray lands
+          let zf = spec.z ?? 0.5;
+          for (; zf > 0.05; zf -= 0.05) {
+            raycaster.set(toWorldPoint([b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * zf]), toWorldDir([0, -s, 0]));
+            if (raycaster.intersectObject(mesh, false).length) break;
+          }
+          d = project(name, mesh, { origin: [b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * zf], dir: [0, -s, 0],
+            up: [0, 0, 1], size: [w, h, Math.max(1.2, absMaxY(b) * 1.6)], texture, renderOrder: order });
+        }
+        if (d) {
+          d.userData.liveryTeam = team.id;
+          if (spec.kind === 'panel') d.receiveShadow = false; // big flat paint panels showed shadow acne
+          if (order > 1) { d.material.polygonOffsetFactor = -4; d.material.polygonOffsetUnits = -4; }
+        }
+      });
+    });
+    applyCarEnvironment(renderer, carModel, { intensity: 0.9 });
+    return report.decals - before;
+  }
+
   // Tyres & wheels (sidewall markings, nut colours) are built in cad/wheels_tyres.js
 
   // ---------------------------------------------------------------------
@@ -423,7 +492,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const body = carModel.userData.stanceFrame || carModel;
     splitUniforms.uSpFrame.value.multiplyMatrices(loadPose, _inv.copy(body.matrixWorld).invert());
   };
-  carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame };
+  carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame, buildTeam };
   return report;
 }
 

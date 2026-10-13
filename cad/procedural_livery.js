@@ -570,3 +570,66 @@ export function createHaloApexDecalTexture() { return legacyPlaceholder(); }
 export function createHaloArmDecalTexture(isLeft = true) { return legacyPlaceholder(); }
 export function createCockpitRimDecals(isLeft = true) { return legacyPlaceholder(); }
 export function createRearWingEndplateInnerTexture(isLeft = true) { return legacyPlaceholder(); }
+
+// ---------------------------------------------------------------------------
+// Data-driven team decals (data/team_liveries.json). One artwork per decal spec.
+// Returns { texture, aspect } where aspect = width / height of the artwork.
+// ---------------------------------------------------------------------------
+const TEAM_FONTS = {
+  heavy: (s) => `900 ${s}px ${HEAVY}`,
+  sans: (s) => `700 ${s}px ${SANS}`,
+  serif: (s) => `700 ${s}px Georgia, "Times New Roman", "Liberation Serif", serif`,
+};
+export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
+  if (spec.kind === 'panel') {
+    // Solid paint panel. Shapes are described relative to the car: 'diagRear' leans back toward the
+    // tail, 'fadeRear' fades out toward the tail, 'fadeFront' fades out toward the nose.
+    const W = 512, H = 256;
+    const { canvas, ctx } = makeCanvas(W, H);
+    const fwd = frontIsLeft ? 1 : -1; // +1: nose at canvas left
+    const shape = spec.shape || 'rect';
+    if (shape === 'fadeRear' || shape === 'fadeFront') {
+      const noseLeft = fwd > 0;
+      const solidLeft = shape === 'fadeRear' ? noseLeft : !noseLeft;
+      const g = solidLeft ? ctx.createLinearGradient(0, 0, W, 0) : ctx.createLinearGradient(W, 0, 0, 0);
+      g.addColorStop(0, spec.color); g.addColorStop(0.55, spec.color); g.addColorStop(1, spec.color + '00');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = spec.color;
+      ctx.beginPath();
+      if (shape === 'diagRear') {
+        const k = W * 0.18; // top edge shifted toward the tail
+        if (fwd > 0) { ctx.moveTo(k, 0); ctx.lineTo(W, 0); ctx.lineTo(W - k, H); ctx.lineTo(0, H); }
+        else { ctx.moveTo(0, 0); ctx.lineTo(W - k, 0); ctx.lineTo(W, H); ctx.lineTo(k, H); }
+      } else ctx.rect(0, 0, W, H);
+      ctx.closePath(); ctx.fill();
+    }
+    return { texture: finalizeTexture(canvas), aspect: null };
+  }
+  if (spec.kind === 'art' && spec.art === 'audiRings') {
+    const W = 1024, H = 300;
+    const { canvas, ctx } = makeCanvas(W, H);
+    ctx.strokeStyle = spec.color || '#e60215'; ctx.lineWidth = 34;
+    const r = 120;
+    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(r + 30 + i * r * 1.55, H / 2, r, 0, Math.PI * 2); ctx.stroke(); }
+    return { texture: finalizeTexture(canvas), aspect: W / H };
+  }
+  if (spec.kind === 'art' && spec.art === 'rbBull') {
+    return { texture: createEngineCoverDecalTexture({ frontIsLeft }), aspect: 2 };
+  }
+  // text
+  const W = 1024, H = 256;
+  const { canvas, ctx } = makeCanvas(W, H);
+  ctx.save();
+  if (spec.skew) { ctx.translate(W / 2, H / 2); ctx.transform(1, 0, spec.skew, 1, 0, 0); ctx.translate(-W / 2, -H / 2); }
+  fitText(ctx, spec.text, W / 2, H / 2 + 6, W * 0.94, H * 0.78, TEAM_FONTS[spec.font || 'heavy'],
+    { fill: spec.color || '#ffffff', stroke: spec.stroke || null, strokeWidth: spec.stroke ? 14 : 0 });
+  ctx.restore();
+  // crop the aspect to the drawn text so the projector box hugs the letters
+  ctx.font = TEAM_FONTS[spec.font || 'heavy'](H * 0.78);
+  const tw = Math.min(W * 0.94, ctx.measureText(spec.text).width);
+  const crop = makeCanvas(Math.ceil(tw + 40), H);
+  crop.ctx.drawImage(canvas, (W - crop.canvas.width) / 2, 0, crop.canvas.width, H, 0, 0, crop.canvas.width, H);
+  return { texture: finalizeTexture(crop.canvas), aspect: crop.canvas.width / H };
+}
