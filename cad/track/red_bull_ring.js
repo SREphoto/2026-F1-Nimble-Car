@@ -19,6 +19,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RED_BULL_RING as D } from './red_bull_ring_data.js';
 import { makeTrackTextures, makeSignAtlas } from './track_textures.js';
+import { buildPitGarages } from './pit_garages.js';
 import { buildBullSculpture } from './rbr_bull.js';
 import { createPitStopStation } from '../pit_stop_crew.js';
 import { RED_BULL_RING_STYLE as STYLE } from './styles/red_bull_ring_style.js';
@@ -245,7 +246,7 @@ export function createRedBullRing() {
     tecpro: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }),
     runoff: new THREE.MeshStandardMaterial({ map: tex.runoff, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
     gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 1.0, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 }),
-    grass: new THREE.MeshLambertMaterial({ map: tex.grass, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 3 }),
+    grass: new THREE.MeshLambertMaterial({ map: tex.grass, color: new THREE.Color(0.67, 0.87, 0.52), polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 3 }),
     line: new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     kerb: new THREE.MeshStandardMaterial({ map: tex.kerb, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
@@ -781,18 +782,15 @@ export function createRedBullRing() {
     const g = new THREE.Group(); g.name = 'RBR_Pit_Building';
     const mk = (geo, mat, cast = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = true; g.add(m); return m; };
     // ground floor block (garages), 2 upper floors (glass), roof slab with overhang
-    mk(boxAt(len, 6, dep, cen.x, y + 3, cen.y, fx, fz), M.concrete);
+    // the garage bays are open 7 m deep (cad/track/pit_garages.js), so the ground floor block starts behind them
+    const REC = 7, gcen = front.clone().addScaledVector(nrm, -(REC + (dep - REC) / 2));
+    mk(boxAt(len, 6, dep - REC, gcen.x, y + 3, gcen.y, fx, fz), M.concrete);
     mk(boxAt(len - 2, 7, dep - 4, cen.x - nrm.x * 1.5, y + 9.5, cen.y - nrm.y * 1.5, fx, fz), M.glass);
     mk(boxAt(len + 4, 0.8, dep + 6, cen.x + nrm.x * 1.5, y + 13.4, cen.y + nrm.y * 1.5, fx, fz), M.roof);
-    // garage door facade (textured quad) on the pit-lane face
-    const gq = new QuadBatch();
-    const fa = front.clone().addScaledVector(nrm, 0.05);
-    const P = (a, h) => [fa.x + fx * a, y + h, fa.y + fz * a];
-    const reps = len / 24;
-    // facade faces +nrm: order corners so the normal points to the pit lane
     const sgn = (fx * nrm.y - fz * nrm.x) > 0 ? 1 : -1;
-    gq.add([P(-sgn * len / 2, 0), P(sgn * len / 2, 0), P(sgn * len / 2, 5.6), P(-sgn * len / 2, 5.6)], [0, 0, reps, 1]);
-    mk(gq.geometry(), M.garage, false);
+    // team garages, one bay per team in pit order (data: cad/track/garage/pit_garages.json)
+    const entryDir = new THREE.Vector2(pit.x[0] - pitPt.x, pit.z[0] - pitPt.y);
+    g.add(buildPitGarages({ front: front.clone().addScaledVector(nrm, 0.02), nrm, y, len, entryDir, DM, recess: REC }));
     root.add(g);
     root.userData.pitBuilding = { front, nrm, y, len, fx, fz, sgn };
   }

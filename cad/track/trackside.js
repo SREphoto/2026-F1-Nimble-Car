@@ -23,7 +23,7 @@ export function makeAsphaltTextures(S) {
   const W = 512, c = canvas(W, W), x = c.getContext('2d'), r = rng(4242);
   x.fillStyle = S.base; x.fillRect(0, 0, W, W);
   // large soft tone variation, then fine stones
-  for (let i = 0; i < 60; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '0,0,0' : '255,255,255'},${0.025 + r() * 0.03})`; x.beginPath(); x.arc(r() * W, r() * W, 20 + r() * 70, 0, 7); x.fill(); }
+  for (let i = 0; i < 60; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '0,0,0' : '255,255,255'},${0.006 + r() * 0.008})`; x.beginPath(); x.arc(r() * W, r() * W, 40 + r() * 90, 0, 7); x.fill(); }
   for (let i = 0; i < 26000; i++) { x.fillStyle = S.grain[(r() * S.grain.length) | 0]; const s = 0.8 + r() * 1.8; x.fillRect(r() * W, r() * W, s, s); }
   for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(200,200,205,${0.25 + r() * 0.3})`; x.fillRect(r() * W, r() * W, 1, 1); } // light chips catch the sun
   // paving seam (sealed joint) along the centre line

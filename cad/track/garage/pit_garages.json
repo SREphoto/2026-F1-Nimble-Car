@@ -1,0 +1,225 @@
+{
+ "note": "Pit lane team garages, in pit order from the pit entry. Colours from /workspace/f1-teams/teams_liveries.json (photo approximated). Plain lettering only, no logo artwork.",
+ "teams": [
+  {
+   "id": "mclaren",
+   "entry": "McLaren Mastercard F1 Team",
+   "drivers": [
+    "Lando Norris",
+    "Oscar Piastri"
+   ],
+   "numbers": [
+    1,
+    81
+   ],
+   "name": "McLAREN",
+   "sub": "MASTERCARD F1 TEAM",
+   "wall": "#F77C09",
+   "trim": "#232328",
+   "floor": "#2b2b30",
+   "text": "#ffffff",
+   "stripe": "#03898C",
+   "font": "italic 900"
+  },
+  {
+   "id": "mercedes",
+   "entry": "Mercedes-AMG PETRONAS F1 Team",
+   "drivers": [
+    "George Russell",
+    "Kimi Antonelli"
+   ],
+   "numbers": [
+    63,
+    12
+   ],
+   "name": "MERCEDES-AMG",
+   "sub": "PETRONAS F1 TEAM",
+   "wall": "#0F0F14",
+   "trim": "#01C7C9",
+   "floor": "#1a1c20",
+   "text": "#ffffff",
+   "stripe": "#B1B3B8",
+   "font": "900"
+  },
+  {
+   "id": "red-bull",
+   "entry": "Oracle Red Bull Racing",
+   "drivers": [
+    "Max Verstappen",
+    "Isack Hadjar"
+   ],
+   "numbers": [
+    3,
+    6
+   ],
+   "name": "ORACLE RED BULL RACING",
+   "sub": "FORD",
+   "wall": "#192355",
+   "trim": "#DA2520",
+   "floor": "#14182c",
+   "text": "#ffffff",
+   "stripe": "#F9A905",
+   "font": "italic 900"
+  },
+  {
+   "id": "ferrari",
+   "entry": "Scuderia Ferrari HP",
+   "drivers": [
+    "Charles Leclerc",
+    "Lewis Hamilton"
+   ],
+   "numbers": [
+    16,
+    44
+   ],
+   "name": "SCUDERIA FERRARI HP",
+   "sub": "HP",
+   "wall": "#DF111D",
+   "trim": "#19191E",
+   "floor": "#9a1218",
+   "text": "#ffffff",
+   "stripe": "#FFF200",
+   "font": "italic 800"
+  },
+  {
+   "id": "williams",
+   "entry": "Atlassian Williams F1 Team",
+   "drivers": [
+    "Alex Albon",
+    "Carlos Sainz"
+   ],
+   "numbers": [
+    23,
+    55
+   ],
+   "name": "ATLASSIAN WILLIAMS",
+   "sub": "F1 TEAM",
+   "wall": "#0b1f4a",
+   "trim": "#58ADED",
+   "floor": "#13284f",
+   "text": "#ffffff",
+   "stripe": "#0071C6",
+   "font": "800"
+  },
+  {
+   "id": "racing-bulls",
+   "entry": "Visa Cash App Racing Bulls F1 Team",
+   "drivers": [
+    "Liam Lawson",
+    "Arvid Lindblad"
+   ],
+   "numbers": [
+    30,
+    41
+   ],
+   "name": "VISA CASH APP RB",
+   "sub": "RACING BULLS F1 TEAM",
+   "wall": "#F1F0EF",
+   "trim": "#1D3A96",
+   "floor": "#d8dbe2",
+   "text": "#1D3A96",
+   "stripe": "#DB2615",
+   "font": "italic 900"
+  },
+  {
+   "id": "aston-martin",
+   "entry": "Aston Martin Aramco F1 Team",
+   "drivers": [
+    "Fernando Alonso",
+    "Lance Stroll"
+   ],
+   "numbers": [
+    14,
+    18
+   ],
+   "name": "ASTON MARTIN ARAMCO",
+   "sub": "F1 TEAM",
+   "wall": "#015E57",
+   "trim": "#CEDE02",
+   "floor": "#0e2e2b",
+   "text": "#ffffff",
+   "stripe": "#CEDE02",
+   "font": "700"
+  },
+  {
+   "id": "haas",
+   "entry": "TGR Haas F1 Team",
+   "drivers": [
+    "Esteban Ocon",
+    "Oliver Bearman"
+   ],
+   "numbers": [
+    31,
+    87
+   ],
+   "name": "TGR HAAS F1 TEAM",
+   "sub": "TOYOTA GAZOO RACING",
+   "wall": "#F0F0EF",
+   "trim": "#E0071E",
+   "floor": "#2a2a2c",
+   "text": "#191919",
+   "stripe": "#191919",
+   "font": "900"
+  },
+  {
+   "id": "audi",
+   "entry": "Audi Revolut F1 Team",
+   "drivers": [
+    "Nico Hulkenberg",
+    "Gabriel Bortoleto"
+   ],
+   "numbers": [
+    27,
+    5
+   ],
+   "name": "AUDI REVOLUT F1 TEAM",
+   "sub": "AUDI",
+   "wall": "#19191B",
+   "trim": "#E60215",
+   "floor": "#3a3a3c",
+   "text": "#B6B4B2",
+   "stripe": "#B6B4B2",
+   "font": "700"
+  },
+  {
+   "id": "alpine",
+   "entry": "BWT Alpine F1 Team",
+   "drivers": [
+    "Pierre Gasly",
+    "Franco Colapinto"
+   ],
+   "numbers": [
+    10,
+    43
+   ],
+   "name": "BWT ALPINE F1 TEAM",
+   "sub": "BWT",
+   "wall": "#02569E",
+   "trim": "#F085BA",
+   "floor": "#0a1f3d",
+   "text": "#ffffff",
+   "stripe": "#F085BA",
+   "font": "italic 800"
+  },
+  {
+   "id": "cadillac",
+   "entry": "Cadillac Formula 1 Team",
+   "drivers": [
+    "Sergio Perez",
+    "Valtteri Bottas"
+   ],
+   "numbers": [
+    11,
+    77
+   ],
+   "name": "CADILLAC",
+   "sub": "FORMULA 1 TEAM",
+   "wall": "#19191B",
+   "trim": "#EFF1F0",
+   "floor": "#232325",
+   "text": "#EFF1F0",
+   "stripe": "#909090",
+   "font": "600"
+  }
+ ]
+}

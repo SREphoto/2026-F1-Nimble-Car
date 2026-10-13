@@ -187,6 +187,13 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     st.saved.exposure = renderer.toneMappingExposure; renderer.toneMappingExposure = 1.0;   // indoor exposure
     st.saved.shadowAuto = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false; changed();
     camera.near = 0.2; camera.far = 1500; camera.updateProjectionMatrix();
+    st.saved.maxDist = controls.maxDistance; st.saved.minDist = controls.minDistance; st.saved.maxPolar = controls.maxPolarAngle; st.saved.setView = window.setCameraView;
+    controls.maxDistance = 85; controls.minDistance = 4; controls.maxPolarAngle = Math.PI * 0.53;
+    camera.up.set(0, 1, 0);
+    // garage camera presets: the normal car presets stand outside the walls, so inside the garage they go to clear spots
+    window.setCameraView = (name) => { const v = GARAGE_VIEWS[name]; if (!v) return st.saved.setView?.(name); st.tween = null;
+      if (name === 'CAM_EXPLODED' || name === 'STATE_ACTIVE') st.saved.setView?.(name);
+      camera.up.set(0, 1, 0); camera.position.set(...v.pos); controls.target.set(...v.target); camera.lookAt(controls.target); controls.update(); keepInside(); };
     camera.position.set(-56, 19, 15); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
     document.body.classList.add('garage-mode');
     const hud = document.getElementById('rbr-hud'); if (hud) hud.style.display = 'none';
@@ -205,11 +212,53 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     scene.fog = st.saved.fog;
     if (legacyEnv) legacyEnv.visible = st.saved.legacy ?? true;
     camera.near = st.saved.near; camera.far = st.saved.far; camera.updateProjectionMatrix();
+    controls.maxDistance = st.saved.maxDist ?? Infinity; controls.minDistance = st.saved.minDist ?? 0; controls.maxPolarAngle = st.saved.maxPolar ?? Math.PI;
+    if (st.saved.setView) window.setCameraView = st.saved.setView;
     document.body.classList.remove('garage-mode');
     const hud = document.getElementById('rbr-hud'); if (hud) hud.style.display = '';
     bar.classList.remove('on'); $('btn-garage')?.classList.remove('active');
     if (st.wasCircuit && trackMode) { trackMode.applyCircuit(true); trackMode.setDriving?.(true); trackMode.setCam?.('chase'); }
     else { camera.position.copy(st.saved.pos); controls.target.copy(st.saved.target); controls.update(); }
+  }
+
+  // ---------------------------------------------------------------- camera stays inside the garage
+  // 1) the orbit target and the camera are clamped into the room (the open door side may go a little way out onto the
+  //    pit lane apron), 2) a ray from the target to the camera pulls the camera in front of any wall or ceiling it hits.
+  const GARAGE_VIEWS = {
+    CAM_ISO: { pos: [-40, 22, 28], target: [16, 4, 0] },
+    CAM_FRONT: { pos: [-62, 6, 0], target: [10, 3, 0] },
+    CAM_SIDE: { pos: [16, 7, 31], target: [16, 3.5, 0] },
+    CAM_TOP: { pos: [14, 41, 0.5], target: [14, 0, 0] },
+    CAM_REAR: { pos: [80, 9, 0], target: [30, 4, 0] },
+    CAM_STEERING: { pos: [12.0, 5.6, 0], target: [9.0, 4.2, 0] },
+    CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
+    CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
+    CAM_EXPLODED: { pos: [-48, 30, 30], target: [14, 6, 0] },
+    STATE_ACTIVE: { pos: [-40, 18, 28], target: [10, 3.2, 0] },
+  };
+  const camRay = new THREE.Raycaster(), cDir = new THREE.Vector3();
+  const roomBox = () => ({ x0: L.x0 - 40, x1: L.x1 - 3, z: L.halfWidth - 2.5, y0: 1.2, y1: L.height - 4 });
+  function keepInside() {
+    if (!garage) return;
+    const R = roomBox(), t = controls.target, p = camera.position;
+    const clampV = (v) => { v.x = THREE.MathUtils.clamp(v.x, R.x0, R.x1); v.z = THREE.MathUtils.clamp(v.z, -R.z, R.z); v.y = THREE.MathUtils.clamp(v.y, R.y0, R.y1); };
+    clampV(t); clampV(p);
+    // outside the door the side walls stop, so keep the camera within the door opening width there too
+    cDir.subVectors(p, t); const dist = cDir.length();
+    if (dist > 0.01) {
+      cDir.divideScalar(dist); camRay.set(t, cDir); camRay.far = dist;
+      const walls = garage.userData.camBlockers || (garage.userData.camBlockers = collectBlockers());
+      const hit = camRay.intersectObjects(walls, false)[0];
+      if (hit && hit.distance < dist) p.copy(t).addScaledVector(cDir, Math.max(2, hit.distance - 2.5));
+    }
+  }
+  // only big room surfaces (walls, ceiling, door, large panels) block the camera, not small props
+  function collectBlockers() {
+    const out = [], sz = new THREE.Vector3(), box = new THREE.Box3();
+    garage.updateMatrixWorld(true);
+    garage.traverse(o => { if (!o.isMesh || o.isInstancedMesh || !o.geometry) return; box.setFromObject(o).getSize(sz);
+      const dims = [sz.x, sz.y, sz.z].sort((a, b) => b - a); if (dims[0] > 30 && dims[1] > 25 && dims[2] < 6) out.push(o); });
+    return out;
   }
 
   // ---------------------------------------------------------------- per frame
@@ -234,6 +283,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       p.x = THREE.MathUtils.clamp(p.x, L.x0 - 60, L.x1 - 4); p.z = THREE.MathUtils.clamp(p.z, -L.halfWidth + 3, L.halfWidth - 3);
       mv.subVectors(p, camera.position); camera.position.add(mv); controls.target.add(mv); controls.update();
     }
+    keepInside();
     if (st.sel) {
       scr.copy(st.selCentre).project(camera);
       const r = renderer.domElement, w = r.clientWidth, h = r.clientHeight;
