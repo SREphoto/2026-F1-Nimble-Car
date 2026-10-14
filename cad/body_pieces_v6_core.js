@@ -75,10 +75,10 @@ export function podSection(P, t) {
 export const tubeR = (x) => lerp(0.62, 0.3, sstep(x, 11, 32.6));
 export function tube(P) { const r = tubeR(P.x); return { r, yR: P.yO - r, zR: P.zO + 0.18 }; }
 export function topSection(P, u) { const T = tube(P), th = 2.1, e = [T.yR + T.r * Math.cos(th), T.zR + T.r * Math.sin(th)];
-  return bez([P.yIn, P.zIn], [lerp(P.yIn, e[0], 0.4), lerp(P.zIn, e[1], 0.8)], [e[0] - 0.25 * Math.sin(th) * -1, e[1] - 0.25 * Math.cos(th)], e, u); }
-export function sideSection(P, t) { const T = tube(P), cr = [T.yR + 0.05, T.zR - T.r - 0.08]; // crease under the tube
+  return bez([P.yIn, P.zIn], [lerp(P.yIn, e[0], 0.4), lerp(P.zIn, e[1], 0.8)], [e[0] + 0.45 * Math.sin(th), e[1] - 0.45 * Math.cos(th)], e, u); } // tangent into the tube (fillet)
+export function sideSection(P, t) { const T = tube(P), cr = [T.yR + T.r * Math.cos(-1.65), T.zR + T.r * Math.sin(-1.65)]; // crisp crease: tube bottom, side leaves inward
   const F = [P.yF, P.zF], U = [P.yU, P.zU];
-  if (t <= 1) { const h = cr[1] - P.zF; return bez(cr, [P.yO - 0.05, cr[1] - 0.15 * h], [P.yF + 0.2, P.zF + 0.45 * h], F, t); }
+  if (t <= 1) { const h = cr[1] - P.zF; return bez(cr, [cr[0] - 0.2, cr[1] - 0.05 * h], [P.yF + 0.2, P.zF + 0.45 * h], F, t); }
   const u = t - 1, d = P.yF - P.yU; return bez(F, [P.yF - 0.05, P.zF - 0.55 * (P.zF - P.zU)], [P.yU + 0.55 * d, P.zU + 0.1], U, u); }
 
 // ---------------------------------------------------------------------------------------
@@ -141,11 +141,11 @@ export function buildBodyV6(opts = {}) {
   const tubeAt = (P, th) => { const T = tube(P); return [T.yR + T.r * Math.cos(th), T.zR + T.r * Math.sin(th)]; };
   // ridge: closed round tube, front end capped by a dome curling into the inlet top, rear end tapering shut
   { const N = 28, xr = xsr(X.podFront, X.ridgeEnd, 0.25);
-    const tr = xr.map((x) => { const P = podAt(x), T = tube(P), k = sstep(x, X.ridgeEnd - 1.2, X.ridgeEnd) * 0.85;
-      return Array.from({ length: N }, (_, j) => { const th = j / N * Math.PI * 2; return [x, T.yR + T.r * (1 - k) * Math.cos(th), T.zR + T.r * (1 - k) * Math.sin(th)]; }); });
+    const tr = xr.map((x) => { const P = podAt(x), T = tube(P), k = 0;
+      return Array.from({ length: N }, (_, j) => { const th = 2.1 - (2.1 + 1.65) * j / (N - 1); return [x, T.yR + T.r * (1 - k) * Math.cos(th), T.zR + T.r * (1 - k) * Math.sin(th)]; }); });
     const P0 = podAt(X.podFront), T0 = tube(P0);
     const cap = tsr(1, 0, 5).slice(0, 5).map((c) => tr[0].map(([x, y, z]) => [X.podFront - T0.r * 0.6 * Math.sqrt(1 - c * c), T0.yR + (y - T0.yR) * c, T0.zR + (z - T0.zR) * c]));
-    both('Sidepod_Ridge', 'Body_Sidepods', gridMesh([...cap, ...tr], true, (p) => { const T = tube(podAt(p[0])); return [p[0], T.yR, T.zR]; }), 'paint', [0, 2.2, 3.0], FN.ridge); }
+    both('Sidepod_Ridge', 'Body_Sidepods', gridMesh([...cap, ...tr], false, (p) => { const T = tube(podAt(p[0])); return [p[0], T.yR, T.zR]; }), 'paint', [0, 2.2, 3.0], FN.ridge); }
   both('Sidepod_Top_Panel', 'Body_Sidepods', gridMesh(rings(X.podFront, X.ridgeEnd, topSection, 14), false, podIn), 'paint', [0, 1.2, 4.2], FN.top);
   both('Sidepod_Body', 'Body_Sidepods', gridMesh(rings(X.podFront, X.taper, (P, u) => sideSection(P, u), 14), false, podIn), 'paint', [0, 4.0, 0.6], FN.side);
   both('Sidepod_Undercut_Panel', 'Body_Sidepods', gridMesh(rings(X.podFront, X.taper, (P, u) => sideSection(P, 1 + u), 12), false, podIn), 'paint', [0, 4.2, -1.4], FN.undercut);
@@ -161,8 +161,11 @@ export function buildBodyV6(opts = {}) {
     const lip = [[X.podFront + 0.25, 0], [X.podFront - 0.02, 0.02], [X.podFront - 0.05, 0.12], [X.podFront + 0.05, 0.2], [X.podFront + 0.3, 0.2]];
     const lipRings = lip.map(([x, g]) => Array.from({ length: N }, (_, k) => { const [y, z] = sq(k, N, g); return [x, y, z]; }));
     both('Sidepod_Inlet_Lip', 'Body_Sidepods', gridMesh(lipRings, true, () => [X.podFront + 2, yc, zc]), 'carbon', [-2.4, 1.8, 0.4], FN.inlet);
-    const duct = xsr(X.podFront + 0.25, X.podFront + 1.6, 0.27).map((x, i, a) => Array.from({ length: N }, (_, k) => { const s = 1 - 0.25 * i / (a.length - 1); const [y, z] = sq(k, N, 0); return [x, yc + (y - yc) * s, zc + (z - zc) * s]; }));
+    const duct = xsr(X.podFront + 0.25, X.podFront + 0.95, 0.175).map((x, i, a) => Array.from({ length: N }, (_, k) => { const s = 1 - 0.25 * i / (a.length - 1); const [y, z] = sq(k, N, 0); return [x, yc + (y - yc) * s, zc + (z - zc) * s]; }));
     both('Sidepod_InletDuct', 'Body_Sidepods', gridMesh(duct, true, (p) => [p[0], yc + 3, zc]), 'dark', [-1.6, 1.8, 0.4], FN.inlet);
+    { const last = duct[duct.length - 1], xb = last[0][0];
+      const back = tsr(0, 1, 3).map((t) => last.map(([x, y, z]) => [xb + 0.02, yc + (y - yc) * (1 - t), zc + (z - zc) * (1 - t)]));
+      both('Sidepod_InletMouth', 'Body_Sidepods', gridMesh(back, true, (p) => [p[0] - 1, p[1], p[2]]), 'dark', [-1.4, 1.8, 0.4], FN.inlet); }
     // front lower face: from the mouth bottom down to the undercut start
     const fr = tsr(0, 1, 6).map((v) => tsr(0.55, 1.8, 12).map((t) => { const [y, z] = sideSection(P, t); const zt = z0 - 0.2; const zz = Math.min(z, lerp(zt, z, v)); return [X.podFront + 0.02, lerp(y0 - 0.1, y, Math.max(v, 0)), zz]; }));
     both('Sidepod_Front_Face', 'Body_Sidepods', gridMesh(fr, false, (p) => [p[0] + 3, p[1], p[2]]), 'paint', [-2.0, 2.6, -0.4], FN.front);

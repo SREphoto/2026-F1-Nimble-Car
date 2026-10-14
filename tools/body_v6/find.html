@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script></head><body><pre id="o"></pre>
+<script type="module">
+import * as THREE from 'three';
+import { createFullCarAssembly } from '../../cad/full_car3d.js';
+const P = new URLSearchParams(location.search), b = (P.get('box') || '8,2.5,5,11,5,5.7').split(',').map(Number);
+const q = new THREE.Box3(new THREE.Vector3(b[0], b[1], b[2]), new THREE.Vector3(b[3], b[4], b[5]));
+const car = createFullCarAssembly(); car.updateMatrixWorld(true); const out = [];
+car.traverse(o => { if (!o.isMesh) return; const bb = new THREE.Box3().setFromObject(o); if (bb.intersectsBox(q)) out.push(o.name + ' < ' + o.parent?.name + ' ' + [bb.min.x, bb.min.y, bb.min.z, bb.max.x, bb.max.y, bb.max.z].map(v => v.toFixed(1)).join(',')); });
+document.getElementById('o').textContent = out.join('\n');
+</script></body></html>
