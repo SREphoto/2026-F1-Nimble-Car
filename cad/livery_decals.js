@@ -288,6 +288,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     // Body v4: ORACLE sits on the OUTER face of the sidepod ridge and follows the ridge's rise
     // toward the cockpit (ridge spline stored on the pod by body_center_v4.js).
     const ridge = pod.userData.ridge;
+    // body v5: the ridge is its own panel; project ORACLE onto it
+    const ridgeMesh = byName(`Sidepod_Ridge_${s > 0 ? 'LH' : 'RH'}`) || pod;
     if (ridge) {
       const at = (x) => { let i = 0; while (i < ridge.length - 2 && x > ridge[i + 1].x) i++; const p = ridge[i], q = ridge[i + 1]; const t = THREE.MathUtils.clamp((x - p.x) / (q.x - p.x), 0, 1); return { y: p.y + (q.y - p.y) * t, z: p.z + (q.z - p.z) * t, r: p.r + (q.r - p.r) * t }; };
       const xa = 12.8, xb = 19.6, xc = (xa + xb) / 2, A = at(xa), B = at(xb), C = at(xc);
@@ -296,7 +298,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
       const nrm = [0, s * Math.cos(fa), Math.sin(fa)];
       const pt = [xc, C.y + s * C.r * Math.cos(fa), C.z + C.r * Math.sin(fa)];
       const w = (xb - xa) * 1.15;
-      project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
+      project(`Sidepod_ORACLE_${sideName(s)}`, ridgeMesh, {
         origin: [pt[0] + nrm[0] * 4, pt[1] + nrm[1] * 4, pt[2] + nrm[2] * 4], dir: nrm.map((v) => -v),
         up: [-m, 0, 1], size: [w, w / 6.5, 1.2], texture: tex.sidepod[s],
       });
@@ -305,28 +307,35 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
       up: [-0.176, 0, 1], size: [L * 0.45, L * 0.45 / 6.5, 2.2], texture: tex.sidepod[s],
     });
     // ROKT reads from the side of the car: artwork up points toward the centreline
-    project(`Sidepod_ROKT_${sideName(s)}`, pod, {
+    const podTop = byName(`Sidepod_Top_Panel_${s > 0 ? 'LH' : 'RH'}`) || pod;
+    { const b = carBox(podTop); const L = b.max.x - b.min.x;
+    project(`Sidepod_ROKT_${sideName(s)}`, podTop, {
       origin: [b.min.x + L * 0.2, (b.min.y + b.max.y) / 2 + s * (b.max.y - b.min.y) * 0.12, b.max.z + 5], dir: [0, 0, -1],
       up: [0, -s, 0], size: [2.6, 0.65, 1.0], texture: tex.rokt,
-    });
+    }); }
   });
 
   // ---- Engine cover: big charging bull + Red Bull on each flank, sun disc on top ----
-  const ec = byName('EngineCover_MainShell');
+  // body v5: cover = spine + separate side panels; flank decals go on each side panel
+  const ecSpine = byName('EngineCover_Spine');
+  const ecSide = (s) => byName(`EngineCover_SidePanel_${s > 0 ? 'LH' : 'RH'}`) || ecSpine;
+  const ec = ecSpine || byName('EngineCover_MainShell');
   if (ec) {
     const b = carBox(ec); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
     sides.forEach((s) => {
+      const ecs = ecSide(s);
+      const b = carBox(ecs); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
       // body v4: the cover flank slopes, so aim down onto it and keep the bull to the flank
-      project(`EngineCover_Bull_${sideName(s)}`, ec, {
+      project(`EngineCover_Bull_${sideName(s)}`, ecs, {
         origin: [22.6, s * 6.0, 9.0], dir: [0, -s * 0.72, -0.69],
         up: [0, -s * 0.69, 0.72], size: [9.5, 4.75, 2.2], texture: tex.engine[s],
       });
-      project(`EngineCover_RedBull_${sideName(s)}`, ec, {
+      project(`EngineCover_RedBull_${sideName(s)}`, ecs, {
         origin: [b.min.x + L * 0.56, s * (absMaxY(b) + 5), b.min.z + H * 0.3], dir: [0, -s, 0],
         up: [0, 0, 1], size: [L * 0.36, L * 0.09, absMaxY(b) * 1.2], texture: tex.redBull,
       });
       // RB22 is Red Bull Ford: Ford Racing on the rear of the engine cover flank (no Honda, no Castrol).
-      project(`EngineCover_FordRacing_${sideName(s)}`, ec, {
+      project(`EngineCover_FordRacing_${sideName(s)}`, ecs, {
         origin: [b.min.x + L * 0.86, s * (absMaxY(b) + 5), b.min.z + H * 0.42], dir: [0, -s, 0],
         up: [0, 0, 1], size: [L * 0.13, L * 0.065, absMaxY(b) * 1.2], texture: tex.ford, renderOrder: 2,
       });
@@ -435,7 +444,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   }).filter(Boolean);
   const pods = ['LH', 'RH'].map((t) => byName(`Sidepod_Body_${t}`)).filter(Boolean);
   const targetFor = (t, s) => ({
-    nose, engineCover: ec, tub: tubSkin, rearWingMain: rwMain,
+    nose, engineCover: (s > 0 ? ecSide(1) : ecSide(-1)), tub: tubSkin, rearWingMain: rwMain,
     sidepod: pickSide(pods, s), frontEndplate: pickSide(frontEndplates, s), rearEndplate: pickSide(rearEndplates, s),
   })[t];
   const built = new Set();
@@ -451,7 +460,20 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
       const order = spec.kind === 'panel' ? 1 : 3;
       const faceSides = spec.face === 'top' && !['sidepod'].includes(spec.target) ? [1] : sides;
       faceSides.forEach((s) => {
-        const mesh = targetFor(spec.target, s);
+        let mesh = targetFor(spec.target, s);
+        // body v5: the pod is several panels; top decals go on the top panel, side decals on
+        // whichever of flank / undercut / ridge the ray lands on at the requested spot
+        if (spec.target === 'sidepod' && mesh) {
+          const t = s > 0 ? 'LH' : 'RH';
+          if (spec.face === 'top') mesh = byName(`Sidepod_Top_Panel_${t}`) || mesh;
+          else {
+            const cands = [mesh, byName(`Sidepod_Undercut_Panel_${t}`), byName(`Sidepod_Ridge_${t}`)].filter(Boolean);
+            const bb = carBox(mesh); const Lx = bb.max.x - bb.min.x;
+            mesh = cands.find((c) => { const cb = carBox(c); for (let zf = 0.9; zf > 0.05; zf -= 0.1) {
+              raycaster.set(toWorldPoint([bb.min.x + Lx * spec.x, s * (absMaxY(cb) + 5), cb.min.z + (cb.max.z - cb.min.z) * zf]), toWorldDir([0, -s, 0]));
+              if (raycaster.intersectObject(c, false).length) return true; } return false; }) || mesh;
+          }
+        }
         if (!mesh) { report.skipped.push(`${team.id}#${i}: no ${spec.target}`); return; }
         const b = carBox(mesh); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z; const Wy = b.max.y - b.min.y;
         const { texture, aspect } = createTeamDecalTexture(spec, { frontIsLeft: frontIsLeft(s) });
@@ -470,10 +492,11 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
           const w = L * spec.w; const h = spec.h ? H * spec.h : w / (aspect || 4);
           // tapered parts: if the requested height misses the part, slide down until the ray lands
           let zf = spec.z ?? 0.5;
-          for (; zf > 0.05; zf -= 0.05) {
-            raycaster.set(toWorldPoint([b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * zf]), toWorldDir([0, -s, 0]));
-            if (raycaster.intersectObject(mesh, false).length) break;
-          }
+          const hitAt = (z) => { raycaster.set(toWorldPoint([b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * z]), toWorldDir([0, -s, 0])); return raycaster.intersectObject(mesh, false).length > 0; };
+          const z0 = zf;
+          for (; zf > 0.05 && !hitAt(zf); zf -= 0.05);
+          // panels with a tucked-in lower edge (v5 flank): search upward instead
+          if (!hitAt(zf)) for (zf = z0; zf < 0.95 && !hitAt(zf); zf += 0.05);
           d = project(name, mesh, { origin: [b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * zf], dir: [0, -s, 0],
             up: [0, 0, 1], size: [w, h, Math.max(1.2, absMaxY(b) * 1.6)], texture, renderOrder: order });
         }

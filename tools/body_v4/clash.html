@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { createFullCarAssembly } from '../../cad/full_car3d.js';
 const car = createFullCarAssembly(); car.updateMatrixWorld(true);
-const skinRoots = ['Body_Center_V4', 'Body_Monocoque_CarbonTub_Skin', 'Airbox_RollHoop_Intake', 'Floor_MainPlate', 'Carbon_Underbody_Floor', 'Body_Cockpit_CoamingRim_LH', 'Body_Cockpit_CoamingRim_RH', 'Cockpit_Headrest_Assembly'];
+const skinRoots = ['Body_Main_V5', 'Body_Monocoque_CarbonTub_Skin', 'Airbox_RollHoop_Intake', 'Floor_MainPlate', 'Carbon_Underbody_Floor', 'Body_Cockpit_CoamingRim_LH', 'Body_Cockpit_CoamingRim_RH', 'Cockpit_Headrest_Assembly'];
 const skins = []; skinRoots.forEach(n => { const r = car.getObjectByName(n); r && r.traverse(o => { if (o.isMesh) { o.material.side = THREE.DoubleSide; skins.push(o); } }); });
 const checkRoots = ['Powertrain_Moving_Internals_Assembly', 'High_Voltage_800V_Network', 'Assembly_EnergyStore_Battery_Internals', 'Assembly_FuelCell', 'Harness_Master_Chassis_Spine', 'Assembly_SECU_EngineControlUnit', 'Grounding_Bonding_Straps', 'Gearbox_Structural_Casing', 'Assembly_Carbon_Clutch_Pack', 'Kinematic_8Speed_GearTrain_Assembly', 'Body_RollHoop_Primary_172kN'];
 const dirs = [[0,0,1],[0,1,0],[0,-1,0],[0,0.7,0.7],[0,-0.7,0.7],[1,0,0.3]].map(d => new THREE.Vector3(...d).normalize());

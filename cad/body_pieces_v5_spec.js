@@ -109,7 +109,7 @@ export const BODY_V5 = {
     explode: [3.5, 0, 2.0],
   },
   kneeProtection: {
-    function: 'Cockpit side panels beside the driver\\'s knees (X 7.6-10.4): add side-impact protection over the SIPS crush tubes and fill the gap between the tub and the pod inlet.',
+    function: "Cockpit side panels beside the driver's knees (X 7.6-10.4): add side-impact protection over the SIPS crush tubes and fill the gap between the tub and the pod inlet.",
     wraps: 'SIPS crush tubes X 8.9-13.1, y 2.88-3.32',
     x0: 7.7, x1: 10.0, z0: 2.6, z1: 4.25, gap: 0.04,
     explode: [0, 3.0, 0.8],

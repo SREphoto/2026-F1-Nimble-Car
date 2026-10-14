@@ -28,6 +28,7 @@ import { createElectricalHarness } from './electrical_wiring_harness.js';
 import { createPowertrainInternals } from './powertrain_moving_internals.js';
 import { createTransmissionGears } from './transmission_moving_gears.js';
 import { createSuspensionSteering } from './suspension_steering_assembly.js';
+import { setBodyExplode, setBodyPieceVisible } from './body_pieces_v5.js';
 import { createFloorAeroSurfaces } from './floor_aero_surfaces.js';
 import { createActiveWingsBodywork } from './active_wings_bodywork.js';
 
@@ -73,6 +74,11 @@ export function createFullCarAssembly(options = {}) {
   // 9. Active Wings & Sculpted Bodywork
   subassemblies.bodywork = createActiveWingsBodywork(options);
   masterCar.add(subassemblies.bodywork);
+
+  // Garage: remove/restore individual body panels by name
+  const bodyV5 = subassemblies.bodywork.getObjectByName('Body_Main_V5');
+  masterCar.userData.bodyPieces = bodyV5;
+  masterCar.userData.setBodyPieceVisible = (name, v) => setBodyPieceVisible(bodyV5, name, v);
 
   // Cache movable kinematic nodes for high-performance 60fps animation
   const kinematics = {
@@ -276,6 +282,7 @@ export function createFullCarAssembly(options = {}) {
     }
 
     // 6. Dramatic Exploded View Offsets (Exhaustive Mechanical Exposure)
+    if (bodyV5) setBodyExplode(bodyV5, explodedProgress);
     if (explodedProgress > 0) {
       // Bodywork elevates high overhead (+18.0 dm = 1.8 meters)
       if (subassemblies.bodywork) {

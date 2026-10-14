@@ -19,7 +19,7 @@ import {
   createRearWingEndplateInnerTexture
 } from './procedural_livery.js';
 import { createWingElement, elementEdges } from './aero_profiles.js';
-import { createBodyCenterV4 } from './body_center_v4.js';
+import { createBodyPiecesV5 } from './body_pieces_v5.js';
 
 /**
  * Front wing layout (front-wing group frame: origin 0.55 dm above the ground at x = -8.6).
@@ -564,8 +564,8 @@ export function createActiveWingsBodywork(options = {}) {
   // 2. MAIN BODY / CENTRE SECTION (body v4, cad/body_center_v4.js): sidepods built around the
   // rising ridge, inlets, engine cover with centre seam, tail closure.
   // =========================================================================
-  const bodyV4 = createBodyCenterV4({ paint: navyMat, carbon: carbonMat });
-  group.add(bodyV4);
+  const bodyV5 = createBodyPiecesV5({ paint: navyMat, carbon: carbonMat });
+  group.add(bodyV5);
 
   // =========================================================================
   // 3. ENGINE COVER, PRIMARY AIRBOX & DORSAL SHARK FIN
