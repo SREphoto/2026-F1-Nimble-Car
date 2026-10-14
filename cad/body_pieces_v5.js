@@ -72,7 +72,7 @@ export function createBodyPiecesV5({ paint, carbon, dark, spec = BODY_V5 } = {})
   const xR0 = S.ridge.spline[0].x, xR1 = S.ridge.spline[S.ridge.spline.length - 1].x;
   const coverX0 = S.cover.stations[0].x;
   // side-panel surface height at |y| (concave fall from spine edge to base)
-  const sideZ = (c, y) => { const t = THREE.MathUtils.clamp((Math.abs(y) - c.ws) / (c.w - c.ws), 0, 1); return lerp(c.ze, c.zb, 1 - Math.pow(1 - t, 1.8)); };
+  const sideZ = (c, y) => { const t = THREE.MathUtils.clamp((Math.abs(y) - c.ws) / (c.w - c.ws), 0, 1); return lerp(c.ze, c.zb, Math.pow(t, 1.8)); }; // convex shoulder: stays over the fuel cell / inverters, drops at the edge
   // pod inboard join: cockpit rim at the front, tucked under the cover side panel further back
   const podAt = (x) => {
     const P = Pd(x);
