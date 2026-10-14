@@ -331,7 +331,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
         up: [0, -s * 0.69, 0.72], size: [9.5, 4.75, 2.2], texture: tex.engine[s],
       });
       project(`EngineCover_RedBull_${sideName(s)}`, ecs, {
-        origin: [b.min.x + L * 0.56, s * (absMaxY(b) + 5), b.min.z + H * 0.3], dir: [0, -s, 0],
+        origin: [b.min.x + L * 0.56, s * (absMaxY(b) + 5), b.min.z + H * 0.55], dir: [0, -s, 0],
         up: [0, 0, 1], size: [L * 0.36, L * 0.09, absMaxY(b) * 1.2], texture: tex.redBull,
       });
       // RB22 is Red Bull Ford: Ford Racing on the rear of the engine cover flank (no Honda, no Castrol).
