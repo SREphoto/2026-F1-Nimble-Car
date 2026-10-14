@@ -6,6 +6,7 @@ import { createFullCarAssembly } from '../../cad/full_car3d.js';
 import { materials, applyCarEnvironment } from '../../materials.js';
 import { applyLivery } from '../../cad/livery_decals.js';
 import { applyTeamTheme } from '../../teams.js';
+import { setBodyExplode } from '../../cad/body_pieces_v5.js';
 const P = new URLSearchParams(location.search);
 const view = P.get('view') || 'rear34', mode = P.get('mode') || 'wire', team = P.get('team') || 'redbull';
 const W = innerWidth, H = innerHeight;
@@ -26,6 +27,16 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.5 : 1.0));
 const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.8 : 1.6); scene.add(dl); dl.userData.key = true;
 const dl2 = new THREE.DirectionalLight(0xbfd0ff, wireMode ? 0.6 : 0.5); dl2.position.set(30, 10, -30); scene.add(dl2);
 
+// v5: explode only the new body pieces (explode=0..1)
+const ex = +(P.get('explode') || 0); if (ex) setBodyExplode(car.getObjectByName('Body_Main_V5'), ex);
+// soft studio lighting: soft shadows from the key + large fill, shadow-catcher floor
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+dl.castShadow = true; dl.shadow.mapSize.set(2048, 2048); dl.shadow.radius = 6; dl.shadow.bias = -0.0004;
+Object.assign(dl.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 200 });
+const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-40, 30, 40); scene.add(fill);
+car.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+const sc = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.ShadowMaterial({ opacity: 0.35 }));
+sc.rotation.x = -Math.PI / 2; sc.position.y = 0.02; sc.receiveShadow = true; scene.add(sc);
 const hide = (P.get('hide') || '').split(',').filter(Boolean);
 car.traverse(o => { if (hide.some(h => o.name && o.name.includes(h))) o.visible = false; });
 if (mode === 'wire') {
@@ -59,6 +70,20 @@ root.updateMatrixWorld(true);
 cam.position.copy(toW(c)); cam.up.set(0, 1, 0); if (view === 'top') cam.up.copy(toW([-1, 0, 0]).sub(toW([0, 0, 0])));
 cam.lookAt(toW(t));
 dl.position.copy(toW(t)).add(cam.position.clone().sub(toW(t)).multiplyScalar(0.5)).add(new THREE.Vector3(0, 45, 0)); dl.target.position.copy(toW(t)); scene.add(dl.target);
-renderer.render(scene, cam);
-document.title = 'READY';
+dl.shadow.camera.updateProjectionMatrix();
+let rendered = false;
+if (P.get('ao') !== '0') try {
+  const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js');
+  const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js');
+  const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js');
+  const comp = new EffectComposer(renderer); comp.addPass(new RenderPass(scene, cam));
+  let ao;
+  try { const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js'); ao = new GTAOPass(scene, cam, W, H);
+    ao.updateGtaoMaterial({ radius: 1.2, distanceExponent: 1, thickness: 1.5, scale: 1.2 }); ao.blendIntensity = 1.0; }
+  catch (e) { const { SAOPass } = await import('three/addons/postprocessing/SAOPass.js'); ao = new SAOPass(scene, cam);
+    Object.assign(ao.params, { saoIntensity: 0.02, saoScale: 4, saoKernelRadius: 30, saoBlur: true }); }
+  comp.addPass(ao); comp.addPass(new OutputPass()); comp.render(); rendered = true; document.title = 'AO';
+} catch (e) { console.error('AO failed', e); }
+if (!rendered) renderer.render(scene, cam);
+document.title += ' READY';
 </script></body></html>
