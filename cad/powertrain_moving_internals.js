@@ -44,18 +44,18 @@ export const PU_SPEC = {
 export const COOLING_SPEC = {
   coolers: [
     // name, centre, size [thickness, width, height], lean about Y (rad), core type
-    { name: 'Cooler_Radiator_Water_LH', at: [11.0, 4.25, 2.2], size: [0.3, 2.5, 2.1], lean: -0.55, core: 'water' },
-    { name: 'Cooler_Radiator_Water_RH', at: [11.0, -4.25, 2.2], size: [0.3, 2.5, 2.1], lean: -0.55, core: 'water' },
+    { name: 'Cooler_Radiator_Water_LH', at: [11.3, 4.2, 3.3], size: [0.3, 1.7, 1.9], lean: -0.55, core: 'water' },
+    { name: 'Cooler_Radiator_Water_RH', at: [11.3, -4.2, 3.3], size: [0.3, 1.7, 1.9], lean: -0.55, core: 'water' },
     { name: 'Cooler_ChargeAir_LH', at: [22.75, 2.15, 1.2], size: [1.3, 0.95, 0.95], lean: 0, core: 'air', alongX: true },
-    { name: 'Cooler_Oil_RH', at: [15.4, -4.3, 1.9], size: [0.25, 2.0, 1.6], lean: -0.45, core: 'oil' },
-    { name: 'Cooler_ERS_LH', at: [15.4, 4.3, 1.9], size: [0.25, 2.0, 1.6], lean: -0.45, core: 'water' },
+    { name: 'Cooler_Oil_RH', at: [15.5, -4.2, 2.95], size: [0.25, 1.6, 1.4], lean: -0.45, core: 'oil' },
+    { name: 'Cooler_ERS_LH', at: [15.5, 4.2, 2.95], size: [0.25, 1.6, 1.4], lean: -0.45, core: 'water' },
   ],
   hoses: [
-    { name: 'Hose_Water_Feed_LH', r: 0.1, mat: 'rubber', pts: [[11.4, 3.4, 1.05], [16.0, 3.45, 0.95], [20.5, 3.3, 0.95], [22.0, 2.6, 1.0], [22.2, 1.05, 1.05]] },
-    { name: 'Hose_Water_Return_LH', r: 0.1, mat: 'rubber', pts: [[11.6, 3.3, 3.0], [16.5, 3.5, 1.3], [20.5, 3.45, 1.3], [21.9, 2.5, 1.6], [22.2, 0.95, 2.6]] },
-    { name: 'Hose_Water_Feed_RH', r: 0.1, mat: 'rubber', pts: [[11.4, -3.4, 1.05], [16.0, -3.45, 0.95], [20.5, -3.3, 0.95], [22.0, -2.5, 0.95], [22.25, -1.9, 1.0]] },
-    { name: 'Hose_Water_Return_RH', r: 0.1, mat: 'rubber', pts: [[11.6, -3.3, 3.0], [16.5, -3.5, 1.3], [20.5, -3.45, 1.3], [21.9, -2.5, 1.6], [22.2, -1.0, 2.5]] },
-    { name: 'Hose_Oil_Feed_RH', r: 0.07, mat: 'braid', pts: [[15.6, -3.4, 1.2], [19.0, -3.2, 1.15], [21.9, -2.7, 1.2], [22.25, -1.0, 0.85]] },
+    { name: 'Hose_Water_Feed_LH', r: 0.1, mat: 'rubber', pts: [[11.6, 3.4, 2.5], [16.0, 3.45, 2.3], [20.5, 3.2, 2.0], [22.0, 2.5, 1.5], [22.2, 1.05, 1.05]] },
+    { name: 'Hose_Water_Return_LH', r: 0.1, mat: 'rubber', pts: [[11.7, 3.4, 3.6], [16.5, 3.5, 2.8], [20.5, 3.2, 2.5], [21.9, 2.4, 2.2], [22.2, 0.95, 2.6]] },
+    { name: 'Hose_Water_Feed_RH', r: 0.1, mat: 'rubber', pts: [[11.6, -3.4, 2.5], [16.0, -3.45, 2.3], [20.5, -3.2, 2.0], [22.0, -2.5, 1.5], [22.25, -1.9, 1.0]] },
+    { name: 'Hose_Water_Return_RH', r: 0.1, mat: 'rubber', pts: [[11.7, -3.4, 3.6], [16.5, -3.5, 2.8], [20.5, -3.2, 2.5], [21.9, -2.4, 2.2], [22.2, -1.0, 2.5]] },
+    { name: 'Hose_Oil_Feed_RH', r: 0.07, mat: 'braid', pts: [[15.6, -3.5, 2.3], [19.0, -3.2, 1.9], [21.9, -2.5, 1.4], [22.25, -1.0, 0.85]] },
     { name: 'Pipe_ChargeAir_Hot', r: 0.2, mat: 'alloy', pts: [[27.3, 0.42, 4.68], [26.4, 0.95, 4.42], [24.8, 1.45, 3.78], [23.6, 1.75, 2.9], [23.4, 2.1, 1.75]] },
     { name: 'Pipe_ChargeAir_Cold', r: 0.2, mat: 'alloy', pts: [[22.4, 2.1, 1.75], [22.32, 1.75, 2.9], [22.45, 1.0, 3.62], [22.72, 0.3, 3.68]] },
   ],

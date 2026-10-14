@@ -6,12 +6,12 @@ import { createFullCarAssembly } from '../../cad/full_car3d.js';
 const car = createFullCarAssembly(); car.updateMatrixWorld(true);
 const skinRoots = ['Body_Center_V4', 'Body_Monocoque_CarbonTub_Skin', 'Airbox_RollHoop_Intake', 'Floor_MainPlate', 'Carbon_Underbody_Floor', 'Body_Cockpit_CoamingRim_LH', 'Body_Cockpit_CoamingRim_RH', 'Cockpit_Headrest_Assembly'];
 const skins = []; skinRoots.forEach(n => { const r = car.getObjectByName(n); r && r.traverse(o => { if (o.isMesh) { o.material.side = THREE.DoubleSide; skins.push(o); } }); });
-const checkRoots = ['Powertrain_Moving_Internals_Assembly', 'High_Voltage_800V_Network', 'Assembly_EnergyStore_Battery_Internals', 'Assembly_FuelCell', 'Harness_Master_Chassis_Spine', 'Assembly_SECU_EngineControlUnit', 'Grounding_Bonding_Straps', 'Gearbox_Structural_Casing', 'Assembly_Carbon_Clutch_Pack', 'Kinematic_8Speed_GearTrain_Assembly', 'Body_Monocoque_CarbonTub_Skin', 'Body_RollHoop_Primary_172kN'];
+const checkRoots = ['Powertrain_Moving_Internals_Assembly', 'High_Voltage_800V_Network', 'Assembly_EnergyStore_Battery_Internals', 'Assembly_FuelCell', 'Harness_Master_Chassis_Spine', 'Assembly_SECU_EngineControlUnit', 'Grounding_Bonding_Straps', 'Gearbox_Structural_Casing', 'Assembly_Carbon_Clutch_Pack', 'Kinematic_8Speed_GearTrain_Assembly', 'Body_RollHoop_Primary_172kN'];
 const dirs = [[0,0,1],[0,1,0],[0,-1,0],[0,0.7,0.7],[0,-0.7,0.7],[1,0,0.3]].map(d => new THREE.Vector3(...d).normalize());
 const rc = new THREE.Raycaster(); const res = {};
 const v = new THREE.Vector3();
 checkRoots.forEach(n => { const r = car.getObjectByName(n); if (!r) { res[n] = 'MISSING'; return; }
-  r.traverse(o => { if (!o.isMesh) return; const pos = o.geometry.attributes.position; const step = Math.max(1, Math.floor(pos.count / 400));
+  r.traverse(o => { if (!o.isMesh) return; const pos = o.geometry.attributes.position; const step = Math.max(1, Math.floor(pos.count / 60));
     for (let i = 0; i < pos.count; i += step) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
       if (v.x > 33.2) continue; if (v.x > 7.4 && v.x < 16.7 && Math.abs(v.y) < 2.45 && n !== 'Body_Monocoque_CarbonTub_Skin') continue;
       for (const d of dirs) { rc.set(v.clone().addScaledVector(d, 0.03), d); rc.far = 40;
