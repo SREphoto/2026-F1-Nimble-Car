@@ -6,7 +6,7 @@ import { createFullCarAssembly } from '../../cad/full_car3d.js';
 import { materials, applyCarEnvironment } from '../../materials.js';
 import { applyLivery } from '../../cad/livery_decals.js';
 import { applyTeamTheme } from '../../teams.js';
-import { setBodyExplode } from '../../cad/body_pieces_v5.js';
+import { setBodyExplode } from '../../cad/body_pieces_v6.js';
 const P = new URLSearchParams(location.search);
 const view = P.get('view') || 'rear34', mode = P.get('mode') || 'wire', team = P.get('team') || 'redbull';
 const W = innerWidth, H = innerHeight;
@@ -28,7 +28,7 @@ const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.8 : 1.6); scene.add
 const dl2 = new THREE.DirectionalLight(0xbfd0ff, wireMode ? 0.6 : 0.5); dl2.position.set(30, 10, -30); scene.add(dl2);
 
 // v5: explode only the new body pieces (explode=0..1)
-const ex = +(P.get('explode') || 0); if (ex) setBodyExplode(car.getObjectByName('Body_Main_V5'), ex);
+const ex = +(P.get('explode') || 0); if (ex) setBodyExplode(car.getObjectByName('Body_Main_V6'), ex);
 // soft studio lighting: soft shadows from the key + large fill, shadow-catcher floor
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 dl.castShadow = true; dl.shadow.mapSize.set(2048, 2048); dl.shadow.radius = 6; dl.shadow.bias = -0.0004;
