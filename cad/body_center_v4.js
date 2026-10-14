@@ -19,8 +19,8 @@ export const BODY_V4_SPEC = {
   floorZ: 0.5,
   // Ridge spline per side (left side; mirrored for the right). r = ridge tube radius.
   ridge: [
-    { x: 9.6, y: 4.55, z: 4.8, r: 0.5 },
-    { x: 10.6, y: 5.05, z: 4.95, r: 0.62 },
+    { x: 9.6, y: 4.95, z: 4.85, r: 0.6 },
+    { x: 10.6, y: 5.25, z: 4.95, r: 0.68 },
     { x: 12.5, y: 5.45, z: 4.95, r: 0.7 },
     { x: 15.0, y: 5.6, z: 4.8, r: 0.74 },
     { x: 18.0, y: 5.45, z: 4.5, r: 0.74 },
@@ -38,7 +38,7 @@ export const BODY_V4_SPEC = {
   //  dip  depth of the gully between the ridge and the cover
   //  zBot pod bottom: the inlet box floats at the front, the pod reaches the floor further back
   pod: [
-    { x: 9.6, zFl: 2.45, zBot: 2.3, yUc: 3.55, yIn: 3.0, zIn: 4.35, dip: 0.05 },
+    { x: 9.6, zFl: 2.4, zBot: 2.25, yUc: 3.3, yIn: 3.0, zIn: 4.35, dip: 0.05 },
     { x: 10.6, zFl: 2.4, zBot: 1.6, yUc: 3.3, yIn: 3.0, zIn: 4.3, dip: 0.1 },
     { x: 12.5, zFl: 2.35, zBot: 0.8, yUc: 3.1, yIn: 3.0, zIn: 4.35, dip: 0.15 },
     { x: 15.0, zFl: 2.3, zBot: 0.54, yUc: 3.05, yIn: 2.8, zIn: 4.55, dip: 0.25 },
@@ -137,7 +137,7 @@ function orientOutward(rings, closed) {
 
 // ---- sections ------------------------------------------------------------------------------
 const N_ARC = 22, N_GULLY = 10, N_WALL = 5, N_BOT = 4, N_UC = 10, N_FL = 6;
-const A0 = -1.0, A1 = 2.2; // ridge arc range (rad): outer-lower -> over the top -> inner-upper
+const A0 = -1.25, A1 = 2.25; // ridge arc range (rad): outer-lower -> over the top -> inner-upper
 
 /** Left-side pod section at x: closed ring of [y,z]. */
 function podSection(R, P, floorZ) {
@@ -152,11 +152,11 @@ function podSection(R, P, floorZ) {
   for (let k = 0; k < N_WALL; k++) pts.push([P.yIn, lerp(P.zIn, zB, k / N_WALL)]); // inner wall
   for (let k = 0; k < N_BOT; k++) pts.push([lerp(P.yIn, P.yUc, k / N_BOT), zB]); // floor contact
   const a0 = arc(A0);
-  const fBot = [a0[0] - 0.12, P.zFl];
+  const fBot = [a0[0] - 0.32, P.zFl]; // flank tucked under the ridge so the ridge overhangs it like a tube
   // undercut: deep concave scoop from the floor up and out to the flank bottom
   for (let k = 0; k < N_UC; k++) pts.push(cbez([P.yUc, zB], [P.yUc + 0.05, lerp(zB, P.zFl, 0.75)], [lerp(P.yUc, fBot[0], 0.55), P.zFl - 0.05], fBot, k / N_UC));
   // flat flank up to the ridge (very slight outward bow)
-  for (let k = 0; k < N_FL; k++) { const t = k / N_FL; pts.push([lerp(fBot[0], a0[0], t) + 0.1 * Math.sin(Math.PI * t), lerp(fBot[1], a0[1], t)]); }
+  for (let k = 0; k < N_FL; k++) { const t = k / N_FL; pts.push([lerp(fBot[0], a0[0], t) + 0.04 * Math.sin(Math.PI * t), lerp(fBot[1], a0[1], t)]); }
   return pts;
 }
 
