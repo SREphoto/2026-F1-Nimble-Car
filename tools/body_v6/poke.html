@@ -4,12 +4,12 @@
 // lists non-body meshes with vertices outside the v6 pod skin while other vertices are inside it (poking through)
 import * as THREE from 'three';
 import { createFullCarAssembly } from '../../cad/full_car3d.js';
-import { podAt, sideSection, tube, X } from '../../cad/body_pieces_v6_core.js';
+import { podAt, sideSection, tube, X, notch } from '../../cad/body_pieces_v6_core.js';
 const car = createFullCarAssembly(); car.updateMatrixWorld(true);
 const body = car.getObjectByName('Body_Main_V6'); const skip = new Set(); body.traverse(o => skip.add(o));
 // outer y of the pod at (x,z): sample side section + tube
 const outerY = (x, z) => { const P = podAt(x), T = tube(P); let best = -1;
-  for (let t = 0; t <= 2; t += 0.05) { const [y, zz] = sideSection(P, t); if (Math.abs(zz - z) < 0.12) best = Math.max(best, y); }
+  for (let t = 0; t <= 2; t += 0.05) { const [y, zz] = notch(x, sideSection(P, t)); if (Math.abs(zz - z) < 0.12) best = Math.max(best, y); }
   if (Math.abs(z - T.zR) < T.r) best = Math.max(best, T.yR + Math.sqrt(T.r * T.r - (z - T.zR) ** 2)); return best; };
 const res = []; const v = new THREE.Vector3();
 car.traverse(o => { if (!o.isMesh || skip.has(o) || !o.visible) return; let path = []; let q = o; while (q && q !== car) { path.push(q.name); q = q.parent; }

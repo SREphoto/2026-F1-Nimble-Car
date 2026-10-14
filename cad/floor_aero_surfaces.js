@@ -332,7 +332,6 @@ export function createFloorAeroSurfaces(options = {}) {
       const sMesh = new THREE.Mesh(sGeo, floorCarbon);
       sMesh.rotation.x = Math.PI / 2;
       sMesh.position.set(diffLength / 2, side * yOffset, diffLift / 2);
-      if (sIdx === 0) { const cut = 4.2; sMesh.scale.x = (diffLength - cut) / diffLength; sMesh.position.x += cut / 2; } // body v6: start behind the pod rear taper
       sMesh.name = `Diffuser_InternalStrake_${dSide}_${sIdx}`;
       diffuserGroup.add(sMesh);
     });
