@@ -575,28 +575,31 @@ export function createActiveWingsBodywork(options = {}) {
     // wide inlet under the halo/mirror, undercut below, then a coke-bottle taper
     // inward and downward to the rear. yIn sits inside the tub/engine cover (hidden).
     const podStations = resampleStations([
-      // inlet starts under the halo / mirrors (refs 08-11), leaving room ahead of it
-      // for the bargeboard deflector and floor-edge fins
-      { x: 8.6,  yIn: 2.0, yOut: 5.2, zb: 1.05, zt: 3.85, uc: 0.55 }, // RB22: narrow high letterbox inlet
-      { x: 10.4, yIn: 2.0, yOut: 5.8, zb: 0.95, zt: 3.95, uc: 0.70 },
-      { x: 13.5, yIn: 2.0, yOut: 5.7, zb: 0.80, zt: 3.6, uc: 0.72 },  // deep undercut
-      { x: 16.5, yIn: 2.0, yOut: 5.0, zb: 0.70, zt: 3.05, uc: 0.62 }, // steep downwash ramp
-      { x: 19.5, yIn: 2.0, yOut: 4.0, zb: 0.62, zt: 2.45, uc: 0.45 },
-      { x: 23.0, yIn: 1.9, yOut: 3.0, zb: 0.62, zt: 1.85, uc: 0.25 }, // short pod: tucked in early
-      { x: 26.5, yIn: 1.7, yOut: 2.3, zb: 0.62, zt: 1.35, uc: 0.12 },
-      { x: 29.6, yIn: 1.5, yOut: 1.9, zb: 0.62, zt: 0.95, uc: 0.05 }
-    ], 8);
+      // RB22 blueprint (side + top refs): tall, near-square inlet beside the halo, a flat
+      // vertical flank at cockpit-shoulder height, a deep undercut (pod floats over the floor),
+      // then a steep drop and cola-bottle waist into the rear tyres. Inner edge stays outside
+      // the tub rim (wRim ~3.0) along the cockpit, then tucks under the engine cover.
+      { x: 10.4, yIn: 3.05, yOut: 5.45, zb: 2.05, zt: 4.75, uc: 0.10 }, // inlet mouth
+      { x: 11.4, yIn: 3.0, yOut: 5.85, zb: 1.65, zt: 4.85, uc: 0.42 },
+      { x: 13.5, yIn: 3.0, yOut: 6.0, zb: 1.25, zt: 4.85, uc: 0.58 },
+      { x: 16.5, yIn: 2.5, yOut: 5.85, zb: 1.0, zt: 4.7, uc: 0.60 },
+      { x: 19.5, yIn: 1.7, yOut: 5.2, zb: 0.8, zt: 4.3, uc: 0.50 },
+      { x: 22.5, yIn: 1.5, yOut: 4.3, zb: 0.7, zt: 3.85, uc: 0.35 },
+      { x: 25.5, yIn: 1.3, yOut: 3.3, zb: 0.65, zt: 2.55, uc: 0.20 },
+      { x: 28.5, yIn: 1.15, yOut: 2.55, zb: 0.62, zt: 1.75, uc: 0.08 },
+      { x: 30.5, yIn: 1.1, yOut: 2.05, zb: 0.62, zt: 1.3, uc: 0.04 }
+    ], 16);
     const podRing = (st, v, off = 0) => {
       const th = v * Math.PI * 2;
       const c = Math.cos(th), sn = Math.sin(th);
       const cy = (st.yIn + st.yOut) / 2, a = (st.yOut - st.yIn) / 2 + off;
       const cz = (st.zb + st.zt) / 2, bz = (st.zt - st.zb) / 2 + off;
-      let y = cy + a * spow(c, 0.38);
-      const z = cz + bz * spow(sn, 0.5);
+      let y = cy + a * spow(c, 0.24);  // flat, near-vertical flank with crisp edges
+      const z = cz + bz * spow(sn, 0.28);
       if (c > 0 && sn < 0) y -= a * st.uc * Math.pow(-sn, 1.6) * Math.pow(c, 0.3); // outboard undercut
       return [st.x, side * y, z];
     };
-    const podGeo = loftGeometry(podStations, (st, v) => podRing(st, v), 48, { flip: isLeft }); // outward-facing normals on both sides
+    const podGeo = loftGeometry(podStations, (st, v) => podRing(st, v), 128, { flip: isLeft }); // outward-facing normals on both sides
     const podMesh = new THREE.Mesh(podGeo, navyMat);
     podMesh.castShadow = true;
     podMesh.receiveShadow = true;
@@ -634,6 +637,7 @@ export function createActiveWingsBodywork(options = {}) {
     }
     const flankMesh = new THREE.Mesh(flankGeo, sidepodLiveryMat);
     flankMesh.name = `Sidepod_OracleLivery_${isLeft ? 'LH' : 'RH'}`;
+    flankMesh.visible = false; // superseded by the projected ORACLE decal (avoids z-fighting on the flat flank)
     pod.add(flankMesh);
 
     // Forward inlet: carbon lip around the mouth and a dark recessed intake face
@@ -714,18 +718,18 @@ export function createActiveWingsBodywork(options = {}) {
   // then tapers down and inward over the engine and gearbox to the rear-wing pylons.
   // Each ring is a rounded "tent": hw * (1 - s^k)^0.5 at height fraction s.
   const ecStations = resampleStations([
-    // front stations rise right up to the scoop underside (7.2-7.35 dm): no gap under the airbox
-    { x: 15.6, hw: 2.2, zb: 3.6, zt: 7.5, k: 3.0 },
-    { x: 17.2, hw: 2.75, zb: 3.3, zt: 8.05, k: 3.0 }, // shoulders: slimmer, real 2026 covers are narrow behind the hoop
-    { x: 19.2, hw: 2.7, zb: 2.3, zt: 8.45, k: 2.4 },
-    // flanks drop right down onto the sidepod tops (pods are 1.85 dm high at x 23): no gap at x 21-24
-    { x: 21.5, hw: 2.55, zb: 1.8, zt: 7.4, k: 2.4 },
-    { x: 24.5, hw: 2.25, zb: 1.4, zt: 6.0, k: 2.8 },
-    { x: 27.5, hw: 2.05, zb: 1.2, zt: 5.2, k: 3.2 },
-    // tail raised a little so the single exhaust downpipe stays inside the cover
-    { x: 30.5, hw: 1.7, zb: 1.3, zt: 4.7, k: 3.0 },
-    { x: 33.2, hw: 1.3, zb: 2.0, zt: 4.5, k: 2.6 },
-    { x: 34.6, hw: 1.05, zb: 2.4, zt: 4.3, k: 2.6 }
+    // narrow spine: rises steeply behind the driver to the airbox, then the pod tops fall
+    // away on both sides; flanks land inside the pods so nothing gaps
+    { x: 15.6, hw: 2.0, zb: 3.9, zt: 7.5, k: 3.0 },
+    { x: 17.2, hw: 2.2, zb: 3.6, zt: 8.05, k: 3.6 },
+    { x: 19.2, hw: 2.2, zb: 3.0, zt: 8.45, k: 3.6 },
+    { x: 21.5, hw: 2.3, zb: 2.5, zt: 7.3, k: 4.0 },
+    { x: 24.5, hw: 2.05, zb: 1.8, zt: 5.9, k: 3.0 },
+    { x: 27.5, hw: 1.6, zb: 1.3, zt: 5.0, k: 3.0 },
+    // tail kept just tall enough for the single exhaust downpipe
+    { x: 30.5, hw: 1.3, zb: 1.3, zt: 4.6, k: 3.0 },
+    { x: 33.2, hw: 1.1, zb: 2.0, zt: 4.45, k: 2.6 },
+    { x: 34.6, hw: 0.95, zb: 2.4, zt: 4.3, k: 2.6 }
   ], 8);
   const ecRing = (st, v, off = 0) => {
     // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
@@ -771,6 +775,7 @@ export function createActiveWingsBodywork(options = {}) {
     }
     const ecDecal = new THREE.Mesh(ecDecGeo, ecLiveryMat);
     ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
+    ecDecal.visible = false; // superseded by the projected bull decals
     engineCoverGroup.add(ecDecal);
   });
 

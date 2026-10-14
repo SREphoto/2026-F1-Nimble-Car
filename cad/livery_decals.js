@@ -130,7 +130,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
    * @param up      which way is "up" for the artwork (car frame)
    * @param size    [width, height, depth] of the projector box (dm)
    */
-  function project(name, mesh, { origin, dir, up = [0, 0, 1], right = null, size, texture, matOpts, renderOrder = 1, spill = [] }) {
+  function project(name, mesh, { origin, dir, up = [0, 0, 1], right = null, size, texture, matOpts, renderOrder = 1, spill = [], facingThreshold = 0.08 }) {
     if (!mesh) { report.skipped.push(`${name}: target not found`); return null; }
     const dW = toWorldDir(dir);
     raycaster.set(toWorldPoint(origin), dW);
@@ -155,7 +155,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     // bleeding through thin panels and showing mirrored on the far face).
     const ref = faceNormalWorld(mesh, hit.face);
     const facing = Math.sign(ref.dot(z)) || 1;
-    const filtered = filterFacing(geo, z, facing);
+    const filtered = filterFacing(geo, z, facing, facingThreshold);
     geo.dispose();
     if (!filtered) { report.skipped.push(`${name}: no facing triangles`); return null; }
 
@@ -286,8 +286,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     // Real RB22 (Austria GP + Samuel angle sheet): large ORACLE on the sidepod slopes DOWN toward the rear ~10°.
     // Artwork up leans toward the nose so letters stay upright and follow the panel; do not shear the glyphs.
     project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
-      origin: [b.min.x + L * 0.33, s * (absMaxY(b) + 5), b.min.z + H * 0.5], dir: [0, -s, 0], // lower + further forward: the RB22 pod ramps down steeply behind the inlet
-      up: [-0.176, 0, 1], size: [L * 0.46, L * 0.46 / 6.5, 2.2], texture: tex.sidepod[s],
+      origin: [b.min.x + L * 0.30, s * (absMaxY(b) + 5), b.min.z + H * 0.66], dir: [0, -s, 0], // centred on the flat vertical flank of the tall RB22 pod
+      up: [-0.176, 0, 1], size: [L * 0.45, L * 0.45 / 6.5, 2.2], texture: tex.sidepod[s],
     });
     // ROKT reads from the side of the car: artwork up points toward the centreline
     project(`Sidepod_ROKT_${sideName(s)}`, pod, {
