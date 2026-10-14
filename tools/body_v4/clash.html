@@ -14,7 +14,7 @@ checkRoots.forEach(n => { const r = car.getObjectByName(n); if (!r) { res[n] = '
   r.traverse(o => { if (!o.isMesh) return; const pos = o.geometry.attributes.position; const step = Math.max(1, Math.floor(pos.count / 60));
     for (let i = 0; i < pos.count; i += step) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
       if (v.x > 33.2) continue; if (v.x > 7.4 && v.x < 16.7 && Math.abs(v.y) < 2.45 && n !== 'Body_Monocoque_CarbonTub_Skin') continue;
-      for (const d of dirs) { rc.set(v.clone().addScaledVector(d, 0.03), d); rc.far = 40;
+      for (const d of dirs) { rc.set(v.clone().addScaledVector(d, 0.03).add(new THREE.Vector3(0, 0.013, 0)), d); rc.far = 40;
         const hits = rc.intersectObjects(skins, false).filter(h => h.object !== o);
         if (!hits.length) { const k = (o.name || o.parent.name) ; res[k] = res[k] || { n: 0, ex: [] }; res[k].n++; if (res[k].ex.length < 3) res[k].ex.push([v.x, v.y, v.z].map(a => a.toFixed(2)).join(',') + ' d' + d.toArray().map(a => a.toFixed(1)).join('/')); break; } } } }); });
 document.getElementById('o').textContent = JSON.stringify(res, null, 1);
