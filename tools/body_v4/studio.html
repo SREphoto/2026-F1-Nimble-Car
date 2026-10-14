@@ -20,10 +20,10 @@ const car = createFullCarAssembly(); root.add(car);
 try { applyCarEnvironment?.(renderer, scene); } catch (e) {}
 const env = new THREE.PMREMGenerator(renderer);
 const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
-scene.environment = env.fromScene(new RoomEnvironment(), 0.04).texture;
+if ((P.get('mode') || 'wire') !== 'wire') scene.environment = env.fromScene(new RoomEnvironment(), 0.04).texture;
 const wireMode = (P.get('mode') || 'wire') === 'wire';
-scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.35 : 1.0));
-const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.2 : 1.6); scene.add(dl); dl.userData.key = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.18 : 1.0));
+const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.8 : 1.6); scene.add(dl); dl.userData.key = true;
 const dl2 = new THREE.DirectionalLight(0xbfd0ff, wireMode ? 0.6 : 0.5); dl2.position.set(30, 10, -30); scene.add(dl2);
 
 const hide = (P.get('hide') || '').split(',').filter(Boolean);
@@ -58,7 +58,7 @@ const toW = (p) => new THREE.Vector3(...p).applyMatrix4(root.matrixWorld);
 root.updateMatrixWorld(true);
 cam.position.copy(toW(c)); cam.up.set(0, 1, 0); if (view === 'top') cam.up.copy(toW([-1, 0, 0]).sub(toW([0, 0, 0])));
 cam.lookAt(toW(t));
-dl.position.copy(cam.position).add(new THREE.Vector3(0, 25, 0)).add(new THREE.Vector3(-10, 0, 0)); dl.target.position.copy(toW(t)); scene.add(dl.target);
+dl.position.copy(toW(t)).add(cam.position.clone().sub(toW(t)).multiplyScalar(0.5)).add(new THREE.Vector3(0, 45, 0)); dl.target.position.copy(toW(t)); scene.add(dl.target);
 renderer.render(scene, cam);
 document.title = 'READY';
 </script></body></html>
