@@ -22,7 +22,7 @@ const env = new THREE.PMREMGenerator(renderer);
 const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
 if ((P.get('mode') || 'wire') !== 'wire') scene.environment = env.fromScene(new RoomEnvironment(), 0.04).texture;
 const wireMode = (P.get('mode') || 'wire') === 'wire';
-scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.18 : 1.0));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.5 : 1.0));
 const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.8 : 1.6); scene.add(dl); dl.userData.key = true;
 const dl2 = new THREE.DirectionalLight(0xbfd0ff, wireMode ? 0.6 : 0.5); dl2.position.set(30, 10, -30); scene.add(dl2);
 
@@ -50,7 +50,7 @@ if (mode === 'wire') {
 }
 // views: [camX, camY(left+), camZ(up)] in CAD frame, target in CAD
 const T = [17, 0, 3];
-const V = { rear34: [50, 40, 8], front34: [-38, -50, 16], side: [17, 80, 3.5], top: [17, 0, 90], rear34r: [62, -34, 16], front34r: [-30, -38, 15], front: [-70, 0, 8], rear: [90, 0, 10] };
+const V = { rear34: [52, 42, 5.5], front34: [-36, -46, 24], side: [17, 80, 3.5], top: [17, 0, 90], rear34r: [62, -34, 16], front34r: [-30, -38, 15], front: [-70, 0, 8], rear: [90, 0, 10] };
 const c = (P.get('cam') ? P.get('cam').split(',').map(Number) : V[view]);
 const t = P.get('tgt') ? P.get('tgt').split(',').map(Number) : (view === 'rear34' ? [18, 0, 2.8] : view === 'front34' ? [15, 0, 2.5] : T);
 if (!P.get('fov') && !os && (view === 'rear34' || view === 'front34')) { cam.fov = view === 'rear34' ? 25 : 22; cam.updateProjectionMatrix(); }

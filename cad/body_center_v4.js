@@ -19,16 +19,15 @@ export const BODY_V4_SPEC = {
   floorZ: 0.5,
   // Ridge spline per side (left side; mirrored for the right). r = ridge tube radius.
   ridge: [
-    { x: 9.6, y: 4.95, z: 4.85, r: 0.6 },
-    { x: 10.6, y: 5.25, z: 4.95, r: 0.68 },
-    { x: 12.5, y: 5.45, z: 4.95, r: 0.7 },
-    { x: 15.0, y: 5.6, z: 4.8, r: 0.74 },
-    { x: 18.0, y: 5.45, z: 4.5, r: 0.74 },
-    { x: 21.0, y: 5.05, z: 4.05, r: 0.7 },
-    { x: 24.0, y: 4.5, z: 3.45, r: 0.62 },
-    { x: 27.0, y: 3.8, z: 2.65, r: 0.5 },
-    { x: 29.5, y: 3.2, z: 1.9, r: 0.38 },
-    { x: 31.2, y: 2.8, z: 1.4, r: 0.28 },
+    { x: 9.4, y: 5.0, z: 4.55, r: 0.72 },
+    { x: 10.6, y: 5.3, z: 4.65, r: 0.82 },
+    { x: 12.5, y: 5.5, z: 4.6, r: 0.86 },
+    { x: 16.0, y: 5.55, z: 4.0, r: 0.88 },
+    { x: 20.0, y: 5.2, z: 3.3, r: 0.84 },
+    { x: 23.5, y: 4.6, z: 2.85, r: 0.74 },
+    { x: 26.5, y: 3.9, z: 2.35, r: 0.6 },
+    { x: 29.2, y: 3.25, z: 1.85, r: 0.45 },
+    { x: 31.2, y: 2.85, z: 1.45, r: 0.32 },
   ],
   // Pod body under / inboard of the ridge, per station (left side):
   //  zFl  bottom of the flat flank = top of the undercut
@@ -38,32 +37,32 @@ export const BODY_V4_SPEC = {
   //  dip  depth of the gully between the ridge and the cover
   //  zBot pod bottom: the inlet box floats at the front, the pod reaches the floor further back
   pod: [
-    { x: 9.6, zFl: 2.4, zBot: 2.25, yUc: 3.3, yIn: 3.0, zIn: 4.35, dip: 0.05 },
-    { x: 10.6, zFl: 2.4, zBot: 1.6, yUc: 3.3, yIn: 3.0, zIn: 4.3, dip: 0.1 },
-    { x: 12.5, zFl: 2.35, zBot: 0.8, yUc: 3.1, yIn: 3.0, zIn: 4.35, dip: 0.15 },
-    { x: 15.0, zFl: 2.3, zBot: 0.54, yUc: 3.05, yIn: 2.8, zIn: 4.55, dip: 0.25 },
-    { x: 18.0, zFl: 2.15, zBot: 0.54, yUc: 2.95, yIn: 2.3, zIn: 4.6, dip: 0.28 },
-    { x: 21.0, zFl: 1.95, zBot: 0.54, yUc: 2.9, yIn: 1.8, zIn: 4.2, dip: 0.25 },
-    { x: 24.0, zFl: 1.7, zBot: 0.54, yUc: 2.85, yIn: 1.45, zIn: 3.7, dip: 0.2 },
-    { x: 27.0, zFl: 1.35, zBot: 0.54, yUc: 2.4, yIn: 1.2, zIn: 3.1, dip: 0.12 },
-    { x: 29.5, zFl: 1.05, zBot: 0.54, yUc: 2.1, yIn: 1.05, zIn: 2.5, dip: 0.05 },
-    { x: 31.2, zFl: 0.85, zBot: 0.54, yUc: 2.0, yIn: 1.0, zIn: 1.95, dip: 0.0 },
+    { x: 9.4, zFl: 1.9, zBot: 1.75, yUc: 3.3, yIn: 3.0, zIn: 4.45, dip: 0.0 },
+    { x: 10.6, zFl: 2.1, zBot: 1.5, yUc: 3.3, yIn: 3.0, zIn: 4.4, dip: 0.0 },
+    { x: 12.5, zFl: 2.2, zBot: 0.8, yUc: 3.1, yIn: 3.0, zIn: 4.45, dip: 0.05 },
+    { x: 16.0, zFl: 2.0, zBot: 0.54, yUc: 3.05, yIn: 2.7, zIn: 4.7, dip: 0.1 },
+    { x: 20.0, zFl: 1.7, zBot: 0.54, yUc: 2.9, yIn: 1.9, zIn: 4.3, dip: 0.1 },
+    { x: 23.5, zFl: 1.5, zBot: 0.54, yUc: 2.85, yIn: 1.5, zIn: 3.8, dip: 0.1 },
+    { x: 26.5, zFl: 1.25, zBot: 0.54, yUc: 2.45, yIn: 1.25, zIn: 3.2, dip: 0.08 },
+    { x: 29.2, zFl: 1.1, zBot: 0.54, yUc: 2.1, yIn: 1.05, zIn: 2.6, dip: 0.05 },
+    { x: 31.2, zFl: 0.85, zBot: 0.54, yUc: 2.0, yIn: 1.0, zIn: 2.0, dip: 0.0 },
   ],
   // Engine cover: half width w at its base (base sits inside the pods), base height zb, crown zt,
   // n = shoulder squareness, seam = centre crease depth.
   cover: [
-    { x: 15.2, w: 2.8, zb: 4.6, zt: 5.45, n: 2.2 },
-    { x: 16.6, w: 3.25, zb: 4.55, zt: 7.35, n: 2.1 },
-    { x: 18.0, w: 3.35, zb: 4.45, zt: 7.65, n: 2.1 },
-    { x: 20.0, w: 3.3, zb: 4.25, zt: 7.0, n: 2.1 },
-    { x: 22.5, w: 3.05, zb: 3.9, zt: 6.3, n: 2.1 },
-    { x: 25.0, w: 2.75, zb: 3.45, zt: 5.85, n: 2.1 },
-    { x: 27.5, w: 2.1, zb: 2.95, zt: 5.45, n: 2.3 },
-    { x: 30.0, w: 1.7, zb: 2.4, zt: 4.95, n: 2.4 },
-    { x: 32.5, w: 1.25, zb: 2.4, zt: 4.62, n: 2.4 },
-    { x: 34.9, w: 0.7, zb: 2.9, zt: 4.15, n: 2.2 },
+    { x: 15.2, w: 2.8, zb: 4.85, zt: 5.6, n: 1.8 },
+    { x: 16.6, w: 3.1, zb: 4.75, zt: 7.4, n: 1.6 },
+    { x: 18.0, w: 3.1, zb: 4.55, zt: 7.7, n: 1.6 },
+    { x: 20.0, w: 3.0, zb: 4.3, zt: 7.1, n: 1.6 },
+    { x: 22.5, w: 2.8, zb: 3.95, zt: 6.45, n: 1.6 },
+    { x: 25.0, w: 2.55, zb: 3.5, zt: 5.95, n: 1.65 },
+    { x: 27.5, w: 2.2, zb: 3.0, zt: 5.5, n: 1.7 },
+    { x: 30.0, w: 1.8, zb: 2.5, zt: 5.0, n: 1.8 },
+    { x: 32.5, w: 1.3, zb: 2.45, zt: 4.65, n: 2.0 },
+    { x: 34.6, w: 0.85, zb: 2.8, zt: 4.3, n: 2.0 },
+    { x: 35.6, w: 0.4, zb: 3.3, zt: 4.05, n: 2.0 },
   ],
-  seam: 0.06,
+  seam: 0.08,
   inlet: { lip: 0.09, depth: 0.7 },
   step: 0.4, // loft station spacing (dm)
 };
@@ -137,7 +136,7 @@ function orientOutward(rings, closed) {
 
 // ---- sections ------------------------------------------------------------------------------
 const N_ARC = 22, N_GULLY = 10, N_WALL = 5, N_BOT = 4, N_UC = 10, N_FL = 6;
-const A0 = -1.25, A1 = 2.25; // ridge arc range (rad): outer-lower -> over the top -> inner-upper
+const A0 = -1.45, A1 = 2.3; // ridge arc range (rad): outer-lower -> over the top -> inner-upper
 
 /** Left-side pod section at x: closed ring of [y,z]. */
 function podSection(R, P, floorZ) {
@@ -152,7 +151,7 @@ function podSection(R, P, floorZ) {
   for (let k = 0; k < N_WALL; k++) pts.push([P.yIn, lerp(P.zIn, zB, k / N_WALL)]); // inner wall
   for (let k = 0; k < N_BOT; k++) pts.push([lerp(P.yIn, P.yUc, k / N_BOT), zB]); // floor contact
   const a0 = arc(A0);
-  const fBot = [a0[0] - 0.32, P.zFl]; // flank tucked under the ridge so the ridge overhangs it like a tube
+  const fBot = [a0[0] - 0.5, P.zFl]; // flank tucked under the ridge so the ridge overhangs it like a tube
   // undercut: deep concave scoop from the floor up and out to the flank bottom
   for (let k = 0; k < N_UC; k++) pts.push(cbez([P.yUc, zB], [P.yUc + 0.05, lerp(zB, P.zFl, 0.75)], [lerp(P.yUc, fBot[0], 0.55), P.zFl - 0.05], fBot, k / N_UC));
   // flat flank up to the ridge (very slight outward bow)

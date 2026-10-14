@@ -290,7 +290,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const ridge = pod.userData.ridge;
     if (ridge) {
       const at = (x) => { let i = 0; while (i < ridge.length - 2 && x > ridge[i + 1].x) i++; const p = ridge[i], q = ridge[i + 1]; const t = THREE.MathUtils.clamp((x - p.x) / (q.x - p.x), 0, 1); return { y: p.y + (q.y - p.y) * t, z: p.z + (q.z - p.z) * t, r: p.r + (q.r - p.r) * t }; };
-      const xa = 13.6, xb = 20.8, xc = (xa + xb) / 2, A = at(xa), B = at(xb), C = at(xc);
+      const xa = 12.8, xb = 19.6, xc = (xa + xb) / 2, A = at(xa), B = at(xb), C = at(xc);
       const m = (B.z - A.z) / (xb - xa); // ridge slope (negative: it rises toward the front)
       const fa = -0.25; // outer face, just below the ridge's widest point
       const nrm = [0, s * Math.cos(fa), Math.sin(fa)];
