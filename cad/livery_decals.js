@@ -285,8 +285,23 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     if (Math.sign(b.min.y + b.max.y) !== s) return;
     // Real RB22 (Austria GP + Samuel angle sheet): large ORACLE on the sidepod slopes DOWN toward the rear ~10°.
     // Artwork up leans toward the nose so letters stay upright and follow the panel; do not shear the glyphs.
-    project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
-      origin: [b.min.x + L * 0.30, s * (absMaxY(b) + 5), b.min.z + H * 0.66], dir: [0, -s, 0], // centred on the flat vertical flank of the tall RB22 pod
+    // Body v4: ORACLE sits on the OUTER face of the sidepod ridge and follows the ridge's rise
+    // toward the cockpit (ridge spline stored on the pod by body_center_v4.js).
+    const ridge = pod.userData.ridge;
+    if (ridge) {
+      const at = (x) => { let i = 0; while (i < ridge.length - 2 && x > ridge[i + 1].x) i++; const p = ridge[i], q = ridge[i + 1]; const t = THREE.MathUtils.clamp((x - p.x) / (q.x - p.x), 0, 1); return { y: p.y + (q.y - p.y) * t, z: p.z + (q.z - p.z) * t, r: p.r + (q.r - p.r) * t }; };
+      const xa = 13.6, xb = 20.8, xc = (xa + xb) / 2, A = at(xa), B = at(xb), C = at(xc);
+      const m = (B.z - A.z) / (xb - xa); // ridge slope (negative: it rises toward the front)
+      const fa = -0.25; // outer face, just below the ridge's widest point
+      const nrm = [0, s * Math.cos(fa), Math.sin(fa)];
+      const pt = [xc, C.y + s * C.r * Math.cos(fa), C.z + C.r * Math.sin(fa)];
+      const w = (xb - xa) * 1.15;
+      project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
+        origin: [pt[0] + nrm[0] * 4, pt[1] + nrm[1] * 4, pt[2] + nrm[2] * 4], dir: nrm.map((v) => -v),
+        up: [-m, 0, 1], size: [w, w / 6.5, 1.2], texture: tex.sidepod[s],
+      });
+    } else project(`Sidepod_ORACLE_${sideName(s)}`, pod, {
+      origin: [b.min.x + L * 0.30, s * (absMaxY(b) + 5), b.min.z + H * 0.66], dir: [0, -s, 0],
       up: [-0.176, 0, 1], size: [L * 0.45, L * 0.45 / 6.5, 2.2], texture: tex.sidepod[s],
     });
     // ROKT reads from the side of the car: artwork up points toward the centreline
@@ -301,9 +316,10 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   if (ec) {
     const b = carBox(ec); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z;
     sides.forEach((s) => {
+      // body v4: the cover flank slopes, so aim down onto it and keep the bull to the flank
       project(`EngineCover_Bull_${sideName(s)}`, ec, {
-        origin: [b.min.x + L * 0.4, s * (absMaxY(b) + 5), b.min.z + H * 0.52], dir: [0, -s, 0],
-        up: [0, 0, 1], size: [L * 0.66, L * 0.33, absMaxY(b) * 2.2], texture: tex.engine[s],
+        origin: [22.6, s * 6.0, 9.0], dir: [0, -s * 0.72, -0.69],
+        up: [0, -s * 0.69, 0.72], size: [9.5, 4.75, 2.2], texture: tex.engine[s],
       });
       project(`EngineCover_RedBull_${sideName(s)}`, ec, {
         origin: [b.min.x + L * 0.56, s * (absMaxY(b) + 5), b.min.z + H * 0.3], dir: [0, -s, 0],

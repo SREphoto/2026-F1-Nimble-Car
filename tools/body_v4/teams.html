@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script></head><body><pre id="o"></pre>
+<script type="module">
+import * as THREE from 'three';
+import { createFullCarAssembly } from '../../cad/full_car3d.js';
+import { materials } from '../../materials.js';
+import { applyLivery } from '../../cad/livery_decals.js';
+import { applyTeamTheme, F1_TEAMS } from '../../teams.js';
+const r = new THREE.WebGLRenderer(); const car = createFullCarAssembly(); const out = [];
+const rep = applyLivery(car, r); out.push('base decals ' + rep.decals + ' skipped ' + JSON.stringify(rep.skipped));
+for (const id of Object.keys(F1_TEAMS)) { const before = rep.decals, sk = rep.skipped.length;
+  try { applyTeamTheme(id, { carModel: car, materials, renderer: r }); } catch (e) { out.push(id + ' ERR ' + e.message); }
+  out.push(`${id}: +${rep.decals - before} decals, skipped ${JSON.stringify(rep.skipped.slice(sk))}`); }
+document.getElementById('o').textContent = out.join('\n');
+</script></body></html>
