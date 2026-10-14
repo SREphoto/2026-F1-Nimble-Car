@@ -18,8 +18,8 @@ const sstep = (x, a, b) => { const t = clamp((x - a) / (b - a), 0, 1); return t 
 // yC/zC ridge crown, yO/zO outer crease (widest point of the ridge), yF/zF flank bottom,
 // yU/zU where the undercut meets the floor (floats above it at the front).
 export const POD = [
-  { x: 9.7,  yIn: 2.45, zIn: 5.45, yC: 3.95, zC: 6.15, yO: 5.15, zO: 5.55, yF: 4.75, zF: 4.55, yU: 2.95, zU: 2.3 },
-  { x: 11.5, yIn: 2.45, zIn: 5.5,  yC: 4.1,  zC: 6.25, yO: 5.4,  zO: 5.45, yF: 4.95, zF: 4.2,  yU: 2.75, zU: 1.5 },
+  { x: 9.7,  yIn: 2.45, zIn: 5.45, yC: 3.95, zC: 6.15, yO: 5.35, zO: 6.0, yF: 5.15, zF: 3.7, yU: 2.95, zU: 2.3 },
+  { x: 11.5, yIn: 2.45, zIn: 5.5,  yC: 4.1,  zC: 6.25, yO: 5.45, zO: 5.75, yF: 5.1, zF: 3.6,  yU: 2.75, zU: 1.5 },
   { x: 14.0, yIn: 2.45, zIn: 5.6,  yC: 4.1,  zC: 6.1,  yO: 5.35, zO: 5.2,  yF: 4.85, zF: 3.75,  yU: 2.6, zU: 0.8 },
   { x: 17.0, yIn: 2.4,  zIn: 5.30,  yC: 3.95, zC: 5.50,  yO: 5.1,  zO: 4.60,  yF: 4.55, zF: 3.3, yU: 2.5, zU: 0.55 },
   { x: 20.0, yIn: 2.3,  zIn: 4.90, yC: 3.7,  zC: 5.00, yO: 4.75, zO: 4.10, yF: 4.15, zF: 2.85, yU: 2.45, zU: 0.55 },
@@ -70,6 +70,17 @@ export function podSection(P, t) {
   return bez(F, [P.yF - 0.05, P.zF - 0.55 * (P.zF - P.zU)], [P.yU + 0.55 * d, P.zU + 0.1], U, u);
 }
 
+// v6b tube ridge: centre (yR,zR), radius r. Top panel runs from the inboard edge to the tube's upper-inner
+// tangent; the pod side starts in a crease tucked under the tube.
+export const tubeR = (x) => lerp(0.62, 0.3, sstep(x, 11, 32.6));
+export function tube(P) { const r = tubeR(P.x); return { r, yR: P.yO - r, zR: P.zO + 0.18 }; }
+export function topSection(P, u) { const T = tube(P), th = 2.1, e = [T.yR + T.r * Math.cos(th), T.zR + T.r * Math.sin(th)];
+  return bez([P.yIn, P.zIn], [lerp(P.yIn, e[0], 0.4), lerp(P.zIn, e[1], 0.8)], [e[0] - 0.25 * Math.sin(th) * -1, e[1] - 0.25 * Math.cos(th)], e, u); }
+export function sideSection(P, t) { const T = tube(P), cr = [T.yR + 0.05, T.zR - T.r - 0.08]; // crease under the tube
+  const F = [P.yF, P.zF], U = [P.yU, P.zU];
+  if (t <= 1) { const h = cr[1] - P.zF; return bez(cr, [P.yO - 0.05, cr[1] - 0.15 * h], [P.yF + 0.2, P.zF + 0.45 * h], F, t); }
+  const u = t - 1, d = P.yF - P.yU; return bez(F, [P.yF - 0.05, P.zF - 0.55 * (P.zF - P.zU)], [P.yU + 0.55 * d, P.zU + 0.1], U, u); }
+
 // ---------------------------------------------------------------------------------------
 const xsr = (x0, x1, step) => { const n = Math.max(2, Math.round((x1 - x0) / step)); return Array.from({ length: n + 1 }, (_, i) => lerp(x0, x1, i / n)); };
 const tsr = (t0, t1, n) => Array.from({ length: n + 1 }, (_, i) => lerp(t0, t1, i / n));
@@ -105,6 +116,7 @@ const FN = {
   airbox: 'Airbox surround collar: fairs the airbox pillar into the spine behind the roll hoop so engine intake air stays clean.',
   tail: 'Tail cap closing the cover over the gearbox with a hot-air exit around the exhaust.',
   knee: 'Cockpit side panel beside the driver (X 7.6-10.0): side-impact cover over the SIPS tubes, bridging the tub rim to the pod inlet.',
+  top: 'Pod top panel: crescent from the cockpit rim / cover side panel out to the ridge tube; closes the radiator bay and slopes toward the driver so the pods ring the cockpit.',
   front: 'Pod front lower face below the inlet mouth: closes the radiator bay at the front and blends into the undercut.',
   logo: 'ORACLE sponsor plate on the outer face of the ridge, tilted ~10 deg (slopes down toward the rear like the RB22).',
 };
@@ -125,16 +137,25 @@ export function buildBodyV6(opts = {}) {
 
   // ---- per-side pod pieces --------------------------------------------------------------
   // ridge front end curls up into the inlet top lip: lift the first 0.6 dm a little
-  const ridge = podRings(X.podFront, X.ridgeEnd, 0, 2, 24);
-  both('Sidepod_Ridge', 'Body_Sidepods', gridMesh(ridge, false, podIn), 'paint', [0, 2.2, 3.0], FN.ridge);
-  both('Sidepod_Body', 'Body_Sidepods', gridMesh(podRings(X.podFront, X.taper, 2, 3, 14), false, podIn), 'paint', [0, 4.0, 0.6], FN.side);
-  both('Sidepod_Undercut_Panel', 'Body_Sidepods', gridMesh(podRings(X.podFront, X.taper, 3, 4, 12), false, podIn), 'paint', [0, 4.2, -1.4], FN.undercut);
-  both('Sidepod_Rear_Taper', 'Body_Sidepods', gridMesh(podRings(X.taper, X.ridgeEnd, 2, 4, 20), false, podIn), 'paint', [3.0, 3.2, 0], FN.taper);
+  const rings = (x0, x1, fn, n) => xsr(x0, x1, 0.25).map((x) => { const P = podAt(x); return tsr(0, 1, n).map((u) => { const [y, z] = fn(P, u); return [x, y, z]; }); });
+  const tubeAt = (P, th) => { const T = tube(P); return [T.yR + T.r * Math.cos(th), T.zR + T.r * Math.sin(th)]; };
+  // ridge: closed round tube, front end capped by a dome curling into the inlet top, rear end tapering shut
+  { const N = 28, xr = xsr(X.podFront, X.ridgeEnd, 0.25);
+    const tr = xr.map((x) => { const P = podAt(x), T = tube(P), k = sstep(x, X.ridgeEnd - 1.2, X.ridgeEnd) * 0.85;
+      return Array.from({ length: N }, (_, j) => { const th = j / N * Math.PI * 2; return [x, T.yR + T.r * (1 - k) * Math.cos(th), T.zR + T.r * (1 - k) * Math.sin(th)]; }); });
+    const P0 = podAt(X.podFront), T0 = tube(P0);
+    const cap = tsr(1, 0, 5).slice(0, 5).map((c) => tr[0].map(([x, y, z]) => [X.podFront - T0.r * 0.6 * Math.sqrt(1 - c * c), T0.yR + (y - T0.yR) * c, T0.zR + (z - T0.zR) * c]));
+    both('Sidepod_Ridge', 'Body_Sidepods', gridMesh([...cap, ...tr], true, (p) => { const T = tube(podAt(p[0])); return [p[0], T.yR, T.zR]; }), 'paint', [0, 2.2, 3.0], FN.ridge); }
+  both('Sidepod_Top_Panel', 'Body_Sidepods', gridMesh(rings(X.podFront, X.ridgeEnd, topSection, 14), false, podIn), 'paint', [0, 1.2, 4.2], FN.top);
+  both('Sidepod_Body', 'Body_Sidepods', gridMesh(rings(X.podFront, X.taper, (P, u) => sideSection(P, u), 14), false, podIn), 'paint', [0, 4.0, 0.6], FN.side);
+  both('Sidepod_Undercut_Panel', 'Body_Sidepods', gridMesh(rings(X.podFront, X.taper, (P, u) => sideSection(P, 1 + u), 12), false, podIn), 'paint', [0, 4.2, -1.4], FN.undercut);
+  both('Sidepod_Rear_Taper', 'Body_Sidepods', gridMesh(rings(X.taper, X.ridgeEnd, (P, u) => sideSection(P, 2 * u), 20), false, podIn), 'paint', [3.0, 3.2, 0], FN.taper);
+  void tubeAt;
 
   // inlet: rounded-square lip ring at the pod front + dark duct going back
-  { const P = podAt(X.podFront), y0 = P.yIn + 0.15, y1 = P.yO - 0.05, z1 = podSection(P, 1)[1] - 0.12, z0 = z1 - 2.05, r = 0.28;
+  { const P = podAt(X.podFront), y0 = 2.7, y1 = 5.0, z1 = tube(P).zR - tube(P).r + 0.05, z0 = z1 - 2.25, r = 0;
     const yc = (y0 + y1) / 2, zc = (z0 + z1) / 2, hy = (y1 - y0) / 2, hz = (z1 - z0) / 2;
-    const sq = (k, n, g) => { const th = (k / n) * Math.PI * 2, c = Math.cos(th), s = Math.sin(th), e = 2 / 6;
+    const sq = (k, n, g) => { const th = (k / n) * Math.PI * 2, c = Math.cos(th), s = Math.sin(th), e = 0.16;
       return [yc + (hy + g) * Math.sign(c) * Math.pow(Math.abs(c), e), zc + (hz + g) * Math.sign(s) * Math.pow(Math.abs(s), e)]; };
     const N = 48; void r;
     const lip = [[X.podFront + 0.25, 0], [X.podFront - 0.02, 0.02], [X.podFront - 0.05, 0.12], [X.podFront + 0.05, 0.2], [X.podFront + 0.3, 0.2]];
@@ -143,7 +164,7 @@ export function buildBodyV6(opts = {}) {
     const duct = xsr(X.podFront + 0.25, X.podFront + 1.6, 0.27).map((x, i, a) => Array.from({ length: N }, (_, k) => { const s = 1 - 0.25 * i / (a.length - 1); const [y, z] = sq(k, N, 0); return [x, yc + (y - yc) * s, zc + (z - zc) * s]; }));
     both('Sidepod_InletDuct', 'Body_Sidepods', gridMesh(duct, true, (p) => [p[0], yc + 3, zc]), 'dark', [-1.6, 1.8, 0.4], FN.inlet);
     // front lower face: from the mouth bottom down to the undercut start
-    const fr = tsr(0, 1, 6).map((v) => tsr(2.05, 3.6, 12).map((t) => { const [y, z] = podSection(P, t); const zt = z0 - 0.2; const zz = Math.min(z, lerp(zt, z, v)); return [X.podFront + 0.02, lerp(y0 - 0.1, y, Math.max(v, 0)), zz]; }));
+    const fr = tsr(0, 1, 6).map((v) => tsr(0.55, 1.8, 12).map((t) => { const [y, z] = sideSection(P, t); const zt = z0 - 0.2; const zz = Math.min(z, lerp(zt, z, v)); return [X.podFront + 0.02, lerp(y0 - 0.1, y, Math.max(v, 0)), zz]; }));
     both('Sidepod_Front_Face', 'Body_Sidepods', gridMesh(fr, false, (p) => [p[0] + 3, p[1], p[2]]), 'paint', [-2.0, 2.6, -0.4], FN.front);
   }
 
@@ -175,23 +196,29 @@ export function buildBodyV6(opts = {}) {
 
   // tail cap: closes the cover section at X 34.4 and rounds it off to the exhaust
   { const S = spineAt(X.coverEnd), P = podAt(X.coverEnd), x0 = X.coverEnd;
-    const ring = [];
-    spineProf(S, 16).forEach(([y, z]) => ring.push([y, z]));
-    tsr(0, 1, 8).forEach((v, i) => { if (i) ring.push([lerp(S.ws, P.yIn, v), lerp(S.ze, P.zIn, Math.pow(v, 1.7))]); });
-    ring.push([P.yIn * 0.8, 2.6], [0, 2.4], [-P.yIn * 0.8, 2.6]);
-    tsr(0, 1, 8).reverse().forEach((v, i) => { if (i < 8) ring.push([-lerp(S.ws, P.yIn, v), lerp(S.ze, P.zIn, Math.pow(v, 1.7))]); });
-    const cz = 3.6, ex = 0.5;
-    const rings = tsr(0, 1, 8).map((t) => ring.map(([y, z]) => { const s = 1 - 0.55 * Math.pow(t, 1.5); return [x0 + 1.4 * Math.sin(t * Math.PI / 2), y * Math.max(s, ex / 2.2), cz + (z - cz) * s]; }));
-    push('Body_Rear_TailCap', 'Body_Rear', gridMesh(rings, true, (p) => [x0 - 1, 0, cz]), 'paint', [3.5, 0, 1.8], FN.tail);
-    const exr = tsr(0, 1, 3).map((t) => Array.from({ length: 24 }, (_, k) => { const th = k / 24 * Math.PI * 2, r = lerp(0.62, 0.42, t); return [x0 + 1.25 + 0.2 * t, r * Math.cos(th), cz + 0.05 + r * Math.sin(th)]; }));
+    const cz = 3.65, cy = 0, poly = [];
+    spineProf(S, 16).forEach(([y, z]) => poly.push([y, z]));
+    tsr(0, 1, 8).slice(1).forEach((v) => poly.push([lerp(S.ws, P.yIn, v), lerp(S.ze, P.zIn, Math.pow(v, 1.7))]));
+    tsr(0, 1, 10).slice(1, -1).forEach((v) => { const a2 = v * Math.PI; poly.push([P.yIn * Math.cos(a2), cz - (cz - 2.7) * Math.sin(a2) + (P.zIn - cz) * (1 - Math.sin(a2)) * 0]); });
+    tsr(0, 1, 8).reverse().slice(0, -1).forEach((v) => poly.push([-lerp(S.ws, P.yIn, v), lerp(S.ze, P.zIn, Math.pow(v, 1.7))]));
+    // resample the closed section by angle around the exhaust centre, then loft it onto the exhaust ring
+    const ang = poly.map(([y, z]) => Math.atan2(z - cz, y - cy)), rad = poly.map(([y, z]) => Math.hypot(y - cy, z - cz));
+    const radAt = (a) => { let best = 0, bd = 9; ang.forEach((q, i) => { const d = Math.abs(Math.atan2(Math.sin(a - q), Math.cos(a - q))); if (d < bd) { bd = d; best = i; } });
+      const i = best, j = (ang[(i + 1) % ang.length] - ang[i] + 2 * Math.PI) % (2 * Math.PI) < Math.PI ? (i + 1) % ang.length : (i - 1 + ang.length) % ang.length;
+      const da = Math.atan2(Math.sin(ang[j] - ang[i]), Math.cos(ang[j] - ang[i])) || 1, t = clamp(Math.atan2(Math.sin(a - ang[i]), Math.cos(a - ang[i])) / da, 0, 1); return lerp(rad[i], rad[j], t); };
+    const NA = 40, re = 0.66;
+    const rings = tsr(0, 1, 10).map((t) => Array.from({ length: NA }, (_, k) => { const a2 = k / NA * Math.PI * 2, r0 = radAt(a2), e = t * t * (3 - 2 * t), r = lerp(r0, re, e);
+      return [x0 + 1.25 * Math.sin(t * Math.PI / 2), cy + r * Math.cos(a2), cz + r * Math.sin(a2)]; }));
+    push('Body_Rear_TailCap', 'Body_Rear', gridMesh(rings, true, (p) => [p[0] - 1, 0, cz]), 'paint', [3.5, 0, 1.8], FN.tail);
+    const exr = tsr(0, 1, 3).map((t) => Array.from({ length: 24 }, (_, k) => { const th = k / 24 * Math.PI * 2, r = lerp(0.66, 0.42, t); return [x0 + 1.25 - 0.1 * t, r * Math.cos(th), cz + r * Math.sin(th)]; }));
     push('Body_Rear_HotAirExit', 'Body_Rear', gridMesh(exr, true, (p) => [p[0] - 2, 0, cz]), 'dark', [4.2, 0, 1.8], FN.tail); }
 
   // ---- ORACLE plates (GLB only): patch of the ridge outer face, tilted 10 deg ------------
   if (opts.logoPlates) {
-    const tilt = 10 * Math.PI / 180, xc = 16.0, tc = 1.72, L = 6.4, Hh = 0.32; // t units across the section
+    const tilt = 10 * Math.PI / 180, xc = 15.5, tc = 1.72, L = 5.6, Hh = 0.45; // t units across the section
     const rings = tsr(-0.5, 0.5, 20).map((a) => tsr(-0.5, 0.5, 4).map((b) => {
-      const x = xc + a * L * Math.cos(tilt), t = tc + b * Hh * 2 + a * L * Math.sin(tilt) * 0.12; // rises toward the nose
-      const P = podAt(x), [y, z] = podSection(P, clamp(t, 1.05, 1.98)); return [x, y + 0.012, z + 0.006]; }));
+      const x = xc + a * L * Math.cos(tilt), t = tc + b * Hh * 2 + a * L * Math.sin(tilt) * 0.55; // rises toward the nose
+      const P = podAt(x), T = tube(P), th = (t - 1.72) * 1.6 - 0.05; return [x, T.yR + (T.r + 0.012) * Math.cos(th), T.zR + (T.r + 0.012) * Math.sin(th)]; }));
     both('Sidepod_ORACLE_Plate', 'Livery_Zones', gridMesh(rings, false, podIn), 'logo', [0, 2.3, 3.0], FN.logo);
   }
   return out;

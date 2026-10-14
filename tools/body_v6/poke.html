@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script></head><body><pre id="o"></pre>
+<script type="module">
+// lists non-body meshes with vertices outside the v6 pod skin while other vertices are inside it (poking through)
+import * as THREE from 'three';
+import { createFullCarAssembly } from '../../cad/full_car3d.js';
+import { podAt, sideSection, tube, X } from '../../cad/body_pieces_v6_core.js';
+const car = createFullCarAssembly(); car.updateMatrixWorld(true);
+const body = car.getObjectByName('Body_Main_V6'); const skip = new Set(); body.traverse(o => skip.add(o));
+// outer y of the pod at (x,z): sample side section + tube
+const outerY = (x, z) => { const P = podAt(x), T = tube(P); let best = -1;
+  for (let t = 0; t <= 2; t += 0.05) { const [y, zz] = sideSection(P, t); if (Math.abs(zz - z) < 0.12) best = Math.max(best, y); }
+  if (Math.abs(z - T.zR) < T.r) best = Math.max(best, T.yR + Math.sqrt(T.r * T.r - (z - T.zR) ** 2)); return best; };
+const res = []; const v = new THREE.Vector3();
+car.traverse(o => { if (!o.isMesh || skip.has(o) || !o.visible) return; let path = []; let q = o; while (q && q !== car) { path.push(q.name); q = q.parent; }
+  if (path.some(n => /Wheel|Tyre|Susp|Corner|Driver|Halo|Mirror/i.test(n || ''))) return;
+  const pos = o.geometry.attributes.position; let inn = 0, out = 0, ex = null; const st = Math.max(1, Math.floor(pos.count / 400));
+  for (let i = 0; i < pos.count; i += st) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+    if (v.x < X.podFront + 0.3 || v.x > X.ridgeEnd || v.z < 0.65) continue; const oy = outerY(v.x, v.z); if (oy < 0) continue;
+    const ay = Math.abs(v.y); if (ay < oy - 0.05 && ay > 1.0) inn++; else if (ay > oy + 0.05 && ay < oy + 2.0) { out++; ex = ex || [v.x, v.y, v.z].map(a => +a.toFixed(2)); } }
+  if (inn > 0 && out > 0) res.push({ name: o.name, path: path.slice(0, 4).join(' < '), inn, out, ex }); });
+document.getElementById('o').textContent = JSON.stringify(res, null, 0).replace(/\},\{/g, '},\n{');
+</script></body></html>

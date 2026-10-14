@@ -44,7 +44,8 @@ if (mode === 'wire') {
   const wm = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: +(P.get('wo') || 0.45) });
   const meshes = []; car.traverse(o => { if (o.isMesh) meshes.push(o); });
   const darkG = new THREE.MeshStandardMaterial({ color: 0x1a1b1d, roughness: 0.9, side: THREE.DoubleSide });
-  meshes.forEach(o => { if (!o.visible) return; o.material = /Inlet(Duct|Mouth)/.test(o.name) ? darkG : grey;
+  const red = new THREE.MeshStandardMaterial({ color: 0xd01010, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+  meshes.forEach(o => { if (o.userData.logoPlate) { o.visible = true; o.material = red; return; } if (!o.visible) return; o.material = /Inlet(Duct|Mouth)/.test(o.name) ? darkG : grey;
     const q = o.geometry.userData.quadGrid; let lg;
     if (q) { const pos = o.geometry.attributes.position, v = []; const P = (k) => [pos.getX(k), pos.getY(k), pos.getZ(k)];
       for (let i = 0; i < q.rows; i++) for (let j = 0; j < q.cols; j++) { const k = i * q.cols + j;

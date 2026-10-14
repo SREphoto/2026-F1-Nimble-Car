@@ -44,11 +44,11 @@ export const PU_SPEC = {
 export const COOLING_SPEC = {
   coolers: [
     // name, centre, size [thickness, width, height], lean about Y (rad), core type
-    { name: 'Cooler_Radiator_Water_LH', at: [11.3, 4.1, 3.3], size: [0.3, 1.5, 1.6], lean: -0.55, core: 'water' },
-    { name: 'Cooler_Radiator_Water_RH', at: [11.3, -4.1, 3.3], size: [0.3, 1.5, 1.6], lean: -0.55, core: 'water' },
+    { name: 'Cooler_Radiator_Water_LH', at: [11.3, 3.85, 4.35], size: [0.3, 1.5, 1.6], lean: -0.55, core: 'water' },
+    { name: 'Cooler_Radiator_Water_RH', at: [11.3, -3.85, 4.35], size: [0.3, 1.5, 1.6], lean: -0.55, core: 'water' },
     { name: 'Cooler_ChargeAir_LH', at: [22.75, 2.15, 1.2], size: [1.3, 0.95, 0.95], lean: 0, core: 'air', alongX: true },
-    { name: 'Cooler_Oil_RH', at: [15.5, -4.1, 3.05], size: [0.25, 1.5, 1.4], lean: -0.45, core: 'oil' },
-    { name: 'Cooler_ERS_LH', at: [15.5, 4.1, 3.05], size: [0.25, 1.5, 1.4], lean: -0.45, core: 'water' },
+    { name: 'Cooler_Oil_RH', at: [15.5, -3.55, 4.0], size: [0.25, 1.5, 1.4], lean: -0.45, core: 'oil' },
+    { name: 'Cooler_ERS_LH', at: [15.5, 3.55, 4.0], size: [0.25, 1.5, 1.4], lean: -0.45, core: 'water' },
   ],
   hoses: [
     { name: 'Hose_Water_Feed_LH', r: 0.1, mat: 'rubber', pts: [[11.6, 3.4, 2.5], [16.0, 3.45, 2.3], [20.5, 3.2, 2.0], [22.0, 2.5, 1.5], [22.2, 1.05, 1.05]] },

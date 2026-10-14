@@ -290,7 +290,13 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const ridge = pod.userData.ridge;
     // body v5: the ridge is its own panel; project ORACLE onto it
     const ridgeMesh = byName(`Sidepod_Ridge_${s > 0 ? 'LH' : 'RH'}`) || pod;
-    if (ridge) {
+    const plate = byName(`Sidepod_ORACLE_Plate_${s > 0 ? 'LH' : 'RH'}`);
+    if (plate) { // body v6: ORACLE on the outer face of the ridge tube, sloping down to the rear ~10 deg
+      const pb = carBox(plate), c = [(pb.min.x + pb.max.x) / 2, (pb.min.y + pb.max.y) / 2, (pb.min.z + pb.max.z) / 2], fa = -0.1;
+      const nrm = [0, s * Math.cos(fa), Math.sin(fa)], w = (pb.max.x - pb.min.x) * 1.0;
+      project(`Sidepod_ORACLE_${sideName(s)}`, ridgeMesh, { origin: [c[0], c[1] + nrm[1] * 4, c[2] + nrm[2] * 4], dir: nrm.map((v) => -v),
+        up: [-0.176, 0, 1], size: [w, w / 6.5, 1.0], texture: tex.sidepod[s] });
+    } else if (ridge) {
       const at = (x) => { let i = 0; while (i < ridge.length - 2 && x > ridge[i + 1].x) i++; const p = ridge[i], q = ridge[i + 1]; const t = THREE.MathUtils.clamp((x - p.x) / (q.x - p.x), 0, 1); return { y: p.y + (q.y - p.y) * t, z: p.z + (q.z - p.z) * t, r: p.r + (q.r - p.r) * t }; };
       const xa = 12.8, xb = 19.6, xc = (xa + xb) / 2, A = at(xa), B = at(xb), C = at(xc);
       const m = (B.z - A.z) / (xb - xa); // ridge slope (negative: it rises toward the front)
