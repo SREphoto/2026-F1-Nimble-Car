@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "tracks": [
+    {
+      "id": "opening",
+      "title": "Opening Track",
+      "file": "assets/audio/music/opening-track.mp3",
+      "role": "opening",
+      "volume": 0.5,
+      "loop": true
+    }
+  ]
+}

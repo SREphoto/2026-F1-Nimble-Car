@@ -139,6 +139,12 @@ try {
   carModel = createFullCarAssembly();
   carModel.rotation.x = -Math.PI / 2; // Map automotive CAD Z-up to Three.js Y-up
   scene.add(carModel);
+  window.sunLight = sunLight;
+  window.ambientLight = ambientLight;
+  window.frontFillLight = frontFillLight;
+  window.bounceLight = bounceLight;
+  window.carModel = carModel;
+
   // SREdesigns livery: projected decals, paint/carbon finish, env reflections
   try { buildWheelsTyres(carModel, renderer); } catch (wheelErr) { console.error('Wheel/tyre build failed:', wheelErr); }
   try { applyLivery(carModel, renderer); } catch (liveryErr) { console.error('Livery pass failed:', liveryErr); }

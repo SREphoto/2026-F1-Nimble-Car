@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "id": "dawn_establish",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/dawn_establish.png"
+    },
+    {
+      "id": "pit_dolly",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/pit_dolly.png"
+    },
+    {
+      "id": "tyre_close",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/tyre_close.png"
+    },
+    {
+      "id": "rear_wing",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/rear_wing.png"
+    },
+    {
+      "id": "halo",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/halo.png"
+    },
+    {
+      "id": "pit_roll",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/pit_roll.png"
+    },
+    {
+      "id": "hero",
+      "ok": true,
+      "file": "/workspace/f1-track/docs/intro-shots/hero.png"
+    }
+  ],
+  "ui": {
+    "mute": true,
+    "replay": true,
+    "active": true,
+    "circuit": false
+  },
+  "errors": [],
+  "rawErrorCount": 0
+}

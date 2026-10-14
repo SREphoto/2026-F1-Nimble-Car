@@ -1,0 +1,330 @@
+{
+  "version": 1,
+  "title": "2026 F1 Nimble Car",
+  "subtitle": "SREdesigns",
+  "totalTargetSec": 67,
+  "skipHint": "Press any key or click to skip",
+  "storageKey": "f1-intro-seen",
+  "lightingPresets": {
+    "dawn": {
+      "background": "#2a1408",
+      "fog": "#3a1c0c",
+      "fogDensity": 0.0022,
+      "sunColor": "#ff6a22",
+      "sunIntensity": 1.55,
+      "sunPosition": [
+        90,
+        18,
+        -40
+      ],
+      "ambientColor": "#ff9a55",
+      "ambientIntensity": 0.38,
+      "fillIntensity": 0.25,
+      "bounceIntensity": 0.35,
+      "exposure": 1.05
+    },
+    "dawnWarm": {
+      "background": "#3a180a",
+      "fog": "#4a2210",
+      "fogDensity": 0.0018,
+      "sunColor": "#ff8833",
+      "sunIntensity": 1.9,
+      "sunPosition": [
+        70,
+        28,
+        -20
+      ],
+      "ambientColor": "#ffb070",
+      "ambientIntensity": 0.48,
+      "fillIntensity": 0.4,
+      "bounceIntensity": 0.45,
+      "exposure": 1.12
+    },
+    "hero": {
+      "background": "#4a2812",
+      "fog": "#5a3018",
+      "fogDensity": 0.0014,
+      "sunColor": "#ffaa55",
+      "sunIntensity": 2.2,
+      "sunPosition": [
+        50,
+        55,
+        30
+      ],
+      "ambientColor": "#ffc090",
+      "ambientIntensity": 0.55,
+      "fillIntensity": 0.7,
+      "bounceIntensity": 0.55,
+      "exposure": 1.18
+    }
+  },
+  "shots": [
+    {
+      "id": "dawn_establish",
+      "label": "Dawn over the pit lane",
+      "duration": 8.0,
+      "easing": "easeInOut",
+      "lighting": "dawn",
+      "showCrew": true,
+      "from": {
+        "pos": [
+          -90,
+          28,
+          70
+        ],
+        "target": [
+          30,
+          6,
+          140
+        ]
+      },
+      "to": {
+        "pos": [
+          -50,
+          18,
+          90
+        ],
+        "target": [
+          40,
+          8,
+          160
+        ]
+      }
+    },
+    {
+      "id": "pit_dolly",
+      "label": "Slow dolly past the garages",
+      "duration": 9.0,
+      "easing": "linear",
+      "lighting": "dawn",
+      "showCrew": true,
+      "from": {
+        "pos": [
+          -70,
+          7,
+          98
+        ],
+        "target": [
+          -40,
+          8,
+          175
+        ]
+      },
+      "to": {
+        "pos": [
+          70,
+          7,
+          98
+        ],
+        "target": [
+          100,
+          8,
+          175
+        ]
+      }
+    },
+    {
+      "id": "tyre_close",
+      "label": "Front tyre",
+      "duration": 7.0,
+      "easing": "easeInOut",
+      "lighting": "dawnWarm",
+      "showCrew": false,
+      "from": {
+        "pos": [
+          -1,
+          3.0,
+          15
+        ],
+        "target": [
+          0.2,
+          3.1,
+          8.2
+        ]
+      },
+      "to": {
+        "pos": [
+          2.5,
+          3.4,
+          12.5
+        ],
+        "target": [
+          0.8,
+          3.2,
+          8.0
+        ]
+      }
+    },
+    {
+      "id": "rear_wing",
+      "label": "Rear wing",
+      "duration": 6.5,
+      "easing": "easeInOut",
+      "lighting": "dawnWarm",
+      "showCrew": false,
+      "from": {
+        "pos": [
+          58,
+          5.5,
+          12
+        ],
+        "target": [
+          40,
+          5.5,
+          0
+        ]
+      },
+      "to": {
+        "pos": [
+          52,
+          6.0,
+          -4
+        ],
+        "target": [
+          38,
+          5.8,
+          0
+        ]
+      }
+    },
+    {
+      "id": "halo",
+      "label": "Halo and cockpit",
+      "duration": 6.5,
+      "easing": "easeInOut",
+      "lighting": "dawnWarm",
+      "showCrew": false,
+      "from": {
+        "pos": [
+          20,
+          10,
+          14
+        ],
+        "target": [
+          10,
+          5.0,
+          0
+        ]
+      },
+      "to": {
+        "pos": [
+          15,
+          7.5,
+          6
+        ],
+        "target": [
+          9.5,
+          4.6,
+          0
+        ]
+      }
+    },
+    {
+      "id": "pit_roll",
+      "label": "Car rolls the pit lane",
+      "duration": 11.0,
+      "easing": "easeInOut",
+      "lighting": "dawnWarm",
+      "showCrew": true,
+      "heatShimmer": true,
+      "carRoll": {
+        "fromX": -45,
+        "toX": 55,
+        "z": 0,
+        "y": 0
+      },
+      "from": {
+        "pos": [
+          -55,
+          9,
+          28
+        ],
+        "target": [
+          -30,
+          4,
+          0
+        ]
+      },
+      "to": {
+        "pos": [
+          25,
+          8,
+          30
+        ],
+        "target": [
+          50,
+          4,
+          0
+        ]
+      }
+    },
+    {
+      "id": "hero",
+      "label": "Hero three-quarter",
+      "duration": 10.0,
+      "easing": "easeOut",
+      "lighting": "hero",
+      "showCrew": false,
+      "resetCar": true,
+      "from": {
+        "pos": [
+          -50,
+          12,
+          50
+        ],
+        "target": [
+          12,
+          3.5,
+          0
+        ]
+      },
+      "to": {
+        "pos": [
+          -36,
+          16,
+          40
+        ],
+        "target": [
+          10,
+          3.2,
+          0
+        ]
+      },
+      "titleAt": 0.4
+    },
+    {
+      "id": "settle",
+      "label": "Settle into the garage view",
+      "duration": 9.0,
+      "easing": "easeInOut",
+      "lighting": "hero",
+      "showCrew": false,
+      "from": {
+        "pos": [
+          -36,
+          16,
+          40
+        ],
+        "target": [
+          10,
+          3.2,
+          0
+        ]
+      },
+      "to": {
+        "pos": [
+          -38,
+          16,
+          42
+        ],
+        "target": [
+          10,
+          3.2,
+          0
+        ]
+      },
+      "titleAt": 0.0,
+      "fadeUiAt": 0.55
+    }
+  ]
+}
