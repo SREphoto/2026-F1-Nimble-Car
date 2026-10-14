@@ -50,10 +50,10 @@ if (mode === 'wire') {
 }
 // views: [camX, camY(left+), camZ(up)] in CAD frame, target in CAD
 const T = [17, 0, 3];
-const V = { rear34: [52, 42, 5.5], front34: [-36, -46, 24], side: [17, 80, 3.5], top: [17, 0, 90], rear34r: [62, -34, 16], front34r: [-30, -38, 15], front: [-70, 0, 8], rear: [90, 0, 10] };
+const V = { rear34: [52, 37, 8], front34: [-30, -48, 17], side: [17, 80, 3.5], top: [17, 0, 90], rear34r: [62, -34, 16], front34r: [-30, -38, 15], front: [-70, 0, 8], rear: [90, 0, 10] };
 const c = (P.get('cam') ? P.get('cam').split(',').map(Number) : V[view]);
-const t = P.get('tgt') ? P.get('tgt').split(',').map(Number) : (view === 'rear34' ? [18, 0, 2.8] : view === 'front34' ? [15, 0, 2.5] : T);
-if (!P.get('fov') && !os && (view === 'rear34' || view === 'front34')) { cam.fov = view === 'rear34' ? 25 : 22; cam.updateProjectionMatrix(); }
+const t = P.get('tgt') ? P.get('tgt').split(',').map(Number) : (view === 'rear34' ? [20, 0, 3.2] : view === 'front34' ? [15, 0, 2.5] : T);
+if (!P.get('fov') && !os && (view === 'rear34' || view === 'front34')) { cam.fov = view === 'rear34' ? 27 : 23; cam.updateProjectionMatrix(); }
 const toW = (p) => new THREE.Vector3(...p).applyMatrix4(root.matrixWorld);
 root.updateMatrixWorld(true);
 cam.position.copy(toW(c)); cam.up.set(0, 1, 0); if (view === 'top') cam.up.copy(toW([-1, 0, 0]).sub(toW([0, 0, 0])));
