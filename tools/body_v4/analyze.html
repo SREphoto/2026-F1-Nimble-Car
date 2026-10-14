@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script></head><body><pre id="o"></pre>
+<script type="module">
+import * as THREE from 'three';
+import { createFullCarAssembly } from '../../cad/full_car3d.js';
+const P = new URLSearchParams(location.search);
+const car = createFullCarAssembly(); car.updateMatrixWorld(true);
+const depth = +(P.get('depth') || 2); const out = [];
+const f = (n) => n.toFixed(2);
+function walk(o, d) {
+  if (d > depth) return;
+  const b = new THREE.Box3().setFromObject(o);
+  if (!b.isEmpty()) out.push(`${'  '.repeat(d)}${o.name || o.type} x[${f(b.min.x)},${f(b.max.x)}] y[${f(b.min.y)},${f(b.max.y)}] z[${f(b.min.z)},${f(b.max.z)}]`);
+  o.children.forEach(c => walk(c, d + 1));
+}
+const start = P.get('root') ? car.getObjectByName(P.get('root')) : car;
+walk(start, 0);
+if (window.extra) out.push(await window.extra(car, THREE));
+document.getElementById('o').textContent = out.join('\n');
+</script></body></html>

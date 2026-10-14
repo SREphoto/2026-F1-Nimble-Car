@@ -19,6 +19,7 @@ import {
   createRearWingEndplateInnerTexture
 } from './procedural_livery.js';
 import { createWingElement, elementEdges } from './aero_profiles.js';
+import { createBodyCenterV4 } from './body_center_v4.js';
 
 /**
  * Front wing layout (front-wing group frame: origin 0.55 dm above the ground at x = -8.6).
@@ -560,103 +561,11 @@ export function createActiveWingsBodywork(options = {}) {
   group.add(frontAeroGroup);
 
   // =========================================================================
-  // 2. SCULPTED 3D SIDEPODS & INTERNAL RADIATOR CORES
-  // Overbite letterbox intakes, deep undercuts, and right-side-up ORACLE livery
+  // 2. MAIN BODY / CENTRE SECTION (body v4, cad/body_center_v4.js): sidepods built around the
+  // rising ridge, inlets, engine cover with centre seam, tail closure.
   // =========================================================================
-  const sidepodGroup = new THREE.Group();
-  sidepodGroup.name = 'Sidepod_Assembly_LH_RH';
-
-  [-1, 1].forEach((side, idx) => {
-    const isLeft = side > 0;
-    const pod = new THREE.Group();
-
-    // Sidepod shell lofted between cross-sections (X = 8.6 inlet to X = 29.6 tail). R12 overlay:
-    // about 0.3 to 0.5 dm slimmer than before along its length, tapering harder behind x 23.
-    // wide inlet under the halo/mirror, undercut below, then a coke-bottle taper
-    // inward and downward to the rear. yIn sits inside the tub/engine cover (hidden).
-    const podStations = resampleStations([
-      // RB22 blueprint (side + top refs): tall, near-square inlet beside the halo, a flat
-      // vertical flank at cockpit-shoulder height, a deep undercut (pod floats over the floor),
-      // then a steep drop and cola-bottle waist into the rear tyres. Inner edge stays outside
-      // the tub rim (wRim ~3.0) along the cockpit, then tucks under the engine cover.
-      { x: 10.4, yIn: 3.05, yOut: 5.45, zb: 2.05, zt: 4.75, uc: 0.10 }, // inlet mouth
-      { x: 11.4, yIn: 3.0, yOut: 5.85, zb: 1.65, zt: 4.85, uc: 0.42 },
-      { x: 13.5, yIn: 3.0, yOut: 6.0, zb: 1.25, zt: 4.85, uc: 0.58 },
-      { x: 16.5, yIn: 2.5, yOut: 5.85, zb: 1.0, zt: 4.7, uc: 0.60 },
-      { x: 19.5, yIn: 1.7, yOut: 5.2, zb: 0.8, zt: 4.3, uc: 0.50 },
-      { x: 22.5, yIn: 1.5, yOut: 4.3, zb: 0.7, zt: 3.85, uc: 0.35 },
-      { x: 25.5, yIn: 1.3, yOut: 3.3, zb: 0.65, zt: 2.55, uc: 0.20 },
-      { x: 28.5, yIn: 1.15, yOut: 2.55, zb: 0.62, zt: 1.75, uc: 0.08 },
-      { x: 30.5, yIn: 1.1, yOut: 2.05, zb: 0.62, zt: 1.3, uc: 0.04 }
-    ], 16);
-    const podRing = (st, v, off = 0) => {
-      const th = v * Math.PI * 2;
-      const c = Math.cos(th), sn = Math.sin(th);
-      const cy = (st.yIn + st.yOut) / 2, a = (st.yOut - st.yIn) / 2 + off;
-      const cz = (st.zb + st.zt) / 2, bz = (st.zt - st.zb) / 2 + off;
-      let y = cy + a * spow(c, 0.24);  // flat, near-vertical flank with crisp edges
-      const z = cz + bz * spow(sn, 0.28);
-      if (c > 0 && sn < 0) y -= a * st.uc * Math.pow(-sn, 1.6) * Math.pow(c, 0.3); // outboard undercut
-      return [st.x, side * y, z];
-    };
-    const podGeo = loftGeometry(podStations, (st, v) => podRing(st, v), 128, { flip: isLeft }); // outward-facing normals on both sides
-    const podMesh = new THREE.Mesh(podGeo, navyMat);
-    podMesh.castShadow = true;
-    podMesh.receiveShadow = true;
-    podMesh.name = `Sidepod_Body_${isLeft ? 'LH' : 'RH'}`;
-    pod.add(podMesh);
-
-    // Rear end cap
-    const tailSt = podStations[podStations.length - 1];
-    const tailRing = []; for (let j = 0; j < 48; j++) { const p = podRing(tailSt, j / 48); tailRing.push(new THREE.Vector3(...p)); }
-    if (!isLeft) tailRing.reverse(); // keep the cap normal pointing rearward
-    const tailCap = new THREE.Mesh(capGeometry(tailRing), navyMat);
-    tailCap.name = `Sidepod_TailCap_${isLeft ? 'LH' : 'RH'}`;
-    pod.add(tailCap);
-
-    // -----------------------------------------------------------------------
-    // Livery decal conforming to the pod's outer flank (offset 0.02 dm)
-    // Seen from outside: LH texture runs front-to-rear right-to-left, RH left-to-right
-    // -----------------------------------------------------------------------
-    const sidepodTex = createSidepodLiveryTexture(isLeft);
-    const sidepodLiveryMat = new THREE.MeshStandardMaterial({
-      map: sidepodTex,
-      transparent: true,
-      roughness: 0.28,
-      metalness: 0.35,
-      side: THREE.DoubleSide
-    });
-    const decX0 = 10.4, decX1 = 19.5;
-    const decStations = podStations.filter(st => st.x >= decX0 - 1e-6 && st.x <= decX1 + 1e-6);
-    const vA = -0.17, vB = 0.17; // ring angle range on the outer flank (fraction of a turn)
-    const flankGeo = loftGeometry(decStations, (st, v) => podRing(st, vA + (vB - vA) * v, 0.02), 16, { closed: false, flip: !isLeft });
-    const fuv = flankGeo.attributes.uv;
-    for (let k = 0; k < fuv.count; k++) {
-      const uu = fuv.getX(k);
-      fuv.setXY(k, isLeft ? 1 - uu : uu, fuv.getY(k));
-    }
-    const flankMesh = new THREE.Mesh(flankGeo, sidepodLiveryMat);
-    flankMesh.name = `Sidepod_OracleLivery_${isLeft ? 'LH' : 'RH'}`;
-    flankMesh.visible = false; // superseded by the projected ORACLE decal (avoids z-fighting on the flat flank)
-    pod.add(flankMesh);
-
-    // Forward inlet: carbon lip around the mouth and a dark recessed intake face
-    const inletSt = podStations[0];
-    const lipPts = []; for (let j = 0; j < 48; j++) { const p = podRing(inletSt, j / 48, -0.06); lipPts.push(new THREE.Vector3(p[0], p[1], p[2])); }
-    const inletRim = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lipPts, true), 96, 0.08, 8, true), carbonMat);
-    inletRim.name = `Sidepod_InletLip_${isLeft ? 'LH' : 'RH'}`;
-    pod.add(inletRim);
-    const mouthPts = lipPts.map(p => new THREE.Vector3(p.x + 0.5, p.y, p.z));
-    const inletMouth = new THREE.Mesh(capGeometry(mouthPts), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.95, side: THREE.DoubleSide }));
-    inletMouth.name = `Sidepod_InletMouth_${isLeft ? 'LH' : 'RH'}`;
-    pod.add(inletMouth);
-
-    // (Radiators, charge-air and oil coolers live in the power unit's PU_Cooling_System, from COOLING_SPEC.)
-
-    sidepodGroup.add(pod);
-  });
-
-  group.add(sidepodGroup);
+  const bodyV4 = createBodyCenterV4({ paint: navyMat, carbon: carbonMat });
+  group.add(bodyV4);
 
   // =========================================================================
   // 3. ENGINE COVER, PRIMARY AIRBOX & DORSAL SHARK FIN
@@ -714,88 +623,7 @@ export function createActiveWingsBodywork(options = {}) {
 
   engineCoverGroup.add(airboxGroup);
 
-  // 3D Lofted Engine Cover Shell: rises from the cockpit rim to the airbox crown,
-  // then tapers down and inward over the engine and gearbox to the rear-wing pylons.
-  // Each ring is a rounded "tent": hw * (1 - s^k)^0.5 at height fraction s.
-  const ecStations = resampleStations([
-    // narrow spine: rises steeply behind the driver to the airbox, then the pod tops fall
-    // away on both sides; flanks land inside the pods so nothing gaps
-    { x: 15.6, hw: 2.0, zb: 3.9, zt: 7.5, k: 3.0 },
-    { x: 17.2, hw: 2.2, zb: 3.6, zt: 8.05, k: 3.6 },
-    { x: 19.2, hw: 2.2, zb: 3.0, zt: 8.45, k: 3.6 },
-    { x: 21.5, hw: 2.3, zb: 2.5, zt: 7.3, k: 4.0 },
-    { x: 24.5, hw: 2.05, zb: 1.8, zt: 5.9, k: 3.0 },
-    { x: 27.5, hw: 1.6, zb: 1.3, zt: 5.0, k: 3.0 },
-    // tail kept just tall enough for the single exhaust downpipe
-    { x: 30.5, hw: 1.3, zb: 1.3, zt: 4.6, k: 3.0 },
-    { x: 33.2, hw: 1.1, zb: 2.0, zt: 4.45, k: 2.6 },
-    { x: 34.6, hw: 0.95, zb: 2.4, zt: 4.3, k: 2.6 }
-  ], 8);
-  const ecRing = (st, v, off = 0) => {
-    // v: 0 -> +Y base, 0.5 -> crown, 1 -> -Y base (open underneath; sits on sidepods/tub)
-    const s1 = 1 - Math.abs(2 * v - 1);            // 0 at base, 1 at crown
-    const z = st.zb + (st.zt - st.zb) * s1 + off * 0.5;
-    const w = (st.hw + off) * Math.sqrt(Math.max(0, 1 - Math.pow(s1, st.k)));
-    return [st.x, (v < 0.5 ? 1 : -1) * w, z];
-  };
-  const ecGeo = loftGeometry(ecStations, (st, v) => ecRing(st, v), 48, { closed: false, flip: true });
-  const ecMesh = new THREE.Mesh(ecGeo, navyMat);
-  ecMesh.castShadow = true;
-  ecMesh.receiveShadow = true;
-  ecMesh.name = 'EngineCover_MainShell';
-  engineCoverGroup.add(ecMesh);
-  // Close the cover's forward face behind the headrest (fan over the first tent ring)
-  {
-    const st0 = ecStations[0], ring = [];
-    for (let j = 0; j <= 32; j++) { const p = ecRing(st0, j / 32); ring.push(new THREE.Vector3(p[0], p[1], p[2])); }
-    const ecCap = new THREE.Mesh(capGeometry(ring), navyMat);
-    ecCap.name = 'EngineCover_FrontBulkheadCap';
-    engineCoverGroup.add(ecCap);
-  }
-
-  // Red Bull Charging Bull Decals on Engine Cover Flanks
-  [-1, 1].forEach((side, bIdx) => {
-    const isLeft = side > 0;
-    const ecLiveryTex = createEngineCoverLiveryTexture(isLeft);
-    const ecLiveryMat = new THREE.MeshStandardMaterial({
-      map: ecLiveryTex,
-      transparent: true,
-      roughness: 0.28,
-      metalness: 0.35,
-      side: THREE.DoubleSide
-    });
-    // Conforming decal on the cover flank (X 19.5-26.5, lower-mid flank), offset 0.02 dm
-    const decSt = ecStations.filter(st => st.x >= 19.5 - 1e-6 && st.x <= 26.5 + 1e-6);
-    const vLo = isLeft ? 0.08 : 0.92, vHi = isLeft ? 0.36 : 0.64;
-    const ecDecGeo = loftGeometry(decSt, (st, v) => ecRing(st, vLo + (vHi - vLo) * v, 0.02), 12, { closed: false, flip: !isLeft });
-    const duv = ecDecGeo.attributes.uv;
-    for (let k = 0; k < duv.count; k++) {
-      const uu = duv.getX(k);
-      duv.setXY(k, isLeft ? 1 - uu : uu, duv.getY(k));
-    }
-    const ecDecal = new THREE.Mesh(ecDecGeo, ecLiveryMat);
-    ecDecal.name = `EngineCover_LiveryDecal_${isLeft ? 'LH' : 'RH'}`;
-    ecDecal.visible = false; // superseded by the projected bull decals
-    engineCoverGroup.add(ecDecal);
-  });
-
-  // Dorsal Shark Fin along Engine Spine
-  const finShape = new THREE.Shape();
-  finShape.moveTo(18.0, 7.9);  // Starts behind the roll hoop / airbox
-  finShape.lineTo(18.0, 8.8); // Apex
-  finShape.lineTo(33.0, 5.8); // Rear wing pylon junction
-  finShape.lineTo(33.0, 3.95);
-  finShape.quadraticCurveTo(24.0, 5.9, 18.0, 7.9);
-  finShape.closePath();
-
-  const finExtrude = { steps: 1, depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
-  const finGeo = new THREE.ExtrudeGeometry(finShape, finExtrude);
-  finGeo.center();
-  const finMesh = new THREE.Mesh(finGeo, navyMat);
-  finMesh.rotation.set(Math.PI / 2, 0, 0);
-  finMesh.position.set(25.5, 0, (3.95 + 8.8) / 2); // re-centred on the shape's bounding box
-  finMesh.name = 'Dorsal_Shark_Fin';
-  engineCoverGroup.add(finMesh);
+  // (Engine cover shell lives in body_center_v4.js. 2026 refs show no dorsal shark fin.)
 
   // Central single tailpipe (Article C5.8), ref R10: a round pipe above the crash structure,
   // between the twin pylons, angled slightly up and back. It pivots on the downpipe joint so the

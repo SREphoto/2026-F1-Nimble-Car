@@ -1,0 +1,64 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#3a3e44;overflow:hidden}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script></head><body>
+<script type="module">
+import * as THREE from 'three';
+import { createFullCarAssembly } from '../../cad/full_car3d.js';
+import { materials, applyCarEnvironment } from '../../materials.js';
+import { applyLivery } from '../../cad/livery_decals.js';
+import { applyTeamTheme } from '../../teams.js';
+const P = new URLSearchParams(location.search);
+const view = P.get('view') || 'rear34', mode = P.get('mode') || 'wire', team = P.get('team') || 'redbull';
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x3a3f46);
+const os = +(P.get('ortho') || 0); const cam = os ? new THREE.OrthographicCamera(-os * W / H, os * W / H, os, -os, 0.5, 2000) : new THREE.PerspectiveCamera(P.get('fov') ? +P.get('fov') : 30, W / H, 0.5, 2000);
+const root = new THREE.Group(); root.rotation.x = -Math.PI / 2;
+scene.add(root);
+const car = createFullCarAssembly(); root.add(car);
+try { applyCarEnvironment?.(renderer, scene); } catch (e) {}
+const env = new THREE.PMREMGenerator(renderer);
+const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+scene.environment = env.fromScene(new RoomEnvironment(), 0.04).texture;
+const wireMode = (P.get('mode') || 'wire') === 'wire';
+scene.add(new THREE.HemisphereLight(0xffffff, 0x303030, wireMode ? 0.35 : 1.0));
+const dl = new THREE.DirectionalLight(0xffffff, wireMode ? 2.2 : 1.6); scene.add(dl); dl.userData.key = true;
+const dl2 = new THREE.DirectionalLight(0xbfd0ff, wireMode ? 0.6 : 0.5); dl2.position.set(30, 10, -30); scene.add(dl2);
+
+const hide = (P.get('hide') || '').split(',').filter(Boolean);
+car.traverse(o => { if (hide.some(h => o.name && o.name.includes(h))) o.visible = false; });
+if (mode === 'wire') {
+  const grey = new THREE.MeshStandardMaterial({ color: 0xc8c8c8, roughness: 0.6, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, envMapIntensity: 0.25 });
+  const wm = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: +(P.get('wo') || 0.45) });
+  const meshes = []; car.traverse(o => { if (o.isMesh) meshes.push(o); });
+  const darkG = new THREE.MeshStandardMaterial({ color: 0x1a1b1d, roughness: 0.9, side: THREE.DoubleSide });
+  meshes.forEach(o => { if (!o.visible) return; o.material = /Inlet(Duct|Mouth)/.test(o.name) ? darkG : grey;
+    const q = o.geometry.userData.quadGrid; let lg;
+    if (q) { const pos = o.geometry.attributes.position, v = []; const P = (k) => [pos.getX(k), pos.getY(k), pos.getZ(k)];
+      for (let i = 0; i < q.rows; i++) for (let j = 0; j < q.cols; j++) { const k = i * q.cols + j;
+        if (i + 1 < q.rows) v.push(...P(k), ...P(k + q.cols));
+        if (j + 1 < q.cols || q.closed) v.push(...P(k), ...P(i * q.cols + (j + 1) % q.cols)); }
+      lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); }
+    else lg = new THREE.EdgesGeometry(o.geometry, 25);
+    o.add(new THREE.LineSegments(lg, wm)); });
+} else {
+  try { applyLivery(car, renderer); } catch (e) { console.error(e); }
+  try { applyTeamTheme(team, { carModel: car, materials, renderer }); } catch (e) { console.error(e); }
+  const fl = new THREE.Mesh(new THREE.CircleGeometry(60, 64), new THREE.MeshStandardMaterial({ color: 0x2a2d32, roughness: 0.9 }));
+  fl.rotation.x = -Math.PI / 2; fl.position.y = -0.01; scene.add(fl);
+}
+// views: [camX, camY(left+), camZ(up)] in CAD frame, target in CAD
+const T = [17, 0, 3];
+const V = { rear34: [62, 42, 15], front34: [-38, -50, 16], side: [17, 80, 3.5], top: [17, 0, 90], rear34r: [62, -34, 16], front34r: [-30, -38, 15], front: [-70, 0, 8], rear: [90, 0, 10] };
+const c = (P.get('cam') ? P.get('cam').split(',').map(Number) : V[view]);
+const t = P.get('tgt') ? P.get('tgt').split(',').map(Number) : (view === 'rear34' ? [18, 0, 2.8] : view === 'front34' ? [15, 0, 2.5] : T);
+if (!P.get('fov') && !os && (view === 'rear34' || view === 'front34')) { cam.fov = 22; cam.updateProjectionMatrix(); }
+const toW = (p) => new THREE.Vector3(...p).applyMatrix4(root.matrixWorld);
+root.updateMatrixWorld(true);
+cam.position.copy(toW(c)); cam.up.set(0, 1, 0); if (view === 'top') cam.up.copy(toW([-1, 0, 0]).sub(toW([0, 0, 0])));
+cam.lookAt(toW(t));
+dl.position.copy(cam.position).add(new THREE.Vector3(0, 25, 0)).add(new THREE.Vector3(-10, 0, 0)); dl.target.position.copy(toW(t)); scene.add(dl.target);
+renderer.render(scene, cam);
+document.title = 'READY';
+</script></body></html>
