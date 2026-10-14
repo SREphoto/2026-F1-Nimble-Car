@@ -43,22 +43,23 @@ export function createFloorAeroSurfaces(options = {}) {
 
   // Main Flat Floor Plate (X in [4.5, 28.5] dm, Y in [-7.0, 7.5] dm, Z = 0.45 dm)
   const floorPlateShape = new THREE.Shape();
-  floorPlateShape.moveTo(4.5, -5.2);
-  floorPlateShape.lineTo(7.5, -7.0);  // Forward floor width expansion
-  // RB22: sharp scalloped floor edge (three cut-outs along the outer edge)
-  const scallops = [[11.5, 14.0], [16.0, 19.0], [21.0, 24.5]];
-  scallops.forEach(([a, b]) => { floorPlateShape.lineTo(a, -7.0); floorPlateShape.quadraticCurveTo((a + b) / 2, -6.25, b, -7.0); });
-  floorPlateShape.lineTo(26.5, -7.0); // Constant width section
-  floorPlateShape.lineTo(28.5, -6.3); // Taper ahead of rear tyre squirt cutout
-  floorPlateShape.lineTo(30.0, -5.4); // Narrow to pass inside the rear tyres (inner face Y = ±5.525)
-  floorPlateShape.lineTo(36.5, -5.2); // Diffuser trailing edge
-  floorPlateShape.lineTo(36.5, 5.2);
-  floorPlateShape.lineTo(30.0, 5.4);
-  floorPlateShape.lineTo(28.5, 6.3);
-  floorPlateShape.lineTo(26.5, 7.0);
-  [...scallops].reverse().forEach(([a, b]) => { floorPlateShape.lineTo(b, 7.0); floorPlateShape.quadraticCurveTo((a + b) / 2, 6.25, a, 7.0); });
-  floorPlateShape.lineTo(7.5, 7.0);
-  floorPlateShape.lineTo(4.5, 5.2);
+  // body-v3: plan view from the top reference. The floor starts narrow beside the tub, flares out
+  // under the sidepods, keeps a thin margin outside the pod flank, then tucks in ahead of the rear
+  // tyres. Outline is data (FLOOR_PLAN below): [x, half width].
+  const FLOOR_PLAN = [
+    [5.0, 2.6], [7.0, 3.3], [9.0, 4.4], [11.0, 5.5], [13.0, 6.1], [15.0, 6.35],
+    [25.0, 6.35], [26.8, 6.1], [28.5, 5.75], [30.0, 5.4], [36.5, 5.2],
+  ];
+  const scallops = [[16.0, 18.5], [19.5, 22.0], [22.8, 24.6]]; // sharp shallow cut-outs along the edge
+  const edgeAt = (x) => { for (let i = 0; i < FLOOR_PLAN.length - 1; i++) { const [x0, w0] = FLOOR_PLAN[i], [x1, w1] = FLOOR_PLAN[i + 1]; if (x <= x1) return w0 + (w1 - w0) * (x - x0) / (x1 - x0); } return FLOOR_PLAN[FLOOR_PLAN.length - 1][1]; };
+  const outline = [];
+  FLOOR_PLAN.forEach(([x, w], i) => {
+    outline.push([x, w]);
+    if (x === 15.0) scallops.forEach(([a, b]) => { outline.push([a, edgeAt(a)], [(a + b) / 2, edgeAt((a + b) / 2) - 0.45], [b, edgeAt(b)]); });
+  });
+  floorPlateShape.moveTo(outline[0][0], -outline[0][1]);
+  outline.slice(1).forEach(([x, w]) => floorPlateShape.lineTo(x, -w));
+  [...outline].reverse().forEach(([x, w]) => floorPlateShape.lineTo(x, w));
   floorPlateShape.closePath();
 
   const floorExtrude = { steps: 1, depth: 0.04, bevelEnabled: false }; // thin sheet with a sharp edge
@@ -79,8 +80,8 @@ export function createFloorAeroSurfaces(options = {}) {
     strakeGroup.name = `Floor_Strakes_${side > 0 ? 'Left' : 'Right'}`;
 
     for (let s = 0; s < 4; s++) {
-      const yStart = side * (1.8 + s * 1.35);
-      const yEnd = side * (2.2 + s * 1.55);
+      const yStart = side * (1.2 + s * 0.55); // body-v3: kept inside the narrower floor nose
+      const yEnd = side * (1.4 + s * 0.6);
 
       // 3D Curved Strake Blade
       const strakeShape = new THREE.Shape();
@@ -115,7 +116,7 @@ export function createFloorAeroSurfaces(options = {}) {
     // Longitudinal Raised Edge Wing (X = 9.0 to 26.5 dm, Y = ±7.45 dm)
     const edgeWingGeo = new THREE.BoxGeometry(2.0, 0.22, 0.03); // short thin lip at the rear of the edge only
     const edgeWingMesh = new THREE.Mesh(edgeWingGeo, floorCarbon);
-    edgeWingMesh.position.set(25.6, side * 6.9, 0.52);
+    edgeWingMesh.position.set(25.6, side * 6.15, 0.52);
     edgeGroup.add(edgeWingMesh);
 
     // Titanium Floor Edge Skid Pucks (5 per side)
@@ -141,7 +142,7 @@ export function createFloorAeroSurfaces(options = {}) {
       const fenceGeo = new THREE.ExtrudeGeometry(fenceShape, fenceExtrude);
       const fenceMesh = new THREE.Mesh(fenceGeo, floorCarbon);
       fenceMesh.rotation.x = Math.PI / 2;
-      fenceMesh.position.set(fX, side * (fenceIdx === 0 ? 6.25 : 5.8), 0.45);
+      fenceMesh.position.set(fX, side * (fenceIdx === 0 ? 5.75 : 5.35), 0.45);
       fenceMesh.name = `TyreSquirt_Fence_${fenceIdx}_${side > 0 ? 'L' : 'R'}`;
       edgeGroup.add(fenceMesh);
     });
