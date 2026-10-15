@@ -3,7 +3,12 @@
  * Data: data/intro_sequence.json. Music: cad/audio/music_player.js.
  * Click-to-start (audio unlock), skip, replay. Remembers first play in localStorage.
  */
+
 import * as THREE from 'three';
+
+// The car is built Z-up (CAD frame) and tipped -90° about X to stand in the Y-up scene.
+// Resetting its rotation to zero lays it on its back, half under the pavement.
+const CAR_BASE_ROT = [-Math.PI / 2, 0, 0];
 
 const SEQ_URL = 'data/intro_sequence.json';
 const DEFAULT_STORAGE = 'f1-intro-seen';
@@ -269,6 +274,7 @@ function snapshotScene() {
     controlsEnabled: controls.enabled,
     autoRotate: controls.autoRotate,
     carPos: carModel ? carModel.position.toArray() : [0, 0, 0],
+    carRot: carModel ? [carModel.rotation.x, carModel.rotation.y, carModel.rotation.z] : CAR_BASE_ROT,
     circuit: !!trackMode?.mode?.circuit,
   };
 }
@@ -301,7 +307,7 @@ function restoreScene() {
   controls.update();
   if (carModel) {
     carModel.position.set(...S.carPos);
-    carModel.rotation.set(0, 0, 0);
+    carModel.rotation.set(...(S.carRot || CAR_BASE_ROT));
   }
   if (trackMode && typeof trackMode.applyCircuit === 'function' && S.circuit && !trackMode.mode.circuit) {
     trackMode.applyCircuit(true);
@@ -343,7 +349,7 @@ function beginPlayback() {
   if (first) applyLighting(first.lighting || 'dawn');
   if (carModel) {
     carModel.position.set(0, 0, 0);
-    carModel.rotation.set(0, 0, 0);
+    carModel.rotation.set(...CAR_BASE_ROT);
   }
   window.f1Music?.start?.();
 }
@@ -398,10 +404,10 @@ function updateShot(shot, u, dt) {
   if (shot.carRoll && carModel) {
     const x = lerp(shot.carRoll.fromX, shot.carRoll.toX, t);
     carModel.position.set(x, shot.carRoll.y || 0, shot.carRoll.z || 0);
-    carModel.rotation.set(0, 0, 0);
+    carModel.rotation.set(...CAR_BASE_ROT);
   } else if (shot.resetCar && carModel && u < 0.05) {
     carModel.position.set(0, 0, 0);
-    carModel.rotation.set(0, 0, 0);
+    carModel.rotation.set(...CAR_BASE_ROT);
   }
 
   if (shot.titleAt != null && u >= shot.titleAt) showTitle(true);
