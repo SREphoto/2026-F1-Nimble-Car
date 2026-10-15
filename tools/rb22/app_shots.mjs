@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 const OUT=process.argv[2]||'/workspace/f1-refs-body/rb22/renders'; fs.mkdirSync(OUT,{recursive:true});
 const PORT=process.env.PORT||8851; const extra=process.env.Q||'';
-const V={front34:[-30,12,-26, 14,4,0],rear34:[60,15,28, 18,4,0],side:[17,5,-62, 17,4.5,0],top:[17,72,0.01,17,0,0],nosejoin:[-8,9,-15,2,4,0],tailclose:[48,9,14,32,4,0]};
+const V={front34:[-30,12,-26, 14,4,0],rear34:[60,15,28, 18,4,0],side:[17,5,-62, 17,4.5,0],top:[17,72,0.01,17,0,0],nosejoin:[-8,9,-15,2,4,0],tailclose:[48,9,14,32,4,0],rearlow:[52,6,0.01,36,5,0]};
 const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 const p=await b.newPage({viewport:{width:1400,height:860}});
 const errs=[];p.on('console',m=>{if(m.type()==='error'||m.type()==='warning')errs.push(m.type()+': '+m.text())});p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
@@ -14,11 +14,13 @@ const grab=async(name)=>{const data=await p.evaluate(()=>{const r=window.rendere
 const setCam=async(c)=>p.evaluate(c=>{const cam=window.camera,ct=window.controls;ct.autoRotate=false;cam.aspect=1400/860;cam.fov=30;cam.updateProjectionMatrix();cam.position.set(c[0],c[1],c[2]);ct.target.set(c[3],c[4],c[5]);ct.update();window.renderer.setSize(1400,860,false);},c);
 const jobs=(process.env.JOBS||'red-bull:front34,rear34,side;mclaren:front34,rear34,side').split(';');
 for(const j of jobs){const [team,views]=j.split(':');
-  if(team==='wire'){await p.evaluate(()=>{window.setTeam('red-bull');const g=window.carModel;g.traverse(o=>{if(o.isMesh&&o.visible){o.userData._m=o.material;o.material=new o.material.constructor({color:0x101010,wireframe:true});}});});
+  if(team==='wire'){await p.evaluate(()=>{window.setTeam('red-bull');const g=window.carModel;const rb=g.getObjectByName('Body_RB22_Assembly');const col=g.getObjectByName('Body_RB22_NoseCollar');const inRb=(o)=>{for(let q=o;q;q=q.parent){if(q===rb||q===col)return true;}return false;};g.traverse(o=>{if(o.isMesh){o.userData._m=o.material;o.material=inRb(o)?new o.material.constructor({color:0x00e5ff,wireframe:true}):new o.material.constructor({color:0x3a3d44,roughness:0.8});}});});
     for(const v of views.split(',')){await setCam(V[v]);await grab(`wire_${v}`);} 
     await p.evaluate(()=>window.carModel.traverse(o=>{if(o.userData._m){o.material=o.userData._m;delete o.userData._m;}}));continue;}
   if(team==='intro'){for(const id of views.split(',')){const [sid,u]=id.split('@');await p.evaluate(([sid,u])=>window.f1Intro.debugJumpToShot(sid,+u),[sid,u||'0.5']);await p.waitForTimeout(400);await p.evaluate(([sid,u])=>window.f1Intro.debugJumpToShot(sid,+u),[sid,u||'0.5']);await grab(`intro_${sid}`);} continue;}
-  await p.evaluate(t=>window.setTeam(t),team);await p.waitForTimeout(800);
+  if(team.endsWith('-nodecal')){await p.evaluate(t=>{window.setTeam(t);window.carModel.traverse(o=>{if(/^Livery_Decal_Team_/.test(o.name))o.visible=false;});},team.replace('-nodecal',''));}
+  else if(team.endsWith('-nopaint')){await p.evaluate(t=>{window.setTeam(t);window.carModel.traverse(o=>{if(o.isMesh&&o.material&&o.material.name==='RB22_BodyPaint'){o.material=o.material.clone();o.material.colorWrite=false;}});},team.replace('-nopaint',''));}
+  else await p.evaluate(t=>window.setTeam(t),team);await p.waitForTimeout(800);
   for(const v of views.split(',')){await setCam(V[v]);await p.waitForTimeout(200);await grab(`${team}_${v}`);}
 }
 console.log(errs.filter(e=>!/favicon|eruda/.test(e)).slice(0,25).join('\n'));

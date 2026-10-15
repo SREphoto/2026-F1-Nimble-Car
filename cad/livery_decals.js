@@ -153,9 +153,10 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
 
     // Keep only triangles on the side facing the projector (stops the artwork
     // bleeding through thin panels and showing mirrored on the far face).
+    const byVN = !!mesh.userData.mixedWinding;
     const ref = faceNormalWorld(mesh, hit.face);
-    const facing = Math.sign(ref.dot(z)) || 1;
-    const filtered = filterFacing(geo, z, facing, facingThreshold);
+    const facing = byVN ? 1 : (Math.sign(ref.dot(z)) || 1);
+    const filtered = filterFacing(geo, z, facing, facingThreshold, byVN);
     geo.dispose();
     if (!filtered) { report.skipped.push(`${name}: no facing triangles`); return null; }
 
@@ -481,6 +482,10 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
           d.userData.liveryTeam = team.id;
           if (spec.kind === 'panel') d.receiveShadow = false; // big flat paint panels showed shadow acne
           if (order > 1) { d.material.polygonOffsetFactor = -4; d.material.polygonOffsetUnits = -4; }
+          if (rb) { // the RB22 skin is finely tessellated and double-sided: push decals further forward
+            d.material.polygonOffsetFactor = order > 1 ? -8 : -6; d.material.polygonOffsetUnits = order > 1 ? -16 : -10;
+            d.material.depthWrite = false; d.castShadow = false; d.receiveShadow = false;
+          }
         }
       });
     });
@@ -524,7 +529,7 @@ function faceNormalWorld(mesh, face) {
 }
 
 /** Keep triangles whose winding normal has sign `facing` relative to projector axis z. */
-function filterFacing(geo, z, facing, threshold = 0.08) {
+function filterFacing(geo, z, facing, threshold = 0.08, byVertexNormals = false) {
   const pos = geo.attributes.position, nrm = geo.attributes.normal, uv = geo.attributes.uv;
   const P = [], N = [], U = [];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
@@ -533,10 +538,20 @@ function filterFacing(geo, z, facing, threshold = 0.08) {
     n.crossVectors(b.clone().sub(a), c.clone().sub(a));
     const len = n.length();
     if (len < 1e-10) continue;
-    if (facing * n.dot(z) / len < threshold) continue;
+    const rawDot = n.dot(z); // winding of the triangle as stored
+    if (byVertexNormals) {
+      // meshes with mixed triangle winding (the RB22 skin): trust the smooth vertex normals instead
+      const sx = nrm.getX(i) + nrm.getX(i + 1) + nrm.getX(i + 2), sy = nrm.getY(i) + nrm.getY(i + 1) + nrm.getY(i + 2), sz = nrm.getZ(i) + nrm.getZ(i + 1) + nrm.getZ(i + 2);
+      if (n.x * sx + n.y * sy + n.z * sz < 0) n.negate();
+      const sl = Math.hypot(sx, sy, sz) || 1;
+      if (facing * (sx * z.x + sy * z.y + sz * z.z) / sl < threshold * 0.25) continue;
+    } else if (facing * n.dot(z) / len < threshold) continue;
     // Wind every kept triangle so its front face points back at the projector
-    const order = n.dot(z) >= 0 ? [0, 1, 2] : [0, 2, 1];
+    const order = rawDot >= 0 ? [0, 1, 2] : [0, 2, 1];
     for (const k of order) {
+      if (byVertexNormals) { // lift 0.02 dm off the skin: depth offset alone left pin-holes on the RB22 body
+        const o = 0.02; P.push(pos.getX(i + k) + nrm.getX(i + k) * o, pos.getY(i + k) + nrm.getY(i + k) * o, pos.getZ(i + k) + nrm.getZ(i + k) * o);
+      } else
       P.push(pos.getX(i + k), pos.getY(i + k), pos.getZ(i + k));
       N.push(nrm.getX(i + k), nrm.getY(i + k), nrm.getZ(i + k));
       U.push(uv.getX(i + k), uv.getY(i + k));

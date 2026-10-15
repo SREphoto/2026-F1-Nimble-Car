@@ -60,7 +60,7 @@ export async function installRb22Body(carModel, renderer) {
           });
           bakedMap = mat.map;
         }
-        o.material = paint; paintMeshes.push(o);
+        o.material = paint; paintMeshes.push(o); o.userData.mixedWinding = true;
         parts[part] = parts[part] || {}; parts[part].paint = o;
       }
     }
@@ -82,7 +82,7 @@ export async function installRb22Body(carModel, renderer) {
   const isBaked = (team) => (team?.livery?.bodyTexture === 'baked') && !plainForced;
   function setTeam(team) {
     const baked = isBaked(team);
-    paint.map = baked ? bakedMap : plainMap;
+    paint.map = baked ? bakedMap : null; // other teams: clean team colour, no leftover Red Bull art
     paint.color.set(baked ? 0xffffff : (team?.bodyColor ?? 0xffffff));
     if (team && !baked) {
       paint.roughness = team.roughness ?? 0.35; paint.clearcoat = team.clearcoat ?? 0.8;
