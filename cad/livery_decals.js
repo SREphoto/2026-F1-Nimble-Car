@@ -418,14 +418,30 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     return ep && ep.children.find((c) => c.isMesh && c.material === carPaint);
   }).filter(Boolean);
   const pods = ['LH', 'RH'].map((t) => byName(`Sidepod_Body_${t}`)).filter(Boolean);
-  const targetFor = (t, s) => ({
-    nose, engineCover: ec, tub: tubSkin, rearWingMain: rwMain,
-    sidepod: pickSide(pods, s), frontEndplate: pickSide(frontEndplates, s), rearEndplate: pickSide(rearEndplates, s),
-  })[t];
+  const targetFor = (t, s) => {
+    const rb = carModel.userData.rb22; // shared RB22 body (cad/rb22_body.js) once it has loaded
+    if (rb && ['tub', 'engineCover', 'sidepod', 'sidepodRidge'].includes(t)) {
+      return ({ tub: rb.targets.tub, engineCover: rb.targets.engineCover,
+        sidepod: pickSide(rb.targets.sidepods, s), sidepodRidge: pickSide(rb.targets.sidepods, s) })[t];
+    }
+    return ({
+      nose, engineCover: ec, tub: tubSkin, rearWingMain: rwMain,
+      sidepod: pickSide(pods, s), frontEndplate: pickSide(frontEndplates, s), rearEndplate: pickSide(rearEndplates, s),
+    })[t];
+  };
   const built = new Set();
+  // Drop every data-driven team decal (used when the shared body is swapped in after load)
+  function resetTeams() {
+    const old = [];
+    carModel.traverse((o) => { if (o.isMesh && /^Livery_Decal_Team_/.test(o.name)) old.push(o); });
+    old.forEach((o) => { o.parent.remove(o); o.geometry.dispose(); });
+    built.clear();
+  }
   function buildTeam(team) {
     const data = team && team.livery;
-    if (!data || data.bespokeDecals || built.has(team.id)) return 0;
+    const rb = carModel.userData.rb22;
+    if (!data || built.has(team.id)) return 0;
+    if (rb ? rb.isBaked(team) : data.bespokeDecals) return 0;
     built.add(team.id);
     carModel.updateMatrixWorld(true);
     carToWorld = carModel.matrixWorld.clone();
@@ -492,7 +508,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
     const body = carModel.userData.stanceFrame || carModel;
     splitUniforms.uSpFrame.value.multiplyMatrices(loadPose, _inv.copy(body.matrixWorld).invert());
   };
-  carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame, buildTeam };
+  carModel.userData.livery = { report, carPaint, splitUniforms, syncFrame, buildTeam, resetTeams };
   return report;
 }
 

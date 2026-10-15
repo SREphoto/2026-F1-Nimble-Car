@@ -1,5 +1,5 @@
 {
- "_about": "Game data: one shared 2026 car body, painted per team. Colours are photo approximations from /workspace research (Austrian GP 2026 left-side photos). Decal boxes are fractions of the target part's bounding box: x/w along the part from nose to tail, z/h from bottom to top. face 'side' is mirrored onto both flanks, 'top' is projected from above. kind: text | panel | art.",
+ "_about": "Game data: one shared 2026 car body, painted per team. Colours are photo approximations from /workspace research (Austrian GP 2026 left-side photos). Decal boxes are fractions of the target part's bounding box: x/w along the part from nose to tail, z/h from bottom to top. face 'side' is mirrored onto both flanks, 'top' is projected from above. kind: text | panel | art. With the shared RB22 body: 'bodyTexture': 'baked' keeps that model's own painted Red Bull livery (add ?rb22Paint=plain to the URL to use the plain paint and the decals below instead); every other team gets plain paint in its body colour plus its decals. Targets tub, engineCover, sidepod and sidepodRidge (the rounded ridge's outer face, used for ORACLE) land on the RB22 body.",
  "targets": [
   "nose",
   "sidepod",
@@ -7,7 +7,8 @@
   "tub",
   "frontEndplate",
   "rearEndplate",
-  "rearWingMain"
+  "rearWingMain",
+  "sidepodRidge"
  ],
  "teams": [
   {
@@ -33,7 +34,39 @@
     "camo": 0.2
    },
    "bespokeDecals": true,
-   "decals": []
+   "decals": [
+    {
+     "kind": "text",
+     "target": "sidepodRidge",
+     "face": "side",
+     "x": 0.42,
+     "z": 0.62,
+     "w": 0.42,
+     "text": "ORACLE",
+     "color": "#FFFFFF"
+    },
+    {
+     "kind": "text",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.55,
+     "z": 0.55,
+     "w": 0.3,
+     "text": "Red Bull",
+     "color": "#DA2520"
+    },
+    {
+     "kind": "text",
+     "target": "tub",
+     "face": "side",
+     "x": 0.35,
+     "z": 0.6,
+     "w": 0.18,
+     "text": "CARLYLE",
+     "color": "#FFFFFF"
+    }
+   ],
+   "bodyTexture": "baked"
   },
   {
    "id": "mclaren",

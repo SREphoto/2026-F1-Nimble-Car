@@ -495,6 +495,7 @@ export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLc
   }
 
   // Team livery decals from data/team_liveries.json (built the first time a team is picked)
+  try { carModel?.userData?.rb22?.setTeam?.(team); } catch (e) { console.warn('RB22 body paint failed', e); }
   try { carModel?.userData?.livery?.buildTeam?.(team); } catch (e) { console.warn('team livery build failed', e); }
   if (carModel?.userData?.livery?.splitUniforms?.uCamo) carModel.userData.livery.splitUniforms.uCamo.value = team.camo || 0;
 

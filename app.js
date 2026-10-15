@@ -21,6 +21,7 @@ import { initGarageInspect } from './cad/track/garage/garage_inspect.js';
 import { initTyreStates } from './cad/tyre_states.js';
 import { sumTravel } from './cad/track/ride_model.js';
 import { applyLivery } from './cad/livery_decals.js';
+import { installRb22Body, RB22_CREDIT } from './cad/rb22_body.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 import { initSessions } from './cad/game/session_ui.js';
 import { initGlobe } from './cad/game/globe.js';
@@ -426,6 +427,22 @@ try {
   });
 } catch (themeErr) {
   console.warn('Initial team theme hydration error:', themeErr);
+}
+
+// Shared main body (free RB22 model, CC BY 4.0). Loads after first paint, then re-applies the team.
+if (carModel && !/[?&]legacyBody/.test(location.search)) {
+  installRb22Body(carModel, renderer).then(() => {
+    carModel.userData.livery?.resetTeams?.();
+    applyTeamTheme(getCurrentTeam()?.id || getSavedTeam(), { carModel, materials, renderer, updateLcd: updateLcdDisplay });
+    window.__rb22Ready = true;
+  }).catch((e) => { console.error('RB22 body failed to load, keeping the built body:', e); window.__rb22Ready = 'failed'; });
+}
+{
+  const note = document.createElement('div');
+  note.id = 'model-credit';
+  note.textContent = `Body model: ${RB22_CREDIT}`;
+  note.style.cssText = 'position:fixed;right:8px;bottom:4px;font:10px/1.3 system-ui,sans-serif;color:rgba(255,255,255,.55);pointer-events:none;z-index:5;';
+  document.body.appendChild(note);
 }
 
 // Design Principles & Inspiration Modal Controls
