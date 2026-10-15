@@ -46,7 +46,7 @@ export async function installRb22Body(carModel, renderer) {
   body.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true; o.receiveShadow = true;
-      const part = o.parent && o.parent !== body ? o.parent.name : o.name;
+      const part = /^Body_RB22_/.test(o.parent?.name || '') && o.parent.name !== 'Body_RB22_Shell' ? o.parent.name : o.name;
       const mat = o.material;
       if (mat.map) mat.map.anisotropy = maxAniso;
       const mname = (mat.name || '').replace(/\.\d+$/, '');
@@ -64,14 +64,19 @@ export async function installRb22Body(carModel, renderer) {
         parts[part] = parts[part] || {}; parts[part].paint = o;
       }
     }
-    if (o.parent === body) parts[o.name] = { ...(parts[o.name] || {}), group: o };
   });
+  body.traverse((o) => { if (!o.isMesh && /^Body_RB22_/.test(o.name)) parts[o.name] = { ...(parts[o.name] || {}), group: o }; });
   const decalsBaked = body.getObjectByName('Body_RB22_BakedDecals');
 
   // Put the body where the old bodywork lived, so exploded view and tyre stance move it too
   const host = carModel.getObjectByName('Active_Wings_Bodywork_Assembly') || carModel;
   host.add(body);
   REPLACED.forEach((n) => { const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; } });
+
+  // Collar: loft from the back of our nose to the cut front face of the RB22 tub, so the two meet with no gap
+  const collarMat = new THREE.MeshPhysicalMaterial({ name: 'RB22_NoseCollarPaint', color: 0x1b1f48, roughness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.12, side: THREE.DoubleSide });
+  let collar = null;
+  try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
 
   const plainForced = typeof location !== 'undefined' && /[?&]rb22Paint=plain/.test(location.search);
   const isBaked = (team) => (team?.livery?.bodyTexture === 'baked') && !plainForced;
@@ -84,6 +89,8 @@ export async function installRb22Body(carModel, renderer) {
       paint.clearcoatRoughness = team.clearcoatRoughness ?? 0.12; paint.metalness = Math.min(0.2, team.metalness ?? 0.1);
     }
     paint.needsUpdate = true;
+    collarMat.color.set(baked ? 0x1b1f48 : (team?.bodyColor ?? 0xffffff));
+    collarMat.roughness = paint.roughness; collarMat.clearcoat = paint.clearcoat;
     if (decalsBaked) decalsBaked.visible = baked;
     return baked;
   }
@@ -93,7 +100,60 @@ export async function installRb22Body(carModel, renderer) {
     engineCover: parts.Body_RB22_EngineCover_Airbox?.paint,
     sidepods: [parts.Body_RB22_Sidepod_LH?.paint, parts.Body_RB22_Sidepod_RH?.paint].filter(Boolean),
   };
-  const api = { body, parts, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
+}
+
+// ---------------------------------------------------------------------------
+// Nose-to-tub collar. Both ends are sampled by casting rays inward in a plane of
+// constant X (CAD frame), then lofted with a smooth blend between them.
+export const RB22_CUT_X = 2.0; // dm, where tools/rb22/split.mjs cut the RB22 tub
+export function buildNoseCollar(carModel, host, tubGroup, material) {
+  const nose = carModel.getObjectByName('Nosecone_MainBody_Navy');
+  if (!nose || !tubGroup) { console.warn('[rb22] collar: missing', !!nose, !!tubGroup); return null; }
+  carModel.updateMatrixWorld(true);
+  const toWorld = carModel.matrixWorld; const toHost = host.matrixWorld.clone().invert();
+  const tubMeshes = []; tubGroup.traverse((o) => { if (o.isMesh) tubMeshes.push(o); });
+  const rc = new THREE.Raycaster();
+  const N = 72; const zc = 2.6; const R = 14;
+  const ring = (x, meshes) => {
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const dy = Math.cos(a), dz = Math.sin(a);
+      const o = new THREE.Vector3(x, dy * R, zc + dz * R).applyMatrix4(toWorld);
+      const t = new THREE.Vector3(x, 0, zc).applyMatrix4(toWorld);
+      rc.set(o, t.clone().sub(o).normalize()); rc.far = R;
+      const hit = rc.intersectObjects(meshes, false)[0];
+      pts.push(hit ? hit.point.clone().applyMatrix4(carModel.matrixWorld.clone().invert()) : null);
+    }
+    return pts;
+  };
+  const xa = 0.95; const xb = RB22_CUT_X + 0.03;
+  const A = ring(xa, [nose]); const B = ring(xb, tubMeshes);
+  console.info('[rb22] collar rings', A.filter(Boolean).length, B.filter(Boolean).length);
+  if (A.filter(Boolean).length < N * 0.6) return null;
+  // gaps (no surface on that ray): take the other end's point, or the nearest neighbour
+  const fill = (P, Q) => P.map((p, i) => p || Q[i] || P.find(Boolean));
+  const a = fill(A, B); const b = fill(B, A).map((p) => new THREE.Vector3(xb, p.y * 0.995, zc + (p.z - zc) * 0.995));
+  const S = 8; const pos = []; const idx = [];
+  for (let s = 0; s <= S; s++) {
+    const u = s / S; const w = u * u * (3 - 2 * u);
+    for (let i = 0; i < N; i++) {
+      const p = a[i], q = b[i];
+      pos.push(xa + (xb - xa) * u, p.y + (q.y - p.y) * w, p.z + (q.z - p.z) * w);
+    }
+  }
+  for (let s = 0; s < S; s++) for (let i = 0; i < N; i++) {
+    const i2 = (i + 1) % N; const r0 = s * N, r1 = (s + 1) * N;
+    idx.push(r0 + i, r1 + i, r1 + i2, r0 + i, r1 + i2, r0 + i2);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  // carModel frame -> host frame
+  const m = new THREE.Matrix4().multiplyMatrices(toHost, toWorld); g.applyMatrix4(m);
+  const mesh = new THREE.Mesh(g, material); mesh.name = 'Body_RB22_NoseCollar'; mesh.castShadow = true; mesh.receiveShadow = true;
+  host.add(mesh);
+  return mesh;
 }

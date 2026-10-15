@@ -1,0 +1,16 @@
+<body style="margin:0;background:#888"><script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const q=new URLSearchParams(location.search);
+const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(1280,800);document.body.appendChild(r.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0x9aa3ad);s.add(new THREE.HemisphereLight(0xffffff,0x444444,2.2));const d=new THREE.DirectionalLight(0xffffff,2);d.position.set(10,20,10);s.add(d);
+const cam=new THREE.PerspectiveCamera(30,1.6,0.1,500);
+const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);
+const g=await L.loadAsync(q.get('f'));const car=g.scene;car.rotation.x=-Math.PI/2;s.add(car);
+if(q.has('wire'))car.traverse(o=>{if(o.isMesh){o.material=new THREE.MeshBasicMaterial({color:0x111111,wireframe:true});}});
+const grid=new THREE.GridHelper(80,40);s.add(grid);
+window.shot=(px,py,pz,tx,ty,tz)=>{cam.position.set(px,py,pz);cam.lookAt(tx,ty,tz);r.render(s,cam);return true;};
+window.READY=true;
+</script>
