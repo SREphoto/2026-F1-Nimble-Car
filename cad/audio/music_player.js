@@ -40,10 +40,10 @@ function fadeTo(vol, ms = FADE_MS) {
   const from = a.volume;
   const to = Math.max(0, Math.min(1, vol));
   const t0 = performance.now();
-  if (Math.abs(from - to) < 0.01) { a.volume = to; return; }
+  if (Math.abs(from - to) < 0.01) { a.volume = Math.min(1, Math.max(0, to)); return; }
   function step(now) {
     const t = Math.min(1, (now - t0) / ms);
-    a.volume = from + (to - from) * t;
+    a.volume = Math.min(1, Math.max(0, from + (to - from) * t));
     if (t < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
