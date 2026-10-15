@@ -421,8 +421,8 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   const pods = ['LH', 'RH'].map((t) => byName(`Sidepod_Body_${t}`)).filter(Boolean);
   const targetFor = (t, s) => {
     const rb = carModel.userData.rb22; // shared RB22 body (cad/rb22_body.js) once it has loaded
-    if (rb && ['tub', 'engineCover', 'sidepod', 'sidepodRidge'].includes(t)) {
-      return ({ tub: rb.targets.tub, engineCover: rb.targets.engineCover,
+    if (rb && ['tub', 'engineCover', 'sidepod', 'sidepodRidge', ...(rb.targets.nose ? ['nose'] : [])].includes(t)) {
+      return ({ tub: rb.targets.tub, nose: rb.targets.nose, engineCover: rb.targets.engineCover,
         sidepod: pickSide(rb.targets.sidepods, s), sidepodRidge: pickSide(rb.targets.sidepods, s) })[t];
     }
     return ({

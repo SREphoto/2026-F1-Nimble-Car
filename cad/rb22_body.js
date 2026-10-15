@@ -18,6 +18,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 export const RB22_CREDIT = '2026 Redbull RB22 by Dave (Tyler_Dave), sketchfab.com, CC BY 4.0';
+const FW_LEAD_BEHIND_TIP = -0.3; // dm: wing leading edge just ahead of the nose tip, as on the RB22
+const api0 = {};
+const DRIVER_LIFT = 0.8; // dm
 const BASE = new URL('../assets/models/', import.meta.url);
 
 // Our hand-built parts that this body replaces (hidden, kept for the exploded/X-ray views)
@@ -25,6 +28,7 @@ const REPLACED = [
   'Body_Monocoque_CarbonTub', 'Body_Halo_Titanium_Assembly', 'Body_RollHoop_Primary_172kN',
   'Chassis_Top_Instrumentation', 'Assembly_FIA_T_Camera', 'Assembly_Mirror_Left', 'Assembly_Mirror_Right',
   'Cockpit_Headrest_Assembly',
+  'Nosecone_FIS_Assembly', // the RB22's own nose is used: one smooth top line from tip to cockpit
   'Sidepod_Assembly_LH_RH', 'Engine_Cover_Airbox_Fin_Assembly', 'Floor_Underbody_Diffuser_Assembly',
 ];
 
@@ -77,7 +81,28 @@ export async function installRb22Body(carModel, renderer) {
   // Collar: loft from the back of our nose to the cut front face of the RB22 tub, so the two meet with no gap
   const collarMat = new THREE.MeshPhysicalMaterial({ name: 'RB22_NoseCollarPaint', color: 0x1b1f48, roughness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.12, side: THREE.DoubleSide });
   let collar = null;
-  try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
+  if (!parts.Body_RB22_Nose) try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
+
+  // Slide our front wing so it sits under the RB22 nose tip as it does under the real car
+  const fw = carModel.getObjectByName('FrontWing_Aerofoil_Assembly');
+  if (fw && parts.Body_RB22_Nose?.group) {
+    carModel.updateMatrixWorld(true);
+    const inv = carModel.matrixWorld.clone().invert();
+    const nb = new THREE.Box3().setFromObject(parts.Body_RB22_Nose.group).applyMatrix4(inv);
+    const wb = new THREE.Box3().setFromObject(fw).applyMatrix4(inv);
+    fw.position.x += (nb.min.x + FW_LEAD_BEHIND_TIP) - wb.min.x;
+    api0.frontWingShift = (nb.min.x + FW_LEAD_BEHIND_TIP) - wb.min.x;
+  }
+
+  // The RB22 cockpit rim sits higher than our old tub: lift the seat, driver, wheel and pedals with it
+  // so the helmet shows above the rim and the steering wheel clears the cowl, like the real car.
+  const cell = carModel.getObjectByName('Body_SurvivalCell_Monocoque_Assembly');
+  if (cell && !cell.userData.rb22Lift) { cell.position.z += DRIVER_LIFT; cell.userData.rb22Lift = DRIVER_LIFT; }
+  // Our nose-sensor wiring ran into the old nose; the RB22 nose has no matching run, so hide it
+  carModel.getObjectByName('Low_Voltage_Control_Harness')?.traverse((o) => {
+    if (!o.isMesh) return; const b = new THREE.Box3().setFromObject(o).applyMatrix4(carModel.matrixWorld.clone().invert());
+    if (b.min.x < 1.5) o.visible = false;
+  });
 
   const plainForced = typeof location !== 'undefined' && /[?&]rb22Paint=plain/.test(location.search);
   const isBaked = (team) => (team?.livery?.bodyTexture === 'baked') && !plainForced;
@@ -103,10 +128,11 @@ export async function installRb22Body(carModel, renderer) {
 
   const targets = {
     tub: parts.Body_RB22_Chassis_Tub?.paint,
+    nose: parts.Body_RB22_Nose?.paint,
     engineCover: parts.Body_RB22_EngineCover_Airbox?.paint,
     sidepods: [parts.Body_RB22_Sidepod_LH?.paint, parts.Body_RB22_Sidepod_RH?.paint].filter(Boolean),
   };
-  const api = { body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { ...api0, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }

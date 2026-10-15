@@ -28,7 +28,7 @@ for(let pi=0;pi<prims.length;pi++){
     else if(nearAxle((c.mn[0]+c.mx[0])/2) && minAY>4.6 && c.mn[2]>0.4 && sx<8 && c.tris.length<4000) compDrop='wheelcorner';
     for(const t of c.tris){
       const w=[0,0,0];let mxX=-1e9;for(let j=0;j<3;j++){a.getElement(idx[t*3+j],v);const q=T(v);mxX=Math.max(mxX,q[0]);w[0]+=q[0]/3;w[1]+=q[1]/3;w[2]+=q[2]/3;}
-      if(!compDrop&&mxX<CUT){add('nose',pi,t);continue;}
+      if(mxX<CUT && (!compDrop||compDrop==='nose')){const ay0=Math.abs(w[1]);const cx0=w[0],cz0=w[2];add((!MIRROR_PRIM.has(pi)&&!DECAL_PRIM.has(pi)&&(ay0<2.1&&(cx0>=-4.2?cz0>1.0:cz0>2.45)))?'Body_RB22_Nose':(DECAL_PRIM.has(pi)&&ay0<2.1&&cz0>2.45?'Body_RB22_BakedDecals':'nose'),pi,t);continue;}
       w[0]=Math.max(w[0],CUT+0.01);
       const [cx,cy,cz]=w; const ay=Math.abs(cy);
       let part=compDrop;
@@ -68,7 +68,7 @@ for(const [name,byPrim] of parts){
     const isBody=name.startsWith('Body_');
     for(const t of tris){const ks=[idx[t*3],idx[t*3+1],idx[t*3+2]];const r=ks.map(vert);
       const xs=r.map(i=>P[i*3]);
-      if(!isBody||(Math.min(...xs)>=CUT&&Math.max(...xs)<=TCUT)){I.push(...r);continue;}
+      if(!isBody||name==='Body_RB22_Nose'||(Math.min(...xs)>=CUT&&Math.max(...xs)<=TCUT)){I.push(...r);continue;}
       const clip=(poly,inside,X)=>{const out=[];for(let j=0;j<poly.length;j++){const A=poly[j],B=poly[(j+1)%poly.length];const xa=P[A*3],xb=P[B*3];
         if(inside(xa))out.push(A);
         if(inside(xa)!==inside(xb)){const f=(X-xa)/(xb-xa);const ni=P.length/3;
