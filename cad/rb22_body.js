@@ -42,7 +42,7 @@ export async function installRb22Body(carModel, renderer) {
   plainMap.flipY = false; plainMap.colorSpace = THREE.SRGBColorSpace; plainMap.anisotropy = maxAniso;
 
   const parts = {};
-  let paint = null; let bakedMap = null; const paintMeshes = [];
+  let paint = null; let bakedMap = null; const paintMeshes = []; const accentMeshes = [];
   body.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true; o.receiveShadow = true;
@@ -51,6 +51,7 @@ export async function installRb22Body(carModel, renderer) {
       if (mat.map) mat.map.anisotropy = maxAniso;
       const mname = (mat.name || '').replace(/\.\d+$/, '');
       o.name = `${part}_${mname}`;
+      if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
         if (!paint) {
           // one shared paint material for the whole body
@@ -91,6 +92,11 @@ export async function installRb22Body(carModel, renderer) {
     paint.needsUpdate = true;
     collarMat.color.set(baked ? 0x1b1f48 : (team?.bodyColor ?? 0xffffff));
     collarMat.roughness = paint.roughness; collarMat.clearcoat = paint.clearcoat;
+    accentMeshes.forEach((m) => { // airbox-top camera pod: Red Bull yellow art, team accent elsewhere
+      if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
+      m.material.map = baked ? m.userData.bakedMap : null;
+      m.material.color.set(baked ? 0xffffff : (team?.accentColor ?? 0xffffff)); m.material.needsUpdate = true;
+    });
     if (decalsBaked) decalsBaked.visible = baked;
     return baked;
   }
