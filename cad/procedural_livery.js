@@ -584,7 +584,7 @@ export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
   if (spec.kind === 'panel') {
     // Solid paint panel. Shapes are described relative to the car: 'diagRear' leans back toward the
     // tail, 'fadeRear' fades out toward the tail, 'fadeFront' fades out toward the nose.
-    const W = 512, H = 256;
+    const W = 1024, H = 512;
     const { canvas, ctx } = makeCanvas(W, H);
     const fwd = frontIsLeft ? 1 : -1; // +1: nose at canvas left
     const shape = spec.shape || 'rect';
@@ -618,18 +618,18 @@ export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
   if (spec.kind === 'art' && spec.art === 'rbBull') {
     return { texture: createEngineCoverDecalTexture({ frontIsLeft }), aspect: 2 };
   }
-  // text
-  const W = 1024, H = 256;
+  // text (2048x512: sharp at close-up camera distances)
+  const W = 2048, H = 512;
   const { canvas, ctx } = makeCanvas(W, H);
   ctx.save();
   if (spec.skew) { ctx.translate(W / 2, H / 2); ctx.transform(1, 0, spec.skew, 1, 0, 0); ctx.translate(-W / 2, -H / 2); }
   fitText(ctx, spec.text, W / 2, H / 2 + 6, W * 0.94, H * 0.78, TEAM_FONTS[spec.font || 'heavy'],
-    { fill: spec.color || '#ffffff', stroke: spec.stroke || null, strokeWidth: spec.stroke ? 14 : 0 });
+    { fill: spec.color || '#ffffff', stroke: spec.stroke || null, strokeWidth: spec.stroke ? 28 : 0 });
   ctx.restore();
   // crop the aspect to the drawn text so the projector box hugs the letters
   ctx.font = TEAM_FONTS[spec.font || 'heavy'](H * 0.78);
   const tw = Math.min(W * 0.94, ctx.measureText(spec.text).width);
-  const crop = makeCanvas(Math.ceil(tw + 40), H);
+  const crop = makeCanvas(Math.ceil(tw + 80), H);
   crop.ctx.drawImage(canvas, (W - crop.canvas.width) / 2, 0, crop.canvas.width, H, 0, 0, crop.canvas.width, H);
   return { texture: finalizeTexture(crop.canvas), aspect: crop.canvas.width / H };
 }

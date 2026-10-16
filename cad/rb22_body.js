@@ -18,9 +18,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 export const RB22_CREDIT = '2026 Redbull RB22 by Dave (Tyler_Dave), sketchfab.com, CC BY 4.0';
-const FW_LEAD_BEHIND_TIP = -0.3; // dm: wing leading edge just ahead of the nose tip, as on the RB22
 const api0 = {};
-const DRIVER_LIFT = 0.8; // dm
+const DRIVER_LIFT = 2.9; // dm: helmet top 9.29 just under the halo hoop top 9.51, visor (8.1-8.4) in the halo side gaps
 const BASE = new URL('../assets/models/', import.meta.url);
 
 // Our hand-built parts that this body replaces (hidden, kept for the exploded/X-ray views)
@@ -42,7 +41,7 @@ export async function installRb22Body(carModel, renderer) {
   const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.() || 8;
 
   const parts = {};
-  let paint = null; let bakedMap = null; const paintMeshes = []; const accentMeshes = [];
+  let paint = null; let bakedMap = null; const paintMeshes = []; const accentMeshes = []; const fwDetail = [];
   body.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true; o.receiveShadow = true;
@@ -51,6 +50,7 @@ export async function installRb22Body(carModel, renderer) {
       if (mat.map) mat.map.anisotropy = maxAniso;
       const mname = (mat.name || '').replace(/\.\d+$/, '');
       o.name = `${part}_${mname}`;
+      if (/^redbull_(detail|carbon\d)$/.test(mname) && /^Body_RB22_FrontWing/.test(part)) { o.material = mat.clone(); fwDetail.push(o); } // wing flaps carry baked Red Bull/VISA/Mobil art
       if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
         if (!paint) {
@@ -79,16 +79,11 @@ export async function installRb22Body(carModel, renderer) {
   let collar = null;
   if (!parts.Body_RB22_Nose) try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
 
-  // Slide our front wing so it sits under the RB22 nose tip as it does under the real car
-  const fw = carModel.getObjectByName('FrontWing_Aerofoil_Assembly');
-  if (fw && parts.Body_RB22_Nose?.group) {
-    carModel.updateMatrixWorld(true);
-    const inv = carModel.matrixWorld.clone().invert();
-    const nb = new THREE.Box3().setFromObject(parts.Body_RB22_Nose.group).applyMatrix4(inv);
-    const wb = new THREE.Box3().setFromObject(fw).applyMatrix4(inv);
-    fw.position.x += (nb.min.x + FW_LEAD_BEHIND_TIP) - wb.min.x;
-    api0.frontWingShift = (nb.min.x + FW_LEAD_BEHIND_TIP) - wb.min.x;
-  }
+  // The RB22's own front wing (with its pillars) is used, so ours is hidden with every pylon/mount
+  ['FrontWing_Aerofoil_Assembly', 'FrontWing_Pylons', 'FrontWing_Mount_Assembly'].forEach((n) => {
+    const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; }
+  });
+  carModel.traverse((o) => { if (/^FrontWing_/.test(o.name) && !o.parent?.name?.startsWith('Body_RB22')) { o.visible = false; o.userData.replacedByRb22 = true; } });
 
   // The RB22 cockpit rim sits higher than our old tub: lift the seat, driver, wheel and pedals with it
   // so the helmet shows above the rim and the steering wheel clears the cowl, like the real car.
@@ -119,6 +114,12 @@ export async function installRb22Body(carModel, renderer) {
       m.material.color.set(baked ? 0xffffff : (team?.accentColor ?? 0xffffff)); m.material.needsUpdate = true;
     });
     if (decalsBaked) decalsBaked.visible = baked;
+    fwDetail.forEach((m) => { // other teams: plain dark carbon flaps, team colour comes from endplates + decals
+      if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
+      m.material.map = baked ? m.userData.bakedMap : null;
+      m.material.color.set(baked ? 0xffffff : 0x17181b); m.material.needsUpdate = true;
+    });
+    body.traverse((o) => { if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) o.visible = baked; });
     return baked;
   }
 
@@ -126,9 +127,22 @@ export async function installRb22Body(carModel, renderer) {
     tub: parts.Body_RB22_Chassis_Tub?.paint,
     nose: parts.Body_RB22_Nose?.paint,
     engineCover: parts.Body_RB22_EngineCover_Airbox?.paint,
+    frontEndplates: [parts.Body_RB22_FrontWing_LH?.paint, parts.Body_RB22_FrontWing_RH?.paint].filter(Boolean),
     sidepods: [parts.Body_RB22_Sidepod_LH?.paint, parts.Body_RB22_Sidepod_RH?.paint].filter(Boolean),
   };
-  const api = { ...api0, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  // Endplate-only boxes for decals: the wing-half mesh spans the whole wing, the endplate is its outer wall
+  const boxCache = new Map();
+  function boxFor(mesh, worldToCar) {
+    if (!targets.frontEndplates.includes(mesh)) return null;
+    if (boxCache.has(mesh)) return boxCache.get(mesh);
+    mesh.updateMatrixWorld(true);
+    const m = worldToCar.clone().multiply(mesh.matrixWorld); const pos = mesh.geometry.attributes.position; const v = new THREE.Vector3();
+    let ay = 0; for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); ay = Math.max(ay, Math.abs(v.y)); }
+    const b = new THREE.Box3();
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); if (Math.abs(v.y) > ay - 0.5) b.expandByPoint(v); }
+    boxCache.set(mesh, b); return b;
+  }
+  const api = { ...api0, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }

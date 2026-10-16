@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const p=await b.newPage();
+await p.addInitScript(()=>{try{localStorage.setItem('f1-intro-seen','1')}catch(e){}});
+await p.goto('http://localhost:8851/index.html',{waitUntil:'load'});
+await p.waitForFunction(()=>window.__rb22Ready,null,{timeout:240000});
+console.log(await p.evaluate(()=>{const g=window.carModel;g.updateMatrixWorld(true);const inv=g.matrixWorld.clone().invert();const out=[];
+const B=(o)=>{const C=g.getObjectByName('Body_RB22_Shell')?.constructor;return null};
+g.traverse(o=>{if(o.isMesh&&o.visible&&/helmet|visor|halo/i.test(o.name+'/'+(o.parent?.name||''))){const pos=o.geometry.attributes.position;const v=o.position.clone();let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];const m=inv.clone().multiply(o.matrixWorld);for(let i=0;i<pos.count;i+=3){v.fromBufferAttribute(pos,i).applyMatrix4(m);const a=v.toArray();for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],a[k]);mx[k]=Math.max(mx[k],a[k]);}}out.push(o.name+' <'+(o.parent?.name)+'> min '+mn.map(x=>x.toFixed(2))+' max '+mx.map(x=>x.toFixed(2)));}});return out.join('\n');}));
+await b.close();

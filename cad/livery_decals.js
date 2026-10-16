@@ -421,9 +421,9 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
   const pods = ['LH', 'RH'].map((t) => byName(`Sidepod_Body_${t}`)).filter(Boolean);
   const targetFor = (t, s) => {
     const rb = carModel.userData.rb22; // shared RB22 body (cad/rb22_body.js) once it has loaded
-    if (rb && ['tub', 'engineCover', 'sidepod', 'sidepodRidge', ...(rb.targets.nose ? ['nose'] : [])].includes(t)) {
+    if (rb && ['tub', 'engineCover', 'sidepod', 'sidepodRidge', ...(rb.targets.nose ? ['nose'] : []), ...(rb.targets.frontEndplates?.length ? ['frontEndplate'] : [])].includes(t)) {
       return ({ tub: rb.targets.tub, nose: rb.targets.nose, engineCover: rb.targets.engineCover,
-        sidepod: pickSide(rb.targets.sidepods, s), sidepodRidge: pickSide(rb.targets.sidepods, s) })[t];
+        sidepod: pickSide(rb.targets.sidepods, s), sidepodRidge: pickSide(rb.targets.sidepods, s), frontEndplate: pickSide(rb.targets.frontEndplates, s) })[t];
     }
     return ({
       nose, engineCover: ec, tub: tubSkin, rearWingMain: rwMain,
@@ -454,7 +454,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
       faceSides.forEach((s) => {
         const mesh = targetFor(spec.target, s);
         if (!mesh) { report.skipped.push(`${team.id}#${i}: no ${spec.target}`); return; }
-        const b = carBox(mesh); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z; const Wy = b.max.y - b.min.y;
+        const ob = rb?.boxFor?.(mesh, worldToCar); const b = ob || carBox(mesh); const L = b.max.x - b.min.x; const H = b.max.z - b.min.z; const Wy = b.max.y - b.min.y;
         const { texture, aspect } = createTeamDecalTexture(spec, { frontIsLeft: frontIsLeft(s) });
         const name = `Team_${team.id}_${i}_${spec.kind}_${sideName(s)}`;
         let d;
@@ -476,7 +476,7 @@ export function applyLivery(carModel, renderer, { verbose = false } = {}) {
             if (raycaster.intersectObject(mesh, false).length) break;
           }
           d = project(name, mesh, { origin: [b.min.x + L * spec.x, s * (absMaxY(b) + 5), b.min.z + H * zf], dir: [0, -s, 0],
-            up: [0, 0, 1], size: [w, h, Math.max(1.2, absMaxY(b) * 1.6)], texture, renderOrder: order });
+            up: [0, 0, 1], size: [w, h, ob ? 1.0 : Math.max(1.2, absMaxY(b) * 1.6)], texture, renderOrder: order });
         }
         if (d) {
           d.userData.liveryTeam = team.id;

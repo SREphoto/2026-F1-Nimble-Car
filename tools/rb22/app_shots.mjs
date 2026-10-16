@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 const OUT=process.argv[2]||'/workspace/f1-refs-body/rb22/renders'; fs.mkdirSync(OUT,{recursive:true});
 const PORT=process.env.PORT||8851; const extra=process.env.Q||'';
-const V={front34:[-30,12,-26, 14,4,0],rear34:[60,15,28, 18,4,0],side:[17,5,-62, 17,4.5,0],top:[17,72,0.01,17,0,0],nosejoin:[-8,9,-15,2,4,0],tailclose:[48,9,14,32,4,0],rearlow:[52,6,0.01,36,5,0],noseside:[-2,4.5,-26,-2,4,0],nose34:[-16,8,-16,-1,3.5,0],cockpit:[4,13,-9,12,5.5,0],cockpittop:[12,26,0.01,12,5,0]};
+const V={front34:[-30,12,-26, 14,4,0],rear34:[60,15,28, 18,4,0],side:[17,5,-62, 17,4.5,0],top:[17,72,0.01,17,0,0],nosejoin:[-8,9,-15,2,4,0],tailclose:[48,9,14,32,4,0],rearlow:[52,6,0.01,36,5,0],noseside:[-2,4.5,-26,-2,4,0],nose34:[-16,8,-16,-1,3.5,0],cockpit:[4,13,-9,12,5.5,0],cockpittop:[12,26,0.01,12,5,0],fwfront:[-30,5,0.01,-5,2.5,0],fw34:[-18,8,-14,-4,2.5,0],cockpitfront:[-6,8.5,0.01,13,7,0],cockpitside:[13,7,-14,13,7,0],side:[17,5,-62,17,4.5,0],under:[14,-38,-22,14,1,0],fcorner:[-9,7,-17,0,3.5,-5],rearstraight:[78,7,0.01,30,4,0]};
 const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 const p=await b.newPage({viewport:{width:1400,height:860}});
 const errs=[];p.on('console',m=>{if(m.type()==='error'||m.type()==='warning')errs.push(m.type()+': '+m.text())});p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
