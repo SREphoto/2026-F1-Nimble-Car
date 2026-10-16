@@ -20,21 +20,26 @@ for(let pi=0;pi<prims.length;pi++){
     const nearAxle=(x)=>(x>-4.5&&x<6.5)||(x>29&&x<39.5);
     // whole-component drops
     let compDrop=null;
+    if(pi===1 && c.mn[0]>-1.6 && c.mx[0]<-0.7 && maxAY<0.35 && c.mx[2]>7.5) { if(DEBUG)console.log('drop nose pitot',c.tris.length); continue; } // white nose pitot/camera pod + its leads
     if(c.mx[0]<CUT) compDrop='nose';
     else if(c.mn[0]>35.0 && c.mx[2]>4.0 && maxAY>2.6) compDrop='rearwing';
     else if(c.mn[0]>35.0 && c.mn[2]>6.0) compDrop='rearwing';
     else if(c.mn[0]>TCUT) compDrop='tailbeyond';
     else if(nearAxle((c.mn[0]+c.mx[0])/2) && maxAY>5.2 && minAY<4.5 && c.mn[2]>1.0 && sx<7 && sz<5 && c.tris.length<4000 && !(c.mx[0]-c.mn[0]>20)) compDrop='suspension';
     else if(nearAxle((c.mn[0]+c.mx[0])/2) && minAY>4.6 && c.mn[2]>0.4 && sx<8 && c.tris.length<4000) compDrop='wheelcorner';
+    // keep the RB22's own wishbones, push/pull rods, track rods and upright bodies; drop brake drums inside the wheel and rear-wing bits
+    if(compDrop==='suspension') compDrop='Body_RB22_Suspension';
+    else if(compDrop==='wheelcorner') compDrop= c.mx[2]>7 ? 'rearwing' : (maxAY>6.4 ? 'wheelcorner' : 'Body_RB22_Suspension');
     for(const t of c.tris){
       const w=[0,0,0];let mxX=-1e9;for(let j=0;j<3;j++){a.getElement(idx[t*3+j],v);const q=T(v);mxX=Math.max(mxX,q[0]);w[0]+=q[0]/3;w[1]+=q[1]/3;w[2]+=q[2]/3;}
-      if(mxX<CUT && (!compDrop||compDrop==='nose')){const ay0=Math.abs(w[1]);const cx0=w[0],cz0=w[2];add((!MIRROR_PRIM.has(pi)&&!DECAL_PRIM.has(pi)&&ay0<2.1&&cz0>2.45)?'Body_RB22_Nose':(DECAL_PRIM.has(pi)&&ay0<2.1&&cz0>2.45?'Body_RB22_BakedDecals':(DECAL_PRIM.has(pi)?'Body_RB22_FrontWing_Decals':(w[1]>0?'Body_RB22_FrontWing_LH':'Body_RB22_FrontWing_RH'))),pi,t);continue;}
+      if(mxX<CUT && (!compDrop||compDrop==='nose') ){const ay0=Math.abs(w[1]);const cx0=w[0],cz0=w[2];add((!MIRROR_PRIM.has(pi)&&!DECAL_PRIM.has(pi)&&ay0<2.1&&cz0>2.45)?'Body_RB22_Nose':(DECAL_PRIM.has(pi)&&ay0<2.1&&cz0>2.45?'Body_RB22_BakedDecals':(DECAL_PRIM.has(pi)?'Body_RB22_FrontWing_Decals':(w[1]>0?'Body_RB22_FrontWing_LH':'Body_RB22_FrontWing_RH'))),pi,t);continue;}
       w[0]=Math.max(w[0],CUT+0.01);
       const [cx,cy,cz]=w; const ay=Math.abs(cy);
       let part=compDrop;
+      if(part==='tailbeyond' && ay<2.5 && cz<5.6) part='Body_RB22_Tail'; // RB22 crash structure + rain light: keep the whole tail, closed
       if(!part){
         if(cx>35.2 && cz>5.6) part='rearwing';
-        else if(cx>TCUT) part='tailbeyond';
+        else if(cx>TCUT) part= (ay<2.5&&cz<5.6) ? 'Body_RB22_Tail' : 'tailbeyond';
         else if(MIRROR_PRIM.has(pi)) part='Body_RB22_Mirrors';
         else if(DECAL_PRIM.has(pi)) part='Body_RB22_BakedDecals';
         else if(cz<1.25 || (ay>4.7 && cz<2.7 && cx<30)) part= cx>28.5?'Body_RB22_Diffuser':'Body_RB22_Floor';
@@ -68,14 +73,14 @@ for(const [name,byPrim] of parts){
     const isBody=name.startsWith('Body_');
     for(const t of tris){const ks=[idx[t*3],idx[t*3+1],idx[t*3+2]];const r=ks.map(vert);
       const xs=r.map(i=>P[i*3]);
-      if(!isBody||name.startsWith('Body_RB22_Nose')||name.startsWith('Body_RB22_FrontWing')||(Math.min(...xs)>=CUT&&Math.max(...xs)<=TCUT)){I.push(...r);continue;}
+      if(!isBody||name.startsWith('Body_RB22_Nose')||name.startsWith('Body_RB22_FrontWing')||name==='Body_RB22_Suspension'||name==='Body_RB22_Tail'||(Math.min(...xs)>=CUT&&Math.max(...xs)<=TCUT)){I.push(...r);continue;}
       const clip=(poly,inside,X)=>{const out=[];for(let j=0;j<poly.length;j++){const A=poly[j],B=poly[(j+1)%poly.length];const xa=P[A*3],xb=P[B*3];
         if(inside(xa))out.push(A);
         if(inside(xa)!==inside(xb)){const f=(X-xa)/(xb-xa);const ni=P.length/3;
           for(let d=0;d<3;d++)P.push(P[A*3+d]+f*(P[B*3+d]-P[A*3+d]));P[ni*3]=X;
           const nn=[0,1,2].map(d=>N[A*3+d]+f*(N[B*3+d]-N[A*3+d]));const l=Math.hypot(...nn)||1;N.push(...nn.map(x=>x/l));
           UV.push(UV[A*2]+f*(UV[B*2]-UV[A*2]),UV[A*2+1]+f*(UV[B*2+1]-UV[A*2+1]));out.push(ni);}}return out;};
-      let poly=clip(r,x=>x>=CUT,CUT); if(poly.length>=3) poly=clip(poly,x=>x<=TCUT,TCUT);
+      let poly=clip(r,x=>x>=CUT,CUT); if(poly.length>=3&&name!=='Body_RB22_Tail') poly=clip(poly,x=>x<=TCUT,TCUT);
       for(let j=1;j+1<poly.length;j++)I.push(poly[0],poly[j],poly[j+1]);}
     // winding: mapping det=+1 so keep
     const np=out.createPrimitive().setAttribute('POSITION',out.createAccessor().setType('VEC3').setArray(new Float32Array(P)).setBuffer(ob)).setAttribute('NORMAL',out.createAccessor().setType('VEC3').setArray(new Float32Array(N)).setBuffer(ob)).setIndices(out.createAccessor().setType('SCALAR').setArray(new Uint32Array(I)).setBuffer(ob));

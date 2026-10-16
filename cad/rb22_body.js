@@ -31,6 +31,24 @@ const REPLACED = [
   'Sidepod_Assembly_LH_RH', 'Engine_Cover_Airbox_Fin_Assembly', 'Floor_Underbody_Diffuser_Assembly',
 ];
 
+// 2x2 twill carbon weave, tiled over the wing flaps of non-Red Bull teams (their baked art is removed)
+let _weave = null;
+function carbonWeave() {
+  if (_weave) return _weave;
+  const N = 64, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
+  g.fillStyle = '#121316'; g.fillRect(0, 0, N, N);
+  const t = N / 8;
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+    const warp = ((i + j) >> 1) % 2 === 0; // 2x2 twill: diagonal steps
+    const gr = g.createLinearGradient(i * t, j * t, warp ? i * t + t : i * t, warp ? j * t : j * t + t);
+    gr.addColorStop(0, warp ? '#2a2c31' : '#1a1b1f'); gr.addColorStop(0.5, warp ? '#3a3d44' : '#24262b'); gr.addColorStop(1, warp ? '#2a2c31' : '#1a1b1f');
+    g.fillStyle = gr; g.fillRect(i * t + 0.5, j * t + 0.5, t - 1, t - 1);
+  }
+  _weave = new THREE.CanvasTexture(c); _weave.colorSpace = THREE.SRGBColorSpace;
+  _weave.wrapS = _weave.wrapT = THREE.RepeatWrapping; _weave.repeat.set(48, 48); _weave.anisotropy = 8;
+  return _weave;
+}
+
 export async function installRb22Body(carModel, renderer) {
   if (!carModel || carModel.userData.rb22) return carModel?.userData.rb22;
   const loader = new GLTFLoader();
@@ -51,6 +69,9 @@ export async function installRb22Body(carModel, renderer) {
       const mname = (mat.name || '').replace(/\.\d+$/, '');
       o.name = `${part}_${mname}`;
       if (/^redbull_(detail|carbon\d)$/.test(mname) && /^Body_RB22_FrontWing/.test(part)) { o.material = mat.clone(); fwDetail.push(o); } // wing flaps carry baked Red Bull/VISA/Mobil art
+      if (mname === 'redbull_decals') { // the atlas carries a crisp alpha: cut the logos from it, not from the coarse decal polygons
+        mat.alphaTest = 0.5; mat.transparent = false; mat.alphaToCoverage = true; mat.needsUpdate = true;
+      }
       if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
         if (!paint) {
@@ -85,6 +106,25 @@ export async function installRb22Body(carModel, renderer) {
   });
   carModel.traverse((o) => { if (/^FrontWing_/.test(o.name) && !o.parent?.name?.startsWith('Body_RB22')) { o.visible = false; o.userData.replacedByRb22 = true; } });
 
+  // One set of suspension: the RB22's wishbones, push/pull rods, track rods and upright bodies are in the
+  // body file (Body_RB22_Suspension). Hide our arms, rockers, rack and tethers; keep our wheel corners
+  // (tyres, rims, hubs, brakes) on their Wheel_Spindle_* pivots so steering and wheels-off still work.
+  const hideOurs = (o) => { o.traverse((m) => { if (m.isMesh) { m.visible = false; m.userData.replacedByRb22 = true; } }); };
+  ['Front_Suspension_Assembly', 'Rear_Suspension_Assembly'].forEach((n) => {
+    const asm = carModel.getObjectByName(n); if (!asm) return;
+    asm.children.forEach((c) => { if (!/_(Left|Right)$/.test(c.name)) hideOurs(c); });   // inboard rockers / dampers / ARB
+    asm.children.filter((c) => /_(Left|Right)$/.test(c.name)).forEach((side) => {
+      side.children.forEach((c) => {
+        if (!/Upright/.test(c.name)) { hideOurs(c); return; }                           // wishbones, push/pull rods, track rods
+        c.children.forEach((u) => {
+          if (!/WheelCorner/.test(u.name)) hideOurs(u);                                 // our upright body
+          else u.traverse((w) => { if (/ZylonTether/.test(w.name)) hideOurs(w); });     // wheel tethers ran to our arms
+        });
+      });
+    });
+  });
+  ['Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
+
   // The RB22 cockpit rim sits higher than our old tub: lift the seat, driver, wheel and pedals with it
   // so the helmet shows above the rim and the steering wheel clears the cowl, like the real car.
   const cell = carModel.getObjectByName('Body_SurvivalCell_Monocoque_Assembly');
@@ -116,8 +156,8 @@ export async function installRb22Body(carModel, renderer) {
     if (decalsBaked) decalsBaked.visible = baked;
     fwDetail.forEach((m) => { // other teams: plain dark carbon flaps, team colour comes from endplates + decals
       if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
-      m.material.map = baked ? m.userData.bakedMap : null;
-      m.material.color.set(baked ? 0xffffff : 0x17181b); m.material.needsUpdate = true;
+      m.material.map = baked ? m.userData.bakedMap : carbonWeave();
+      m.material.color.set(baked ? 0xffffff : 0x9a9ca2); m.material.needsUpdate = true;
     });
     body.traverse((o) => { if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) o.visible = baked; });
     return baked;

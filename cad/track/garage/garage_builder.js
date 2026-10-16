@@ -19,6 +19,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { GARAGE_LAYOUT, REGULATIONS } from './garage_data.js';
 import { GARAGE_TEAM_COLORS } from './garage_team_colors.js';
+import { createDriverHelmet, HELMET_SPEC } from '../../driver_helmet.js';
 
 export const REFLECT_LAYER = 5;   // objects seen in the floor mirror (garage, car, lights)
 export const SHELL_LAYER = 6;     // room shell and pit building: the only casters for the outside sunlight shadow
@@ -394,10 +395,28 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   ];
   // helmet shelf: two shelves with three helmets
   {
-    const helm = (x, y) => new THREE.SphereGeometry(1.45, 18, 12).scale(1, 1.05, 1.15).translate(x, y + 1.45, 1.6);
-    const vis = (x, y) => new THREE.SphereGeometry(1.5, 18, 8, -Math.PI * 0.32, Math.PI * 0.64, Math.PI * 0.36, Math.PI * 0.2).scale(1, 1.05, 1.15).translate(x, y + 1.45, 1.6);
+    // the same helmet the driver wears (cad/driver_helmet.js), merged per material and instanced on the shelves
     const hs = [[-4.5, 13.3], [0, 13.3], [4.5, 13.3], [-2.2, 18.6], [2.2, 18.6]];
-    PROP.helmetShelf = [[M.band, merged([B(16, 0.4, 3.4, 0, 13.3, 1.7), B(16, 0.4, 3.4, 0, 18.6, 1.7), B(16, 10, 0.3, 0, 17.5, 0.15)])], [M.team, merged(hs.map(([x, y]) => helm(x, y + 0.2)))], [M.visor, merged(hs.map(([x, y]) => vis(x, y + 0.2)))], [M.chrome, merged([B(0.3, 0.3, 3, -7.5, 12.9, 1.7), B(0.3, 0.3, 3, 7.5, 12.9, 1.7), B(0.3, 0.3, 3, -7.5, 18.2, 1.7), B(0.3, 0.3, 3, 7.5, 18.2, 1.7)])]];
+    const colours = teamId === 'red-bull' ? HELMET_SPEC.colours : { ...HELMET_SPEC.colours, base: '#' + new THREE.Color(T().panel).getHexString() };
+    const hg = createDriverHelmet({ centre: [0, 0, 0], colours });
+    hg.getObjectByName('Driver_HANS_Device')?.removeFromParent(); hg.getObjectByName('Driver_Neck_Balaclava')?.removeFromParent();
+    hg.updateMatrixWorld(true);
+    const byMat = new Map();
+    const toShelf = new THREE.Matrix4().makeRotationY(Math.PI / 2).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)).premultiply(new THREE.Matrix4().makeScale(1.1, 1.1, 1.1));
+    hg.traverse((o) => {
+      if (!o.isMesh || o.name === 'Helmet_InnerLiner') return;
+      let g0 = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      g0.applyMatrix4(o.matrixWorld).applyMatrix4(toShelf);
+      if (!g0.attributes.normal) g0.computeVertexNormals();
+      for (const k of Object.keys(g0.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g0.deleteAttribute(k);
+      if (!g0.attributes.uv) g0.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g0.attributes.position.count * 2), 2));
+      if (!byMat.has(o.material)) byMat.set(o.material, []); byMat.get(o.material).push(g0);
+    });
+    const helmParts = [...byMat].map(([mat, gs]) => {
+      const one = mergeGeometries(gs);
+      return [mat, merged(hs.map(([x, y]) => one.clone().translate(x, y + 0.2 + 1.45, 1.6)))];
+    });
+    PROP.helmetShelf = [[M.band, merged([B(16, 0.4, 3.4, 0, 13.3, 1.7), B(16, 0.4, 3.4, 0, 18.6, 1.7), B(16, 10, 0.3, 0, 17.5, 0.15)])], ...helmParts, [M.chrome, merged([B(0.3, 0.3, 3, -7.5, 12.9, 1.7), B(0.3, 0.3, 3, 7.5, 12.9, 1.7), B(0.3, 0.3, 3, -7.5, 18.2, 1.7), B(0.3, 0.3, 3, 7.5, 18.2, 1.7)])]];
   }
   // flight case (castor case with aluminium edges, corner caps, latches and handles)
   { const c = caseParts(8, 9, 6); PROP.flightCase = [[M.teamMatte, merged(c.body)], [M.alu, merged(c.alu)], [M.chrome, merged(c.caps)], [M.black, merged(c.dark)], [M.rubber, merged(c.wheels)], [M.dark, merged(c.forks)]]; }

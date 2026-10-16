@@ -15,7 +15,7 @@ export const HELMET_SPEC = {
   // cockpit edge, the crown stays well under the halo and the chin clears the steering wheel.
   centre: [13.75, 0.0, 5.05],
   front: 1.30, rear: 1.42, halfWidth: 1.12, top: 1.22, // shell radii (dm)
-  sideFlat: 2.5,                 // superellipse exponent (2 = round, higher = flatter sides)
+  sideFlat: 2.25,                 // superellipse exponent (2 = round, higher = flatter sides)
   rimRear: -0.80, rimFront: -1.26, // bottom edge height (dm below the centre) at the back / chin
   visor: { az: 66, elLo: -0.12, elHi: 0.30, cornerRise: 0.13, cornerDrop: 0.09 }, // edges taper so the opening has rounded corners   // degrees either side of straight ahead, elevation rad
   strip: { az: 62, elLo: 0.30, elHi: 0.40 },    // ballistic (Zylon) strip just above the visor
@@ -29,21 +29,46 @@ export const HELMET_SPEC = {
 };
 
 export function helmetTexture(c) {
-  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512;
+  // 2048 x 1024, Verstappen-style layout: dark base, bright crown, a sweeping red/orange flash along each
+  // side that points to the visor, pinstripes and a lettered band at the back. Other teams pass their colours.
+  const W = 2048, H = 1024;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d');
   // u (x) runs around the helmet from the back (0) through the left, front (0.5), right, back (1)
   // v (y) runs from the bottom rim (bottom of canvas) to the crown (top of canvas)
-  g.fillStyle = c.base; g.fillRect(0, 0, 1024, 512);
-  g.fillStyle = c.crown; g.fillRect(0, 0, 1024, 150);               // yellow crown
-  g.fillStyle = c.stripe; g.fillRect(0, 150, 1024, 22);             // red band under the crown
-  g.fillStyle = c.accent; g.fillRect(0, 172, 1024, 6);
-  g.fillStyle = c.stripe;                                           // swoosh along each side
+  const base = g.createLinearGradient(0, 0, 0, H); base.addColorStop(0, c.base); base.addColorStop(1, shade(c.base, -0.35));
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  const crown = g.createLinearGradient(0, 0, 0, 330); crown.addColorStop(0, shade(c.crown, 0.15)); crown.addColorStop(1, c.crown);
+  g.fillStyle = crown; g.fillRect(0, 0, W, 300);
+  // crown edge dips into a point over the visor (u = 0.5) and at the back (u = 0 / 1)
+  g.beginPath(); g.moveTo(0, 300);
+  for (let i = 0; i <= 64; i++) { const u = i / 64; g.lineTo(u * W, 300 + 110 * Math.max(0, 1 - Math.abs(u - 0.5) * 6) + 70 * Math.max(0, 1 - Math.min(u, 1 - u) * 8)); }
+  g.lineTo(W, 0); g.lineTo(0, 0); g.closePath(); g.fill();
+  g.fillStyle = c.stripe; g.fillRect(0, 300, W, 14); g.fillStyle = c.accent; g.fillRect(0, 318, W, 5);
+  // side flashes: long tapering blades from the back toward the visor, red with an orange/accent edge
   for (const s of [0.25, 0.75]) {
-    g.beginPath(); g.moveTo(1024 * (s - 0.2), 360); g.quadraticCurveTo(1024 * s, 260, 1024 * (s + 0.2), 330);
-    g.lineTo(1024 * (s + 0.2), 360); g.quadraticCurveTo(1024 * s, 300, 1024 * (s - 0.2), 390); g.closePath(); g.fill();
+    const dirn = s < 0.5 ? 1 : -1; // toward the front (u = 0.5)
+    for (const [col, off, th] of [[c.accent, 0, 120], [c.stripe, 12, 96], [shade(c.stripe, 0.25), 30, 46]]) {
+      g.fillStyle = col; g.beginPath();
+      const x0 = W * (s - dirn * 0.2), x1 = W * (s + dirn * 0.2);
+      g.moveTo(x0, 640 + off); g.bezierCurveTo(W * s, 600 + off, W * (s + dirn * 0.1), 470 + off, x1, 430 + off);
+      g.bezierCurveTo(W * (s + dirn * 0.1), 470 + off + th * 0.3, W * s, 600 + off + th, x0, 640 + off + th); g.closePath(); g.fill();
+    }
+    g.strokeStyle = c.accent; g.lineWidth = 4; g.beginPath(); g.moveTo(W * (s - 0.24), 790); g.lineTo(W * (s + 0.24), 760); g.stroke();
   }
+  // back: a dark band with the driver number in white
+  g.fillStyle = shade(c.base, -0.5); g.fillRect(0, 380, 150, 150); g.fillRect(W - 150, 380, 150, 150);
+  g.fillStyle = c.accent; g.font = 'bold 120px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(c.number || '1', 75, 458); g.fillText(c.number || '1', W - 75, 458);
+  // bottom rim pinstripe
+  g.fillStyle = c.crown; g.fillRect(0, H - 40, W, 10);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
+}
+function shade(hex, k) {
+  const col = new THREE.Color(hex); const hsl = {}; col.getHSL(hsl);
+  col.setHSL(hsl.h, hsl.s, THREE.MathUtils.clamp(hsl.l + k * (k > 0 ? 1 - hsl.l : hsl.l), 0, 1));
+  return '#' + col.getHexString();
 }
 
 export function createDriverHelmet(spec = HELMET_SPEC) {
@@ -97,17 +122,19 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   // ---- Materials (helmet paint is its own gloss clear-coat, not the car's matte paint)
   const shellMat = new THREE.MeshPhysicalMaterial({ map: helmetTexture(S.colours), roughness: 0.28, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.06 });
   shellMat.name = 'Helmet_GlossPaint';
-  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x2c3858, roughness: 0.12, metalness: 0.35, envMapIntensity: 1.6, sheen: 0.6, sheenColor: 0x6a4cff, clearcoat: 1, clearcoatRoughness: 0.02, iridescence: 0.6, iridescenceIOR: 1.6, side: THREE.DoubleSide });
-  visorMat.name = 'Helmet_Visor_SmokedIridium';
+  // dark-tinted race shield: glossy black with a mirror-like coat (it read blue before)
+  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x030304, roughness: 0.03, metalness: 0.55, envMapIntensity: 1.4, clearcoat: 1, clearcoatRoughness: 0.0, side: THREE.DoubleSide });
+  visorMat.name = 'Helmet_Visor_DarkTint';
   const blackTrim = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.55, metalness: 0.1, side: THREE.DoubleSide });
   blackTrim.name = 'Helmet_BlackRubberTrim';
-  const zylon = materials.carbonGlossAero || blackTrim;
+  const zylon = new THREE.MeshPhysicalMaterial({ color: 0x050506, roughness: 0.15, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.03 }); // black tear-off / Zylon strip
+  zylon.name = 'Helmet_ZylonStrip_GlossBlack';
   const nomex = new THREE.MeshStandardMaterial({ color: 0x141518, roughness: 0.95, metalness: 0 });
   nomex.name = 'Driver_Nomex_Fabric';
 
   // ---- Shell: one surface from the rim to the crown, open underneath (the neck goes there)
   {
-    const NA = 72, NE = 28, pos = [], uv = [], idx = [];
+    const NA = 120, NE = 40, pos = [], uv = [], idx = [];
     for (let i = 0; i <= NA; i++) {
       const u = i / NA, a = Math.PI + u * 2 * Math.PI; // start at the back so the seam is hidden
       const e0 = rimEl(a);
@@ -142,7 +169,7 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   const V = S.visor;
   const vs = (t) => Math.abs(2 * t - 1) ** 3;            // 0 in the middle, 1 at the visor ends
   const vLo = (t) => V.elLo + V.cornerRise * vs(t), vHi = (t) => V.elHi - V.cornerDrop * vs(t);
-  group.add(patch(d2r(-V.az), d2r(V.az), vLo, vHi, 0.012, visorMat, 'Helmet_Visor_Polycarbonate', 48, 8, 0.012));
+  group.add(patch(d2r(-V.az), d2r(V.az), vLo, vHi, 0.012, visorMat, 'Helmet_Visor_Polycarbonate', 96, 16, 0.012));
   // seal: a thin raised frame round the visor opening (follows the rounded outline)
   const seal = new THREE.Group(); seal.name = 'Helmet_VisorGasket';
   seal.add(patch(d2r(-V.az), d2r(V.az), (t) => vLo(t) - 0.035, vLo, 0.018, blackTrim, 'Helmet_VisorGasket_Lower', 48, 2));
@@ -187,22 +214,37 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
     group.add(patch(d2r(tv.az - 7), d2r(tv.az + 7), tv.el - 0.09, tv.el + 0.07, 0.01, blackTrim, `Helmet_TopVent_Scoop_${k}`, 6, 4, 0.035));
     group.add(patch(d2r(tv.az - 5), d2r(tv.az + 5), tv.el - 0.1, tv.el - 0.075, 0.05, new THREE.MeshBasicMaterial({ color: 0x050505, side: THREE.DoubleSide }), `Helmet_TopVent_Slot_${k}`, 4, 1));
   });
-  // rear spoiler: small wing on the crown, rising toward the back
+  // rear spoiler: a two-element wing across the back of the crown with a small gurney and end fences
   {
-    const sp = S.spoiler, pos = [], idx = [], ny = 12;
-    for (let i = 0; i <= ny; i++) {
-      const y = -sp.halfSpan + (2 * sp.halfSpan) * (i / ny);
-      const a = Math.PI - Math.atan2(y, S.rear), base = surf(a, sp.el, 0.01);
-      const tip = base.clone().add(new THREE.Vector3(sp.chord, 0, sp.rise));
-      pos.push(base.x, base.y, base.z, tip.x, tip.y, tip.z, base.x - 0.12, base.y, base.z + 0.06);
-    }
-    for (let i = 0; i < ny; i++) { const k = i * 3, n = k + 3; idx.push(k, k + 1, n + 1, k, n + 1, n, k + 2, n + 2, n + 1, k + 2, n + 1, k + 1); }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    const spoiler = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: 0x15171c, roughness: 0.35, clearcoat: 1, side: THREE.DoubleSide }));
-    spoiler.name = 'Helmet_RearSpoiler'; spoiler.castShadow = true;
+    const sp = { ...S.spoiler, halfSpan: 0.7, chord: 0.38, rise: 0.12 };
+    const mat = new THREE.MeshPhysicalMaterial({ color: 0x0d0e11, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide });
+    const spoiler = new THREE.Group(); spoiler.name = 'Helmet_RearSpoiler';
+    const ny = 24;
+    const wing = (el, chord, rise, thick, gurney) => {
+      const pos = [], idx = [];
+      for (let i = 0; i <= ny; i++) {
+        const y = -sp.halfSpan + (2 * sp.halfSpan) * (i / ny);
+        const a = Math.PI - Math.atan2(y, S.rear), b0 = surf(a, el, 0.005);
+        const tip = b0.clone().add(new THREE.Vector3(chord, 0, rise));
+        const mid = b0.clone().lerp(tip, 0.5).add(new THREE.Vector3(0, 0, thick));
+        const gur = tip.clone().add(new THREE.Vector3(0.01, 0, gurney));
+        pos.push(...b0.toArray(), ...mid.toArray(), ...tip.toArray(), ...gur.toArray());
+      }
+      for (let i = 0; i < ny; i++) for (let k = 0; k < 3; k++) { const p0 = i * 4 + k, q0 = p0 + 4; idx.push(p0, q0, q0 + 1, p0, q0 + 1, p0 + 1); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat); m.castShadow = true; return m;
+    };
+    spoiler.add(wing(sp.el, sp.chord, sp.rise, 0.05, 0.05));
+    spoiler.add(wing(sp.el - 0.16, sp.chord * 0.75, sp.rise * 0.6, 0.035, 0.03));
+    [1, -1].forEach((s2) => { // end fences
+      const a = Math.PI - Math.atan2(s2 * sp.halfSpan, S.rear), b0 = surf(a, sp.el - 0.2, 0);
+      const fence = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.3), mat);
+      fence.position.copy(b0).add(new THREE.Vector3(0.18, 0, 0.12)); fence.rotation.y = -0.35; spoiler.add(fence);
+    });
     group.add(spoiler);
   }
+  // chin bar: a black aero lip under the chin and two side cheek vents
+  group.add(patch(d2r(-48), d2r(48), (t) => rimEl(d2r(-48 + 96 * t)) + 0.0, (t) => rimEl(d2r(-48 + 96 * t)) + 0.09, 0.012, blackTrim, 'Helmet_ChinBar_Lip', 48, 2, 0.03));
 
   // ---- HANS: anchor posts on the helmet, tethers, carbon yoke on the shoulders
   const hans = new THREE.Group(); hans.name = 'Driver_HANS_Device';
