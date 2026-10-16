@@ -144,7 +144,7 @@ export async function installRb22Body(carModel, renderer) {
       const box = new Map(); const cnt = new Map();
       for (let i = 0; i < n; i++) { const r = f(rep[i]); let b = box.get(r); if (!b) { b = new THREE.Box3(); box.set(r, b); cnt.set(r, 0); } b.expandByPoint(new THREE.Vector3().fromBufferAttribute(pos, i)); cnt.set(r, cnt.get(r) + 1); }
       const sc = new THREE.Vector3(); o.getWorldScale(sc); const scale = sc.x / (carModel.getWorldScale(new THREE.Vector3()).x || 1);
-      const isStay = (r) => { const s = box.get(r).getSize(new THREE.Vector3()).multiplyScalar(scale); const d = [s.x, s.y, s.z].sort((a, b) => a - b); return cnt.get(r) <= 130 && d[2] > 1.1 && d[1] < 0.6; };
+      const isStay = (r) => { const s = box.get(r).getSize(new THREE.Vector3()).multiplyScalar(scale); const d = [s.x, s.y, s.z].sort((a, b) => a - b); return cnt.get(r) <= 130 && d[2] > 1.1 && d[0] < 0.2; };
       const keep = []; const stay = [];
       for (let t = 0; t < idx.length; t += 3) (isStay(f(rep[idx[t]])) ? stay : keep).push(idx[t], idx[t + 1], idx[t + 2]);
       if (!stay.length) return;

@@ -14,16 +14,16 @@ export const HELMET_SPEC = {
   // cockpit sides, tucked between the padded headrest wings; the visor sits just above the
   // cockpit edge, the crown stays well under the halo and the chin clears the steering wheel.
   centre: [13.75, 0.0, 5.05],
-  front: 1.30, rear: 1.42, halfWidth: 1.12, top: 1.22, // shell radii (dm)
-  sideFlat: 2.25,                 // superellipse exponent (2 = round, higher = flatter sides)
+  front: 1.30, rear: 1.40, halfWidth: 1.10, top: 1.20, // shell radii (dm)
+  sideFlat: 2.08,                 // superellipse exponent (2 = round, higher = flatter sides)
   rimRear: -0.80, rimFront: -1.26, // bottom edge height (dm below the centre) at the back / chin
-  visor: { az: 66, elLo: -0.12, elHi: 0.30, cornerRise: 0.13, cornerDrop: 0.09 }, // edges taper so the opening has rounded corners   // degrees either side of straight ahead, elevation rad
-  strip: { az: 62, elLo: 0.30, elHi: 0.40 },    // ballistic (Zylon) strip just above the visor
-  peak: { az: 58, el: 0.41, out: 0.09 },        // small lip above the visor
+  visor: { az: 64, elLo: -0.16, elHi: 0.22, cornerRise: 0.16, cornerDrop: 0.05 }, // edges taper so the opening has rounded corners   // degrees either side of straight ahead, elevation rad
+  strip: { az: 60, elLo: 0.225, elHi: 0.27 },    // ballistic (Zylon) strip just above the visor
+  peak: { az: 54, el: 0.28, out: 0.05 },        // small lip above the visor
   pivot: { el: 0.10, r: 0.17 },                 // visor pivot covers on the temples
   chinVents: [{ az: 14, el: -0.62 }, { az: -14, el: -0.62 }],
-  topVents: [{ az: 22, el: 0.86 }, { az: -22, el: 0.86 }], // small raised air intakes on the crown (D3, D4)
-  spoiler: { el: 0.62, halfSpan: 0.62, chord: 0.32, rise: 0.10 }, // rear aero spoiler on the crown
+  topVents: [], // small raised air intakes on the crown (D3, D4)
+  spoiler: { el: 0.58, halfSpan: 0.55, chord: 0.26, rise: 0.06 }, // rear aero spoiler on the crown
   hansPosts: { az: 128, el: -0.42 },            // anchor posts on the lower rear quarters
   colours: { base: '#18245e', crown: '#f6c200', stripe: '#d0021b', accent: '#ffffff' },
 };
@@ -54,13 +54,11 @@ export function helmetTexture(c) {
       g.moveTo(x0, 640 + off); g.bezierCurveTo(W * s, 600 + off, W * (s + dirn * 0.1), 470 + off, x1, 430 + off);
       g.bezierCurveTo(W * (s + dirn * 0.1), 470 + off + th * 0.3, W * s, 600 + off + th, x0, 640 + off + th); g.closePath(); g.fill();
     }
-    g.strokeStyle = c.accent; g.lineWidth = 4; g.beginPath(); g.moveTo(W * (s - 0.24), 790); g.lineTo(W * (s + 0.24), 760); g.stroke();
   }
   // back: a dark band with the driver number in white
   g.fillStyle = c.accent; g.font = 'italic bold 110px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(c.number || '1', W * 0.04, 470); g.fillText(c.number || '1', W * 0.96, 470);
   // bottom rim pinstripe
-  g.fillStyle = c.crown; g.fillRect(0, H - 40, W, 10);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
 }
@@ -119,10 +117,12 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   }
 
   // ---- Materials (helmet paint is its own gloss clear-coat, not the car's matte paint)
-  const shellMat = new THREE.MeshPhysicalMaterial({ map: helmetTexture(S.colours), roughness: 0.28, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.06 });
+  const shellMat = new THREE.MeshPhysicalMaterial({ map: helmetTexture(S.colours), roughness: 0.18, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.02 });
   shellMat.name = 'Helmet_GlossPaint';
   // dark-tinted race shield: glossy black with a mirror-like coat (it read blue before)
-  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x030304, roughness: 0.03, metalness: 0.55, envMapIntensity: 1.4, clearcoat: 1, clearcoatRoughness: 0.0, side: THREE.DoubleSide });
+  // no metalness (that mirrored the blue sky), a near-black dielectric with a weak clear coat: dark smoked race shield
+  const visorMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.06, metalness: 0.0, envMapIntensity: 0.25, clearcoat: 0.5, clearcoatRoughness: 0.03, specularColor: new THREE.Color(0x808080), specularIntensity: 0.5, side: THREE.DoubleSide });
+  visorMat.userData.envMapIntensity = 0.25;
   visorMat.name = 'Helmet_Visor_DarkTint';
   const blackTrim = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.55, metalness: 0.1, side: THREE.DoubleSide });
   blackTrim.name = 'Helmet_BlackRubberTrim';
@@ -133,7 +133,7 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
 
   // ---- Shell: one surface from the rim to the crown, open underneath (the neck goes there)
   {
-    const NA = 120, NE = 40, pos = [], uv = [], idx = [];
+    const NA = 192, NE = 64, pos = [], uv = [], idx = [];
     for (let i = 0; i <= NA; i++) {
       const u = i / NA, a = Math.PI + u * 2 * Math.PI; // start at the back so the seam is hidden
       const e0 = rimEl(a);
@@ -229,11 +229,11 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
       for (let j = 0; j <= NE; j++) {
         const t = j / NE;                                  // 0 leading (higher), 1 trailing (lower, rearmost)
         const e = sp.el + 0.10 - (0.10 + 0.16) * t;
-        const lift = 0.004 + f * (0.10 * t * t + 0.02 * t); // grows toward the trailing edge
+        const lift = 0.004 + f * (0.06 * t * t + 0.012 * t); // grows toward the trailing edge
         const p = surf(a, e, lift); pos.push(p.x, p.y, p.z);
       }
       // gurney lip: a short upturn on the trailing edge
-      const tr = surf(a, sp.el - 0.16, 0.004 + f * 0.12), gn = surf(a, sp.el - 0.10, 0.004 + f * 0.14);
+      const tr = surf(a, sp.el - 0.16, 0.004 + f * 0.075), gn = surf(a, sp.el - 0.12, 0.004 + f * 0.085);
       pos.push(gn.x, gn.y, gn.z);
       // underside: back down onto the shell
       const ub = surf(a, sp.el - 0.16, 0.004); pos.push(ub.x, ub.y, ub.z);
