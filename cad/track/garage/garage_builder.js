@@ -529,7 +529,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     const byMat = new Map();
     hm.traverse((o) => {
       if (!o.isMesh || !o.visible) return;
-      const g0 = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld).applyMatrix4(shelfHelmet.toShelf);
+      const g0 = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      for (const k of Object.keys(g0.attributes)) { // the GLBs are quantized (normalized ints): unpack to floats before baking transforms
+        const at = g0.attributes[k]; if (at.array instanceof Float32Array) continue;
+        const f = new Float32Array(at.count * at.itemSize);
+        for (let i = 0; i < at.count; i++) for (let c = 0; c < at.itemSize; c++) f[i * at.itemSize + c] = [at.getX, at.getY, at.getZ, at.getW][c].call(at, i);
+        g0.setAttribute(k, new THREE.BufferAttribute(f, at.itemSize));
+      }
+      g0.applyMatrix4(o.matrixWorld).applyMatrix4(shelfHelmet.toShelf);
       for (const k of Object.keys(g0.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g0.deleteAttribute(k);
       if (!g0.attributes.uv) g0.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g0.attributes.position.count * 2), 2));
       if (!byMat.has(o.material)) byMat.set(o.material, []); byMat.get(o.material).push(g0);
