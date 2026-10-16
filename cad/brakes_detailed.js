@@ -360,7 +360,7 @@ export function buildDetailedBrakeCorner(scene, mats, side = "LH") {
     );
     tieBolt.rotation.x = Math.PI / 2;
     tieBolt.position.set(tx, ty, -0.58);
-    caliperGroup.add(tieBolt);
+    // tie bolts ran 1.12 long and stuck out of the caliper as pins: not added
 
     // 12-point jet nut on opposite side
     const nut = createStudWith12PtNut(
@@ -369,7 +369,7 @@ export function buildDetailedBrakeCorner(scene, mats, side = "LH") {
     );
     nut.rotation.x = -Math.PI / 2;
     nut.position.set(tx, ty, 0.58);
-    caliperGroup.add(nut);
+    // matching tie nuts/studs dropped with the bolts
   });
 
   // -------------------------------------------------------------
