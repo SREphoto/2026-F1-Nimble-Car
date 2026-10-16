@@ -70,7 +70,9 @@ export async function installRb22Body(carModel, renderer) {
       o.name = `${part}_${mname}`;
       if (/^redbull_(detail|carbon\d)$/.test(mname) && /^Body_RB22_FrontWing/.test(part)) { o.material = mat.clone(); fwDetail.push(o); } // wing flaps carry baked Red Bull/VISA/Mobil art
       if (mname === 'redbull_decals') { // the atlas carries a crisp alpha: cut the logos from it, not from the coarse decal polygons
-        mat.alphaTest = 0.5; mat.transparent = false; mat.alphaToCoverage = true; mat.needsUpdate = true;
+        // blend the edges (bilinear alpha) instead of a hard 0.5 cut, which left texel stair-steps on every logo
+        mat.alphaTest = 0.04; mat.transparent = true; mat.depthWrite = false; mat.alphaToCoverage = false;
+        mat.polygonOffset = true; mat.polygonOffsetFactor = -2; mat.polygonOffsetUnits = -2; mat.needsUpdate = true; o.renderOrder = 2;
       }
       if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
