@@ -36,14 +36,10 @@ export async function installRb22Body(carModel, renderer) {
   if (!carModel || carModel.userData.rb22) return carModel?.userData.rb22;
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const [gltf, plainMap] = await Promise.all([
-    loader.loadAsync(new URL('rb22_body.glb', BASE).href),
-    new THREE.TextureLoader().loadAsync(new URL('rb22_paint_plain.webp', BASE).href),
-  ]);
+  const gltf = await loader.loadAsync(new URL('rb22_body.glb', BASE).href);
   const body = gltf.scene;
   body.name = 'Body_RB22_Assembly';
   const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.() || 8;
-  plainMap.flipY = false; plainMap.colorSpace = THREE.SRGBColorSpace; plainMap.anisotropy = maxAniso;
 
   const parts = {};
   let paint = null; let bakedMap = null; const paintMeshes = []; const accentMeshes = [];
