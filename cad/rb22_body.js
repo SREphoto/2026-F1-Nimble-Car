@@ -128,6 +128,33 @@ export async function installRb22Body(carModel, renderer) {
     tailCap = loftBetween(carModel, host, cover, 31.6, tailM, 35.6, 4.6, collarMat, 'Body_RB22_EngineCover_RearClosure');
   } catch (e) { console.warn('RB22 tail closure failed', e); }
 
+  // The model's floor stays (thin rods from the chassis/sidepod down to the floor edge) came out white in
+  // its texture. Move those small, long, thin pieces into their own carbon-black mesh.
+  try {
+    const stayMat = new THREE.MeshStandardMaterial({ color: 0x0b0c0e, roughness: 0.45, metalness: 0.2, name: 'RB22_FloorStay_Carbon' });
+    const targets = [];
+    body.traverse((o) => { if (o.isMesh && /^Body_RB22_(Chassis_Tub|Floor)_redbull_detail/.test(o.name) && o.geometry.index) targets.push(o); });
+    targets.forEach((o) => {
+      const geo = o.geometry; const pos = geo.attributes.position; const idx = geo.index.array; const n = pos.count;
+      const par = new Int32Array(n); for (let i = 0; i < n; i++) par[i] = i;
+      const f = (i) => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+      const key = new Map(); const rep = new Int32Array(n);
+      for (let i = 0; i < n; i++) { const k = pos.getX(i).toFixed(4) + ',' + pos.getY(i).toFixed(4) + ',' + pos.getZ(i).toFixed(4); if (!key.has(k)) key.set(k, i); rep[i] = key.get(k); }
+      for (let t = 0; t < idx.length; t += 3) { const a = f(rep[idx[t]]); par[f(rep[idx[t + 1]])] = a; par[f(rep[idx[t + 2]])] = a; }
+      const box = new Map(); const cnt = new Map();
+      for (let i = 0; i < n; i++) { const r = f(rep[i]); let b = box.get(r); if (!b) { b = new THREE.Box3(); box.set(r, b); cnt.set(r, 0); } b.expandByPoint(new THREE.Vector3().fromBufferAttribute(pos, i)); cnt.set(r, cnt.get(r) + 1); }
+      const sc = new THREE.Vector3(); o.getWorldScale(sc); const scale = sc.x / (carModel.getWorldScale(new THREE.Vector3()).x || 1);
+      const isStay = (r) => { const s = box.get(r).getSize(new THREE.Vector3()).multiplyScalar(scale); const d = [s.x, s.y, s.z].sort((a, b) => a - b); return cnt.get(r) <= 130 && d[2] > 1.1 && d[1] < 0.6; };
+      const keep = []; const stay = [];
+      for (let t = 0; t < idx.length; t += 3) (isStay(f(rep[idx[t]])) ? stay : keep).push(idx[t], idx[t + 1], idx[t + 2]);
+      if (!stay.length) return;
+      geo.setIndex(keep);
+      const g2 = geo.clone(); g2.setIndex(stay);
+      const m2 = new THREE.Mesh(g2, stayMat); m2.name = o.name.replace('redbull_detail', 'FloorStay_Carbon'); m2.castShadow = true;
+      o.parent.add(m2); m2.position.copy(o.position); m2.quaternion.copy(o.quaternion); m2.scale.copy(o.scale);
+    });
+  } catch (e) { console.warn('RB22 floor stay recolour failed', e); }
+
   // The RB22's own front wing (with its pillars) is used, so ours is hidden with every pylon/mount
   ['FrontWing_Aerofoil_Assembly', 'FrontWing_Pylons', 'FrontWing_Mount_Assembly'].forEach((n) => {
     const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; }
