@@ -17,6 +17,13 @@ for(const j of jobs){const [team,views]=j.split(':');
   if(team==='wire'){await p.evaluate(()=>{window.setTeam('red-bull');const g=window.carModel;const rb=g.getObjectByName('Body_RB22_Assembly');const col=g.getObjectByName('Body_RB22_NoseCollar');const inRb=(o)=>{for(let q=o;q;q=q.parent){if(q===rb||q===col)return true;}return false;};g.traverse(o=>{if(o.isMesh){o.userData._m=o.material;o.material=inRb(o)?new o.material.constructor({color:0x00e5ff,wireframe:true}):new o.material.constructor({color:0x3a3d44,roughness:0.8});}});});
     for(const v of views.split(',')){await setCam(V[v]);await grab(`wire_${v}`);} 
     await p.evaluate(()=>window.carModel.traverse(o=>{if(o.userData._m){o.material=o.userData._m;delete o.userData._m;}}));continue;}
+  if(team==='garage'){await p.evaluate(()=>window.enterGarageInspect&&window.enterGarageInspect());await p.waitForTimeout(4000);
+    const ok=await p.evaluate(()=>{let hit=null;window.scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.name==='Helmet_GlossPaint'&&!hit){let inCar=false;for(let q=o;q;q=q.parent)if(q===window.carModel)inCar=true;if(!inCar)hit=o;}});if(!hit)return 'none';
+      const b=new THREE.Box3().setFromObject(hit);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const cam=window.camera,ct=window.controls;ct.autoRotate=false;
+      // look at the shelf from the open side (towards the garage centre)
+      const g=new THREE.Vector3();window.carModel.getWorldPosition(g);const dir=g.clone().sub(c).setY(0).normalize();const dist=Math.max(s.x,s.z,s.y)*1.3;
+      cam.fov=30;cam.aspect=1400/860;cam.updateProjectionMatrix();cam.position.copy(c).addScaledVector(dir,dist).add(new THREE.Vector3(0,s.y*0.1,0));ct.target.copy(c);ct.update();window.renderer.setSize(1400,860,false);return [c.toArray(),s.toArray()];});
+    console.log('garage shelf',JSON.stringify(ok));await p.waitForTimeout(500);await grab('garage_shelf');continue;}
   if(team==='intro'){for(const id of views.split(',')){const [sid,u]=id.split('@');await p.evaluate(([sid,u])=>window.f1Intro.debugJumpToShot(sid,+u),[sid,u||'0.5']);await p.waitForTimeout(400);await p.evaluate(([sid,u])=>window.f1Intro.debugJumpToShot(sid,+u),[sid,u||'0.5']);await grab(`intro_${sid}`);} continue;}
   if(team.endsWith('-nowheel')){await p.evaluate(t=>{window.setTeam(t);window.carModel.traverse(o=>{if(/^Wheel_Visual_/.test(o.name))o.visible=false;});},team.replace('-nowheel',''));}
   else if(team.endsWith('-nodecal')){await p.evaluate(t=>{window.setTeam(t);window.carModel.traverse(o=>{if(/^Livery_Decal_Team_/.test(o.name))o.visible=false;});},team.replace('-nodecal',''));}
