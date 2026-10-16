@@ -125,6 +125,19 @@ export async function installRb22Body(carModel, renderer) {
   });
   ['Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
 
+  // Our powertrain, gearbox, wiring and coolers were sized for the old body: parts of them (gearbox casing,
+  // exhaust downpipe, MGU-K, crankcase sump, rear-wing LED looms) poke through the RB22 floor and tail.
+  // The RB22 body is closed, so they are hidden in normal view and only shown when the car is exploded.
+  const internals = [];
+  ['Powertrain_Moving_Internals_Assembly', 'Transmission_Moving_Gears_Assembly', 'Electrical_Wiring_Harness_Assembly'].forEach((n) => {
+    const asm = carModel.getObjectByName(n); if (!asm) return;
+    asm.children.forEach((c) => { if (c.name !== 'Kinematic_Driveshafts_Assembly') internals.push(c); });
+  });
+  ['Body_FireSuppression_System'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) internals.push(o); });
+  let internalsShown = null;
+  const showInternals = (v) => { if (v === internalsShown) return; internalsShown = v; internals.forEach((o) => { o.visible = v; o.userData.rb22Internal = true; }); };
+  showInternals(false);
+
   // The RB22 cockpit rim sits higher than our old tub: lift the seat, driver, wheel and pedals with it
   // so the helmet shows above the rim and the steering wheel clears the cowl, like the real car.
   const cell = carModel.getObjectByName('Body_SurvivalCell_Monocoque_Assembly');
@@ -182,7 +195,7 @@ export async function installRb22Body(carModel, renderer) {
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); if (Math.abs(v.y) > ay - 0.5) b.expandByPoint(v); }
     boxCache.set(mesh, b); return b;
   }
-  const api = { ...api0, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { ...api0, showInternals, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }

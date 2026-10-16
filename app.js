@@ -742,6 +742,7 @@ window.setCameraView = function(viewName) {
   }
 
   // Articulate and force synchronous WebGL render
+  carModel?.userData?.rb22?.showInternals?.(state.explodedProgress > 0.02);
   if (carModel && carModel.updateKinematics) {
     carModel.updateKinematics({
       rpm: state.rpm,
