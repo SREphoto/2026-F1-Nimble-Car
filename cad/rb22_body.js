@@ -100,6 +100,32 @@ export async function installRb22Body(carModel, renderer) {
   let collar = null;
   if (!parts.Body_RB22_Nose) try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
 
+  // The RB22 tail carries exposed gearbox/exhaust detail (copper pipes, white brackets) above its crash
+  // structure behind the cover. Drop those triangles: X > 32, Z > 4.7 in the car frame.
+  {
+    carModel.updateMatrixWorld(true);
+    const toCar = carModel.matrixWorld.clone().invert(); const v = new THREE.Vector3();
+    body.traverse((o) => {
+      if (!o.isMesh || !/^Body_RB22_Tail_redbull_detail/.test(o.name) || !o.geometry.index) return;
+      const m = toCar.clone().multiply(o.matrixWorld), pos = o.geometry.attributes.position, ix = o.geometry.index.array, keep = [];
+      for (let t = 0; t < ix.length; t += 3) {
+        let cx = 0, cz = 0; for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pos, ix[t + k]).applyMatrix4(m); cx += v.x / 3; cz += v.z / 3; }
+        if (!(cx > 32 && cz > 4.7)) keep.push(ix[t], ix[t + 1], ix[t + 2]);
+      }
+      o.geometry = o.geometry.clone(); o.geometry.setIndex(keep); o.userData.rb22Trimmed = (ix.length - keep.length) / 3;
+    });
+  }
+  // Close the back of the engine cover: the RB22 cover stops at X ~32 and leaves its gearbox/exhaust
+  // detail open to view. Loft a skin from the cover's rear edge back onto the crash structure.
+  let tailCap = null;
+  try {
+    const cover = []; const tailM = [];
+    body.traverse((o) => { if (!o.isMesh) return;
+      if (/^Body_RB22_EngineCover_Airbox_redbull_(paint|carbon2)/.test(o.name)) cover.push(o);
+      if (/^Body_RB22_Tail_redbull_(paint|carbon2)/.test(o.name)) tailM.push(o); });
+    tailCap = loftBetween(carModel, host, cover, 31.6, tailM, 35.6, 4.6, collarMat, 'Body_RB22_EngineCover_RearClosure');
+  } catch (e) { console.warn('RB22 tail closure failed', e); }
+
   // The RB22's own front wing (with its pillars) is used, so ours is hidden with every pylon/mount
   ['FrontWing_Aerofoil_Assembly', 'FrontWing_Pylons', 'FrontWing_Mount_Assembly'].forEach((n) => {
     const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; }
@@ -195,7 +221,7 @@ export async function installRb22Body(carModel, renderer) {
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); if (Math.abs(v.y) > ay - 0.5) b.expandByPoint(v); }
     boxCache.set(mesh, b); return b;
   }
-  const api = { ...api0, showInternals, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { ...api0, tailCap, showInternals, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }
@@ -251,4 +277,36 @@ export function buildNoseCollar(carModel, host, tubGroup, material) {
   const mesh = new THREE.Mesh(g, material); mesh.name = 'Body_RB22_NoseCollar'; mesh.castShadow = true; mesh.receiveShadow = true;
   host.add(mesh);
   return mesh;
+}
+
+// Generic X-plane loft between two sets of meshes (CAD frame), used to close the engine cover's rear.
+export function loftBetween(carModel, host, meshesA, xa, meshesB, xb, zc, material, name, N = 64, R = 10) {
+  carModel.updateMatrixWorld(true);
+  const toWorld = carModel.matrixWorld, toCar = toWorld.clone().invert();
+  const rc = new THREE.Raycaster();
+  const ring = (x, meshes) => {
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const o = new THREE.Vector3(x, Math.cos(a) * R, zc + Math.sin(a) * R).applyMatrix4(toWorld);
+      const t = new THREE.Vector3(x, 0, zc).applyMatrix4(toWorld);
+      rc.set(o, t.sub(o).normalize()); rc.far = R;
+      const hit = rc.intersectObjects(meshes, false)[0];
+      pts.push(hit ? hit.point.clone().applyMatrix4(toCar) : null);
+    }
+    return pts;
+  };
+  const A = ring(xa, meshesA), B = ring(xb, meshesB);
+  console.info('[rb22] ' + name + ' rings', A.filter(Boolean).length, B.filter(Boolean).length);
+  if (A.filter(Boolean).length < N * 0.5 || B.filter(Boolean).length < N * 0.5) return null;
+  const fill = (P) => P.map((p, i) => { if (p) return p; for (let k = 1; k < N; k++) { const q = P[(i + k) % N] || P[(i - k + N) % N]; if (q) return q; } return null; });
+  const a = fill(A).map((p) => new THREE.Vector3(xa, 0, zc).lerp(p, 0.995)), b = fill(B).map((p) => new THREE.Vector3(xb, 0, zc).lerp(p, 0.995));
+  const S = 10, pos = [], idx = [];
+  for (let s = 0; s <= S; s++) { const u = s / S, w = u * u * (3 - 2 * u);
+    for (let i = 0; i < N; i++) pos.push(xa + (xb - xa) * u, a[i].y + (b[i].y - a[i].y) * w, a[i].z + (b[i].z - a[i].z) * w); }
+  for (let s = 0; s < S; s++) for (let i = 0; i < N; i++) { const i2 = (i + 1) % N, r0 = s * N, r1 = (s + 1) * N; idx.push(r0 + i, r1 + i, r1 + i2, r0 + i, r1 + i2, r0 + i2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(host.matrixWorld.clone().invert(), toWorld));
+  const mesh = new THREE.Mesh(g, material); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true;
+  host.add(mesh); return mesh;
 }

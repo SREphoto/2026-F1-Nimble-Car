@@ -57,9 +57,8 @@ export function helmetTexture(c) {
     g.strokeStyle = c.accent; g.lineWidth = 4; g.beginPath(); g.moveTo(W * (s - 0.24), 790); g.lineTo(W * (s + 0.24), 760); g.stroke();
   }
   // back: a dark band with the driver number in white
-  g.fillStyle = shade(c.base, -0.5); g.fillRect(0, 380, 150, 150); g.fillRect(W - 150, 380, 150, 150);
-  g.fillStyle = c.accent; g.font = 'bold 120px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(c.number || '1', 75, 458); g.fillText(c.number || '1', W - 75, 458);
+  g.fillStyle = c.accent; g.font = 'italic bold 110px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(c.number || '1', W * 0.04, 470); g.fillText(c.number || '1', W * 0.96, 470);
   // bottom rim pinstripe
   g.fillStyle = c.crown; g.fillRect(0, H - 40, W, 10);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
@@ -203,7 +202,8 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
   // visor pivot covers, flush on each temple
   [1, -1].forEach(s => {
     const a = d2r(s * 90), pv = S.pivot;
-    group.add(patch(a - pv.r / 1.12, a + pv.r / 1.12, pv.el - pv.r / 1.2, pv.el + pv.r / 1.2, 0.02, blackTrim, `Helmet_VisorPivot_${s > 0 ? 'Left' : 'Right'}`, 6, 6, 0.012));
+    const half = (t) => Math.sqrt(Math.max(0, 1 - (2 * t - 1) ** 2)) * pv.r / 1.2; // round, not square
+    group.add(patch(a - pv.r / 1.12, a + pv.r / 1.12, (t) => pv.el - half(t), (t) => pv.el + half(t), 0.012, blackTrim, `Helmet_VisorPivot_${s > 0 ? 'Left' : 'Right'}`, 6, 6, 0.012));
   });
   // chin vents: two small dark slots on the chin bar
   S.chinVents.forEach((cvt, k) => {
@@ -214,33 +214,36 @@ export function createDriverHelmet(spec = HELMET_SPEC) {
     group.add(patch(d2r(tv.az - 7), d2r(tv.az + 7), tv.el - 0.09, tv.el + 0.07, 0.01, blackTrim, `Helmet_TopVent_Scoop_${k}`, 6, 4, 0.035));
     group.add(patch(d2r(tv.az - 5), d2r(tv.az + 5), tv.el - 0.1, tv.el - 0.075, 0.05, new THREE.MeshBasicMaterial({ color: 0x050505, side: THREE.DoubleSide }), `Helmet_TopVent_Slot_${k}`, 4, 1));
   });
-  // rear spoiler: a two-element wing across the back of the crown with a small gurney and end fences
+  // rear spoiler: moulded into the back of the crown like a 2026 race helmet. One smooth surface that
+  // leaves the shell at its leading edge and lifts clear toward a trailing edge with a small gurney, its
+  // span tapering into the shell at both ends (no separate fences or slabs).
   {
-    const sp = { ...S.spoiler, halfSpan: 0.7, chord: 0.38, rise: 0.12 };
-    const mat = new THREE.MeshPhysicalMaterial({ color: 0x0d0e11, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide });
-    const spoiler = new THREE.Group(); spoiler.name = 'Helmet_RearSpoiler';
-    const ny = 24;
-    const wing = (el, chord, rise, thick, gurney) => {
-      const pos = [], idx = [];
-      for (let i = 0; i <= ny; i++) {
-        const y = -sp.halfSpan + (2 * sp.halfSpan) * (i / ny);
-        const a = Math.PI - Math.atan2(y, S.rear), b0 = surf(a, el, 0.005);
-        const tip = b0.clone().add(new THREE.Vector3(chord, 0, rise));
-        const mid = b0.clone().lerp(tip, 0.5).add(new THREE.Vector3(0, 0, thick));
-        const gur = tip.clone().add(new THREE.Vector3(0.01, 0, gurney));
-        pos.push(...b0.toArray(), ...mid.toArray(), ...tip.toArray(), ...gur.toArray());
-      }
-      for (let i = 0; i < ny; i++) for (let k = 0; k < 3; k++) { const p0 = i * 4 + k, q0 = p0 + 4; idx.push(p0, q0, q0 + 1, p0, q0 + 1, p0 + 1); }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, mat); m.castShadow = true; return m;
+    const sp = S.spoiler, NA = 40, NE = 10, pos = [], idx = [];
+    const azHalf = Math.atan2(sp.halfSpan, S.rear);
+    const top = (k) => { // k: 0..1 along the span; 1 in the middle, 0 at the tips
+      return Math.sin(k * Math.PI) ** 0.6;
     };
-    spoiler.add(wing(sp.el, sp.chord, sp.rise, 0.05, 0.05));
-    spoiler.add(wing(sp.el - 0.16, sp.chord * 0.75, sp.rise * 0.6, 0.035, 0.03));
-    [1, -1].forEach((s2) => { // end fences
-      const a = Math.PI - Math.atan2(s2 * sp.halfSpan, S.rear), b0 = surf(a, sp.el - 0.2, 0);
-      const fence = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.3), mat);
-      fence.position.copy(b0).add(new THREE.Vector3(0.18, 0, 0.12)); fence.rotation.y = -0.35; spoiler.add(fence);
-    });
+    const ring = [];
+    for (let i = 0; i <= NA; i++) {
+      const k = i / NA, a = Math.PI - azHalf + 2 * azHalf * k, f = top(k);
+      for (let j = 0; j <= NE; j++) {
+        const t = j / NE;                                  // 0 leading (higher), 1 trailing (lower, rearmost)
+        const e = sp.el + 0.10 - (0.10 + 0.16) * t;
+        const lift = 0.004 + f * (0.10 * t * t + 0.02 * t); // grows toward the trailing edge
+        const p = surf(a, e, lift); pos.push(p.x, p.y, p.z);
+      }
+      // gurney lip: a short upturn on the trailing edge
+      const tr = surf(a, sp.el - 0.16, 0.004 + f * 0.12), gn = surf(a, sp.el - 0.10, 0.004 + f * 0.14);
+      pos.push(gn.x, gn.y, gn.z);
+      // underside: back down onto the shell
+      const ub = surf(a, sp.el - 0.16, 0.004); pos.push(ub.x, ub.y, ub.z);
+    }
+    const W = NE + 3;
+    for (let i = 0; i < NA; i++) for (let j = 0; j < W - 1; j++) { const p0 = i * W + j, q0 = p0 + W; idx.push(p0, p0 + 1, q0 + 1, p0, q0 + 1, q0); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const mat = new THREE.MeshPhysicalMaterial({ color: 0x0b0c0f, roughness: 0.22, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04, side: THREE.DoubleSide });
+    mat.name = 'Helmet_Spoiler_GlossCarbon';
+    const spoiler = new THREE.Mesh(g, mat); spoiler.name = 'Helmet_RearSpoiler'; spoiler.castShadow = true;
     group.add(spoiler);
   }
   // chin bar: a black aero lip under the chin and two side cheek vents
