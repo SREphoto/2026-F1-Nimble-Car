@@ -20,6 +20,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 import { GARAGE_LAYOUT, REGULATIONS } from './garage_data.js';
 import { GARAGE_TEAM_COLORS } from './garage_team_colors.js';
 import { createDriverHelmet, HELMET_SPEC } from '../../driver_helmet.js';
+import { loadHelmetModels, buildHelmetModel } from '../../helmet_models.js';
 
 export const REFLECT_LAYER = 5;   // objects seen in the floor mirror (garage, car, lights)
 export const SHELL_LAYER = 6;     // room shell and pit building: the only casters for the outside sunlight shadow
@@ -394,6 +395,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     [M.chrome, merged([...[0, 1, 2, 3].map(d => B(4.5, 0.22, 0.35, 0, 3.0 + d * 2.1, 6.2)), B(0.25, 2.4, 0.35, -0.6, 26, 4.2), B(0.25, 2.4, 0.35, 0.6, 26, 4.2)])],
   ];
   // helmet shelf: two shelves with three helmets
+  let shelfHelmet = null;
   {
     // the same helmet the driver wears (cad/driver_helmet.js), merged per material and instanced on the shelves
     const hs = [[-4.5, 13.3], [0, 13.3], [4.5, 13.3], [-2.2, 18.6], [2.2, 18.6]];
@@ -403,6 +405,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     hg.updateMatrixWorld(true);
     const byMat = new Map();
     const toShelf = new THREE.Matrix4().makeRotationY(Math.PI / 2).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)).premultiply(new THREE.Matrix4().makeScale(1.1, 1.1, 1.1));
+    shelfHelmet = { hs, toShelf };
     hg.traverse((o) => {
       if (!o.isMesh || o.name === 'Helmet_InnerLiner') return;
       let g0 = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
@@ -513,6 +516,33 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
       im.name = `Garage_${kind}_${pi}`; im.castShadow = !['truss', 'tubeLight'].includes(kind); im.receiveShadow = true; im.computeBoundingSphere(); g.add(im);
     });
   }
+
+  // Real helmet models on the shelf (same as the driver's): swapped in once loaded, low clear coat so they
+  // read as painted shells, not chrome bubbles. Rebuilt on team change.
+  let disposed = false, shelfModels = null;
+  const rebuildShelfHelmets = () => {
+    if (!shelfModels || disposed || !place.helmetShelf || !shelfHelmet) return;
+    g.children.filter((o) => o.userData.shelfHelmetModel).forEach((o) => { o.removeFromParent(); o.geometry.dispose(); });
+    PROP.helmetShelf.forEach(([mat], pi) => { if (mat !== M.band && mat !== M.chrome) { const im = g.getObjectByName(`Garage_helmetShelf_${pi}`); if (im) im.visible = false; } });
+    const hm = buildHelmetModel(shelfModels, teamId === 'red-bull' ? 'verstappen' : 'bell', HELMET_SPEC, { paint: shelfModels.teams[teamId]?.paint, gloss: 0.3 });
+    hm.updateMatrixWorld(true);
+    const byMat = new Map();
+    hm.traverse((o) => {
+      if (!o.isMesh || !o.visible) return;
+      const g0 = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld).applyMatrix4(shelfHelmet.toShelf);
+      for (const k of Object.keys(g0.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g0.deleteAttribute(k);
+      if (!g0.attributes.uv) g0.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g0.attributes.position.count * 2), 2));
+      if (!byMat.has(o.material)) byMat.set(o.material, []); byMat.get(o.material).push(g0);
+    });
+    const mats = place.helmetShelf;
+    for (const [mat, gs] of byMat) {
+      const one = mergeGeometries(gs);
+      const geo = mergeGeometries(shelfHelmet.hs.map(([x, y]) => one.clone().translate(x, y + 0.2 + 1.45, 1.6)));
+      const im = new THREE.InstancedMesh(geo, mat, mats.length); mats.forEach((m, i) => im.setMatrixAt(i, m));
+      im.name = 'Garage_helmetShelf_Model'; im.userData.shelfHelmetModel = true; im.castShadow = true; im.receiveShadow = true; im.computeBoundingSphere(); g.add(im);
+    }
+  };
+  loadHelmetModels().then((m) => { shelfModels = m; rebuildShelfHelmets(); }).catch((e) => console.warn('Garage helmet models failed', e));
 
   // ---------------------------------------------------------------- light canopy over the car: team colour frame, black band, glowing panel, air lines
   const C = L.canopy, CW = C.x1 - C.x0, CX = (C.x0 + C.x1) / 2, CHW = C.halfWidth;
@@ -637,12 +667,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     teamId = GARAGE_TEAM_COLORS[id] ? id : 'red-bull';
     M.team.color.set(T().panel); M.teamMatte.color.set(T().panel); M.accent.color.set(T().accent);
     for (const t of [regMon, regSheet, atlasTex, blanketTex]) redraw(t);
+    rebuildShelfHelmets();
   };
   g.userData.setReflections = (on) => { if (mirror) { mirror.visible = on; M.floor.opacity = on ? 1 - F.reflect : 1; M.floor.transparent = on; M.floor.needsUpdate = true; } };
   g.userData.layout = L;
   g.userData.mirror = mirror;
   /** free every geometry, material, texture and render target of the garage (called when leaving the garage) */
   g.userData.dispose = () => {
+    disposed = true;
     const mats = new Set(), texs = new Set();
     g.traverse(o => {
       if (o.geometry) o.geometry.dispose();

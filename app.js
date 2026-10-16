@@ -22,6 +22,7 @@ import { initTyreStates } from './cad/tyre_states.js';
 import { sumTravel } from './cad/track/ride_model.js';
 import { applyLivery } from './cad/livery_decals.js';
 import { installRb22Body, RB22_CREDIT } from './cad/rb22_body.js';
+import { HELMET_CREDITS } from './cad/helmet_models.js';
 import { buildWheelsTyres } from './cad/wheels_tyres.js';
 import { initSessions } from './cad/game/session_ui.js';
 import { initGlobe } from './cad/game/globe.js';
@@ -440,7 +441,7 @@ if (carModel && !/[?&]legacyBody/.test(location.search)) {
 {
   const note = document.createElement('div');
   note.id = 'model-credit';
-  note.textContent = `Body model: ${RB22_CREDIT}`;
+  note.textContent = `Body model: ${RB22_CREDIT} · Helmets: ${HELMET_CREDITS.join(' and ')} (sketchfab.com, CC BY 4.0)`;
   note.style.cssText = 'position:fixed;right:8px;bottom:4px;font:10px/1.3 system-ui,sans-serif;color:rgba(255,255,255,.55);pointer-events:none;z-index:5;';
   document.body.appendChild(note);
 }

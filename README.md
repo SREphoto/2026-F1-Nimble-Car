@@ -122,4 +122,6 @@ The 2026 Formula 1 technical regulations introduce the "Nimble Car" concept, red
 ## Credits
 
 - Main body, centre section and nose: [2026 Redbull RB22 by Dave (Tyler_Dave), Sketchfab, CC BY 4.0](https://sketchfab.com/3d-models/2026-redbull-rb22-0a3d24a58e0549d591a5a48c22eec383) ([licence](https://creativecommons.org/licenses/by/4.0/)). Cut down to the body, moved to the app's frame, compressed and repainted per team (see `cad/rb22_body.js`, `tools/rb22/`).
+- Red Bull driver helmet: [Helmet Redbull - Max Verstappen by Fabianmml, Sketchfab, CC BY 4.0](https://sketchfab.com/3d-models/helmet-redbull-max-verstappen-87eee96938ae415281a8aa8233eefba8) ([licence](https://creativecommons.org/licenses/by/4.0/)). Textures compressed to 2048 WebP (`assets/models/helmet_verstappen.glb`, `cad/helmet_models.js`).
+- Other teams' helmets: [racing Helmet by nNiCo67, Sketchfab, CC BY 4.0](https://sketchfab.com/3d-models/racing-helmet-053c3092297c4054be87e10844d76861) ([licence](https://creativecommons.org/licenses/by/4.0/)). Recoloured per team with a black visor (`assets/models/helmet_bell_gp3.glb`, `cad/helmet_models.js`).
 

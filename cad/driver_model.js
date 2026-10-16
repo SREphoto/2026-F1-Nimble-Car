@@ -24,6 +24,7 @@
 import * as THREE from 'three';
 import { materials as defaultMaterials } from '../materials.js';
 import { createDriverHelmet, helmetTexture } from './driver_helmet.js';
+import { attachHelmetModel } from './helmet_models.js';
 import { sweepGeometry } from './sweep_section.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fabricMaterial, dyed, createSuitTorsoTexture, createSuitLimbTexture, createPatchAtlas, patchMaterial, buildTorso, makeSuitLimb, poseSuitLimb } from './driver_suit.js';
@@ -448,6 +449,8 @@ export function createArticulatedDriver(options = {}) {
   helmet.position.sub(P.c7);
   neckPivot.add(helmet);
   nodes.neckPivot = neckPivot; nodes.helmet = helmet;
+  // real helmet models (Verstappen for red-bull, recoloured Bell GP3 for the rest) replace the built shell
+  helmet.userData.setModelTeam = attachHelmetModel(helmet, helmet.userData.helmetSpec);
 
   // ---- HANS: collar behind the neck (against the headrest, D6) with two flat prongs down the chest
   {
@@ -601,6 +604,7 @@ export function createArticulatedDriver(options = {}) {
     if (shell && S.helmet?.colours) {
       shell.material.map = helmetTexture(S.helmet.colours); shell.material.needsUpdate = true;
     }
+    if (teamOrSettings?.id) helmet.userData.setModelTeam?.(teamOrSettings.id);
     root.userData.settings = S;
   };
 
