@@ -196,6 +196,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       camera.up.set(0, 1, 0); camera.position.set(...v.pos); controls.target.set(...v.target); camera.lookAt(controls.target); controls.update(); keepInside(); };
     camera.position.set(-56, 19, 15); controls.target.set(16, 4, 0); controls.enabled = true; controls.update();
     document.body.classList.add('garage-mode');
+    window.f1Music?.playContext?.('garage');
     const hud = document.getElementById('rbr-hud'); if (hud) hud.style.display = 'none';
     bar.classList.add('on'); $('btn-garage')?.classList.add('active');
   }
@@ -215,6 +216,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     controls.maxDistance = st.saved.maxDist ?? Infinity; controls.minDistance = st.saved.minDist ?? 0; controls.maxPolarAngle = st.saved.maxPolar ?? Math.PI;
     if (st.saved.setView) window.setCameraView = st.saved.setView;
     document.body.classList.remove('garage-mode');
+    window.f1Music?.returnToGeneral?.();
     const hud = document.getElementById('rbr-hud'); if (hud) hud.style.display = '';
     bar.classList.remove('on'); $('btn-garage')?.classList.remove('active');
     if (st.wasCircuit && trackMode) { trackMode.applyCircuit(true); trackMode.setDriving?.(true); trackMode.setCam?.('chase'); }

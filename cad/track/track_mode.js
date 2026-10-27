@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { createRedBullRing, DM } from './red_bull_ring.js';
 import { createRideModel } from './ride_model.js';
 import { soundEngine } from '../../sfx.js';
+import { raceStartSequence } from '../audio/race_start_sequence.js';
 
 const WHEELBASE = 3.4;          // m (2026 regs)
 const MASS = 800;               // kg incl. driver
@@ -630,6 +631,7 @@ export function initTrackMode(ctx) {
     <div id="rbr-body">
       <div class="rbr-row">
         <button type="button" id="rbr-drive" class="rbr-btn" title="Drive the car with the throttle / brake / steering / gear controls (or W A S D, Q/E gears, C camera)">Drive</button>
+        <button type="button" id="rbr-race-start" class="rbr-btn rbr-btn-start" title="Authentic F1 Standing Start: 5 red lights sequence, engine launch revs, announcer, and lights out!">Race start</button>
         <button type="button" id="rbr-auto" class="rbr-btn" title="Autopilot follows the TUM race line using the same throttle/brake/steer/gear controls">Autopilot lap</button>
         <button type="button" id="rbr-pit" class="rbr-btn" title="Autopilot drives into the pit lane at the next pit entry, keeps to 80 km/h, stops at the Red Bull box and drives out">Autopilot pit stop</button>
         <button type="button" id="rbr-reset" class="rbr-btn" title="Back to the pole-position grid box">Reset to grid</button>
@@ -664,6 +666,8 @@ export function initTrackMode(ctx) {
     #rbr-hud.min .rbr-head{cursor:pointer}
     #rbr-hud .rbr-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
     #rbr-hud .rbr-btn{background:#141b26;color:#cfd8e3;border:1px solid #2a3545;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer}
+    #rbr-hud .rbr-btn.rbr-btn-start{background:rgba(225,6,0,.25);border-color:rgba(255,60,60,.45);color:#ffb4b4;font-weight:600}
+    #rbr-hud .rbr-btn.rbr-btn-start:hover{background:rgba(225,6,0,.48);border-color:#ff3b30;color:#fff;box-shadow:0 0 12px rgba(255,59,48,.55)}
     #rbr-hud .rbr-btn.active{background:#00d4e8;color:#04121a;border-color:#00d4e8}
     #rbr-hud .rbr-tele{display:flex;justify-content:space-between;margin-top:5px;font-family:ui-monospace,monospace;font-size:11px}
     #rbr-map{display:block;margin-top:6px;width:220px;height:150px}
@@ -682,6 +686,25 @@ export function initTrackMode(ctx) {
       if (b) { b.textContent = '▾'; b.title = 'Collapse HUD'; }
     }
   });
+  function triggerRaceStart() {
+    if (!mode.circuit) applyCircuit(true);
+    setAutopilot(false);
+    setThrottle(0);
+    setBrake(100);
+    setSteer(0);
+    parkOnGrid();
+    setCam('chase');
+    ensureEngine();
+    raceStartSequence.start({
+      onLightsOut: () => {
+        setBrake(0);
+        setThrottle(1.0);
+        setGear('1');
+        setDriving(true);
+      }
+    });
+  }
+  $('rbr-race-start')?.addEventListener('click', triggerRaceStart);
   $('rbr-drive')?.addEventListener('click', () => setDriving(!mode.driving));
   $('rbr-auto')?.addEventListener('click', () => setAutopilot(!mode.autopilot));
   $('rbr-pit')?.addEventListener('click', () => requestPitStop(!mode.pitReq));
@@ -817,7 +840,7 @@ export function initTrackMode(ctx) {
         if (sc.far !== 4000) { sc.near = 10; sc.far = 4000; sc.left = -160; sc.right = 160; sc.top = 160; sc.bottom = -160; sc.updateProjectionMatrix(); }
       }
     },
-    setDriving, setAutopilot, setCam, parkOnGrid, applyCircuit, requestPitStop, locatePit, pitAt, BOX_S, pitEntrySp,
+    setDriving, setAutopilot, setCam, parkOnGrid, applyCircuit, requestPitStop, locatePit, pitAt, BOX_S, pitEntrySp, triggerRaceStart,
     /** teleport to distance sp (m) from the pole box, optionally with speed (m/s) */
     teleport(sp, v = 0, lat = 0) {
       const F = track.at(sp);

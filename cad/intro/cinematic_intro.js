@@ -351,7 +351,11 @@ function beginPlayback() {
     carModel.position.set(0, 0, 0);
     carModel.rotation.set(...CAR_BASE_ROT);
   }
-  window.f1Music?.start?.();
+  if (window.f1Music?.playContext) {
+    window.f1Music.playContext('game_start');
+  } else {
+    window.f1Music?.start?.();
+  }
 }
 
 function endIntro({ skipped = false } = {}) {
@@ -368,6 +372,7 @@ function endIntro({ skipped = false } = {}) {
   writeSeen(key);
   restoreScene();
   window.f1Music?.setDriving?.(false);
+  window.f1Music?.returnToGeneral?.();
   if (typeof runtime.onDone === 'function') runtime.onDone({ skipped });
 }
 

@@ -1,13 +1,327 @@
 {
-  "version": 1,
+  "version": 2,
+  "description": "2026 F1 Nimble Car Audio Soundtrack - SREdesigns",
+  "rules": {
+    "category1": "Designated context songs (Game Start, Formation Lap, Garage, Qualification Results, Winner's Circle, Credits)",
+    "category2": "General soundtrack songs played during car viewing and racing/driving",
+    "category3": "Excluded / unused songs"
+  },
+  "designated": {
+    "game_start": {
+      "id": "1_game_start",
+      "title": "Towards the Summit",
+      "file": "assets/audio/music/1_Game_Start_towards_the_summit.mp3",
+      "category": 1,
+      "context": "game_start",
+      "role": "opening",
+      "volume": 0.52,
+      "loop": true
+    },
+    "formation_lap": {
+      "id": "1_formation_lap",
+      "title": "Redline Pursuit (Formation Lap)",
+      "file": "assets/audio/music/1_formation_lap_redline_pursuit.mp3",
+      "category": 1,
+      "context": "formation_lap",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    "garage": {
+      "id": "1_garage",
+      "title": "North of Midnight (Garage)",
+      "file": "assets/audio/music/1_garage_north_of_midnight.mp3",
+      "category": 1,
+      "context": "garage",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    "qualification_results": {
+      "id": "1_qualification_results",
+      "title": "No Way (Qualification Results)",
+      "file": "assets/audio/music/1_qualification_results_No way.mp3",
+      "category": 1,
+      "context": "qualification_results",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    "winners_circle": {
+      "id": "1_winners_circle",
+      "title": "Flags Against the Blue (Winner's Circle)",
+      "file": "assets/audio/music/1_Winners_Circle_flags_against_the_blue.mp3",
+      "category": 1,
+      "context": "winners_circle",
+      "role": "designated",
+      "volume": 0.55,
+      "loop": true
+    },
+    "credits": {
+      "id": "1_credits",
+      "title": "Redline Pursuit (Credits)",
+      "file": "assets/audio/music/1_credits_redline_pursuit 2.mp3",
+      "category": 1,
+      "context": "credits",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    }
+  },
+  "soundtrack": [
+    {
+      "id": "2_apex_horizon",
+      "title": "Apex Horizon",
+      "file": "assets/audio/music/2_apex_horizon.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_apex_turn_velocity",
+      "title": "Apex Turn Velocity",
+      "file": "assets/audio/music/2_apex_turn_velocity.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_beyond_the_hairpin",
+      "title": "Beyond the Hairpin",
+      "file": "assets/audio/music/2_beyond_the_hairpin.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_beyond_the_redline",
+      "title": "Beyond the Redline",
+      "file": "assets/audio/music/2_beyond_the_redline.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_bound_by_the_spell",
+      "title": "Bound by the Spell",
+      "file": "assets/audio/music/2_bound_by_the_spell.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_everything_is_mine",
+      "title": "Everything is Mine",
+      "file": "assets/audio/music/2_everything_is_mine.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_into_the_wide",
+      "title": "Into the Wide",
+      "file": "assets/audio/music/2_into_the_wide.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_midnight_perimeter",
+      "title": "Midnight Perimeter",
+      "file": "assets/audio/music/2_midnight_perimeter.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_midnight_torque",
+      "title": "Midnight Torque",
+      "file": "assets/audio/music/2_midnight_torque.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_overclocked_hearts",
+      "title": "Overclocked Hearts",
+      "file": "assets/audio/music/2_overclocked_hearts.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_the_final_act",
+      "title": "The Final Act",
+      "file": "assets/audio/music/2_the_final_act.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_waking_from_the_hall",
+      "title": "Waking from the Hall",
+      "file": "assets/audio/music/2_waking_from_the_hall.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    }
+  ],
   "tracks": [
     {
-      "id": "opening",
-      "title": "Opening Track",
-      "file": "assets/audio/music/opening-track.mp3",
+      "id": "1_game_start",
+      "title": "Towards the Summit",
+      "file": "assets/audio/music/1_Game_Start_towards_the_summit.mp3",
+      "category": 1,
+      "context": "game_start",
       "role": "opening",
-      "volume": 0.5,
+      "volume": 0.52,
       "loop": true
+    },
+    {
+      "id": "1_formation_lap",
+      "title": "Redline Pursuit (Formation Lap)",
+      "file": "assets/audio/music/1_formation_lap_redline_pursuit.mp3",
+      "category": 1,
+      "context": "formation_lap",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    {
+      "id": "1_garage",
+      "title": "North of Midnight (Garage)",
+      "file": "assets/audio/music/1_garage_north_of_midnight.mp3",
+      "category": 1,
+      "context": "garage",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    {
+      "id": "1_qualification_results",
+      "title": "No Way (Qualification Results)",
+      "file": "assets/audio/music/1_qualification_results_No way.mp3",
+      "category": 1,
+      "context": "qualification_results",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    {
+      "id": "1_winners_circle",
+      "title": "Flags Against the Blue (Winner's Circle)",
+      "file": "assets/audio/music/1_Winners_Circle_flags_against_the_blue.mp3",
+      "category": 1,
+      "context": "winners_circle",
+      "role": "designated",
+      "volume": 0.55,
+      "loop": true
+    },
+    {
+      "id": "1_credits",
+      "title": "Redline Pursuit (Credits)",
+      "file": "assets/audio/music/1_credits_redline_pursuit 2.mp3",
+      "category": 1,
+      "context": "credits",
+      "role": "designated",
+      "volume": 0.50,
+      "loop": true
+    },
+    {
+      "id": "2_apex_horizon",
+      "title": "Apex Horizon",
+      "file": "assets/audio/music/2_apex_horizon.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_apex_turn_velocity",
+      "title": "Apex Turn Velocity",
+      "file": "assets/audio/music/2_apex_turn_velocity.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_beyond_the_hairpin",
+      "title": "Beyond the Hairpin",
+      "file": "assets/audio/music/2_beyond_the_hairpin.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_beyond_the_redline",
+      "title": "Beyond the Redline",
+      "file": "assets/audio/music/2_beyond_the_redline.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_bound_by_the_spell",
+      "title": "Bound by the Spell",
+      "file": "assets/audio/music/2_bound_by_the_spell.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_everything_is_mine",
+      "title": "Everything is Mine",
+      "file": "assets/audio/music/2_everything_is_mine.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_into_the_wide",
+      "title": "Into the Wide",
+      "file": "assets/audio/music/2_into_the_wide.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_midnight_perimeter",
+      "title": "Midnight Perimeter",
+      "file": "assets/audio/music/2_midnight_perimeter.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_midnight_torque",
+      "title": "Midnight Torque",
+      "file": "assets/audio/music/2_midnight_torque.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_overclocked_hearts",
+      "title": "Overclocked Hearts",
+      "file": "assets/audio/music/2_overclocked_hearts.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_the_final_act",
+      "title": "The Final Act",
+      "file": "assets/audio/music/2_the_final_act.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
+    },
+    {
+      "id": "2_waking_from_the_hall",
+      "title": "Waking from the Hall",
+      "file": "assets/audio/music/2_waking_from_the_hall.mp3",
+      "category": 2,
+      "role": "soundtrack",
+      "volume": 0.50
     }
   ]
 }

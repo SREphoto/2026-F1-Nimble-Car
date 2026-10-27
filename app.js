@@ -456,6 +456,7 @@ function openDesignModal() {
   if (designModal) {
     designModal.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    window.f1Music?.playContext?.('credits');
   }
 }
 
@@ -463,6 +464,7 @@ function closeDesignModal() {
   if (designModal) {
     designModal.setAttribute('hidden', '');
     document.body.style.overflow = '';
+    window.f1Music?.returnToGeneral?.();
   }
 }
 

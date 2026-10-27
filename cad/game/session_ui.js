@@ -90,6 +90,7 @@ export async function initSessions({ trackMode, tyreStates }) {
 
   // ---------------------------------------------------------------- session control
   function startSession(key) {
+    wasFinished = false;
     if (!key) { eng.stop(); toGarage(); render(); return; }
     eng.start(key);
     player.laps = []; player.wear = 0; toGarage(); applyTyres(); render();
@@ -106,6 +107,7 @@ export async function initSessions({ trackMode, tyreStates }) {
     trackMode.applyCircuit(true); trackMode.parkOnGrid(); trackMode.setDriving(true);
     player.run = 'out'; player.box = false; player.lapSeen = car().lap; player.offT = 0;
     S.playerOnLapSince = null;
+    window.f1Music?.playContext?.('formation_lap');
   }
 
   // ---------------------------------------------------------------- watch Drive mode for completed laps
@@ -126,6 +128,7 @@ export async function initSessions({ trackMode, tyreStates }) {
       if (type === 'in') { toGarage(); }
       else {
         player.run = S.elapsed >= eng.segDur() ? 'in' : 'flying';   // after the flag: one more lap, then in
+        if (player.run === 'flying') window.f1Music?.returnToGeneral?.();
         player.lapStartAt = S.elapsed;
         S.playerOnLapSince = player.run === 'flying' ? S.elapsed : null;
       }
@@ -187,10 +190,23 @@ export async function initSessions({ trackMode, tyreStates }) {
     }
   });
 
+  let wasFinished = false;
   function step(dt) {
-    if (!eng.state) return;
+    if (!eng.state) { wasFinished = false; return; }
     watchCar(dt);
-    eng.tick(dt * ui.speed);
+    const ev = eng.tick(dt * ui.speed);
+    if (eng.state.finished && !wasFinished) {
+      wasFinished = true;
+      const board = eng.leaderboard();
+      const isWinner = board[0]?.entry?.player || board[0]?.id === 'player';
+      if (isWinner) {
+        window.f1Music?.playContext?.('winners_circle');
+      } else if (eng.state.type === 'qualifying') {
+        window.f1Music?.playContext?.('qualification_results');
+      }
+    } else if (!eng.state.finished) {
+      wasFinished = false;
+    }
   }
   let last = performance.now(), acc = 0;
   (function loop(now) {
