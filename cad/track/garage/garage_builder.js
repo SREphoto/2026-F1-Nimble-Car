@@ -21,6 +21,9 @@ import { GARAGE_LAYOUT, REGULATIONS } from './garage_data.js';
 import { GARAGE_TEAM_COLORS } from './garage_team_colors.js';
 import { createDriverHelmet, HELMET_SPEC } from '../../driver_helmet.js';
 import { loadHelmetModels, buildHelmetModel } from '../../helmet_models.js';
+import { createGarageScreenTextures, redrawScreen } from './garage_screens.js';
+import { buildHangingTools, createInteractiveToolChest, buildFloorCableRamps } from './garage_tools.js';
+import { buildPitPerch } from './garage_pit_perch.js';
 
 export const REFLECT_LAYER = 5;   // objects seen in the floor mirror (garage, car, lights)
 export const SHELL_LAYER = 6;     // room shell and pit building: the only casters for the outside sunlight shadow
@@ -205,6 +208,8 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   }, { aniso: 16 });
 
   // ---------------------------------------------------------------- materials (shared)
+  const screenTextures = createGarageScreenTextures(T());
+  g.userData.screenTextures = screenTextures;
   const std = (o) => new THREE.MeshStandardMaterial(o);
   const M = {
     floor: new THREE.MeshPhysicalMaterial({ map: floorTex, roughness: F.roughness, metalness: 0.0, clearcoat: F.clearcoat, clearcoatRoughness: F.clearcoatRoughness, envMapIntensity: 0.45, transparent: high, opacity: high ? 1 - F.reflect : 1 }),
@@ -235,8 +240,8 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     red: std({ color: 0xc8161d, roughness: 0.35, metalness: 0.25 }),
     bottle: std({ color: 0x18191c, roughness: 0.3, metalness: 0.6 }),
     gauge: std({ map: gaugeTex, roughness: 0.3 }),
-    screen: std({ map: telemTex, emissive: 0xffffff, emissiveMap: telemTex, emissiveIntensity: 0.9, roughness: 0.25 }),
-    timing: std({ map: timingTex, emissive: 0xffffff, emissiveMap: timingTex, emissiveIntensity: 0.9, roughness: 0.25 }),
+    screen: std({ map: screenTextures.telemetry, emissive: 0xffffff, emissiveMap: screenTextures.telemetry, emissiveIntensity: 0.95, roughness: 0.25 }),
+    timing: std({ map: screenTextures.timingTower, emissive: 0xffffff, emissiveMap: screenTextures.timingTower, emissiveIntensity: 0.95, roughness: 0.25 }),
     seat: std({ color: 0x18181b, roughness: 0.5 }),
     cloth: std({ color: 0x232327, roughness: 0.92, side: THREE.DoubleSide }),
     visor: std({ color: 0x0c0f14, roughness: 0.05, metalness: 0.9 }),
@@ -567,10 +572,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     for (const x of [C.x0 + 3, C.x1 - 3]) for (const z of [-CHW + 1, CHW - 1]) put(M.galv, rod([x, top, z], [x, L.truss.y - L.truss.size / 2, Math.sign(z) * 13], 0.08, 4));
     // number boards at the ends of the canopy (team name on the atlas)
     quad(M.signs, C.x0 - t - 0.05, C.y + C.depth * 0.7, 0, 12, 1.2, -1, 0, atlasUV(0)); quad(M.signs, C.x1 + t + 0.05, C.y + C.depth * 0.7, 0, 12, 1.2, 1, 0, atlasUV(0));
-    // coiled air lines hanging from the canopy (wheel guns and jacks)
+    // coiled air lines hanging from the canopy (wheel guns, tyre gauges, and telemetry harness)
     const hoses = [], yel = [];
     [[C.x0 + 4, -CHW + 2], [C.x0 + 4, CHW - 2], [C.x1 - 6, -CHW + 2], [C.x1 - 6, CHW - 2], [CX, -CHW + 1.5], [CX, CHW - 1.5]].forEach(([x, z], k) => (k % 3 === 2 ? yel : hoses).push(coil(x, C.y, 15 + (k % 2) * 3, z, 0.85, 8)));
     put(M.rubber, mergeGeometries(hoses)); put(M.yellowHose, mergeGeometries(yel));
+    // hanging pneumatic wheel guns, tyre pressure gauge, and umbilical connector attached to the cables
+    const hangingTools = buildHangingTools(M, C);
+    g.add(hangingTools);
+    g.userData.hangingTools = hangingTools;
   }
 
   // ---------------------------------------------------------------- engineers' desk with the monitor wall, regulations monitor and printed sheet
@@ -580,23 +589,110 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   for (const s of [-1, 1]) box(M.dark, DK.depth - 1, DK.height, 0.6, dx, DK.height / 2, dz + s * (DK.length / 2 - 0.5));
   const MW = DK.monitorWall, mwX = X1 - 0.9;
   box(M.band, 0.6, MW.rows * (MW.h + 0.9) + 1.4, MW.cols * (MW.w + 0.9) + 1.4, mwX, 17 + (MW.rows - 1) * (MW.h + 0.9) / 2, dz);
-  for (let r = 0; r < MW.rows; r++) for (let c = 0; c < MW.cols; c++) {
-    const cz = dz - (MW.cols - 1) / 2 * (MW.w + 0.9) + c * (MW.w + 0.9), cy = 17 + r * (MW.h + 0.9);
+
+  // 8 High-Fidelity Monitors on the Wall:
+  // Row 1: Standings & Schedule, Weather Radar, Steering Wheel Guide, SREdesigns.com Showcase
+  // Row 0: Acknowledgements & Credits, Telemetry Curves, Circuit GPS Map, Tyre Thermal Matrix
+  const wallScreensConfig = [
+    { r: 1, c: 0, tex: screenTextures.standings, click: 'screen_standings', title: '2026 Racing Stats, Schedule & Standings' },
+    { r: 1, c: 1, tex: screenTextures.weatherRadar, click: 'screen_weather', title: 'Live Doppler Weather Radar & Environmental Controls' },
+    { r: 1, c: 2, tex: screenTextures.steeringWheel, click: 'screen_steering_wheel', title: 'PCU-8D Steering Wheel Tool & Button Guide' },
+    { r: 1, c: 3, tex: screenTextures.sredesigns, click: 'screen_sredesigns', title: 'SREdesigns.com Official Design Showcase' },
+    { r: 0, c: 0, tex: screenTextures.acknowledgements, click: 'screen_acknowledgements', title: 'Project Acknowledgements & Credits' },
+    { r: 0, c: 1, tex: screenTextures.telemetry, click: 'screen_telemetry', title: 'High-Speed Vehicle Telemetry Channels' },
+    { r: 0, c: 2, tex: screenTextures.circuitGps, click: 'screen_circuit_gps', title: 'Circuit Track GPS & Sector Deltas' },
+    { r: 0, c: 3, tex: screenTextures.tyreThermal, click: 'screen_tyre_thermal', title: '4-Corner Tyre Thermal & Wear Matrix' },
+  ];
+
+  const wallScreenMeshes = [];
+  wallScreensConfig.forEach(cfg => {
+    const cz = dz - (MW.cols - 1) / 2 * (MW.w + 0.9) + cfg.c * (MW.w + 0.9);
+    const cy = 17 + cfg.r * (MW.h + 0.9);
     box(M.dark, 0.5, MW.h + 0.45, MW.w + 0.45, mwX - 0.5, cy, cz);
-    quad((r + c) % 3 === 1 ? M.timing : M.screen, mwX - 0.8, cy, cz, MW.w, MW.h, -1, 0);
-  }
+
+    const sMat = std({ map: cfg.tex, emissive: 0xffffff, emissiveMap: cfg.tex, emissiveIntensity: 0.95, roughness: 0.25 });
+    const sMesh = new THREE.Mesh(new THREE.PlaneGeometry(MW.w, MW.h), sMat);
+    sMesh.rotation.y = -Math.PI / 2;
+    sMesh.position.set(mwX - 0.8, cy, cz);
+    sMesh.name = `Garage_MonitorWall_${cfg.r}_${cfg.c}`;
+    sMesh.userData.click = cfg.click;
+    sMesh.userData.title = cfg.title;
+    g.add(sMesh);
+    wallScreenMeshes.push(sMesh);
+  });
+
   const team = () => T().name;
   const regMon = canvasTex(1024, 768, (x, w, h) => drawRegulations(x, w, h, { dark: true, team: team() }), { aniso: 16 });
   const regSheet = canvasTex(768, 1024, (x, w, h) => drawRegulations(x, w, h, { dark: false, team: team() }), { aniso: 16 });
   const mon = new THREE.Mesh(new THREE.PlaneGeometry(8, 6), std({ map: regMon, emissive: 0xffffff, emissiveMap: regMon, emissiveIntensity: 0.9 }));
   mon.rotation.y = -Math.PI / 2; mon.position.set(dx + 1.5, DK.height + 4.6, dz - 6); mon.name = 'Garage_Desk_Monitor'; mon.userData.click = 'regulations'; g.add(mon);
   box(M.dark, 0.5, 6.6, 8.6, dx + 1.85, DK.height + 4.6, dz - 6); box(M.dark, 0.5, 3, 0.5, dx + 2, DK.height + 1.5, dz - 6); box(M.dark, 2.5, 0.3, 2.5, dx + 2, DK.height + 0.4, dz - 6);
-  for (const oz of [3, 11]) { box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + oz); quad(M.screen, dx + 1.55, DK.height + 3.6, dz + oz, 6, 4, -1, 0); box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + oz); }
+
+  // Secondary desk monitors:
+  // At oz = 3: Steering Wheel Tool Monitor
+  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 3);
+  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 3);
+  const deskWheelMat = std({ map: screenTextures.steeringWheel, emissive: 0xffffff, emissiveMap: screenTextures.steeringWheel, emissiveIntensity: 0.95, roughness: 0.25 });
+  const deskWheelMon = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), deskWheelMat);
+  deskWheelMon.rotation.y = -Math.PI / 2;
+  deskWheelMon.position.set(dx + 1.55, DK.height + 3.6, dz + 3);
+  deskWheelMon.name = 'Garage_Desk_Wheel_Monitor';
+  deskWheelMon.userData.click = 'screen_steering_wheel';
+  deskWheelMon.userData.title = 'PCU-8D Steering Wheel Tool';
+  g.add(deskWheelMon);
+
+  // At oz = 11: SREdesigns Showcase Monitor
+  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 11);
+  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 11);
+  const deskSreMat = std({ map: screenTextures.sredesigns, emissive: 0xffffff, emissiveMap: screenTextures.sredesigns, emissiveIntensity: 0.95, roughness: 0.25 });
+  const deskSreMon = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), deskSreMat);
+  deskSreMon.rotation.y = -Math.PI / 2;
+  deskSreMon.position.set(dx + 1.55, DK.height + 3.6, dz + 11);
+  deskSreMon.name = 'Garage_Desk_SRE_Monitor';
+  deskSreMon.userData.click = 'screen_sredesigns';
+  deskSreMon.userData.title = 'SREdesigns.com Portfolio & Lab';
+  g.add(deskSreMon);
+
+  // Printed Regulations sheet
   const sheet = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.97), std({ map: regSheet, roughness: 0.9 }));
   sheet.rotation.set(-Math.PI / 2, 0, Math.PI / 2 + 0.2); sheet.position.set(dx - 1, DK.height + 0.27, dz + 2); sheet.name = 'Garage_Regs_Sheet'; sheet.userData.click = 'regulations'; g.add(sheet);
-  box(M.dark, 2.4, 0.15, 3.4, dx - 1.2, DK.height + 0.33, dz + 7.2); quad(M.screen, dx + 0.05, DK.height + 1.5, dz + 7.2, 3.4, 2.2, -1, 0);
-  g.userData.clickables = [mon, sheet];
+
+  // Workstation laptop on desk
+  box(M.dark, 2.4, 0.15, 3.4, dx - 1.2, DK.height + 0.33, dz + 7.2);
+  const laptopMat = std({ map: screenTextures.laptop, emissive: 0xffffff, emissiveMap: screenTextures.laptop, emissiveIntensity: 0.95, roughness: 0.25 });
+  const laptopScreen = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), laptopMat);
+  laptopScreen.rotation.y = -Math.PI / 2;
+  laptopScreen.position.set(dx + 0.05, DK.height + 1.5, dz + 7.2);
+  laptopScreen.name = 'Garage_Desk_Laptop_Screen';
+  laptopScreen.userData.click = 'screen_acknowledgements';
+  laptopScreen.userData.title = 'Project Acknowledgements & Diagnostics';
+  g.add(laptopScreen);
+
+  // Interactive Roll-Cab Tool Chest with 5 sliding drawers
+  const toolChest = createInteractiveToolChest(M, { teamColor: T().panel });
+  toolChest.position.set(30, 0, 28);
+  toolChest.rotation.y = Math.PI;
+  g.add(toolChest);
+  g.userData.toolChest = toolChest;
+
+  // Mobile Pit Perch / Pit Wall Stand
+  const pitPerch = buildPitPerch(M, L, teamId, GARAGE_TEAM_COLORS);
+  g.add(pitPerch);
+  g.userData.pitPerch = pitPerch;
+
+  // Floor safety cable bridges
+  const cableRamps = buildFloorCableRamps(M, L);
+  g.add(cableRamps);
+
+  const clickables = [mon, sheet, deskWheelMon, deskSreMon, laptopScreen, ...wallScreenMeshes, pitPerch];
+  hangingTools.traverse(o => { if (o.userData?.click) clickables.push(o); });
+  toolChest.userData.drawers.forEach(dr => clickables.push(dr));
+  toolChest.traverse(o => { if (o.userData?.click && !clickables.includes(o)) clickables.push(o); });
+
+  g.userData.clickables = clickables;
   g.userData.deskView = { target: [dx + 1, DK.height + 3, dz - 2], pos: [dx - 22, DK.height + 9, dz - 2] };
+  g.userData.pitPerchView = { target: [-174, 9.8, -1.0], pos: [-162, 11.5, 0] };
+  g.userData.toolChestView = { target: [30, 7.5, 28], pos: [30, 14, 18] };
 
   // ---------------------------------------------------------------- car stands and jacks (shown when the wheels are off, placed from the car)
   const stands = new THREE.Group(); stands.name = 'Garage_Car_Stands'; stands.visible = false;
@@ -674,6 +770,20 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     teamId = GARAGE_TEAM_COLORS[id] ? id : 'red-bull';
     M.team.color.set(T().panel); M.teamMatte.color.set(T().panel); M.accent.color.set(T().accent);
     for (const t of [regMon, regSheet, atlasTex, blanketTex]) redraw(t);
+    // Redraw the high-fidelity garage screen textures with the new team branding
+    redrawScreen(screenTextures.steeringWheel, T());
+    redrawScreen(screenTextures.standings, T());
+    redrawScreen(screenTextures.sredesigns, T());
+    redrawScreen(screenTextures.acknowledgements, T());
+    redrawScreen(screenTextures.timingTower, T());
+    redrawScreen(screenTextures.laptop, T());
+    if (g.userData.pitPerch) {
+      g.userData.pitPerch.removeFromParent();
+      const newPerch = buildPitPerch(M, L, teamId, GARAGE_TEAM_COLORS);
+      g.add(newPerch);
+      g.userData.pitPerch = newPerch;
+      g.userData.clickables.push(newPerch);
+    }
     rebuildShelfHelmets();
   };
   g.userData.setReflections = (on) => { if (mirror) { mirror.visible = on; M.floor.opacity = on ? 1 - F.reflect : 1; M.floor.transparent = on; M.floor.needsUpdate = true; } };
