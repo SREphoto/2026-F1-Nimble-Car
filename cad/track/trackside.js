@@ -489,15 +489,43 @@ export function makeTyreTopTexture() {
 }
 
 // ------------------------------------------------------------------ 5. fencing
-/** catch fence: diamond wire mesh with alpha. Use with alphaToCoverage so it still reads as mesh far away */
+/** catch fence: FIA Grade 1 high-tensile Geobrugg steel mesh (88% open transparency) */
 export function makeFenceTexture() {
-  const S = 128, c = canvas(S, S), x = c.getContext('2d');
+  const S = 256, c = canvas(S, S), x = c.getContext('2d');
   x.clearRect(0, 0, S, S);
-  x.strokeStyle = 'rgba(176,182,188,1)'; x.lineWidth = 3.2; x.lineCap = 'round';
-  const m = 4;                                             // 4 x 4 diamonds per repeat
+  
+  // Woven high-tensile diamond steel wire mesh
+  x.strokeStyle = 'rgba(200, 208, 218, 0.92)';
+  x.lineWidth = 1.4;
+  x.lineCap = 'round';
+  const m = 8; // 8x8 fine diamonds per repeat for high see-through visibility
   x.beginPath();
-  for (let k = -m; k <= 2 * m; k++) { const o = (k * S) / m; x.moveTo(o, 0); x.lineTo(o + S, S); x.moveTo(o, 0); x.lineTo(o - S, S); }
+  for (let k = -m; k <= 2 * m; k++) {
+    const o = (k * S) / m;
+    x.moveTo(o, 0); x.lineTo(o + S, S);
+    x.moveTo(o, 0); x.lineTo(o - S, S);
+  }
   x.stroke();
+
+  // Subtle metallic glint on diamond knuckled joints
+  x.fillStyle = 'rgba(240, 246, 255, 0.85)';
+  for (let r = 0; r <= m; r++) {
+    for (let col = 0; col <= m; col++) {
+      const cx = (col * S) / m + (r % 2 === 1 ? S / (2 * m) : 0);
+      const cy = (r * S) / m;
+      x.fillRect(cx - 0.7, cy - 0.7, 1.4, 1.4);
+    }
+  }
+
+  // Tensioned horizontal wire ropes
+  x.strokeStyle = 'rgba(170, 180, 192, 0.95)';
+  x.lineWidth = 2.0;
+  x.beginPath();
+  x.moveTo(0, S * 0.25); x.lineTo(S, S * 0.25);
+  x.moveTo(0, S * 0.50); x.lineTo(S, S * 0.50);
+  x.moveTo(0, S * 0.75); x.lineTo(S, S * 0.75);
+  x.stroke();
+
   return tex(c, { aniso: 16 });
 }
 

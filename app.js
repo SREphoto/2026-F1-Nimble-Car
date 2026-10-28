@@ -1112,7 +1112,7 @@ function animate() {
 let trackMode = null;
 let tyreStates = null;
 try {
-  trackMode = initTrackMode({ scene, camera, controls, renderer, carModel, state, sunLight, ambientLight, legacyEnv: trackEnv });
+  trackMode = initTrackMode({ scene, camera, controls, renderer, carModel, state, sunLight, ambientLight, legacyEnv: trackEnv, frontFillLight, bounceLight });
 } catch (err) {
   console.error('Red Bull Ring circuit failed to build:', err);
 }

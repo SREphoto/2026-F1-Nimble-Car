@@ -24,6 +24,7 @@ import { buildBullSculpture } from './rbr_bull.js';
 import { createPitStopStation } from '../pit_stop_crew.js';
 import { RED_BULL_RING_STYLE as STYLE } from './styles/red_bull_ring_style.js';
 import { makeAsphaltTextures, makeRubberTexture, makeSkidMarkTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts, makePitConcreteTexture } from './trackside.js';
+import { cleanTrackOffsets, isFenceZone, surfaceY } from './track_layout.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -350,6 +351,10 @@ export function createRedBullRing() {
   const sponsorTex = makeSponsorTexture(BS), concreteTex = makeConcreteTexture(), fenceTex = makeFenceTexture();
   const atlas = makeSignAtlas(STYLE.barriers.sponsors.map(sp => ({ key: 'SP_' + sp.name.toUpperCase().replace(/\W/g, ''), text: sp.name, bg: sp.bg, fg: sp.fg, accent: sp.accent })));
   const track = new TrackPath(D);
+  const cleanOffsets = cleanTrackOffsets(D, track);
+  const barR = cleanOffsets.barR, barL = cleanOffsets.barL;
+  const runRClean = cleanOffsets.runR, runLClean = cleanOffsets.runL;
+  const gravRClean = cleanOffsets.gravR, gravLClean = cleanOffsets.gravL;
   const terrain = new Terrain({ ...D.terrain, h_: D.terrain.h });
   const outerT = new Terrain({ ...D.outer, h_: D.outer.h });
   const pit = new Path(D.pit.x, D.pit.z, D.pit.y, false);
@@ -593,17 +598,17 @@ export function createRedBullRing() {
   add(mergeGeometries(blackGeo.map(g => { g.deleteAttribute('uv'); return g; })), M.kerbBlack, 'RBR_Kerbs_Black');
   // asphalt run-off out to the OSM grass edge (starts at the asphalt edge, under the kerbs)
   const kR = i => wr(i) + KERB_W, kL = i => -wl(i) - KERB_W;
-  const runR = i => kR(i) + D.runR[i], runL = i => kL(i) - D.runL[i];
+  const runR = i => kR(i) + runRClean[i], runL = i => kL(i) - runLClean[i];
   // gravel starts right behind the kerb (FIA 2024: T4, T6, and 2.5 m strips at the T9 / T10 exits)
-  const gravR = i => kR(i) + D.gravR[i], gravL = i => kL(i) - D.gravL[i];
+  const gravR = i => kR(i) + gravRClean[i], gravL = i => kL(i) - gravLClean[i];
   const outR = i => Math.max(runR(i), gravR(i)), outL = i => Math.min(runL(i), gravL(i));
   add(mergeGeometries([
-    strip(track, wr, runR, c(-0.012), c(-0.012), { mask: i => D.runR[i] > 0.05, vLen: 12, uLen: 12 }),
-    strip(track, runL, i => -wl(i), c(-0.012), c(-0.012), { mask: i => D.runL[i] > 0.05, vLen: 12, uLen: 12 }),
+    strip(track, wr, runR, c(-0.012), c(-0.012), { mask: i => runRClean[i] > 0.05, vLen: 12, uLen: 12 }),
+    strip(track, runL, i => -wl(i), c(-0.012), c(-0.012), { mask: i => runLClean[i] > 0.05, vLen: 12, uLen: 12 }),
   ]), M.runoff, 'RBR_Runoff_Asphalt');
   add(mergeGeometries([
-    strip(track, kR, gravR, c(-0.004), c(-0.004), { mask: i => D.gravR[i] > 0.4, vLen: 8, uLen: 8 }),
-    strip(track, gravL, kL, c(-0.004), c(-0.004), { mask: i => D.gravL[i] > 0.4, vLen: 8, uLen: 8 }),
+    strip(track, kR, gravR, c(-0.004), c(-0.004), { mask: i => gravRClean[i] > 0.4, vLen: 8, uLen: 8 }),
+    strip(track, gravL, kL, c(-0.004), c(-0.004), { mask: i => gravLClean[i] > 0.4, vLen: 8, uLen: 8 }),
   ]), M.gravel, 'RBR_Gravel_Traps');
   // ---------------------------------------------------------------- 2. pit lane setup & verge masking
   const PW = D.pit.w;
@@ -619,17 +624,35 @@ export function createRedBullRing() {
   }
   const bSide = pitSide[Math.floor(pit.n / 2)] * -1; // garages on the side away from the track
 
-  // grass verge from run-off/gravel out to 6 m beyond the barrier (blends into terrain)
+  // grass verge from run-off/gravel out to 6 m beyond the barrier (blends seamlessly into terrain)
   // Mask out the right verge anywhere it would intersect the pit lane, pit apron, or pit entry/exit
   const grassMaskR = i => {
     const rx = track.rx(i), rz = track.rz(i);
-    const midLat = (outR(i) + D.barR[i] + 6) / 2;
+    const midLat = (outR(i) + barR[i] + 6) / 2;
     const x = track.x[i] + rx * midLat, z = track.z[i] + rz * midLat;
     return !nearPit(x, z, PW / 2 + 5.5);
   };
+  // Seamless edge matching: outer edge queries terrain.height(x, z) directly so there is zero height cliff
+  const vergeOuterYR = i => {
+    const lat = barR[i] + 6;
+    const x = track.x[i] + track.rx(i) * lat, z = track.z[i] + track.rz(i) * lat;
+    const gh = terrain.height(x, z);
+    const maxTrackW = Math.max(track.wr[i] + KERB_W + 1.2, 10);
+    const bankVal = Math.min(lat, maxTrackW) * (track.bank ? track.bank[i] : 0);
+    return gh - (track.y[i] + bankVal);
+  };
+  const vergeOuterYL = i => {
+    const lat = -barL[i] - 6;
+    const x = track.x[i] + track.rx(i) * lat, z = track.z[i] + track.rz(i) * lat;
+    const gh = terrain.height(x, z);
+    const maxTrackW = Math.max(track.wl[i] + KERB_W + 1.2, 10);
+    const bankVal = Math.max(lat, -maxTrackW) * (track.bank ? track.bank[i] : 0);
+    return gh - (track.y[i] + bankVal);
+  };
+
   add(mergeGeometries([
-    strip(track, outR, i => D.barR[i] + 6, c(-0.05), c(-0.2), { mask: grassMaskR, vLen: 10, uLen: 10 }),
-    strip(track, i => -D.barL[i] - 6, outL, c(-0.2), c(-0.05), { vLen: 10, uLen: 10 }),
+    strip(track, outR, i => barR[i] + 6, c(-0.04), vergeOuterYR, { mask: grassMaskR, vLen: 10, uLen: 10 }),
+    strip(track, i => -barL[i] - 6, outL, vergeOuterYL, c(-0.04), { vLen: 10, uLen: 10 }),
   ]), M.grass, 'RBR_Grass_Verge');
 
   add(mergeGeometries([
@@ -784,11 +807,11 @@ export function createRedBullRing() {
   root.userData.pitStation = pitStation;
 
   // ---------------------------------------------------------------- 4. barriers: concrete wall + debris fence + tyre walls
-  const barRi = i => D.barR[i], barLi = i => -D.barL[i];
+  const barRi = i => barR[i], barLi = i => -barL[i];
   const wallMaskR = new Uint8Array(n), wallMaskL = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    const xr = track.x[i] + track.rx(i) * D.barR[i], zr = track.z[i] + track.rz(i) * D.barR[i];
-    const xl = track.x[i] - track.rx(i) * D.barL[i], zl = track.z[i] - track.rz(i) * D.barL[i];
+    const xr = track.x[i] + track.rx(i) * barR[i], zr = track.z[i] + track.rz(i) * barR[i];
+    const xl = track.x[i] - track.rx(i) * barL[i], zl = track.z[i] - track.rz(i) * barL[i];
     wallMaskR[i] = nearPit(xr, zr, PW / 2 - 0.3) ? 0 : 1;
     wallMaskL[i] = nearPit(xl, zl, PW / 2 - 0.3) ? 0 : 1;
   }
@@ -845,32 +868,48 @@ export function createRedBullRing() {
       inst.name = 'RBR_TecPro'; inst.castShadow = true; inst.receiveShadow = true; inst.computeBoundingSphere(); root.add(inst);
     }
   }
-  // debris catch fence on the walls: mesh panel, angled top section leaning toward the track, cables, posts
+  // debris catch fence on the walls: selective placement (only in spectator / grandstand zones)
   {
     const ovx = FS.overhang * Math.cos(FS.overhangAngle), ovy = FS.overhang * Math.sin(FS.overhangAngle);
     const fR = i => barRi(i) + WT / 2, fL = i => barLi(i) - WT / 2, top = WH + FH, rep = 0.8;
+    // Selective debris catch fence (spectator zones) vs. low Armco guardrails (open mountain vistas)
+    const fenceMR = i => mR(i) && isFenceZone(track.spOf(i));
+    const fenceML = i => mL(i) && isFenceZone(track.spOf(i));
+    const openMR = i => mR(i) && !isFenceZone(track.spOf(i));
+    const openML = i => mL(i) && !isFenceZone(track.spOf(i));
+
+    // High debris catch mesh in spectator zones
     add(mergeGeometries([
-      wallStrip(track, fR, c(WH), c(top), { mask: mR, vLen: rep, uFixed: [0, FH / rep] }),
-      wallStrip(track, fL, c(top), c(WH), { mask: mL, vLen: rep, uFixed: [FH / rep, 0] }),
-      strip(track, i => fR(i) - ovx, fR, c(top + ovy), c(top), { mask: mR, vLen: rep, uFixed: [FS.overhang / rep, 0] }),
-      strip(track, fL, i => fL(i) + ovx, c(top), c(top + ovy), { mask: mL, vLen: rep, uFixed: [0, FS.overhang / rep] }),
+      wallStrip(track, fR, c(WH), c(top), { mask: fenceMR, vLen: rep, uFixed: [0, FH / rep] }),
+      wallStrip(track, fL, c(top), c(WH), { mask: fenceML, vLen: rep, uFixed: [FH / rep, 0] }),
+      strip(track, i => fR(i) - ovx, fR, c(top + ovy), c(top), { mask: fenceMR, vLen: rep, uFixed: [FS.overhang / rep, 0] }),
+      strip(track, fL, i => fL(i) + ovx, c(top), c(top + ovy), { mask: fenceML, vLen: rep, uFixed: [0, FS.overhang / rep] }),
     ]), M.fence, 'RBR_Debris_Fence', { receive: false });
+
+    // Tension cables in spectator zones
     const cab = [];
     for (const h of FS.cables) {
-      cab.push(wallStrip(track, fR, c(WH + h), c(WH + h + 0.025), { mask: mR }), wallStrip(track, fL, c(WH + h + 0.025), c(WH + h), { mask: mL }));
+      cab.push(wallStrip(track, fR, c(WH + h), c(WH + h + 0.025), { mask: fenceMR }), wallStrip(track, fL, c(WH + h + 0.025), c(WH + h), { mask: fenceML }));
     }
-    cab.push(wallStrip(track, i => fR(i) - ovx, c(top + ovy - 0.03), c(top + ovy), { mask: mR }), wallStrip(track, i => fL(i) + ovx, c(top + ovy), c(top + ovy - 0.03), { mask: mL }));
+    cab.push(wallStrip(track, i => fR(i) - ovx, c(top + ovy - 0.03), c(top + ovy), { mask: fenceMR }), wallStrip(track, i => fL(i) + ovx, c(top + ovy), c(top + ovy - 0.03), { mask: fenceML }));
     add(mergeGeometries(cab.map(g => { g.deleteAttribute('uv'); return g; })), M.cable, 'RBR_Fence_Cables', { receive: false });
-    // posts every postSpacing metres, with the bent top arm
-    const postGeo = new THREE.BoxGeometry(0.1 * DM, (FH + 0.3) * DM, 0.1 * DM); postGeo.translate(0, (FH + 0.3) / 2 * DM, 0);
-    const armGeo = new THREE.BoxGeometry(0.08 * DM, FS.overhang * DM, 0.08 * DM); armGeo.translate(0, FS.overhang / 2 * DM, 0);
+
+    // In open mountain / meadow zones: low FIA galvanized steel barrier cap rail
+    add(mergeGeometries([
+      wallStrip(track, i => barRi(i) + WT * 0.5, c(WH), c(WH + 0.10), { mask: openMR }),
+      wallStrip(track, i => barLi(i) - WT * 0.5, c(WH), c(WH + 0.10), { mask: openML }),
+    ].map(g => { g.deleteAttribute('uv'); return g; })), M.steel, 'RBR_Open_Guardrail_Caps', { receive: false });
+
+    // Slender 48mm round tubular steel fence posts & angled arms in spectator zones
+    const postGeo = new THREE.CylinderGeometry(0.048 * DM, 0.048 * DM, (FH + 0.3) * DM, 8); postGeo.translate(0, (FH + 0.3) / 2 * DM, 0);
+    const armGeo = new THREE.CylinderGeometry(0.038 * DM, 0.038 * DM, FS.overhang * DM, 8); armGeo.translate(0, FS.overhang / 2 * DM, 0);
     const mats = [], arms = [];
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
     let acc = 0;
     for (let i = 0; i < n; i++) {
       acc += track.ds; if (acc < FS.postSpacing) continue; acc = 0;
       for (const side of [1, -1]) {
-        if (!(side > 0 ? mR(i) : mL(i))) continue;
+        if (!(side > 0 ? fenceMR(i) : fenceML(i))) continue;
         const lat = side > 0 ? fR(i) : fL(i);
         const x = (track.x[i] + track.rx(i) * lat) * DM, z = (track.z[i] + track.rz(i) * lat) * DM;
         m4.makeTranslation(x, (track.y[i] + WH - 0.3) * DM, z); mats.push(m4.clone());
@@ -900,16 +939,18 @@ export function createRedBullRing() {
       let h = T.h_[k];
 
       if (isInner) {
-        // Prevent terrain triangles from penetrating through banked track ribbons, runoffs or pit apron
+        // Prevent terrain triangles from penetrating through banked track ribbons or pit apron
         const nw = track.nearestWithin(x, z);
-        if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 16) {
+        if (nw && nw.d < Math.max(barR[nw.i], barL[nw.i]) + 16) {
           const L = track.locate(x, z, nw.i);
-          const corridor = Math.max(L.barR, L.barL) + 6.0;
-          if (Math.abs(L.lat) < corridor) {
-            h = Math.min(h, L.y - 0.75);
-          }
           if (Math.abs(L.lat) < Math.max(L.wr, L.wl) + 1.2) {
             isUnderTrack[k] = 1;
+          }
+        }
+        if (nearPit(x, z, PW / 2 + 10)) {
+          isUnderTrack[k] = 1;
+        }
+      }
           }
         }
         if (nearPit(x, z, PW / 2 + 10)) {
@@ -1045,6 +1086,19 @@ export function createRedBullRing() {
   }
 
   // ---------------------------------------------------------------- 7. grandstands (LOD: stepped crowd tiers / plain block)
+  // Shared 3D stadium bucket seat geometry
+  const seatBaseGeo = new THREE.BoxGeometry(0.44 * DM, 0.08 * DM, 0.40 * DM).translate(0, 0.04 * DM, 0);
+  const seatBackGeo = new THREE.BoxGeometry(0.44 * DM, 0.38 * DM, 0.06 * DM).translate(0, 0.24 * DM, -0.17 * DM);
+  const seatMeshGeo = mergeGeometries([seatBaseGeo, seatBackGeo]);
+
+  // Shared 3D spectator low-poly articulated figure (torso + head + cap visor + arms)
+  const specTorso = new THREE.BoxGeometry(0.36 * DM, 0.44 * DM, 0.22 * DM).translate(0, 0.22 * DM, 0);
+  const specHead = new THREE.BoxGeometry(0.18 * DM, 0.20 * DM, 0.18 * DM).translate(0, 0.54 * DM, 0);
+  const specCap = new THREE.BoxGeometry(0.20 * DM, 0.04 * DM, 0.26 * DM).translate(0, 0.62 * DM, 0.03 * DM);
+  const specLimbL = new THREE.BoxGeometry(0.10 * DM, 0.36 * DM, 0.10 * DM).translate(-0.22 * DM, 0.36 * DM, 0);
+  const specLimbR = new THREE.BoxGeometry(0.10 * DM, 0.36 * DM, 0.10 * DM).translate(0.22 * DM, 0.36 * DM, 0);
+  const spectatorGeo = mergeGeometries([specTorso, specHead, specCap, specLimbL, specLimbR]);
+
   for (const gs of D.grandstands) {
     const face = new THREE.Vector2(gs.face[0], gs.face[1]);
     const ax = new THREE.Vector2(-face.y, face.x);
@@ -1088,6 +1142,74 @@ export function createRedBullRing() {
     const pMidFront = P(0, 0, base + 1.1);
     rails.push(boxAt(len, 0.06, 0.06, pMidFront[0], pMidFront[1], pMidFront[2], ax.x, ax.y));
 
+    // 3D Instanced Stadium Seats & 3D Spectator Figures
+    const seatTransforms = [], seatColors = [];
+    const specTransforms = [], specColors = [];
+    const m4Inst = new THREE.Matrix4(), qSeat = new THREE.Quaternion(), cColor = new THREE.Color();
+    const seatYaw = Math.atan2(face.x, face.y);
+    qSeat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), seatYaw);
+
+    const isOrangeArmy = gs.name.includes('Remus') || gs.name.includes('Steiermark') || gs.name.includes('T3');
+    const isRedBull = gs.name.includes('Start/Ziel') || gs.name.includes('Haupt') || gs.name.includes('Red Bull');
+    const rCrowd = rng(101 + tiers);
+
+    for (let j = 0; j < tiers; j++) {
+      const dj = (j + 0.5) * run;
+      const hj = base + (j + 1) * rise;
+      for (let a = -len / 2 + 1.2; a <= len / 2 - 1.2; a += 0.56) {
+        // Skip aisles for yellow stairs every ~16m
+        if (Math.abs(a % 16) < 0.65) continue;
+
+        const spPos = P(a, dj, hj);
+        m4Inst.compose(
+          new THREE.Vector3(spPos[0] * DM, spPos[1] * DM, spPos[2] * DM),
+          qSeat,
+          new THREE.Vector3(1, 1, 1)
+        );
+        seatTransforms.push(m4Inst.clone());
+
+        // Seat color: Austrian GP Red, Red Bull Navy, or VIP Silver
+        if (isRedBull) {
+          cColor.setHex(j < 4 ? 0xd0d4dc : 0x0c1938);
+        } else if (isOrangeArmy) {
+          cColor.setHex(j % 2 === 0 ? 0xc8102e : 0x0c1938);
+        } else {
+          cColor.setHex(0xc8102e);
+        }
+        seatColors.push(cColor.clone());
+
+        // 82% Seat Occupancy: 3D Spectator Figure
+        if (rCrowd() < 0.82) {
+          const specPos = P(a, dj + 0.04, hj + 0.08);
+          const isCheering = rCrowd() < 0.22;
+          const specYaw = seatYaw + (rCrowd() - 0.5) * 0.35;
+          const qSpec = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), specYaw);
+
+          m4Inst.compose(
+            new THREE.Vector3(specPos[0] * DM, (specPos[1] + (isCheering ? 0.15 : 0)) * DM, specPos[2] * DM),
+            qSpec,
+            new THREE.Vector3(1, 1, 1)
+          );
+          specTransforms.push(m4Inst.clone());
+
+          // Spectator Fan Shirt & Cap Color
+          if (isOrangeArmy && rCrowd() < 0.88) {
+            cColor.setHex(rCrowd() < 0.5 ? 0xff5500 : 0xff7700); // Dutch Orange Army
+          } else if (isRedBull && rCrowd() < 0.75) {
+            cColor.setHex(rCrowd() < 0.6 ? 0x0c1938 : 0xf2c200); // Red Bull Racing Navy / Yellow
+          } else {
+            const roll = rCrowd();
+            if (roll < 0.30) cColor.setHex(0xd40000); // Ferrari Rosso
+            else if (roll < 0.50) cColor.setHex(0xff5500); // Max Verstappen Orange
+            else if (roll < 0.70) cColor.setHex(0x00a19c); // Mercedes Teal
+            else if (roll < 0.85) cColor.setHex(0xc8102e); // Austrian Red
+            else cColor.setHex(0xffffff); // White
+          }
+          specColors.push(cColor.clone());
+        }
+      }
+    }
+
     const detailed = new THREE.Group();
     const mC = new THREE.Mesh(crowd.geometry(), M.crowd); mC.receiveShadow = true; detailed.add(mC);
     const mSeats = new THREE.Mesh(seats.geometry(), M.seats); mSeats.receiveShadow = true; detailed.add(mSeats);
@@ -1095,6 +1217,29 @@ export function createRedBullRing() {
     const mS = new THREE.Mesh(struct.geometry(), sMat); mS.castShadow = true; detailed.add(mS);
     const mG = new THREE.Mesh(glassBatch.geometry(), M.glass); detailed.add(mG);
     if (rails.length) detailed.add(new THREE.Mesh(merge(rails), M.steel));
+
+    // Add 3D bucket seats
+    if (seatTransforms.length) {
+      const imSeats = new THREE.InstancedMesh(seatMeshGeo, M.seats, seatTransforms.length);
+      seatTransforms.forEach((m, idx) => {
+        imSeats.setMatrixAt(idx, m);
+        imSeats.setColorAt(idx, seatColors[idx]);
+      });
+      imSeats.name = 'Grandstand_3D_Seats_' + gs.name;
+      imSeats.computeBoundingSphere();
+      detailed.add(imSeats);
+    }
+    // Add 3D spectator figures
+    if (specTransforms.length) {
+      const imSpec = new THREE.InstancedMesh(spectatorGeo, M.crowd, specTransforms.length);
+      specTransforms.forEach((m, idx) => {
+        imSpec.setMatrixAt(idx, m);
+        imSpec.setColorAt(idx, specColors[idx]);
+      });
+      imSpec.name = 'Grandstand_3D_Spectators_' + gs.name;
+      imSpec.computeBoundingSphere();
+      detailed.add(imSpec);
+    }
 
     const simple = new THREE.Group();
     const sq = new QuadBatch();
@@ -1320,7 +1465,7 @@ export function createRedBullRing() {
     if (post) posts.push(...frameParts(boxAt, { x, z, y0, w, h, ax: -ax, az: -az, nx, nz, ground: terrainBase(x, z) - 0.05 }));
   };
   const terrainBase = (x, z) => { const L = track.locate(x, z, -1); return Math.abs(L.lat) < Math.max(L.barR, L.barL) + 6 ? L.y : Math.min(L.y, terrain.height(x, z)); };
-  // turn number boards (outside of each corner, behind the barrier)
+  // turn number boards (outside of each corner, clamped safely in front of barrier)
   const turnSp = D.turns.map(i => track.spOf(i));
   root.userData.turns = [];
   D.turns.forEach((ti, k) => {
@@ -1328,37 +1473,52 @@ export function createRedBullRing() {
     const F = track.at(sp - 25);
     const right = track.k[ti] > 0; // right-hander => outside on the left
     const out = right ? -1 : 1;
-    const lat = out > 0 ? F.barR + 2.5 : -(F.barL + 2.5);
-    const x = F.x + F.rx * lat, z = F.z + F.rz * lat;
-    // face the approaching cars, angled towards the track
+    const safeLat = out > 0
+      ? Math.min(F.wr + KERB_W + 1.2, barRi(F.i) - 1.2)
+      : Math.max(-(F.wl + KERB_W + 1.2), -(Math.abs(barLi(F.i)) - 1.2));
+    const x = F.x + F.rx * safeLat, z = F.z + F.rz * safeLat;
     const TB = STYLE.signs.turnBoard;
-    board('T' + (k + 1), x, z, F.y + TB.bottom, TB.width, TB.height, -F.tx - F.rx * out * 0.8, -F.tz - F.rz * out * 0.8);
-    root.userData.turns.push({ n: k + 1, sp, x: F.x, z: F.z, y: F.y, right });
-    // braking distance boards (style data) on the outside of the approach, on their own frames
+    const y0 = surfaceY(track, F.i, safeLat, TB.bottom);
+    board('T' + (k + 1), x, z, y0, TB.width, TB.height, -F.tx - F.rx * out * 0.8, -F.tz - F.rz * out * 0.8);
+    root.userData.turns.push({ n: k + 1, sp, x: F.x, z: F.z, y: y0, right });
+    // braking distance boards (style data) on the outside of the approach, safely grounded
     const BB = STYLE.signs.brakingBoards;
     if (BB.turns.includes(k + 1)) {
       for (const dist of BB.distances) {
         const B = track.at(sp - 45 - dist);
-        const bl = out > 0 ? B.wr + KERB_W + 1.6 : -(B.wl + KERB_W + 1.6);
-        board('B' + dist, B.x + B.rx * bl, B.z + B.rz * bl, B.y + BB.bottom, BB.width, BB.height, -B.tx, -B.tz);
+        const blSafe = out > 0
+          ? Math.min(B.wr + KERB_W + 1.2, barRi(B.i) - 1.2)
+          : Math.max(-(B.wl + KERB_W + 1.2), -(Math.abs(barLi(B.i)) - 1.2));
+        const by0 = surfaceY(track, B.i, blSafe, BB.bottom);
+        board('B' + dist, B.x + B.rx * blSafe, B.z + B.rz * blSafe, by0, BB.width, BB.height, -B.tx, -B.tz);
       }
     }
   });
-  // hoardings on the debris fence along the main straight + key corners (text only)
-  const hoard = ['RBR', ...STYLE.barriers.sponsors.map(sp => 'SP_' + sp.name.toUpperCase().replace(/\W/g, '')), 'SPIELBERG', 'GRANDPRIX', 'SRE'];
-  let hk = 0;
-  const hoardRange = (sp0, sp1, side, stepM = 26) => {
-    for (let sp = sp0; sp < sp1; sp += stepM) {
-      const F = track.at(sp);
-      const iF = F.i;
-      if (side > 0 ? !wallMaskR[iF] : !wallMaskL[iF]) continue;
-      const lat = side > 0 ? F.barR + 0.1 : -(F.barL + 0.1);
-      board(hoard[hk++ % hoard.length], F.x + F.rx * lat, F.z + F.rz * lat, F.y + STYLE.signs.billboard.bottom, STYLE.signs.billboard.width, STYLE.signs.billboard.height, -F.rx * side, -F.rz * side, { post: false });
-    }
+
+  // Curvature-conformal continuous fence & wall banners (zero protrusions into track or fences)
+  const bannerGeos = [];
+  const hoardBanner = (sp0, sp1, side) => {
+    const latFn = i => (side > 0 ? barRi(i) - 0.04 : barLi(i) + 0.04);
+    const maskFn = i => {
+      const sp = track.spOf(i);
+      const inRange = sp1 > sp0 ? (sp >= sp0 && sp <= sp1) : (sp >= sp0 || sp <= sp1);
+      return inRange && (side > 0 ? wallMaskR[i] : wallMaskL[i]);
+    };
+    bannerGeos.push(wallStrip(track, latFn, c(1.15), c(2.15), {
+      mask: maskFn,
+      vLen: side > 0 ? wrapV : -wrapV,
+      uFixed: side > 0 ? [0, 1] : [1, 0]
+    }));
   };
-  hoardRange(-420, 380, -1);
-  hoardRange(-420, 380, 1, 40);
-  for (const sp of turnSp) { hoardRange(sp - 60, sp + 60, -1, 30); hoardRange(sp - 60, sp + 60, 1, 30); }
+  hoardBanner(3800, 380, -1);
+  hoardBanner(3800, 380, 1);
+  for (const sp of turnSp) {
+    hoardBanner((sp - 50 + track.length) % track.length, (sp + 50) % track.length, -1);
+    hoardBanner((sp - 50 + track.length) % track.length, (sp + 50) % track.length, 1);
+  }
+  if (bannerGeos.length) {
+    add(mergeGeometries(bannerGeos), M.sponsor, 'RBR_Fence_Banners');
+  }
   // pit entry / exit boards
   {
     const e = pitAt(15), x = pitAt(pitLen - 15);
@@ -1392,8 +1552,10 @@ export function createRedBullRing() {
   for (const ln of (D.lines || [])) {
     const key = { drsDet: 'DRSDET', drsAct: 'DRSACT', trap: 'TRAP' }[ln.kind] || (ln.kind === 'sector' ? (ln.label.endsWith('1') ? 'S1' : 'S2') : null);
     if (!key) continue;
-    const F = track.at(ln.sp), bl = -(F.wl + KERB_W + 1.5);
-    board(key, F.x + F.rx * bl, F.z + F.rz * bl, F.y + 0.9, 2.4, 0.6, -F.tx, -F.tz);
+    const F = track.at(ln.sp);
+    const blSafe = Math.max(-(F.wl + KERB_W + 1.2), -(Math.abs(barLi(F.i)) - 1.2));
+    const y0 = surfaceY(track, F.i, blSafe, 0.9);
+    board(key, F.x + F.rx * blSafe, F.z + F.rz * blSafe, y0, 2.4, 0.6, -F.tx, -F.tz);
   }
   add(signs.geometry(), M.signs, 'RBR_Signage', { receive: false });
   if (posts.length) add(merge(posts), M.steel, 'RBR_Sign_Structures', { cast: false });
@@ -1413,14 +1575,14 @@ export function createRedBullRing() {
     root.userData.bull = { x: cx, y: gy, z: cz, mesh: g };
   }
 
-  // ---------------------------------------------------------------- 10. trees (multi-species Austrian conifers & alpine beeches)
+  // ---------------------------------------------------------------- 10. trees (natural Austrian alpine forestry generator)
   {
     const rand = rng(77);
     const cells = new Map();
     const CELL = 400;
     const blocked = (x, z) => {
       const nw = track.nearestWithin(x, z);
-      if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 20) return true;
+      if (nw && nw.d < Math.max(barR[nw.i], barL[nw.i]) + 18) return true;
       for (let j = 0; j < pit.n; j += 4) if ((pit.x[j] - x) ** 2 + (pit.z[j] - z) ** 2 < 70 * 70) return true;
       for (const lm of (D.landmarks || [])) if ((x - lm.c[0]) ** 2 + (z - lm.c[1]) ** 2 < 40 * 40) return true;
       for (const gs of D.grandstands) {
@@ -1432,60 +1594,89 @@ export function createRedBullRing() {
     };
     const T = terrain, X0 = T.x0 + 40, X1 = T.x0 + (T.nx - 1) * T.step - 40, Z0 = T.z0 + 40, Z1 = T.z0 + (T.nz - 1) * T.step - 40;
     let placed = 0;
-    for (let tries = 0; tries < 85000 && placed < 9500; tries++) {
-      const x = X0 + rand() * (X1 - X0), z = Z0 + rand() * (Z1 - Z0);
-      const f = forest(x, z);
-      if (f < 0.54 && rand() > 0.04) continue;
-      if (blocked(x, z)) continue;
-      const key = Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
-      if (!cells.has(key)) cells.set(key, []);
-      const species = rand() < 0.72 ? 0 : 1; // 72% Norway Spruce conifer, 28% European Beech
-      cells.get(key).push([x, T.height(x, z), z, 0.8 + rand() * 0.65, rand() * 6.28, species]);
-      placed++;
+
+    // Clustered stand generation: generate natural Austrian forest groves & meadow clearings
+    const groveCount = 380;
+    for (let g = 0; g < groveCount && placed < 9600; g++) {
+      const gx = X0 + rand() * (X1 - X0), gz = Z0 + rand() * (Z1 - Z0);
+      const f = forest(gx, gz);
+      if (f < 0.50 && rand() > 0.05) continue; // dense in forest zones, sparse in meadows
+      if (blocked(gx, gz)) continue;
+
+      const gh = T.height(gx, gz);
+      const isHighAltitude = gh > 42;
+      const groveSpecies = isHighAltitude ? (rand() < 0.88 ? 0 : 1) : (rand() < 0.65 ? 0 : 1);
+      const groveSize = Math.floor(18 + rand() * 32);
+      const groveRadius = 30 + rand() * 45;
+
+      for (let t = 0; t < groveSize && placed < 9600; t++) {
+        const angle = rand() * Math.PI * 2;
+        const dist = Math.pow(rand(), 0.7) * groveRadius;
+        const tx = gx + Math.cos(angle) * dist, tz = gz + Math.sin(angle) * dist;
+        if (tx < X0 || tx > X1 || tz < Z0 || tz > Z1) continue;
+        if (blocked(tx, tz)) continue;
+
+        const key = Math.floor(tx / CELL) + ',' + Math.floor(tz / CELL);
+        if (!cells.has(key)) cells.set(key, []);
+
+        // Mature parent trees in center, saplings on periphery
+        const distNorm = dist / groveRadius;
+        const scale = (distNorm < 0.35 ? (1.15 + rand() * 0.35) : (0.75 + rand() * 0.45));
+        cells.get(key).push([tx, T.height(tx, tz), tz, scale, rand() * 6.28, groveSpecies]);
+        placed++;
+      }
     }
 
-    // Species 1: Detailed Austrian Norway Spruce / Alpine Conifer (Trunk + 5 tiers of textured branch cards)
-    const spruceTrunkGeo = new THREE.CylinderGeometry(0.18 * DM, 0.45 * DM, 14 * DM, 5).translate(0, 7.0 * DM, 0);
+    // Species 1: Botanically accurate Austrian Norway Spruce (Picea abies)
+    // Tapered bark trunk + 6 tiers of downward-drooping whorls (gravity/snow loaded)
+    const spruceTrunkGeo = new THREE.CylinderGeometry(0.18 * DM, 0.48 * DM, 16 * DM, 6).translate(0, 8.0 * DM, 0);
     const spruceFoliagePlanes = [];
     const spruceTiers = [
-      { y: 3.6, w: 7.4, h: 4.4, tilt: 0.22 },
-      { y: 6.4, w: 6.0, h: 4.0, tilt: 0.18 },
-      { y: 9.0, w: 4.6, h: 3.6, tilt: 0.14 },
-      { y: 11.4, w: 3.4, h: 3.2, tilt: 0.10 },
-      { y: 13.6, w: 2.2, h: 2.8, tilt: 0.05 }
+      { y: 3.4, w: 8.8, h: 4.8, tilt: -0.38 }, // downward pitch -22 deg at base
+      { y: 6.2, w: 7.4, h: 4.4, tilt: -0.32 }, // downward pitch -18 deg
+      { y: 8.8, w: 6.0, h: 4.0, tilt: -0.26 }, // downward pitch -15 deg
+      { y: 11.2, w: 4.6, h: 3.5, tilt: -0.20 }, // downward pitch -11 deg
+      { y: 13.4, w: 3.2, h: 3.0, tilt: -0.14 }, // downward pitch -8 deg
+      { y: 15.2, w: 2.0, h: 2.4, tilt: -0.08 }  // crown whorl
     ];
-    spruceTiers.forEach((t, tIdx) => {
+
+    spruceTiers.forEach((tier, tIdx) => {
       const rotOffset = (tIdx % 2) * (Math.PI / 6);
-      for (let a = 0; a < 3; a++) {
-        const p = new THREE.PlaneGeometry(t.w * DM, t.h * DM);
-        p.translate(0, (t.h / 2) * DM, 0);
-        p.rotateX(t.tilt);
+      for (let a = 0; a < 6; a++) {
+        // Individual bough card pointing outward from trunk and drooping downward
+        const p = new THREE.PlaneGeometry(tier.w * 0.52 * DM, tier.h * DM);
+        p.translate(0, -tier.h * 0.42 * DM, tier.w * 0.22 * DM);
+        p.rotateX(tier.tilt);
         p.rotateY(rotOffset + a * (Math.PI / 3));
-        p.translate(0, t.y * DM, 0);
+        p.translate(0, tier.y * DM, 0);
         spruceFoliagePlanes.push(p);
       }
     });
     const spruceFoliageGeo = mergeGeometries(spruceFoliagePlanes);
-    const spLo1 = new THREE.PlaneGeometry(6.6 * DM, 15.5 * DM).translate(0, 7.75 * DM, 0);
+
+    // Drooping silhouette low-poly impostor (2 intersecting drooping bough cards)
+    const spLo1 = new THREE.PlaneGeometry(7.5 * DM, 16.5 * DM).translate(0, 8.25 * DM, 0);
     const spLo2 = spLo1.clone().rotateY(Math.PI / 2);
     const spruceLoGeo = mergeGeometries([spLo1, spLo2]);
 
-    // Species 2: Alpine Deciduous Beech / Larch (Trunk + 5 intersecting organic foliage cards)
-    const beechTrunkGeo = new THREE.CylinderGeometry(0.24 * DM, 0.46 * DM, 5.0 * DM, 5).translate(0, 2.5 * DM, 0);
+    // Species 2: Alpine Deciduous Beech & Larch (Fagus sylvatica / Larix decidua)
+    // Multi-dome spreading canopy with dappled lighting
+    const beechTrunkGeo = new THREE.CylinderGeometry(0.24 * DM, 0.48 * DM, 5.5 * DM, 6).translate(0, 2.75 * DM, 0);
     const beechFoliagePlanes = [];
-    for (let a = 0; a < 4; a++) {
-      const p = new THREE.PlaneGeometry(7.0 * DM, 6.4 * DM);
-      p.translate(0, 3.2 * DM, 0);
-      p.rotateY(a * (Math.PI / 4));
-      p.translate(0, 4.4 * DM, 0);
+    for (let a = 0; a < 6; a++) {
+      const p = new THREE.PlaneGeometry(7.4 * DM, 6.8 * DM);
+      p.translate(0, 3.4 * DM, 0);
+      p.rotateY(a * (Math.PI / 3));
+      p.translate(0, 4.6 * DM, 0);
       beechFoliagePlanes.push(p);
     }
-    const pTop = new THREE.PlaneGeometry(6.2 * DM, 6.2 * DM);
+    const pTop = new THREE.PlaneGeometry(6.6 * DM, 6.6 * DM);
     pTop.rotateX(Math.PI / 2);
-    pTop.translate(0, 8.2 * DM, 0);
+    pTop.translate(0, 8.8 * DM, 0);
     beechFoliagePlanes.push(pTop);
     const beechFoliageGeo = mergeGeometries(beechFoliagePlanes);
-    const beLo1 = new THREE.PlaneGeometry(7.0 * DM, 9.8 * DM).translate(0, 5.2 * DM, 0);
+
+    const beLo1 = new THREE.PlaneGeometry(7.5 * DM, 10.5 * DM).translate(0, 5.25 * DM, 0);
     const beLo2 = beLo1.clone().rotateY(Math.PI / 2);
     const beechLoGeo = mergeGeometries([beLo1, beLo2]);
 
@@ -1517,7 +1708,8 @@ export function createRedBullRing() {
           if (isBeech) {
             tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
           } else {
-            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.52, 0.35 + 0.07 * Math.cos(t[4] * 5));
+            // Authentic Alpine conifer deep evergreen with mountain needle sheen
+            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.54, 0.32 + 0.06 * Math.cos(t[4] * 5));
           }
           imFoliage.setColorAt(k, tint);
         });
@@ -1541,7 +1733,7 @@ export function createRedBullRing() {
           if (isBeech) {
             tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
           } else {
-            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.52, 0.35 + 0.07 * Math.cos(t[4] * 5));
+            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.54, 0.32 + 0.06 * Math.cos(t[4] * 5));
           }
           im.setColorAt(k, tint);
         });

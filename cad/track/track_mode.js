@@ -26,7 +26,7 @@ const latLimit = v => LAT_A + LAT_B * v * v;          // m/s² (mechanical grip 
 const brakeLimit = v => 13 + 0.0042 * v * v;          // m/s² at full pedal
 
 export function initTrackMode(ctx) {
-  const { scene, camera, controls, carModel, state, sunLight, legacyEnv } = ctx;
+  const { scene, camera, controls, renderer, carModel, state, sunLight, legacyEnv, frontFillLight, bounceLight } = ctx;
   const circuit = createRedBullRing();
   const { track, raceline } = circuit;
   const KERB_W = circuit.data.meta.kerb_w ?? 1.4;
@@ -39,6 +39,31 @@ export function initTrackMode(ctx) {
   const legacyFog = scene.fog ? scene.fog.density : 0.0015;
   const sky = circuit.group.userData.sky;
   if (sunLight && !sunLight.target.parent) scene.add(sunLight.target);
+
+  // ------------------------------------------------------------------ outdoor lighting & PMREM IBL
+  const fillLight = frontFillLight || window.frontFillLight;
+  const bncLight = bounceLight || window.bounceLight;
+  const hemiLight = new THREE.HemisphereLight(0xdbe9ff, 0x5a6848, 0.85);
+  hemiLight.name = 'RBR_Outdoor_HemisphereLight';
+  circuit.group.add(hemiLight);
+
+  let skyEnvTexture = null;
+  const originalEnv = scene.environment;
+  if (renderer) {
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      if (sky) {
+        const skyScene = new THREE.Scene();
+        const skyMesh = sky.clone();
+        skyScene.add(skyMesh);
+        const pmremTarget = pmrem.fromScene(skyScene, 0.04);
+        skyEnvTexture = pmremTarget.texture;
+        skyMesh.geometry.dispose();
+      }
+    } catch (e) {
+      console.warn('[TrackMode] PMREM sky environment fallback:', e);
+    }
+  }
 
   // ------------------------------------------------------------------ racing-line speed profile for autopilot
   const rlN = raceline.n;
@@ -636,7 +661,23 @@ export function initTrackMode(ctx) {
     if (legacyEnv) legacyEnv.visible = !on;
     if (scene.fog) scene.fog.density = on ? 0.000012 : legacyFog;
     camera.near = on ? 0.5 : 0.1; camera.far = on ? 200000 : 400; camera.updateProjectionMatrix();
-    if (on) { if (!mode.driving) parkOnGrid(); } else { setDriving(false); levelForClassic(); }
+
+    // Deconflict studio lights & apply outdoor mountain lighting / IBL
+    if (fillLight) fillLight.visible = !on;
+    if (bncLight) bncLight.visible = !on;
+    if (on) {
+      if (skyEnvTexture) scene.environment = skyEnvTexture;
+      if (sunLight) {
+        sunLight.color.setHex(0xfff8ee);
+        sunLight.shadow.bias = -0.00015;
+        sunLight.shadow.normalBias = 0.02;
+      }
+      if (!mode.driving) parkOnGrid();
+    } else {
+      scene.environment = originalEnv;
+      setDriving(false);
+      levelForClassic();
+    }
     $('rbr-classic')?.classList.toggle('active', !on);
   }
 
