@@ -1310,14 +1310,14 @@ export function createRedBullRing() {
     root.userData.bull = { x: cx, y: gy, z: cz, mesh: g };
   }
 
-  // ---------------------------------------------------------------- 10. trees (instanced, LOD per 400 m cell)
+  // ---------------------------------------------------------------- 10. trees (multi-species Austrian conifers & alpine beeches)
   {
     const rand = rng(77);
     const cells = new Map();
     const CELL = 400;
     const blocked = (x, z) => {
       const nw = track.nearestWithin(x, z);
-      if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 22) return true;
+      if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 20) return true;
       for (let j = 0; j < pit.n; j += 4) if ((pit.x[j] - x) ** 2 + (pit.z[j] - z) ** 2 < 70 * 70) return true;
       for (const lm of (D.landmarks || [])) if ((x - lm.c[0]) ** 2 + (z - lm.c[1]) ** 2 < 40 * 40) return true;
       for (const gs of D.grandstands) {
@@ -1329,47 +1329,129 @@ export function createRedBullRing() {
     };
     const T = terrain, X0 = T.x0 + 40, X1 = T.x0 + (T.nx - 1) * T.step - 40, Z0 = T.z0 + 40, Z1 = T.z0 + (T.nz - 1) * T.step - 40;
     let placed = 0;
-    for (let tries = 0; tries < 60000 && placed < 7000; tries++) {
+    for (let tries = 0; tries < 85000 && placed < 9500; tries++) {
       const x = X0 + rand() * (X1 - X0), z = Z0 + rand() * (Z1 - Z0);
       const f = forest(x, z);
-      if (f < 0.58 && rand() > 0.03) continue;
+      if (f < 0.54 && rand() > 0.04) continue;
       if (blocked(x, z)) continue;
       const key = Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
       if (!cells.has(key)) cells.set(key, []);
-      cells.get(key).push([x, T.height(x, z), z, 0.75 + rand() * 0.6, rand() * 6.28]);
+      const species = rand() < 0.72 ? 0 : 1; // 72% Norway Spruce conifer, 28% European Beech
+      cells.get(key).push([x, T.height(x, z), z, 0.8 + rand() * 0.65, rand() * 6.28, species]);
       placed++;
     }
-    // detailed conifer: trunk + 3 stacked cones; low: single cone
-    const hiGeo = mergeGeometries([
-      new THREE.CylinderGeometry(0.25 * DM, 0.35 * DM, 3 * DM, 6).translate(0, 1.5 * DM, 0),
-      new THREE.ConeGeometry(3.2 * DM, 7 * DM, 8).translate(0, 6 * DM, 0),
-      new THREE.ConeGeometry(2.6 * DM, 6 * DM, 8).translate(0, 9.5 * DM, 0),
-      new THREE.ConeGeometry(1.8 * DM, 5 * DM, 8).translate(0, 13 * DM, 0),
-    ].map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
-    const loGeo = new THREE.ConeGeometry(3.0 * DM, 15 * DM, 5).translate(0, 7.5 * DM, 0);
-    const treeMat = new THREE.MeshLambertMaterial({ color: 0x2d5a2b });
+
+    // Species 1: Detailed Austrian Norway Spruce / Alpine Conifer (Trunk + 5 tiered needle boughs)
+    const spruceParts = [
+      new THREE.CylinderGeometry(0.22 * DM, 0.38 * DM, 3.5 * DM, 6).translate(0, 1.75 * DM, 0),
+      new THREE.ConeGeometry(3.5 * DM, 5.5 * DM, 7).translate(0, 5.0 * DM, 0),
+      new THREE.ConeGeometry(2.9 * DM, 5.0 * DM, 7).translate(0, 8.2 * DM, 0),
+      new THREE.ConeGeometry(2.3 * DM, 4.4 * DM, 7).translate(0, 11.0 * DM, 0),
+      new THREE.ConeGeometry(1.6 * DM, 3.8 * DM, 7).translate(0, 13.5 * DM, 0),
+      new THREE.ConeGeometry(0.9 * DM, 2.8 * DM, 7).translate(0, 15.4 * DM, 0)
+    ];
+    const spruceHiGeo = mergeGeometries(spruceParts.map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
+    const spruceLoGeo = new THREE.ConeGeometry(3.2 * DM, 15.5 * DM, 5).translate(0, 7.75 * DM, 0);
+
+    // Species 2: Alpine Deciduous Beech / Larch (Trunk + 4 overlapping rounded canopy foliage clusters)
+    const beechParts = [
+      new THREE.CylinderGeometry(0.3 * DM, 0.45 * DM, 4.0 * DM, 6).translate(0, 2.0 * DM, 0),
+      new THREE.DodecahedronGeometry(2.8 * DM, 1).translate(0, 6.2 * DM, 0),
+      new THREE.DodecahedronGeometry(2.2 * DM, 1).translate(1.2 * DM, 5.5 * DM, 0.6 * DM),
+      new THREE.DodecahedronGeometry(2.0 * DM, 1).translate(-1.0 * DM, 5.8 * DM, -0.8 * DM),
+      new THREE.DodecahedronGeometry(1.8 * DM, 1).translate(0.4 * DM, 7.8 * DM, -0.2 * DM)
+    ];
+    const beechHiGeo = mergeGeometries(beechParts.map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
+    const beechLoGeo = new THREE.DodecahedronGeometry(3.2 * DM, 0).translate(0, 6.0 * DM, 0);
+
+    const coniferMat = new THREE.MeshLambertMaterial({ color: 0x274e2a });
+    const beechMat = new THREE.MeshLambertMaterial({ color: 0x48762f });
+
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3();
     const tint = new THREE.Color();
+
     for (const [key, list] of cells) {
       const lod = new THREE.LOD(); lod.name = 'RBR_Trees_' + key;
       let cx = 0, cz = 0, cy = 0; list.forEach(t => { cx += t[0]; cy += t[1]; cz += t[2]; }); cx /= list.length; cy /= list.length; cz /= list.length;
       lod.position.set(cx * DM, cy * DM, cz * DM);
-      const mk = (geo) => {
-        const im = new THREE.InstancedMesh(geo, treeMat, list.length);
-        list.forEach((t, k) => {
-          q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[4]); sv.set(t[3], t[3] * (0.9 + 0.2 * Math.sin(t[4] * 3)), t[3]);
+
+      const conifers = list.filter(t => t[5] === 0);
+      const beeches = list.filter(t => t[5] === 1);
+
+      const populate = (items, geo, mat, isBeech) => {
+        if (!items.length) return new THREE.Object3D();
+        const im = new THREE.InstancedMesh(geo, mat, items.length);
+        items.forEach((t, k) => {
+          q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[4]);
+          sv.set(t[3], t[3] * (0.92 + 0.16 * Math.sin(t[4] * 3)), t[3]);
           pv.set((t[0] - cx) * DM, (t[1] - cy - 0.3) * DM, (t[2] - cz) * DM);
           m4.compose(pv, q, sv); im.setMatrixAt(k, m4);
-          tint.setHSL(0.30 + 0.04 * Math.sin(t[4] * 7), 0.45, 0.22 + 0.06 * Math.cos(t[4] * 5)); im.setColorAt(k, tint);
+          if (isBeech) {
+            tint.setHSL(0.24 + 0.05 * Math.sin(t[4] * 5), 0.52, 0.28 + 0.07 * Math.cos(t[4] * 7));
+          } else {
+            tint.setHSL(0.32 + 0.04 * Math.sin(t[4] * 7), 0.48, 0.19 + 0.06 * Math.cos(t[4] * 5));
+          }
+          im.setColorAt(k, tint);
         });
         im.computeBoundingSphere(); im.castShadow = false; return im;
       };
-      lod.addLevel(mk(hiGeo), 0);
-      lod.addLevel(mk(loGeo), 4500);
+
+      const hiGroup = new THREE.Group();
+      if (conifers.length) hiGroup.add(populate(conifers, spruceHiGeo, coniferMat, false));
+      if (beeches.length) hiGroup.add(populate(beeches, beechHiGeo, beechMat, true));
+
+      const loGroup = new THREE.Group();
+      if (conifers.length) loGroup.add(populate(conifers, spruceLoGeo, coniferMat, false));
+      if (beeches.length) loGroup.add(populate(beeches, beechLoGeo, beechMat, true));
+
+      lod.addLevel(hiGroup, 0);
+      lod.addLevel(loGroup, 4500);
       lod.addLevel(new THREE.Object3D(), 60000);
       root.add(lod);
     }
     root.userData.treeCount = placed;
+  }
+
+  // ---------------------------------------------------------------- 10b. 3D Volumetric Grass Tufts along track verges
+  {
+    const gW = 0.65 * DM, gH = 0.45 * DM;
+    const q1 = new THREE.PlaneGeometry(gW, gH).translate(0, gH / 2, 0);
+    const q2 = q1.clone().rotateY(Math.PI / 2);
+    const q3 = q1.clone().rotateY(Math.PI / 4);
+    const grassClumpGeo = mergeGeometries([q1, q2, q3].map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
+    const grassClumpMat = new THREE.MeshLambertMaterial({
+      color: 0x588f3e,
+      side: THREE.DoubleSide
+    });
+
+    const tuftCount = 2800;
+    const imGrass = new THREE.InstancedMesh(grassClumpGeo, grassClumpMat, tuftCount);
+    imGrass.name = 'RBR_3D_Grass_Tufts';
+    const m4G = new THREE.Matrix4(), qG = new THREE.Quaternion(), svG = new THREE.Vector3(), pvG = new THREE.Vector3();
+    const gTint = new THREE.Color();
+    const rG = rng(999);
+
+    for (let k = 0; k < tuftCount; k++) {
+      const sp = (k / tuftCount) * track.length + (rG() - 0.5) * 3;
+      const F = track.at(sp);
+      const side = rG() < 0.5 ? 1 : -1;
+      const kerbWidth = (side > 0 ? D.kerbR[F.i] : D.kerbL[F.i]) ? KERB_W : 0;
+      const baseLat = side > 0 ? (F.wr + kerbWidth + 0.4 + rG() * 2.8) : (-F.wl - kerbWidth - 0.4 - rG() * 2.8);
+      const gx = F.x + F.rx * baseLat;
+      const gz = F.z + F.rz * baseLat;
+      const gy = F.y + baseLat * F.bank;
+
+      qG.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rG() * Math.PI * 2);
+      const s = 0.75 + rG() * 0.55;
+      svG.set(s, s * (0.85 + rG() * 0.3), s);
+      pvG.set(gx * DM, gy * DM, gz * DM);
+      m4G.compose(pvG, qG, svG);
+      imGrass.setMatrixAt(k, m4G);
+      gTint.setHSL(0.26 + 0.06 * rG(), 0.52, 0.26 + 0.08 * rG());
+      imGrass.setColorAt(k, gTint);
+    }
+    imGrass.computeBoundingSphere();
+    root.add(imGrass);
   }
 
   // ---------------------------------------------------------------- 11. sky dome (gradient, ignores fog)
