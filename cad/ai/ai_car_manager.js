@@ -214,11 +214,15 @@ export class AiCarManager {
         if (hasBakedLivery) {
           const pTex = this.texLoader.load(new URL(`../../assets/models/liveries/${baseName}_paint.webp`, import.meta.url).href);
           pTex.colorSpace = THREE.SRGBColorSpace;
+          pTex.wrapS = THREE.RepeatWrapping;
+          pTex.wrapT = THREE.RepeatWrapping;
           pTex.flipY = false;
           pTex.anisotropy = 4;
 
           const dTex = this.texLoader.load(new URL(`../../assets/models/liveries/${baseName}_decals.webp`, import.meta.url).href);
           dTex.colorSpace = THREE.SRGBColorSpace;
+          dTex.wrapS = THREE.RepeatWrapping;
+          dTex.wrapT = THREE.RepeatWrapping;
           dTex.flipY = false;
           dTex.anisotropy = 4;
 
@@ -289,6 +293,15 @@ export class AiCarManager {
             }
           } else if (mname === 'redbull_number_3') {
             o.visible = false;
+          } else if (/^redbull_(detail|carbon\d)$/.test(mname) && o.name.includes('FrontWing')) {
+            if (!this.carbonWeaveMat) {
+              this.carbonWeaveMat = new THREE.MeshStandardMaterial({
+                color: 0x1a1b1e,
+                roughness: 0.45,
+                metalness: 0.1,
+              });
+            }
+            o.material = this.carbonWeaveMat;
           }
         }
       });

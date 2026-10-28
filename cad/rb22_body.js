@@ -92,11 +92,15 @@ export async function installRb22Body(carModel, renderer) {
 
     const pTex = texLoader.load(paintUrl);
     pTex.colorSpace = THREE.SRGBColorSpace;
+    pTex.wrapS = THREE.RepeatWrapping;
+    pTex.wrapT = THREE.RepeatWrapping;
     pTex.flipY = false;
     pTex.anisotropy = maxAniso;
 
     const dTex = texLoader.load(decalsUrl);
     dTex.colorSpace = THREE.SRGBColorSpace;
+    dTex.wrapS = THREE.RepeatWrapping;
+    dTex.wrapT = THREE.RepeatWrapping;
     dTex.flipY = false;
     dTex.anisotropy = maxAniso;
 
@@ -337,7 +341,15 @@ export async function installRb22Body(carModel, renderer) {
     });
 
     if (decalsBaked) decalsBaked.visible = baked;
-    body.traverse((o) => { if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) o.visible = baked; });
+    body.traverse((o) => {
+      if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) {
+        if (o.isMesh && o.name.includes('redbull_number_3')) {
+          o.visible = isRedBull;
+        } else {
+          o.visible = baked;
+        }
+      }
+    });
 
     fwDetail.forEach((m) => { // other teams: plain dark carbon flaps, team colour comes from endplates + decals
       if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
