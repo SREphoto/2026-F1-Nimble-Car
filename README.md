@@ -58,6 +58,14 @@ An interactive 3D WebGL application built to inspect and experience the 2026 For
   - Rainy weather: wet/inter tyres with a water film and droplets, wet track sheen and spray in Drive mode.
   - "Tyre state" / Compound / Corner selectors in the Telemetry panel, a Tyre state selector in the Red Bull Ring HUD, and `window.tyreStates` (`setTyreState`, `setTyreCompound(corner, compound)`, `setTyreWear`, `setBlown(corner, on)`, `setWeather`).
 
+- **Photorealistic Red Bull Ring Circuit & Surroundings:**
+  - **Dynamic Track Banking & Camber:** Full continuous super-elevation modeled along all 10 turns (including positive banking on Turns 1, 3, 7, 8, 9, 10, and the infamous downhill off-camber slope on Turn 4 and Turn 6 entry) with vehicle roll physics.
+  - **High-Fidelity Asphalt & Markings:** Tangent-space normal mapping, micro-aggregate stone chips, quartz glints, rolling compaction streaks, heavy-braking lockup skid marks, and 3D ripple kerbs with chipped paint and rubber scuff marks.
+  - **Alpine Landscaping & 3D Vegetation:** Multi-species Austrian forest (Norway Spruce conifers and European Beech) across 9,500 trees, manicured F1 lawn mower stripes, and 2,800 instanced 3D volumetric grass tufts along verges.
+  - **FIA Raked Gravel Traps:** Combed wavy furrow ridges with authentic relief and pea gravel pebbles.
+  - **Grandstands & Dutch "Orange Army" Fans:** Tiered stadium seating with individual Austrian Red and Navy bucket seats, cantilevered aerodynamic canopy roofs with space-frame trusses, 16m × 9m giant LED Jumbotrons with live race telemetry, fluttering 3D trackside flags, and celebratory orange smoke flares.
+  - **Modern Architectural Pit Building & Garages:** Paddock Club VIP hospitality suites with curtain-wall glass, balconies, rooftop observation terrace, Race Control Tower, overhead swinging service booms, tyre warming racks with heated blankets, and mechanics tool chests.
+
 - **Lighting & Environment Controls:**
   - Adjustable light intensity slider (0.2× to 2.5×).
   - Five lighting moods: Studio Neutral, Bright Daylight, Night Race, Cool Blue, Warm Tungsten.
