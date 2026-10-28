@@ -840,7 +840,9 @@ export function createActiveWingsBodywork(options = {}) {
   lip.position.set(EX.length, 0, 0);
   exhaustGroup.add(lip);
 
-  engineCoverGroup.add(exhaustGroup);
+  // Add exhaust directly to the main bodywork assembly so it remains visible
+  // even when procedural engine covers are replaced by team body shells
+  group.add(exhaustGroup);
 
   group.add(engineCoverGroup);
 

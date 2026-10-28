@@ -36,7 +36,7 @@ import { addCarbonWeave } from '../materials.js';
 export const TYRE_SPEC = {
   radius: 3.6,                // 720 mm diameter
   rimRadius: 2.286,           // 18" bead seat
-  width: { front: 2.8, rear: 3.75 },
+  width: { front: 3.05, rear: 4.05 }, // Full FIA F1 specification: 305 mm front, 405 mm rear
 };
 
 const R = TYRE_SPEC.radius;

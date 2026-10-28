@@ -39,13 +39,14 @@ import { createSocketHeadBolt, createStudWith12PtNut, createBellevilleSpring } f
 import { loftRings } from './sweep_section.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
-/** Rear impact structure and rain light (car frame, dm), ref round3 R10. */
+/** Rear impact structure and rain light (car frame, dm), ref round3 R10.
+ * Terminating neatly at X ~37.3 dm directly beneath the rear wing trailing edge */
 export const RIS_SPEC = {
-  x0: 35.0, x1: 38.45,                      // gearbox face to tip
+  x0: 35.0, x1: 37.15,                      // gearbox face to tip (flush with rear wing & diffuser trailing edge)
   root: { top: 3.35, bottom: 2.0, hw: 0.6 }, // flat top carries the twin pylon feet
   tip: { top: 2.92, bottom: 2.4, hw: 0.3 },
-  flatTo: 0.42,                              // top stays at the pylon foot height this far back
-  light: { length: 0.22, cols: 4, rows: 3, glow: 1.1, pointLight: 0.3 },
+  flatTo: 0.28,                              // top stays at the pylon foot height this far back
+  light: { length: 0.15, cols: 4, rows: 3, glow: 1.1, pointLight: 0.3 },
 };
 
 export function createTransmissionGears(options = {}) {

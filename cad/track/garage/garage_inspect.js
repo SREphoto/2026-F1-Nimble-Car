@@ -153,6 +153,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     <button type="button" id="garage-views-btn" class="views-btn" title="Camera Perspectives & Viewpoints">🎥 Views ▾</button>
     <button type="button" id="garage-wheels" class="active" title="Toggle wheels on stands">Wheels on</button>
     <button type="button" id="garage-body" class="active" title="Toggle active bodywork">Bodywork on</button>
+    <button type="button" id="garage-xray" title="Toggle translucent bodywork X-ray to inspect internal engine, gearbox, and battery">X-Ray</button>
     <button type="button" id="garage-wheel-tool" title="PCU-8D Steering Wheel Tool">Steering Wheel</button>
     <button type="button" id="garage-standings" title="2026 Racing Stats & Standings">Standings & Stats</button>
     <button type="button" id="garage-weather" title="Live Doppler Weather Radar & Environmental Settings">Weather Radar</button>
@@ -531,6 +532,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
 
   $('garage-wheels')?.addEventListener('click', () => setWheels(!st.wheels));
   $('garage-body')?.addEventListener('click', () => setBody(!st.body));
+  $('garage-xray')?.addEventListener('click', () => setXRay(!st.xray));
   $('garage-regs')?.addEventListener('click', () => openModal(regOv, true));
   $('garage-wheel-tool')?.addEventListener('click', () => openModal(wheelOv, true));
   $('garage-standings')?.addEventListener('click', () => openModal(standingsOv, true));
@@ -578,11 +580,51 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
 
   function setBody(on) {
     st.body = on;
+    if (st.xray && on) setXRay(false);
     const b = subs()[PART_ORDER.indexOf('bodywork')];
     if (b) b.visible = on;
+    // When bodywork is removed in the garage, reveal the full internal engineering:
+    // 1.6L V6 engine, turbocharger, MGU-K, 8-speed gearbox, 800V electrical harness, coolers & hoses!
+    carModel?.userData?.rb22?.showInternals?.(!on);
+    // Also reveal the structural carbon monocoque survival cell and titanium halo when bodywork is off
+    ['Body_Monocoque_CarbonTub', 'Body_Halo_Titanium_Assembly', 'Body_RollHoop_Primary_172kN', 'Cockpit_Headrest_Assembly'].forEach(n => {
+      const o = carModel.getObjectByName(n);
+      if (o) o.visible = !on;
+    });
     changed();
     $('garage-body')?.classList.toggle('active', on);
     if ($('garage-body')) $('garage-body').textContent = on ? 'Bodywork on' : 'Bodywork off';
+  }
+
+  function setXRay(on) {
+    st.xray = on;
+    const rb = carModel.getObjectByName('Body_RB22_Assembly');
+    if (rb) {
+      rb.traverse(o => {
+        if (o.isMesh) {
+          if (on) {
+            if (!o.userData._origMat) o.userData._origMat = o.material;
+            const m = o.material.clone();
+            m.transparent = true;
+            m.opacity = 0.22;
+            m.depthWrite = false;
+            o.material = m;
+          } else if (o.userData._origMat) {
+            o.material = o.userData._origMat;
+            delete o.userData._origMat;
+          }
+        }
+      });
+    }
+    // Show internals through the translucent bodywork
+    carModel?.userData?.rb22?.showInternals?.(on || !st.body);
+    ['Body_Monocoque_CarbonTub', 'Body_Halo_Titanium_Assembly', 'Body_RollHoop_Primary_172kN'].forEach(n => {
+      const o = carModel.getObjectByName(n);
+      if (o) o.visible = on || !st.body;
+    });
+    changed();
+    $('garage-xray')?.classList.toggle('active', on);
+    if ($('garage-xray')) $('garage-xray').textContent = on ? 'X-Ray on' : 'X-Ray';
   }
 
   // ---------------------------------------------------------------- Selection & Info Card
@@ -605,6 +647,13 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     clearSel();
     const info = GARAGE_PARTS[key];
     if (!info) return;
+    if (['powertrain', 'transmission', 'electrical', 'monocoque'].includes(key)) {
+      carModel?.userData?.rb22?.showInternals?.(true);
+      if (key === 'monocoque') {
+        const tub = carModel.getObjectByName('Body_Monocoque_CarbonTub');
+        if (tub) tub.visible = true;
+      }
+    }
     const groups = key === 'wheels' ? wheelGroups() : [obj];
     const meshes = [];
     groups.forEach(gr => gr.traverse(o => {
@@ -944,6 +993,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     if (!st.active) return;
     clearSel();
     viewsPop?.classList.remove('on');
+    if (st.xray) setXRay(false);
     setWheels(true);
     setBody(true);
     closeAllModals();

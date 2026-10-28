@@ -107,7 +107,7 @@ export const GARAGE_PARTS = {
   suspension: { name: 'Suspension and steering', text: 'Wishbones, push and pull rods, uprights and the steering rack.', facts: ['Carbon wishbones with aero shapes', 'Front and rear ride height set by the team'] },
   floor: { name: 'Floor, plank and diffuser', text: 'The underbody that makes most of the downforce, with the wooden plank that is checked for wear after each session.', facts: ['Plank 10 mm thick at the start', 'Flatter floor rules in 2026'] },
   bodywork: { name: 'Wings, sidepods and engine cover', text: 'Front and rear wings with the 2026 movable flaps, the sidepods and the engine cover.', facts: ['Straight mode lowers drag on the straights', 'Corner mode for full downforce'] },
-  wheels: { name: 'Wheels and Pirelli tyres', text: '18 inch wheels with Pirelli tyres. The 2026 tyres are narrower than before.', facts: ['Front 280 mm wide', 'Rear 375 mm wide'] },
+  wheels: { name: 'Wheels and Pirelli tyres', text: '18 inch wheels with Pirelli tyres. Full-width 305 mm front and 405 mm rear high-grip slick profile.', facts: ['Front 305 mm wide', 'Rear 405 mm wide'] },
 };
 export const PART_ORDER = ['monocoque', 'cockpitAccessories', 'brakes', 'electrical', 'powertrain', 'transmission', 'suspension', 'floor', 'bodywork'];
 
@@ -123,8 +123,8 @@ export const REGULATIONS = {
     ['Fuel energy flow', '3000 MJ/h max (Article C5)'],
     ['MGU-H', 'Banned (turbo only)'],
     ['Aero drag drop (X-Mode)', '-55% drag'],
-    ['Front tyres', '280/710-18 (-25 mm)'],
-    ['Rear tyres', '375/710-18 (-30 mm)'],
+    ['Front tyres', '305/720-18 (Full FIA Spec)'],
+    ['Rear tyres', '405/720-18 (Full FIA Spec)'],
     ['Plank material', '10 mm Jabroc + titanium pucks'],
   ],
 };
