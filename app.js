@@ -69,38 +69,7 @@ scene.fog = new THREE.FogExp2(0x3a5676, 0.0015);
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 400);
 camera.position.set(-36, 18, 42); // 3/4 front view framing car on finish line
 
-let isContextLost = false;
-let renderer;
-try {
-  renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: false,
-    powerPreference: 'high-performance',
-    logarithmicDepthBuffer: false
-  });
-} catch (e) {
-  console.error('[WebGL] Fatal: Failed to create WebGLRenderer:', e);
-  const errDiv = document.createElement('div');
-  errDiv.className = 'webgl-error-banner';
-  errDiv.style.cssText = 'position:absolute;inset:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(18,24,38,0.95);color:#fff;border:1px solid #ff3b3b;border-radius:8px;padding:24px;text-align:center;z-index:9999;font-family:sans-serif;';
-  errDiv.innerHTML = `
-    <h2 style="color:#ff4d4d;margin:0 0 12px 0;">WebGL Context Blocked by Browser</h2>
-    <p style="max-width:550px;line-height:1.5;color:#ccd6e0;margin:0 0 16px 0;">
-      The browser has temporarily blocked WebGL for this page because previous GPU context losses crossed Chrome's stability threshold.
-    </p>
-    <div style="background:#0b101b;padding:12px 18px;border-radius:6px;text-align:left;font-size:13px;line-height:1.6;color:#8ba3c7;margin-bottom:16px;">
-      <b>How to restore immediately:</b><br>
-      1. Completely quit Chrome (<b>Cmd + Q</b> on macOS) and restart it, or open <b>chrome://restart</b>.<br>
-      2. Alternatively, test in an Incognito window or open on <b>127.0.0.1</b> instead of <b>localhost</b>.
-    </div>
-    <button onclick="location.reload()" style="background:#00d4e8;color:#04121a;border:none;padding:10px 20px;border-radius:4px;font-weight:bold;cursor:pointer;">
-      Reload Page
-    </button>
-  `;
-  container.appendChild(errDiv);
-  throw e;
-}
-
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true }); // log depth: full-scale circuit (km) + mm car detail
 renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -111,13 +80,11 @@ container.appendChild(renderer.domElement);
 
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
-  isContextLost = true;
-  console.warn('[WebGL] Context lost. Suspending render loop to allow GPU recovery.');
+  console.warn('[WebGL] Context lost. Preventing default to allow recovery.');
 });
 
 renderer.domElement.addEventListener('webglcontextrestored', () => {
-  console.info('[WebGL] Context restored. Resuming render loop...');
-  isContextLost = false;
+  console.info('[WebGL] Context restored. Refreshing size and scene...');
   handleResize();
 });
 
@@ -147,8 +114,8 @@ scene.add(ambientLight);
 const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.2);
 sunLight.position.set(60, 140, 50);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.width = 2048;
-sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.mapSize.width = 4096;
+sunLight.shadow.mapSize.height = 4096;
 sunLight.shadow.camera.near = 10;
 sunLight.shadow.camera.far = 350;
 sunLight.shadow.camera.left = -120;
@@ -1032,7 +999,6 @@ const clock = new THREE.Clock();
 
 function animate() {
   requestAnimationFrame(animate);
-  if (isContextLost) return; // Halt rendering and simulation updates until WebGL context restores
   const dt = clock.getDelta();
 
   // If simulation is paused, freeze kinematics and silence audio while maintaining 3D orbital control
