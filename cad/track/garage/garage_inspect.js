@@ -91,6 +91,11 @@ body.garage-mode #sess-panel{display:none!important}
 `;
 
 export function initGarageInspect({ scene, camera, controls, renderer, carModel, trackMode, legacyEnv, getTeamId = () => 'red-bull' }) {
+  const $ = (id) => document.getElementById(id);
+  function changed() {
+    renderer.shadowMap.needsUpdate = true;
+    garage?.userData.refreshMirror?.();
+  }
   let garage = null, builder = null;
   const QUALITY = /[?&]garage=low\b/.test(location.search) ? 'low' : 'high';
   const L = GARAGE_LAYOUT;
@@ -329,8 +334,8 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   });
 
   function syncWeatherModalSliders() {
-    if (!window.weather?.current) return;
-    const cur = window.weather.current;
+    const cur = window.weather?.W || window.weather?.current;
+    if (!cur) return;
     const cloudEl = $('modal-wx-cloud'); if (cloudEl) { cloudEl.value = cur.cloud ?? 0; $('modal-wx-cloud-v').textContent = Math.round((cur.cloud ?? 0) * 100) + '%'; }
     const rainEl = $('modal-wx-rain'); if (rainEl) { rainEl.value = cur.rain ?? 0; $('modal-wx-rain-v').textContent = Math.round((cur.rain ?? 0) * 100) + '%'; }
     const windEl = $('modal-wx-wind'); if (windEl) { windEl.value = cur.windKmh ?? 14; $('modal-wx-wind-v').textContent = Math.round(cur.windKmh ?? 14); }
@@ -433,7 +438,6 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     if (e.key === 'Escape') closeAllModals();
   });
 
-  const $ = (id) => document.getElementById(id);
   $('garage-wheels')?.addEventListener('click', () => setWheels(!st.wheels));
   $('garage-body')?.addEventListener('click', () => setBody(!st.body));
   $('garage-regs')?.addEventListener('click', () => openModal(regOv, true));
@@ -452,11 +456,6 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     garage?.userData.setTeam(e.detail?.teamId);
     changed();
   });
-
-  const changed = () => {
-    renderer.shadowMap.needsUpdate = true;
-    garage?.userData.refreshMirror?.();
-  };
 
   // ---------------------------------------------------------------- Car helpers
   const subs = () => carModel.children.slice(0, PART_ORDER.length);

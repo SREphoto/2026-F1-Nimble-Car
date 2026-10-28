@@ -17,6 +17,52 @@
 import * as THREE from 'three';
 import { REGULATIONS } from './garage_data.js';
 
+// Safe cross-browser roundRect polyfill (Safari < 16, older WebViews, array radii)
+if (typeof CanvasRenderingContext2D !== 'undefined') {
+  const origRoundRect = CanvasRenderingContext2D.prototype.roundRect;
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii = 0) {
+    if (origRoundRect) {
+      try {
+        origRoundRect.call(this, x, y, w, h, radii);
+        return this;
+      } catch (_) {}
+    }
+    let tl, tr, br, bl;
+    if (Array.isArray(radii)) {
+      if (radii.length === 1) {
+        tl = tr = br = bl = radii[0];
+      } else if (radii.length === 2) {
+        tl = br = radii[0];
+        tr = bl = radii[1];
+      } else if (radii.length === 3) {
+        tl = radii[0];
+        tr = bl = radii[1];
+        br = radii[2];
+      } else {
+        [tl, tr, br, bl] = radii;
+      }
+    } else {
+      tl = tr = br = bl = Number(radii) || 0;
+    }
+    const maxR = Math.min(Math.abs(w) / 2, Math.abs(h) / 2);
+    tl = Math.min(Math.max(0, tl), maxR);
+    tr = Math.min(Math.max(0, tr), maxR);
+    br = Math.min(Math.max(0, br), maxR);
+    bl = Math.min(Math.max(0, bl), maxR);
+
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    return this;
+  };
+}
+
 function createScreenTex(w, h, drawFn, { aniso = 16 } = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = w;
@@ -1132,7 +1178,7 @@ export function createGarageScreenTextures(teamInfo = {}) {
   return {
     steeringWheel: createScreenTex(1024, 512, (ctx, w, h) => drawSteeringWheelScreen(ctx, w, h, teamInfo)),
     standings: createScreenTex(1024, 512, (ctx, w, h) => drawStandingsScreen(ctx, w, h, teamInfo)),
-    weatherRadar: createScreenTex(1024, 512, (ctx, w, h) => drawWeatherRadarScreen(ctx, w, h, window.weather?.current || {})),
+    weatherRadar: createScreenTex(1024, 512, (ctx, w, h) => drawWeatherRadarScreen(ctx, w, h, window.weather?.W || window.weather?.current || {})),
     sredesigns: createScreenTex(1024, 512, (ctx, w, h) => drawSREdesignsScreen(ctx, w, h, teamInfo)),
     acknowledgements: createScreenTex(1024, 512, (ctx, w, h) => drawAcknowledgementsScreen(ctx, w, h, teamInfo)),
     telemetry: createScreenTex(1024, 512, (ctx, w, h) => drawTelemetryScreen(ctx, w, h)),
