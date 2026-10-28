@@ -30,7 +30,9 @@ const REPLACED = [
   'Cockpit_Headrest_Assembly',
   'Nosecone_FIS_Assembly', // the RB22's own nose is used: one smooth top line from tip to cockpit
   'Sidepod_Assembly_LH_RH', 'Engine_Cover_Airbox_Fin_Assembly', 'Floor_Underbody_Diffuser_Assembly',
-  'Assembly_Active_Rear_Wing', // the RB22's own rear wing & tail are used for outside body
+  // NOTE: Assembly_Active_Rear_Wing is NOT replaced — the GLB split pipeline stripped the
+  // horizontal wing surfaces (cx>35.2 && cz>5.6 classified as 'rearwing' and dropped),
+  // so Body_RB22_Tail only has the tail cone/crash structure. The procedural wing is kept.
 ];
 
 // 2x2 twill carbon weave, tiled over the wing flaps of non-Red Bull teams (their baked art is removed)
@@ -214,16 +216,9 @@ export async function installRb22Body(carModel, renderer) {
   });
   carModel.traverse((o) => { if (/^FrontWing_/.test(o.name) && !o.parent?.name?.startsWith('Body_RB22')) { o.visible = false; o.userData.replacedByRb22 = true; } });
 
-  // The RB22's own rear wing & tail (Body_RB22_Tail) are used for the outside body, so our procedural wing is hidden
-  ['Assembly_Active_Rear_Wing'].forEach((n) => {
-    const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; }
-  });
-  carModel.traverse((o) => {
-    if ((/^RearWing_/.test(o.name) || o.name === 'Assembly_Active_Rear_Wing' || /^RainLED_/.test(o.name)) && !o.parent?.name?.startsWith('Body_RB22')) {
-      o.visible = false;
-      o.userData.replacedByRb22 = true;
-    }
-  });
+  // NOTE: Assembly_Active_Rear_Wing is NOT hidden — the GLB's Body_RB22_Tail contains only the
+  // tail cone / crash structure (the split pipeline dropped horizontal wing planes at cx>35.2 && cz>5.6).
+  // The procedural rear wing provides the actual mainplane, flap, pylons and beam wing.
 
   // One set of suspension: the RB22's wishbones, push/pull rods, track rods and upright bodies are in the
   // body file (Body_RB22_Suspension). Hide our arms, rockers, rack and tethers; keep our wheel corners
