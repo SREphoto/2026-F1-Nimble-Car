@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { addCarbonSplit } from '../materials.js';
 
 export const RB22_CREDIT = '2026 Redbull RB22 by Dave (Tyler_Dave), sketchfab.com, CC BY 4.0';
 const api0 = {};
@@ -59,7 +60,7 @@ export async function installRb22Body(carModel, renderer) {
   const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.() || 8;
 
   const parts = {};
-  let paint = null; let bakedMap = null; const paintMeshes = []; const accentMeshes = []; const fwDetail = [];
+  let paint = null; let bakedMap = null; let splitUniforms = null; const paintMeshes = []; const accentMeshes = []; const fwDetail = [];
   body.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true; o.receiveShadow = true;
@@ -77,12 +78,19 @@ export async function installRb22Body(carModel, renderer) {
       if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
         if (!paint) {
-          // one shared paint material for the whole body
+          // one shared paint material for the whole body with authentic carbon split
           paint = new THREE.MeshPhysicalMaterial({
             name: 'RB22_BodyPaint', map: mat.map, normalMap: mat.normalMap,
             roughness: 0.35, metalness: 0.1, clearcoat: 0.8, clearcoatRoughness: 0.12, side: THREE.DoubleSide,
           });
           bakedMap = mat.map;
+          splitUniforms = addCarbonSplit(paint, {
+            splitY: 1.45,
+            stripeColor: 0xd8102c,
+            stripeWidth: 0.08,
+            camo: 0.2,
+            camoScale: 1.3
+          });
         }
         o.material = paint; paintMeshes.push(o); o.userData.mixedWinding = true;
         parts[part] = parts[part] || {}; parts[part].paint = o;
@@ -210,12 +218,27 @@ export async function installRb22Body(carModel, renderer) {
     paint.map = baked ? bakedMap : null; // other teams: clean team colour, no leftover Red Bull art
     paint.color.set(baked ? 0xffffff : (team?.bodyColor ?? 0xffffff));
     if (team && !baked) {
-      paint.roughness = team.roughness ?? 0.35; paint.clearcoat = team.clearcoat ?? 0.8;
-      paint.clearcoatRoughness = team.clearcoatRoughness ?? 0.12; paint.metalness = Math.min(0.2, team.metalness ?? 0.1);
+      paint.roughness = team.roughness ?? 0.32;
+      paint.clearcoat = team.clearcoat ?? 0.95;
+      paint.clearcoatRoughness = team.clearcoatRoughness ?? 0.05;
+      paint.metalness = Math.min(0.35, team.metalness ?? 0.12);
     }
     paint.needsUpdate = true;
+    if (splitUniforms) {
+      if (baked) {
+        splitUniforms.uSplitY.value = -999.0;
+        splitUniforms.uStripeW.value = 0.0;
+        splitUniforms.uCamo.value = team?.camo ?? 0.2;
+      } else {
+        splitUniforms.uSplitY.value = 1.45;
+        splitUniforms.uStripeW.value = 0.08;
+        splitUniforms.uStripeColor.value.setHex(team?.stripeColor ?? team?.accentColor ?? 0xffe500);
+        splitUniforms.uCamo.value = team?.camo ?? 0.0;
+      }
+    }
     collarMat.color.set(baked ? 0x1b1f48 : (team?.bodyColor ?? 0xffffff));
     collarMat.roughness = paint.roughness; collarMat.clearcoat = paint.clearcoat;
+    collarMat.needsUpdate = true;
     accentMeshes.forEach((m) => { // airbox-top camera pod: Red Bull yellow art, team accent elsewhere
       if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
       m.material.map = baked ? m.userData.bakedMap : null;
@@ -250,7 +273,7 @@ export async function installRb22Body(carModel, renderer) {
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); if (Math.abs(v.y) > ay - 0.5) b.expandByPoint(v); }
     boxCache.set(mesh, b); return b;
   }
-  const api = { ...api0, tailCap, showInternals, boxFor, body, parts, collar, targets, paint, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { ...api0, tailCap, showInternals, boxFor, body, parts, collar, targets, paint, splitUniforms, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }

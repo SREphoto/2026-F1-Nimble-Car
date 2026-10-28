@@ -580,13 +580,729 @@ const TEAM_FONTS = {
   sans: (s) => `700 ${s}px ${SANS}`,
   serif: (s) => `700 ${s}px Georgia, "Times New Roman", "Liberation Serif", serif`,
 };
+
+/* --- Authentic 2026 Team Logo & Sponsor Art Drawing Primitives --- */
+
+function drawFerrariShield(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const hw = w / 2, hh = h / 2;
+  const shield = () => {
+    ctx.beginPath();
+    ctx.moveTo(-hw, -hh + w * 0.1);
+    ctx.quadraticCurveTo(-hw, -hh, -hw + w * 0.1, -hh);
+    ctx.lineTo(hw - w * 0.1, -hh);
+    ctx.quadraticCurveTo(hw, -hh, hw, -hh + w * 0.1);
+    ctx.lineTo(hw, hh * 0.25);
+    ctx.bezierCurveTo(hw, hh * 0.65, hw * 0.45, hh * 0.9, 0, hh);
+    ctx.bezierCurveTo(-hw * 0.45, hh * 0.9, -hw, hh * 0.65, -hw, hh * 0.25);
+    ctx.closePath();
+  };
+
+  shield();
+  ctx.fillStyle = '#FFE500'; // Giallo Modena yellow canary
+  ctx.fill();
+
+  // Italian Flag at top (Green, White, Red vertical bands)
+  ctx.save();
+  shield();
+  ctx.clip();
+  const topH = h * 0.14;
+  ctx.fillStyle = '#009246';
+  ctx.fillRect(-hw, -hh, w / 3, topH);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-hw + w / 3, -hh, w / 3, topH);
+  ctx.fillStyle = '#CE2B37';
+  ctx.fillRect(-hw + 2 * w / 3, -hh, w / 3, topH);
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = Math.max(1, w * 0.015);
+  ctx.beginPath();
+  ctx.moveTo(-hw, -hh + topH);
+  ctx.lineTo(hw, -hh + topH);
+  ctx.stroke();
+  ctx.restore();
+
+  // Prancing Horse (Cavallino Rampante) in silhouette black
+  ctx.save();
+  ctx.translate(0, -hh * 0.04);
+  const sc = Math.min(w * 0.55 / 100, h * 0.55 / 130);
+  ctx.scale(sc, sc);
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.moveTo(8, -55);
+  ctx.lineTo(12, -68); ctx.lineTo(9, -65); ctx.lineTo(5, -67); ctx.lineTo(4, -58);
+  ctx.bezierCurveTo(-8, -50, -22, -35, -20, -10);
+  ctx.lineTo(-24, -20); ctx.lineTo(-20, -10);
+  ctx.lineTo(-27, -5); ctx.lineTo(-21, 5);
+  ctx.bezierCurveTo(-22, 18, -25, 30, -18, 42);
+  ctx.bezierCurveTo(-28, 30, -38, 12, -35, -5);
+  ctx.bezierCurveTo(-32, -18, -42, -10, -42, 5);
+  ctx.bezierCurveTo(-42, 28, -26, 52, -16, 55);
+  ctx.lineTo(-20, 68); ctx.lineTo(-14, 70); ctx.lineTo(-11, 62); ctx.lineTo(-8, 52);
+  ctx.lineTo(-4, 66); ctx.lineTo(2, 68); ctx.lineTo(1, 58);
+  ctx.bezierCurveTo(4, 46, 5, 32, 2, 22);
+  ctx.bezierCurveTo(8, 15, 12, 5, 15, -8);
+  ctx.lineTo(28, 2); ctx.lineTo(34, -2); ctx.lineTo(24, -14);
+  ctx.lineTo(36, -24); ctx.lineTo(42, -30); ctx.lineTo(36, -34); ctx.lineTo(22, -22);
+  ctx.lineTo(16, -25);
+  ctx.bezierCurveTo(18, -38, 22, -48, 16, -54);
+  ctx.lineTo(22, -58);
+  ctx.bezierCurveTo(20, -63, 14, -60, 8, -55);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // "S" and "F" (Scuderia Ferrari) in black
+  ctx.fillStyle = '#000000';
+  ctx.font = `900 ${Math.round(h * 0.16)}px "Times New Roman", Georgia, serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('S', -hw * 0.45, hh * 0.65);
+  ctx.fillText('F', hw * 0.45, hh * 0.65);
+
+  // Black shield border
+  shield();
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = Math.max(1.5, w * 0.04);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHpLogo(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size / 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#0096D6'; // Official HP Blue
+  ctx.fill();
+
+  ctx.rotate(-13 * Math.PI / 180);
+  ctx.fillStyle = '#FFFFFF';
+  const barW = size * 0.11;
+  const barR = barW / 2;
+  ctx.beginPath();
+  ctx.roundRect(-size * 0.25, -size * 0.46, barW, size * 0.82, barR);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-size * 0.11, -size * 0.04, size * 0.16, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.lineTo(-size * 0.11, size * 0.12);
+  ctx.arc(-size * 0.11, -size * 0.04, size * 0.16 - barW, Math.PI * 0.5, -Math.PI * 0.5, true);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.roundRect(size * 0.03, -size * 0.22, barW, size * 0.68, barR);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(size * 0.17, -size * 0.04, size * 0.16, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.lineTo(size * 0.17, size * 0.12);
+  ctx.arc(size * 0.17, -size * 0.04, size * 0.16 - barW, Math.PI * 0.5, -Math.PI * 0.5, true);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawShellLogo(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sc = size / 100;
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = '#D4001F';
+  ctx.beginPath();
+  ctx.moveTo(-22, 44); ctx.lineTo(22, 44); ctx.lineTo(26, 38); ctx.lineTo(-26, 38);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(-22, 38);
+  ctx.quadraticCurveTo(-46, 28, -48, 8);
+  ctx.quadraticCurveTo(-48, -12, -36, -28);
+  const angles = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75];
+  angles.forEach((a, i) => {
+    const r = 46;
+    const px = Math.sin(a * Math.PI * 0.5) * r;
+    const py = -Math.cos(a * Math.PI * 0.5) * r + 5;
+    if (i === 0) ctx.lineTo(px, py);
+    else ctx.quadraticCurveTo(px * 0.9, py * 0.9, px, py);
+  });
+  ctx.quadraticCurveTo(48, -12, 48, 8);
+  ctx.quadraticCurveTo(46, 28, 22, 38);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#FFD500';
+  angles.forEach((a) => {
+    ctx.save();
+    ctx.rotate(a * 0.42);
+    ctx.beginPath();
+    ctx.moveTo(-3, 34); ctx.lineTo(3, 34); ctx.lineTo(5.5, -34);
+    ctx.quadraticCurveTo(0, -39, -5.5, -34);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+function drawItalianTricolore(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const segW = w / 3;
+  ctx.fillStyle = '#009246'; ctx.fillRect(-w / 2, -h / 2, segW, h);
+  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(-w / 2 + segW, -h / 2, segW, h);
+  ctx.fillStyle = '#CE2B37'; ctx.fillRect(-w / 2 + 2 * segW, -h / 2, segW, h);
+  ctx.restore();
+}
+
+function drawMclarenSpeedmark(ctx, cx, cy, w, h, { color = '#47C7FC', frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (!frontIsLeft) ctx.scale(-1, 1);
+  const sc = Math.min(w / 100, h / 45);
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-45, -18);
+  ctx.bezierCurveTo(-15, -24, 25, -20, 48, -8);
+  ctx.bezierCurveTo(32, -4, 10, -2, -15, -3);
+  ctx.bezierCurveTo(-38, -4, -48, 5, -45, 18);
+  ctx.bezierCurveTo(-52, 6, -48, -12, -45, -18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawMastercard(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = h * 0.45;
+  const d = r * 0.65;
+
+  ctx.fillStyle = '#EB001B';
+  ctx.beginPath(); ctx.arc(-d, 0, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#F79E1B';
+  ctx.beginPath(); ctx.arc(d, 0, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(-d, 0, r, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = '#FF5F00';
+  ctx.beginPath(); ctx.arc(d, 0, r, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawGoogleChrome(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size / 2, rInner = r * 0.42;
+
+  ctx.fillStyle = '#EA4335';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, -Math.PI * 0.5, Math.PI * 0.17);
+  ctx.lineTo(Math.cos(Math.PI * 0.17) * rInner, Math.sin(Math.PI * 0.17) * rInner);
+  ctx.arc(0, 0, rInner, Math.PI * 0.17, -Math.PI * 0.5, true);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#34A853';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, Math.PI * 0.17, Math.PI * 0.83);
+  ctx.lineTo(Math.cos(Math.PI * 0.83) * rInner, Math.sin(Math.PI * 0.83) * rInner);
+  ctx.arc(0, 0, rInner, Math.PI * 0.83, Math.PI * 0.17, true);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#FBBC05';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, Math.PI * 0.83, Math.PI * 1.5);
+  ctx.lineTo(Math.cos(Math.PI * 1.5) * rInner, Math.sin(Math.PI * 1.5) * rInner);
+  ctx.arc(0, 0, rInner, Math.PI * 1.5, Math.PI * 0.83, true);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.arc(0, 0, rInner + size * 0.04, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#4285F4';
+  ctx.beginPath(); ctx.arc(0, 0, rInner, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawAndroidBug(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size * 0.42;
+  ctx.fillStyle = '#3DDC84';
+  ctx.beginPath(); ctx.arc(0, r * 0.2, r, Math.PI, 0); ctx.closePath(); ctx.fill();
+
+  ctx.lineWidth = size * 0.06; ctx.lineCap = 'round'; ctx.strokeStyle = '#3DDC84';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.5, -r * 0.5); ctx.lineTo(-r * 0.8, -r * 0.95);
+  ctx.moveTo(r * 0.5, -r * 0.5); ctx.lineTo(r * 0.8, -r * 0.95);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(-r * 0.42, -r * 0.35, size * 0.05, 0, Math.PI * 2);
+  ctx.arc(r * 0.42, -r * 0.35, size * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawMercedesStar(ctx, cx, cy, size, { embossed = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size / 2;
+
+  ctx.strokeStyle = '#E0E6ED';
+  ctx.lineWidth = size * 0.06;
+  ctx.beginPath(); ctx.arc(0, 0, r - size * 0.03, 0, Math.PI * 2); ctx.stroke();
+
+  const rTip = r * 0.92;
+  const angles = [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6];
+  angles.forEach((a) => {
+    const tipX = Math.cos(a) * rTip, tipY = Math.sin(a) * rTip;
+    const midL = a - Math.PI / 3, midR = a + Math.PI / 3;
+    const baseW = size * 0.08;
+    const baseLX = Math.cos(midL) * baseW, baseLY = Math.sin(midL) * baseW;
+    const baseRX = Math.cos(midR) * baseW, baseRY = Math.sin(midR) * baseW;
+
+    if (embossed) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(baseLX, baseLY); ctx.lineTo(tipX, tipY); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#A0AAB5';
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(tipX, tipY); ctx.lineTo(baseRX, baseRY); ctx.closePath(); ctx.fill();
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath(); ctx.moveTo(baseLX, baseLY); ctx.lineTo(tipX, tipY); ctx.lineTo(baseRX, baseRY); ctx.closePath(); ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
+function drawMercedesStarfield(ctx, cx, cy, w, h, { frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const cols = 8, rows = 4;
+  for (let c = 0; c < cols; c++) {
+    const fx = c / (cols - 1);
+    const alpha = frontIsLeft ? (1.0 - fx * 0.8) : (0.2 + fx * 0.8);
+    const starSz = (h / rows) * (0.35 + alpha * 0.35);
+    for (let r = 0; r < rows; r++) {
+      const stagger = (r % 2 === 1) ? (w / cols) * 0.5 : 0;
+      const x = -w / 2 + c * (w / cols) + stagger;
+      const y = -h / 2 + (r + 0.5) * (h / rows);
+      if (x < w / 2 - 10) {
+        ctx.globalAlpha = Math.max(0.12, alpha);
+        drawMercedesStar(ctx, x, y, starSz, { embossed: false });
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function drawPetronasSwoosh(ctx, cx, cy, w, h, { frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (!frontIsLeft) ctx.scale(-1, 1);
+
+  const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+  g.addColorStop(0, '#00D2BE');
+  g.addColorStop(0.7, '#00D2BE');
+  g.addColorStop(1, '#00D2BE00');
+
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, h * 0.2);
+  ctx.bezierCurveTo(-w * 0.1, h * 0.2, w * 0.2, -h * 0.3, w / 2, -h * 0.4);
+  ctx.lineTo(w / 2, -h * 0.1);
+  ctx.bezierCurveTo(w * 0.2, 0, -w * 0.1, h * 0.45, -w / 2, h * 0.45);
+  ctx.closePath(); ctx.fill();
+
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = Math.max(2, h * 0.08);
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, h * 0.22);
+  ctx.bezierCurveTo(-w * 0.1, h * 0.22, w * 0.2, -h * 0.28, w / 2, -h * 0.38);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAmgBadge(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const slashW = h * 0.18, slashGap = h * 0.12;
+  const startX = -w / 2;
+  for (let i = 0; i < 5; i++) {
+    const x = startX + i * (slashW + slashGap);
+    ctx.fillStyle = `rgb(${150 + i * 22}, ${150 + i * 22}, ${160 + i * 20})`;
+    ctx.beginPath();
+    ctx.moveTo(x + h * 0.25, -h * 0.4); ctx.lineTo(x + h * 0.25 + slashW, -h * 0.4);
+    ctx.lineTo(x + slashW, h * 0.4); ctx.lineTo(x, h * 0.4);
+    ctx.closePath(); ctx.fill();
+  }
+  const textX = startX + 5 * (slashW + slashGap) + h * 0.1;
+  fitText(ctx, 'AMG', (textX + w / 2) / 2, 0, w - (textX - startX), h * 0.85, s => `italic 900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+  ctx.restore();
+}
+
+function drawIneosCrown(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#D8102C'; // Ineos Dark Crimson
+  ctx.beginPath();
+  ctx.roundRect(-w / 2, -h / 2, w, h, h * 0.15);
+  ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = Math.max(1.5, h * 0.04);
+  ctx.stroke();
+  fitText(ctx, 'INEOS', 0, 0, w * 0.85, h * 0.72, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF', spacing: 0.06 });
+  ctx.restore();
+}
+
+function drawAstonWings(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sc = Math.min(w / 140, h / 35);
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#A8B4C0';
+  ctx.lineWidth = 1.2;
+
+  ctx.beginPath();
+  ctx.moveTo(-15, -4); ctx.lineTo(-65, -8); ctx.quadraticCurveTo(-68, -4, -62, 4); ctx.lineTo(-15, 6);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(15, -4); ctx.lineTo(65, -8); ctx.quadraticCurveTo(68, -4, 62, 4); ctx.lineTo(15, 6);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.beginPath();
+  [-50, -35, -22, 22, 35, 50].forEach(x => { ctx.moveTo(x, -6); ctx.lineTo(x * 0.95, 5); });
+  ctx.stroke();
+
+  ctx.fillStyle = '#00594F';
+  ctx.beginPath(); ctx.roundRect(-22, -9, 44, 18, 3); ctx.fill();
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1; ctx.stroke();
+
+  fitText(ctx, 'ASTON MARTIN', 0, 0, 38, 7.5, s => `700 ${s}px ${SANS}`, { fill: '#FFFFFF', spacing: 0.08 });
+  ctx.restore();
+}
+
+function drawAramcoWave(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const iconSz = h * 0.75;
+  const left = -w / 2;
+
+  ctx.lineWidth = iconSz * 0.22; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#00A3E0';
+  ctx.beginPath(); ctx.arc(left + iconSz * 0.5, -iconSz * 0.1, iconSz * 0.35, Math.PI * 0.8, Math.PI * 1.95); ctx.stroke();
+  ctx.strokeStyle = '#00843D';
+  ctx.beginPath(); ctx.arc(left + iconSz * 0.5, iconSz * 0.1, iconSz * 0.35, -Math.PI * 0.2, Math.PI * 0.95); ctx.stroke();
+
+  const tw = w - iconSz * 1.25;
+  fitText(ctx, 'aramco', left + iconSz * 1.2 + tw / 2, 0, tw, h * 0.75, s => `700 ${s}px ${SANS}`, { fill: '#FFFFFF', spacing: 0.02 });
+  ctx.restore();
+}
+
+function drawHondaHrc(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  fitText(ctx, 'HONDA', 0, -h * 0.22, w * 0.88, h * 0.48, s => `900 ${s}px ${HEAVY}`, { fill: '#E60215' });
+  fitText(ctx, 'HRC', 0, h * 0.25, w * 0.5, h * 0.4, s => `italic 900 ${s}px ${HEAVY}`, { fill: '#00519E' });
+  ctx.restore();
+}
+
+function drawWilliamsW(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sc = Math.min(w / 80, h / 60);
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = '#00A0DE';
+  ctx.beginPath(); ctx.moveTo(-36, -26); ctx.lineTo(-20, -26); ctx.lineTo(-6, 26); ctx.lineTo(-22, 26); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.moveTo(-16, -26); ctx.lineTo(-2, -26); ctx.lineTo(12, 26); ctx.lineTo(-2, 26); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#00A0DE';
+  ctx.beginPath(); ctx.moveTo(4, -26); ctx.lineTo(18, -26); ctx.lineTo(32, 26); ctx.lineTo(18, 26); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawDuracellAirbox(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const copperH = h * 0.38;
+
+  const g = ctx.createLinearGradient(0, -h / 2, 0, -h / 2 + copperH);
+  g.addColorStop(0, '#E8984E'); g.addColorStop(0.5, '#C87538'); g.addColorStop(1, '#9C5422');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, copperH, [6, 6, 0, 0]); ctx.fill();
+
+  ctx.fillStyle = '#111215';
+  ctx.fillRect(-w / 2, -h / 2 + copperH, w, h - copperH);
+
+  fitText(ctx, 'DURACELL', 0, -h / 2 + copperH + (h - copperH) * 0.5, w * 0.88, (h - copperH) * 0.65, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF', spacing: 0.05 });
+  ctx.restore();
+}
+
+function drawAtlassian(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sc = Math.min(w / 60, h / 60);
+  ctx.scale(sc, sc);
+  ctx.fillStyle = '#0052CC';
+  ctx.beginPath(); ctx.moveTo(-18, 22); ctx.quadraticCurveTo(-18, -12, -4, -22); ctx.quadraticCurveTo(-12, 5, 2, 22); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(18, -22); ctx.quadraticCurveTo(18, 12, 4, 22); ctx.quadraticCurveTo(12, -5, -2, -22); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawGulf(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size / 2;
+  ctx.fillStyle = '#FF7300';
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.strokeStyle = '#002B49';
+  ctx.lineWidth = size * 0.08; ctx.stroke();
+
+  fitText(ctx, 'Gulf', 0, size * 0.02, size * 0.72, size * 0.42, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+  ctx.restore();
+}
+
+function drawVcarbBull(ctx, cx, cy, w, h, { frontIsLeft = true } = {}) {
+  withFacing(ctx, w, frontIsLeft, () => {
+    drawBull(ctx, cx, cy, w, h, { fill: '#E0E6ED', horn: '#FFFFFF', outline: '#FFFFFF', keepAspect: true });
+  });
+}
+
+function drawCashApp(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#00D632';
+  ctx.beginPath(); ctx.roundRect(-size / 2, -size / 2, size, size, size * 0.22); ctx.fill();
+
+  ctx.rotate(-12 * Math.PI / 180);
+  fitText(ctx, '$', 0, size * 0.02, size * 0.7, size * 0.75, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+  ctx.restore();
+}
+
+function drawVcarbStripes(ctx, cx, cy, w, h, { frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-w / 2, -h * 0.15, w, h * 0.3);
+  ctx.fillStyle = '#FF1801';
+  ctx.fillRect(-w / 2, -h * 0.3, w, h * 0.1);
+  ctx.fillRect(-w / 2, h * 0.2, w, h * 0.1);
+  ctx.restore();
+}
+
+function drawAudiRings(ctx, cx, cy, w, h, color = '#FFFFFF') {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = h * 0.42;
+  const spacing = r * 1.55;
+  const startX = -spacing * 1.5;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = h * 0.11;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.arc(startX + i * spacing, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawAudiSport(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const rw = h * 0.95;
+  ctx.fillStyle = '#FF1801';
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 + rw * 0.35, -h * 0.45);
+  ctx.lineTo(-w / 2 + rw, -h * 0.45);
+  ctx.lineTo(-w / 2 + rw * 0.65, h * 0.45);
+  ctx.lineTo(-w / 2, h * 0.45);
+  ctx.closePath(); ctx.fill();
+
+  const tw = w - rw * 1.2;
+  fitText(ctx, 'Audi Sport', -w / 2 + rw * 1.2 + tw / 2, 0, tw, h * 0.75, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF', spacing: 0.02 });
+  ctx.restore();
+}
+
+function drawRevolut(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sz = h * 0.85;
+  const left = -w / 2;
+  fitText(ctx, 'R', left + sz * 0.35, 0, sz * 0.7, sz, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+  const tw = w - sz * 0.9;
+  fitText(ctx, 'Revolut', left + sz * 0.8 + tw / 2, 0, tw, h * 0.75, s => `700 ${s}px ${SANS}`, { fill: '#FFFFFF' });
+  ctx.restore();
+}
+
+function drawAudiChevron(ctx, cx, cy, w, h, { frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (!frontIsLeft) ctx.scale(-1, 1);
+  ctx.fillStyle = '#FF1801';
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, -h / 2); ctx.lineTo(0, -h / 2); ctx.lineTo(w / 2, h / 2); ctx.lineTo(0, h / 2);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#F0F2F5';
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 + w * 0.15, -h / 2); ctx.lineTo(-w / 2 + w * 0.28, -h / 2); ctx.lineTo(w * 0.28, h / 2); ctx.lineTo(w * 0.15, h / 2);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawTgr(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sz = h * 0.9;
+  const left = -w / 2;
+
+  ctx.fillStyle = '#E6002B';
+  ctx.beginPath();
+  ctx.arc(left + sz * 0.4, 0, sz * 0.45, Math.PI * 0.25, Math.PI * 1.75);
+  ctx.lineTo(left + sz * 0.4, 0); ctx.lineTo(left + sz * 0.65, 0);
+  ctx.arc(left + sz * 0.4, 0, sz * 0.22, 0, Math.PI * 1.75, true);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  fitText(ctx, 'R', left + sz * 0.85, 0, sz * 0.55, sz * 0.9, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+
+  const tw = w - sz * 1.35;
+  fitText(ctx, 'TOYOTA GAZOO', left + sz * 1.35 + tw / 2, -h * 0.2, tw, h * 0.38, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF' });
+  fitText(ctx, 'Racing', left + sz * 1.35 + tw / 2, h * 0.25, tw, h * 0.35, s => `700 ${s}px ${SANS}`, { fill: '#E6002B' });
+  ctx.restore();
+}
+
+function drawHaasH(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size / 2;
+  ctx.fillStyle = '#E6002B';
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  const barW = size * 0.16, barH = size * 0.65;
+  ctx.fillRect(-size * 0.28, -barH / 2, barW, barH);
+  ctx.fillRect(size * 0.12, -barH / 2, barW, barH);
+  ctx.fillRect(-size * 0.28, -size * 0.08, size * 0.56, size * 0.16);
+  ctx.restore();
+}
+
+function drawMoneyGram(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = h * 0.42;
+  const left = -w / 2 + r;
+
+  ctx.fillStyle = '#E6002B';
+  ctx.beginPath(); ctx.arc(left, 0, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = r * 0.22;
+  ctx.beginPath(); ctx.arc(left, 0, r * 0.55, -Math.PI * 0.3, Math.PI * 0.8); ctx.stroke();
+
+  const tw = w - r * 2.4;
+  fitText(ctx, 'MoneyGram', left + r * 1.4 + tw / 2, 0, tw, h * 0.72, s => `700 ${s}px ${SANS}`, { fill: '#FFFFFF' });
+  ctx.restore();
+}
+
+function drawAlpineArrow(ctx, cx, cy, w, h, { color = '#FFFFFF', frontIsLeft = true } = {}) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (!frontIsLeft) ctx.scale(-1, 1);
+  const sc = Math.min(w / 80, h / 70);
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, -32); ctx.lineTo(8, -32); ctx.lineTo(24, 32); ctx.lineTo(10, 32);
+  ctx.lineTo(5, 12); ctx.lineTo(-24, 12); ctx.lineTo(-30, 32); ctx.lineTo(-44, 32);
+  ctx.closePath(); ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(5, 12); ctx.lineTo(38, 12); ctx.lineTo(30, 2); ctx.lineTo(44, 12); ctx.lineTo(30, 22); ctx.lineTo(38, 12);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#0078D0';
+  ctx.beginPath(); ctx.moveTo(3, -12); ctx.lineTo(-18, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawBwtWave(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#FD4BC7';
+  ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, h * 0.2); ctx.fill();
+  fitText(ctx, 'BWT', 0, -h * 0.05, w * 0.85, h * 0.72, s => `900 ${s}px ${HEAVY}`, { fill: '#FFFFFF', spacing: 0.06 });
+  ctx.fillStyle = '#00D2BE';
+  ctx.beginPath(); ctx.arc(-w * 0.28, h * 0.18, h * 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawRenaultEtech(ctx, cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const r = size * 0.44;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(0, -r); ctx.lineTo(r * 0.65, 0); ctx.lineTo(0, r); ctx.lineTo(-r * 0.65, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#0078D0';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.6); ctx.lineTo(r * 0.38, 0); ctx.lineTo(0, r * 0.6); ctx.lineTo(-r * 0.38, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawCadillacCrest(ctx, cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const sc = Math.min(w / 100, h / 45);
+  ctx.scale(sc, sc);
+
+  ctx.fillStyle = '#C0C8D0';
+  ctx.beginPath();
+  ctx.moveTo(-22, -6); ctx.lineTo(-48, -4); ctx.lineTo(-44, 4); ctx.lineTo(-20, 6); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(22, -6); ctx.lineTo(48, -4); ctx.lineTo(44, 4); ctx.lineTo(20, 6); ctx.closePath(); ctx.fill();
+
+  const shield = () => {
+    ctx.beginPath();
+    ctx.moveTo(-16, -14); ctx.lineTo(16, -14); ctx.lineTo(16, 4); ctx.lineTo(0, 18); ctx.lineTo(-16, 4);
+    ctx.closePath();
+  };
+
+  shield(); ctx.fillStyle = '#D4AF37'; ctx.fill();
+
+  ctx.save();
+  shield(); ctx.clip();
+  ctx.fillStyle = '#D8102C'; ctx.fillRect(-14, -12, 14, 12);
+  ctx.fillStyle = '#1A1C20'; ctx.fillRect(0, -12, 14, 12);
+  ctx.fillStyle = '#0052CC'; ctx.fillRect(-14, 0, 14, 16);
+  ctx.fillStyle = '#D4AF37'; ctx.fillRect(0, 0, 14, 16);
+  ctx.restore();
+
+  shield(); ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.restore();
+}
+
 export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
   if (spec.kind === 'panel') {
     // Solid paint panel. Shapes are described relative to the car: 'diagRear' leans back toward the
     // tail, 'fadeRear' fades out toward the tail, 'fadeFront' fades out toward the nose.
     const W = 1024, H = 512;
     const { canvas, ctx } = makeCanvas(W, H);
-    const fwd = frontIsLeft ? 1 : -1; // +1: nose at canvas left
+    const fwd = frontIsLeft ? 1 : -1;
     const shape = spec.shape || 'rect';
     if (shape === 'fadeRear' || shape === 'fadeFront') {
       const noseLeft = fwd > 0;
@@ -599,7 +1315,7 @@ export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
       ctx.fillStyle = spec.color;
       ctx.beginPath();
       if (shape === 'diagRear') {
-        const k = W * 0.18; // top edge shifted toward the tail
+        const k = W * 0.18;
         if (fwd > 0) { ctx.moveTo(k, 0); ctx.lineTo(W, 0); ctx.lineTo(W - k, H); ctx.lineTo(0, H); }
         else { ctx.moveTo(0, 0); ctx.lineTo(W - k, 0); ctx.lineTo(W, H); ctx.lineTo(k, H); }
       } else ctx.rect(0, 0, W, H);
@@ -607,17 +1323,238 @@ export function createTeamDecalTexture(spec, { frontIsLeft = true } = {}) {
     }
     return { texture: finalizeTexture(canvas), aspect: null };
   }
-  if (spec.kind === 'art' && spec.art === 'audiRings') {
-    const W = 1024, H = 300;
-    const { canvas, ctx } = makeCanvas(W, H);
-    ctx.strokeStyle = spec.color || '#e60215'; ctx.lineWidth = 34;
-    const r = 120;
-    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(r + 30 + i * r * 1.55, H / 2, r, 0, Math.PI * 2); ctx.stroke(); }
-    return { texture: finalizeTexture(canvas), aspect: W / H };
+
+  // --- Authentic Team Art Emblems ---
+  if (spec.kind === 'art') {
+    if (spec.art === 'ferrariShield') {
+      const W = 512, H = 640;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawFerrariShield(ctx, W / 2, H / 2, W * 0.94, H * 0.94);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'hpLogo') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawHpLogo(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'shellLogo') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawShellLogo(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'italianTricolore') {
+      const W = 1024, H = 256;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawItalianTricolore(ctx, W / 2, H / 2, W, H);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'mclarenSpeedmark') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawMclarenSpeedmark(ctx, W / 2, H / 2, W * 0.94, H * 0.90, { color: spec.color || '#47C7FC', frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'mastercard') {
+      const W = 1024, H = 640;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawMastercard(ctx, W / 2, H / 2, W * 0.94, H * 0.94);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'googleChrome') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawGoogleChrome(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'androidBug') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAndroidBug(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'mercedesStar') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawMercedesStar(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'mercedesStarfield') {
+      const W = 1024, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawMercedesStarfield(ctx, W / 2, H / 2, W, H, { frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'petronasSwoosh') {
+      const W = 1024, H = 256;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawPetronasSwoosh(ctx, W / 2, H / 2, W, H, { frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'amgBadge') {
+      const W = 1024, H = 320;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAmgBadge(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'ineosCrown') {
+      const W = 1024, H = 450;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawIneosCrown(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'astonWings') {
+      const W = 1024, H = 320;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAstonWings(ctx, W / 2, H / 2, W * 0.96, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'aramcoWave') {
+      const W = 1024, H = 360;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAramcoWave(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'limeEssence') {
+      const W = 1024, H = 256;
+      const { canvas, ctx } = makeCanvas(W, H);
+      ctx.fillStyle = '#CEDC00';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.4); ctx.lineTo(W, 0); ctx.lineTo(W, H); ctx.lineTo(0, H * 0.6);
+      ctx.closePath(); ctx.fill();
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'hondaHrc') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawHondaHrc(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'williamsW') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawWilliamsW(ctx, W / 2, H / 2, W * 0.92, H * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'duracellAirbox') {
+      const W = 512, H = 300;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawDuracellAirbox(ctx, W / 2, H / 2, W * 0.96, H * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'atlassian') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAtlassian(ctx, W / 2, H / 2, W * 0.92, H * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'gulf') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawGulf(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'vcarbBull') {
+      const W = 1024, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawVcarbBull(ctx, W / 2, H / 2, W * 0.92, H * 0.92, { frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: 2 };
+    }
+    if (spec.art === 'visaLogo') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      // Italic VISA with gold winglet on the V
+      fitText(ctx, 'VISA', W / 2, H / 2, W * 0.92, H * 0.82, s => `italic 900 ${s}px ${HEAVY}`, { fill: spec.color || '#FFFFFF', spacing: 0.02 });
+      ctx.fillStyle = '#F6C200';
+      ctx.beginPath();
+      ctx.moveTo(W * 0.16, H * 0.18); ctx.lineTo(W * 0.23, H * 0.18); ctx.lineTo(W * 0.18, H * 0.42);
+      ctx.closePath(); ctx.fill();
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'cashApp') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawCashApp(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'vcarbStripes') {
+      const W = 1024, H = 256;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawVcarbStripes(ctx, W / 2, H / 2, W, H, { frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'audiRings') {
+      const W = 1024, H = 320;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAudiRings(ctx, W / 2, H / 2, W * 0.94, H * 0.88, spec.color || '#FFFFFF');
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'audiSport') {
+      const W = 1024, H = 320;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAudiSport(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'revolut') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawRevolut(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'audiChevron') {
+      const W = 1024, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAudiChevron(ctx, W / 2, H / 2, W, H, { frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'tgrLogo') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawTgr(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'haasH') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawHaasH(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'moneyGram') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawMoneyGram(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'alpineArrow') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawAlpineArrow(ctx, W / 2, H / 2, W * 0.92, H * 0.92, { color: spec.color || '#FFFFFF', frontIsLeft });
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'bwtWave') {
+      const W = 1024, H = 400;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawBwtWave(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'renaultEtech') {
+      const W = 512, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawRenaultEtech(ctx, W / 2, H / 2, W * 0.92);
+      return { texture: finalizeTexture(canvas), aspect: 1 };
+    }
+    if (spec.art === 'cadillacCrest') {
+      const W = 1024, H = 512;
+      const { canvas, ctx } = makeCanvas(W, H);
+      drawCadillacCrest(ctx, W / 2, H / 2, W * 0.94, H * 0.88);
+      return { texture: finalizeTexture(canvas), aspect: W / H };
+    }
+    if (spec.art === 'rbBull') {
+      return { texture: createEngineCoverDecalTexture({ frontIsLeft }), aspect: 2 };
+    }
   }
-  if (spec.kind === 'art' && spec.art === 'rbBull') {
-    return { texture: createEngineCoverDecalTexture({ frontIsLeft }), aspect: 2 };
-  }
+
   // text (2048x512: sharp at close-up camera distances)
   const W = 2048, H = 512;
   const { canvas, ctx } = makeCanvas(W, H);

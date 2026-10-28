@@ -69,274 +69,6 @@
    "bodyTexture": "baked"
   },
   {
-   "id": "mclaren",
-   "name": "McLaren Mastercard F1 Team",
-   "car": "MCL40",
-   "powerUnit": "Mercedes-AMG M17",
-   "drivers": [
-    {
-     "no": 1,
-     "name": "Lando Norris"
-    },
-    {
-     "no": 81,
-     "name": "Oscar Piastri"
-    }
-   ],
-   "paint": {
-    "body": "#F77C09",
-    "accent": "#0389A7",
-    "detail": "#232328",
-    "finish": "gloss"
-   },
-   "decals": [
-    {
-     "kind": "panel",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.45,
-     "w": 0.55,
-     "h": 1.1,
-     "color": "#232328",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.62,
-     "z": 0.28,
-     "w": 0.5,
-     "h": 1.2,
-     "color": "#232328",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.3,
-     "z": 0.35,
-     "w": 0.32,
-     "h": 0.22,
-     "color": "#2C2661"
-    },
-    {
-     "kind": "text",
-     "target": "tub",
-     "face": "side",
-     "x": 0.3,
-     "z": 0.35,
-     "w": 0.26,
-     "text": "DP WORLD",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.38,
-     "z": 0.62,
-     "w": 0.3,
-     "text": "Gemini",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.35,
-     "z": 0.35,
-     "w": 0.22,
-     "text": "OKX",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.72,
-     "z": 0.4,
-     "w": 0.13,
-     "text": "DELL",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "frontEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.45,
-     "w": 0.6,
-     "text": "workday",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "rearEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.68,
-     "w": 0.85,
-     "text": "Dropbox",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "rearWingMain",
-     "face": "top",
-     "x": 0.3,
-     "w": 0.45,
-     "text": "groq",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "nose",
-     "face": "side",
-     "x": 0.55,
-     "z": 0.45,
-     "w": 0.3,
-     "text": "MASTERCARD",
-     "color": "#232328"
-    }
-   ]
-  },
-  {
-   "id": "mercedes",
-   "name": "Mercedes-AMG PETRONAS F1 Team",
-   "car": "W17",
-   "powerUnit": "Mercedes-AMG M17",
-   "drivers": [
-    {
-     "no": 63,
-     "name": "George Russell"
-    },
-    {
-     "no": 12,
-     "name": "Kimi Antonelli"
-    }
-   ],
-   "paint": {
-    "body": "#0F0F14",
-    "accent": "#0F0F14",
-    "detail": "#01C7C9",
-    "finish": "gloss"
-   },
-   "decals": [
-    {
-     "kind": "panel",
-     "target": "nose",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.5,
-     "w": 1.05,
-     "h": 1.3,
-     "color": "#B1B3B8",
-     "shape": "fadeRear"
-    },
-    {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.18,
-     "z": 0.5,
-     "w": 0.4,
-     "h": 1.2,
-     "color": "#B1B3B8",
-     "shape": "fadeRear"
-    },
-    {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.45,
-     "z": 0.16,
-     "w": 0.75,
-     "h": 0.1,
-     "color": "#01C7C9",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.6,
-     "w": 0.34,
-     "text": "PETRONAS",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.45,
-     "z": 0.6,
-     "w": 0.25,
-     "text": "SOLERA",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.62,
-     "z": 0.5,
-     "w": 0.18,
-     "text": "Microsoft",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "tub",
-     "face": "side",
-     "x": 0.42,
-     "z": 0.62,
-     "w": 0.18,
-     "text": "AMG",
-     "color": "#0F0F14"
-    },
-    {
-     "kind": "text",
-     "target": "nose",
-     "face": "side",
-     "x": 0.6,
-     "z": 0.45,
-     "w": 0.22,
-     "text": "IWC",
-     "color": "#0F0F14"
-    },
-    {
-     "kind": "text",
-     "target": "frontEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.45,
-     "w": 0.6,
-     "text": "Microsoft",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "rearEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.68,
-     "w": 0.85,
-     "text": "CROWDSTRIKE",
-     "color": "#FFFFFF"
-    }
-   ]
-  },
-  {
    "id": "ferrari",
    "name": "Scuderia Ferrari HP",
    "car": "SF-26",
@@ -352,64 +84,91 @@
     }
    ],
    "paint": {
-    "body": "#DF111D",
-    "accent": "#EEEFF2",
-    "detail": "#19191E",
-    "finish": "gloss"
+    "body": "#D4001F",
+    "accent": "#FFE500",
+    "detail": "#111115",
+    "finish": "gloss",
+    "camo": 0
    },
    "decals": [
     {
-     "kind": "panel",
+     "kind": "art",
+     "art": "ferrariShield",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.16,
+     "z": 0.72,
+     "w": 0.14,
+     "h": 0.32
+    },
+    {
+     "kind": "art",
+     "art": "ferrariShield",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.22,
+     "h": 0.45
+    },
+    {
+     "kind": "art",
+     "art": "hpLogo",
      "target": "engineCover",
      "face": "side",
-     "x": 0.3,
+     "x": 0.36,
      "z": 0.65,
-     "w": 0.55,
-     "h": 0.8,
-     "color": "#EEEFF2",
-     "shape": "diagRear"
+     "w": 0.22,
+     "h": 0.5
     },
     {
-     "kind": "text",
-     "target": "engineCover",
+     "kind": "art",
+     "art": "shellLogo",
+     "target": "sidepod",
      "face": "side",
-     "x": 0.28,
-     "z": 0.7,
+     "x": 0.36,
+     "z": 0.62,
      "w": 0.16,
-     "text": "HP",
-     "color": "#0096D6",
-     "font": "sans"
+     "h": 0.38
     },
     {
-     "kind": "text",
-     "target": "sidepod",
+     "kind": "art",
+     "art": "shellLogo",
+     "target": "rearEndplate",
      "face": "side",
-     "x": 0.3,
-     "z": 0.6,
-     "w": 0.18,
-     "text": "Shell",
-     "color": "#FFD500"
+     "x": 0.5,
+     "z": 0.68,
+     "w": 0.55,
+     "h": 0.65
     },
     {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.55,
-     "z": 0.6,
-     "w": 0.18,
-     "text": "CEVA",
-     "color": "#FFFFFF"
+     "kind": "art",
+     "art": "italianTricolore",
+     "target": "nose",
+     "face": "top",
+     "x": 0.28,
+     "w": 0.15,
+     "h": 0.35
     },
     {
-     "kind": "text",
+     "kind": "art",
+     "art": "italianTricolore",
      "target": "engineCover",
+     "face": "side",
+     "x": 0.75,
+     "z": 0.48,
+     "w": 0.18,
+     "h": 0.18
+    },
+    {
+     "kind": "text",
+     "target": "sidepod",
      "face": "side",
      "x": 0.58,
-     "z": 0.45,
-     "w": 0.2,
-     "text": "UniCredit",
+     "z": 0.62,
+     "w": 0.22,
+     "text": "CEVA",
      "color": "#FFFFFF",
-     "font": "sans"
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -419,15 +178,16 @@
      "z": 0.68,
      "w": 0.22,
      "text": "RICHARD MILLE",
-     "color": "#FFFFFF"
+     "color": "#FFFFFF",
+     "font": "heavy"
     },
     {
      "kind": "text",
-     "target": "nose",
+     "target": "engineCover",
      "face": "side",
-     "x": 0.55,
-     "z": 0.45,
-     "w": 0.3,
+     "x": 0.6,
+     "z": 0.68,
+     "w": 0.24,
      "text": "UniCredit",
      "color": "#FFFFFF",
      "font": "sans"
@@ -438,254 +198,151 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
+     "w": 0.65,
      "text": "UniCredit",
      "color": "#FFFFFF",
      "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "rearEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.68,
-     "w": 0.85,
-     "text": "V-Power",
-     "color": "#FFFFFF"
     },
     {
      "kind": "text",
      "target": "rearWingMain",
      "face": "top",
      "x": 0.3,
-     "w": 0.4,
-     "text": "IBM",
-     "color": "#4B8BFF"
+     "w": 0.6,
+     "text": "FERRARI",
+     "color": "#FFFFFF",
+     "font": "heavy"
     }
    ]
   },
   {
-   "id": "williams",
-   "name": "Atlassian Williams Racing",
-   "car": "FW48",
-   "powerUnit": "Mercedes-AMG M17",
+   "id": "mclaren",
+   "name": "McLaren Mastercard F1 Team",
+   "car": "MCL39",
+   "powerUnit": "Mercedes-AMG M17 E Performance",
    "drivers": [
     {
-     "no": 23,
-     "name": "Alex Albon"
+     "no": 4,
+     "name": "Lando Norris"
     },
     {
-     "no": 55,
-     "name": "Carlos Sainz"
+     "no": 81,
+     "name": "Oscar Piastri"
     }
    ],
    "paint": {
-    "body": "#0071C6",
-    "accent": "#1E1E23",
-    "detail": "#E10600",
-    "finish": "gloss"
+    "body": "#FF8000",
+    "accent": "#47C7FC",
+    "detail": "#14171A",
+    "finish": "gloss",
+    "camo": 0
    },
    "decals": [
     {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.42,
-     "z": 0.3,
-     "w": 0.6,
-     "h": 0.32,
-     "color": "#F0F0F4",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.62,
-     "w": 0.5,
-     "h": 0.22,
-     "color": "#58ADED",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.75,
-     "z": 0.3,
-     "w": 0.6,
-     "h": 0.5,
-     "color": "#1E1E23",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.6,
-     "w": 0.3,
-     "text": "BARCLAYS",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.42,
-     "z": 0.3,
-     "w": 0.3,
-     "text": "KOMATSU",
-     "color": "#0A3D91"
-    },
-    {
-     "kind": "text",
+     "kind": "art",
+     "art": "mclarenSpeedmark",
      "target": "engineCover",
      "face": "side",
-     "x": 0.5,
-     "z": 0.58,
-     "w": 0.4,
-     "text": "ATLASSIAN",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "tub",
-     "face": "side",
-     "x": 0.3,
-     "z": 0.68,
-     "w": 0.22,
-     "text": "Stephens",
-     "color": "#FFFFFF",
-     "font": "serif"
-    },
-    {
-     "kind": "text",
-     "target": "nose",
-     "face": "side",
-     "x": 0.55,
-     "z": 0.45,
-     "w": 0.2,
-     "text": "Gulf",
-     "color": "#F58220"
-    },
-    {
-     "kind": "text",
-     "target": "frontEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.45,
-     "w": 0.6,
-     "text": "betway",
-     "color": "#FFFFFF",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "rearEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.68,
-     "w": 0.85,
-     "text": "KOMATSU",
-     "color": "#FFFFFF"
-    }
-   ]
-  },
-  {
-   "id": "racing-bulls",
-   "name": "Visa Cash App Racing Bulls",
-   "car": "VCARB 03",
-   "powerUnit": "Red Bull Ford DM01",
-   "drivers": [
-    {
-     "no": 30,
-     "name": "Liam Lawson"
-    },
-    {
-     "no": 41,
-     "name": "Arvid Lindblad"
-    }
-   ],
-   "paint": {
-    "body": "#F1F0EF",
-    "accent": "#FAB507",
-    "detail": "#DB2615",
-    "finish": "matte"
-   },
-   "decals": [
-    {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.25,
-     "w": 0.9,
-     "h": 0.4,
-     "color": "#1D3A96",
-     "shape": "diagRear"
-    },
-    {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.75,
-     "z": 0.28,
-     "w": 0.45,
-     "h": 1.1,
-     "color": "#1D3A96",
-     "shape": "diagRear"
+     "x": 0.45,
+     "z": 0.72,
+     "w": 0.32,
+     "h": 0.38,
+     "color": "#47C7FC"
     },
     {
      "kind": "art",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.38,
-     "z": 0.55,
-     "w": 0.42,
-     "art": "rbBull"
+     "art": "mclarenSpeedmark",
+     "target": "nose",
+     "face": "top",
+     "x": 0.52,
+     "w": 0.24,
+     "h": 0.32,
+     "color": "#47C7FC"
     },
     {
-     "kind": "text",
+     "kind": "art",
+     "art": "mastercard",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.64,
+     "w": 0.2,
+     "h": 0.4
+    },
+    {
+     "kind": "art",
+     "art": "googleChrome",
      "target": "engineCover",
      "face": "side",
-     "x": 0.56,
-     "z": 0.3,
-     "w": 0.3,
-     "text": "Red Bull",
-     "color": "#DB2615"
+     "x": 0.72,
+     "z": 0.52,
+     "w": 0.18,
+     "h": 0.38
+    },
+    {
+     "kind": "art",
+     "art": "androidBug",
+     "target": "tub",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.68,
+     "w": 0.16,
+     "h": 0.34
+    },
+    {
+     "kind": "panel",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.68,
+     "z": 0.45,
+     "w": 0.45,
+     "h": 0.65,
+     "color": "#14171A",
+     "shape": "diagRear"
+    },
+    {
+     "kind": "panel",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.62,
+     "z": 0.6,
+     "w": 0.48,
+     "h": 0.7,
+     "color": "#14171A",
+     "shape": "diagRear"
     },
     {
      "kind": "text",
      "target": "sidepod",
      "face": "side",
-     "x": 0.38,
-     "z": 0.6,
-     "w": 0.34,
-     "text": "VISA",
-     "color": "#1D3A96"
+     "x": 0.52,
+     "z": 0.62,
+     "w": 0.22,
+     "text": "OKX",
+     "color": "#47C7FC",
+     "font": "heavy"
     },
     {
      "kind": "text",
      "target": "tub",
      "face": "side",
-     "x": 0.3,
-     "z": 0.68,
-     "w": 0.2,
-     "text": "HUGO",
-     "color": "#DB2615"
+     "x": 0.25,
+     "z": 0.74,
+     "w": 0.22,
+     "text": "DP WORLD",
+     "color": "#FFFFFF",
+     "font": "heavy"
     },
     {
      "kind": "text",
-     "target": "nose",
+     "target": "engineCover",
      "face": "side",
-     "x": 0.55,
-     "z": 0.45,
-     "w": 0.28,
-     "text": "Cash App",
-     "color": "#00C244",
-     "font": "sans"
+     "x": 0.32,
+     "z": 0.5,
+     "w": 0.2,
+     "text": "DELL",
+     "color": "#47C7FC",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -693,10 +350,127 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
-     "text": "Cash App",
-     "color": "#1D3A96",
-     "font": "sans"
+     "w": 0.65,
+     "text": "OKX",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.65,
+     "text": "MCLAREN",
+     "color": "#000000",
+     "font": "heavy"
+    }
+   ]
+  },
+  {
+   "id": "mercedes",
+   "name": "Mercedes-AMG PETRONAS F1 Team",
+   "car": "F1 W17",
+   "powerUnit": "Mercedes-AMG M17 E Performance",
+   "drivers": [
+    {
+     "no": 63,
+     "name": "George Russell"
+    },
+    {
+     "no": 12,
+     "name": "Kimi Antonelli"
+    }
+   ],
+   "paint": {
+    "body": "#0C1015",
+    "accent": "#00D2BE",
+    "detail": "#D0D8E2",
+    "finish": "gloss",
+    "camo": 0
+   },
+   "decals": [
+    {
+     "kind": "art",
+     "art": "mercedesStar",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.25,
+     "h": 0.5
+    },
+    {
+     "kind": "art",
+     "art": "mercedesStarfield",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.6,
+     "z": 0.55,
+     "w": 0.45,
+     "h": 0.6
+    },
+    {
+     "kind": "art",
+     "art": "petronasSwoosh",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.45,
+     "z": 0.48,
+     "w": 0.65,
+     "h": 0.45
+    },
+    {
+     "kind": "art",
+     "art": "ineosCrown",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.25,
+     "z": 0.82,
+     "w": 0.26,
+     "h": 0.32
+    },
+    {
+     "kind": "art",
+     "art": "amgBadge",
+     "target": "tub",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.7,
+     "w": 0.24,
+     "h": 0.32
+    },
+    {
+     "kind": "text",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.36,
+     "z": 0.65,
+     "w": 0.4,
+     "text": "PETRONAS",
+     "color": "#00D2BE",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.42,
+     "z": 0.45,
+     "w": 0.22,
+     "text": "SOLERA",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "frontEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.45,
+     "w": 0.65,
+     "text": "PETRONAS",
+     "color": "#00D2BE",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -705,8 +479,19 @@
      "x": 0.5,
      "z": 0.68,
      "w": 0.85,
-     "text": "VISA",
-     "color": "#FFFFFF"
+     "text": "CROWDSTRIKE",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.55,
+     "text": "PETRONAS",
+     "color": "#00D2BE",
+     "font": "heavy"
     }
    ]
   },
@@ -726,95 +511,83 @@
     }
    ],
    "paint": {
-    "body": "#015E57",
-    "accent": "#191919",
-    "detail": "#CEDE02",
-    "finish": "satin"
+    "body": "#00594F",
+    "accent": "#CEDC00",
+    "detail": "#0B1411",
+    "finish": "satin",
+    "camo": 0
    },
    "decals": [
     {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.45,
-     "z": 0.45,
-     "w": 1.0,
-     "h": 0.05,
-     "color": "#CEDE02"
+     "kind": "art",
+     "art": "astonWings",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.32,
+     "h": 0.35
     },
     {
-     "kind": "panel",
+     "kind": "art",
+     "art": "astonWings",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.32,
+     "z": 0.72,
+     "w": 0.32,
+     "h": 0.36
+    },
+    {
+     "kind": "art",
+     "art": "aramcoWave",
      "target": "sidepod",
      "face": "side",
-     "x": 0.3,
+     "x": 0.38,
      "z": 0.62,
-     "w": 0.9,
-     "h": 0.05,
-     "color": "#CEDE02",
-     "shape": "diagRear"
+     "w": 0.36,
+     "h": 0.35
     },
     {
-     "kind": "panel",
+     "kind": "art",
+     "art": "limeEssence",
      "target": "sidepod",
      "face": "side",
      "x": 0.5,
-     "z": 0.18,
-     "w": 1.0,
-     "h": 0.3,
-     "color": "#191919"
+     "z": 0.28,
+     "w": 0.65,
+     "h": 0.15
     },
     {
-     "kind": "text",
-     "target": "sidepod",
+     "kind": "art",
+     "art": "hondaHrc",
+     "target": "engineCover",
      "face": "side",
-     "x": 0.42,
-     "z": 0.6,
-     "w": 0.4,
-     "text": "aramco",
-     "color": "#FFFFFF",
-     "font": "sans"
+     "x": 0.68,
+     "z": 0.48,
+     "w": 0.22,
+     "h": 0.35
     },
     {
      "kind": "text",
      "target": "engineCover",
      "face": "side",
-     "x": 0.6,
-     "z": 0.6,
-     "w": 0.2,
+     "x": 0.52,
+     "z": 0.68,
+     "w": 0.24,
      "text": "cognizant",
      "color": "#FFFFFF",
      "font": "sans"
     },
     {
      "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.42,
-     "z": 0.55,
-     "w": 0.22,
-     "text": "MAADEN",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.66,
-     "z": 0.45,
-     "w": 0.16,
-     "text": "HONDA",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
      "target": "tub",
      "face": "side",
-     "x": 0.3,
-     "z": 0.68,
+     "x": 0.28,
+     "z": 0.72,
      "w": 0.22,
-     "text": "Pepperstone",
+     "text": "BOSS",
      "color": "#FFFFFF",
-     "font": "sans"
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -822,9 +595,10 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
-     "text": "GLENFIDDICH",
-     "color": "#FFFFFF"
+     "w": 0.65,
+     "text": "aramco",
+     "color": "#CEDC00",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -833,9 +607,405 @@
      "x": 0.5,
      "z": 0.68,
      "w": 0.85,
-     "text": "coinbase",
+     "text": "VALVOLINE",
      "color": "#FFFFFF",
-     "font": "sans"
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.6,
+     "text": "ARAMCO",
+     "color": "#CEDC00",
+     "font": "heavy"
+    }
+   ]
+  },
+  {
+   "id": "williams",
+   "name": "Atlassian Williams Racing",
+   "car": "FW48",
+   "powerUnit": "Mercedes-AMG M17 E Performance",
+   "drivers": [
+    {
+     "no": 23,
+     "name": "Alexander Albon"
+    },
+    {
+     "no": 55,
+     "name": "Carlos Sainz"
+    }
+   ],
+   "paint": {
+    "body": "#041E42",
+    "accent": "#00A0DE",
+    "detail": "#FFFFFF",
+    "finish": "gloss",
+    "camo": 0
+   },
+   "decals": [
+    {
+     "kind": "art",
+     "art": "williamsW",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.24,
+     "h": 0.38
+    },
+    {
+     "kind": "art",
+     "art": "duracellAirbox",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.22,
+     "z": 0.84,
+     "w": 0.28,
+     "h": 0.3
+    },
+    {
+     "kind": "art",
+     "art": "atlassian",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.25,
+     "z": 0.64,
+     "w": 0.2,
+     "h": 0.38
+    },
+    {
+     "kind": "art",
+     "art": "gulf",
+     "target": "tub",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.68,
+     "w": 0.16,
+     "h": 0.34
+    },
+    {
+     "kind": "art",
+     "art": "williamsW",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.42,
+     "z": 0.68,
+     "w": 0.25,
+     "h": 0.38
+    },
+    {
+     "kind": "text",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.52,
+     "z": 0.62,
+     "w": 0.32,
+     "text": "KOMATSU",
+     "color": "#00A0DE",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.65,
+     "z": 0.48,
+     "w": 0.25,
+     "text": "BARCLAYS",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "frontEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.45,
+     "w": 0.65,
+     "text": "KOMATSU",
+     "color": "#00A0DE",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.68,
+     "w": 0.85,
+     "text": "Gulf",
+     "color": "#FF7300",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.6,
+     "text": "WILLIAMS",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    }
+   ]
+  },
+  {
+   "id": "racing-bulls",
+   "name": "Visa Cash App RB",
+   "car": "VCARB 03",
+   "powerUnit": "Red Bull Ford DM01",
+   "drivers": [
+    {
+     "no": 30,
+     "name": "Liam Lawson"
+    },
+    {
+     "no": 41,
+     "name": "Arvid Lindblad"
+    }
+   ],
+   "paint": {
+    "body": "#1634CA",
+    "accent": "#FF1801",
+    "detail": "#FFFFFF",
+    "finish": "gloss",
+    "camo": 0
+   },
+   "decals": [
+    {
+     "kind": "art",
+     "art": "vcarbBull",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.45,
+     "z": 0.62,
+     "w": 0.48,
+     "h": 0.55
+    },
+    {
+     "kind": "art",
+     "art": "visaLogo",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.32,
+     "z": 0.64,
+     "w": 0.32,
+     "h": 0.38
+    },
+    {
+     "kind": "art",
+     "art": "cashApp",
+     "target": "tub",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.68,
+     "w": 0.16,
+     "h": 0.34
+    },
+    {
+     "kind": "art",
+     "art": "cashApp",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.2,
+     "h": 0.38
+    },
+    {
+     "kind": "art",
+     "art": "vcarbStripes",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.35,
+     "w": 0.75,
+     "h": 0.2
+    },
+    {
+     "kind": "text",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.7,
+     "z": 0.45,
+     "w": 0.22,
+     "text": "HONDA",
+     "color": "#FF1801",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.65,
+     "z": 0.64,
+     "w": 0.22,
+     "text": "HUGO",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "frontEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.45,
+     "w": 0.65,
+     "text": "VISA",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.68,
+     "w": 0.85,
+     "text": "Cash App",
+     "color": "#00D632",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.55,
+     "text": "RACING BULLS",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    }
+   ]
+  },
+  {
+   "id": "audi",
+   "name": "Audi Revolut F1 Team",
+   "car": "Audi R26",
+   "powerUnit": "Audi AFR 26 Hybrid",
+   "drivers": [
+    {
+     "no": 27,
+     "name": "Nico Hülkenberg"
+    },
+    {
+     "no": 5,
+     "name": "Gabriel Bortoleto"
+    }
+   ],
+   "paint": {
+    "body": "#111317",
+    "accent": "#FF1801",
+    "detail": "#F0F2F5",
+    "finish": "satin",
+    "camo": 0
+   },
+   "decals": [
+    {
+     "kind": "art",
+     "art": "audiRings",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.38,
+     "z": 0.68,
+     "w": 0.34,
+     "h": 0.32,
+     "color": "#FFFFFF"
+    },
+    {
+     "kind": "art",
+     "art": "audiRings",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.28,
+     "h": 0.32,
+     "color": "#FF1801"
+    },
+    {
+     "kind": "art",
+     "art": "audiSport",
+     "target": "tub",
+     "face": "side",
+     "x": 0.28,
+     "z": 0.7,
+     "w": 0.26,
+     "h": 0.32
+    },
+    {
+     "kind": "art",
+     "art": "audiChevron",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.65,
+     "z": 0.58,
+     "w": 0.42,
+     "h": 0.65
+    },
+    {
+     "kind": "art",
+     "art": "revolut",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.35,
+     "z": 0.62,
+     "w": 0.32,
+     "h": 0.36
+    },
+    {
+     "kind": "text",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.65,
+     "z": 0.62,
+     "w": 0.2,
+     "text": "bp",
+     "color": "#008850",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.7,
+     "z": 0.42,
+     "w": 0.2,
+     "text": "Castrol",
+     "color": "#008850",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "frontEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.45,
+     "w": 0.65,
+     "text": "Revolut",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearEndplate",
+     "face": "side",
+     "x": 0.5,
+     "z": 0.68,
+     "w": 0.85,
+     "text": "Audi Sport",
+     "color": "#FF1801",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.55,
+     "text": "AUDI",
+     "color": "#FFFFFF",
+     "font": "heavy"
     }
    ]
   },
@@ -855,202 +1025,84 @@
     }
    ],
    "paint": {
-    "body": "#F0F0EF",
-    "accent": "#E0071E",
-    "detail": "#191919",
-    "finish": "gloss"
+    "body": "#E8ECF0",
+    "accent": "#E6002B",
+    "detail": "#14171A",
+    "finish": "gloss",
+    "camo": 0
    },
    "decals": [
     {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.55,
-     "w": 1.0,
-     "h": 0.07,
-     "color": "#E0071E"
-    },
-    {
-     "kind": "panel",
-     "target": "nose",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.55,
-     "w": 1.0,
-     "h": 0.12,
-     "color": "#E0071E"
-    },
-    {
-     "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.12,
-     "w": 1.0,
-     "h": 0.25,
-     "color": "#191919"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
+     "kind": "art",
+     "art": "tgrLogo",
+     "target": "engineCover",
      "face": "side",
      "x": 0.42,
-     "z": 0.6,
-     "w": 0.42,
-     "text": "HAAS",
-     "color": "#191919",
-     "skew": -0.25
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.45,
-     "z": 0.66,
-     "w": 0.4,
-     "text": "GR",
-     "color": "#E0071E",
-     "stroke": "#191919",
-     "skew": -0.2
-    },
-    {
-     "kind": "text",
-     "target": "tub",
-     "face": "side",
-     "x": 0.3,
-     "z": 0.72,
-     "w": 0.22,
-     "text": "ORION180",
-     "color": "#191919"
-    },
-    {
-     "kind": "text",
-     "target": "frontEndplate",
-     "face": "side",
-     "x": 0.5,
-     "z": 0.45,
-     "w": 0.6,
-     "text": "MONEYGRAM",
-     "color": "#191919"
-    },
-    {
-     "kind": "text",
-     "target": "rearEndplate",
-     "face": "side",
-     "x": 0.5,
      "z": 0.68,
-     "w": 0.85,
-     "text": "Play'n GO",
-     "color": "#E0071E",
-     "font": "sans"
-    }
-   ]
-  },
-  {
-   "id": "audi",
-   "name": "Audi Revolut F1 Team",
-   "car": "R26",
-   "powerUnit": "Audi AFR 26 Hybrid",
-   "drivers": [
-    {
-     "no": 27,
-     "name": "Nico Hulkenberg"
+     "w": 0.34,
+     "h": 0.38
     },
     {
-     "no": 5,
-     "name": "Gabriel Bortoleto"
-    }
-   ],
-   "paint": {
-    "body": "#B6B4B2",
-    "accent": "#E60215",
-    "detail": "#19191B",
-    "finish": "satin"
-   },
-   "decals": [
+     "kind": "art",
+     "art": "haasH",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.22,
+     "h": 0.4
+    },
+    {
+     "kind": "art",
+     "art": "moneyGram",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.32,
+     "z": 0.64,
+     "w": 0.34,
+     "h": 0.36
+    },
     {
      "kind": "panel",
-     "target": "engineCover",
+     "target": "sidepod",
      "face": "side",
-     "x": 0.62,
-     "z": 0.5,
-     "w": 0.8,
-     "h": 1.2,
-     "color": "#19191B",
+     "x": 0.68,
+     "z": 0.45,
+     "w": 0.45,
+     "h": 0.65,
+     "color": "#14171A",
      "shape": "diagRear"
     },
     {
      "kind": "panel",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.7,
-     "z": 0.28,
-     "w": 0.45,
-     "h": 1.2,
-     "color": "#E60215"
-    },
-    {
-     "kind": "art",
      "target": "engineCover",
      "face": "side",
-     "x": 0.45,
-     "z": 0.5,
-     "w": 0.22,
-     "art": "audiRings",
-     "color": "#E60215"
+     "x": 0.65,
+     "z": 0.58,
+     "w": 0.42,
+     "h": 0.65,
+     "color": "#E6002B",
+     "shape": "diagRear"
     },
     {
      "kind": "text",
      "target": "sidepod",
      "face": "side",
-     "x": 0.32,
-     "z": 0.6,
-     "w": 0.32,
-     "text": "Revolut",
-     "color": "#19191B",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.75,
-     "z": 0.45,
-     "w": 0.1,
-     "text": "bp",
-     "color": "#3DAE2B",
-     "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "top",
-     "x": 0.25,
-     "z": 0.75,
-     "w": 0.2,
-     "text": "Castrol",
-     "color": "#19191B",
-     "font": "sans"
-    },
-    {
-     "kind": "art",
-     "target": "nose",
-     "face": "top",
      "x": 0.6,
-     "w": 0.3,
-     "art": "audiRings",
-     "color": "#E60215"
+     "z": 0.64,
+     "w": 0.24,
+     "text": "HAAS",
+     "color": "#FFFFFF",
+     "font": "heavy"
     },
     {
      "kind": "text",
-     "target": "nose",
+     "target": "tub",
      "face": "side",
-     "x": 0.55,
-     "z": 0.45,
-     "w": 0.3,
-     "text": "ElevenLabs",
-     "color": "#19191B",
+     "x": 0.28,
+     "z": 0.7,
+     "w": 0.22,
+     "text": "ORION180",
+     "color": "#14171A",
      "font": "sans"
     },
     {
@@ -1059,10 +1111,10 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
-     "text": "Visit Qatar",
-     "color": "#19191B",
-     "font": "sans"
+     "w": 0.65,
+     "text": "HAAS",
+     "color": "#E6002B",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -1071,9 +1123,19 @@
      "x": 0.5,
      "z": 0.68,
      "w": 0.85,
-     "text": "Revolut",
+     "text": "MONEYGRAM",
      "color": "#FFFFFF",
-     "font": "sans"
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.55,
+     "text": "HAAS",
+     "color": "#E6002B",
+     "font": "heavy"
     }
    ]
   },
@@ -1081,7 +1143,7 @@
    "id": "alpine",
    "name": "BWT Alpine F1 Team",
    "car": "A526",
-   "powerUnit": "Mercedes-AMG M17",
+   "powerUnit": "Mercedes-AMG M17 E Performance",
    "drivers": [
     {
      "no": 10,
@@ -1093,85 +1155,86 @@
     }
    ],
    "paint": {
-    "body": "#02569E",
-    "accent": "#02569E",
-    "detail": "#F085BA",
-    "finish": "gloss"
+    "body": "#0078D0",
+    "accent": "#FD4BC7",
+    "detail": "#0C1018",
+    "finish": "gloss",
+    "camo": 0
    },
    "decals": [
+    {
+     "kind": "art",
+     "art": "alpineArrow",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.42,
+     "z": 0.68,
+     "w": 0.28,
+     "h": 0.42,
+     "color": "#FFFFFF"
+    },
+    {
+     "kind": "art",
+     "art": "alpineArrow",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.22,
+     "h": 0.38,
+     "color": "#FFFFFF"
+    },
+    {
+     "kind": "art",
+     "art": "bwtWave",
+     "target": "sidepod",
+     "face": "side",
+     "x": 0.35,
+     "z": 0.62,
+     "w": 0.32,
+     "h": 0.36
+    },
     {
      "kind": "panel",
      "target": "sidepod",
      "face": "side",
-     "x": 0.42,
-     "z": 0.48,
-     "w": 0.85,
-     "h": 1.0,
-     "color": "#F085BA",
+     "x": 0.65,
+     "z": 0.45,
+     "w": 0.5,
+     "h": 0.65,
+     "color": "#FD4BC7",
      "shape": "diagRear"
     },
     {
      "kind": "panel",
-     "target": "nose",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.5,
-     "w": 0.8,
-     "h": 1.3,
-     "color": "#F085BA",
-     "shape": "fadeRear"
-    },
-    {
-     "kind": "panel",
-     "target": "tub",
-     "face": "side",
-     "x": 0.15,
-     "z": 0.45,
-     "w": 0.3,
-     "h": 1.0,
-     "color": "#F085BA",
-     "shape": "fadeRear"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "side",
-     "x": 0.4,
-     "z": 0.6,
-     "w": 0.32,
-     "text": "BWT",
-     "color": "#02569E"
-    },
-    {
-     "kind": "text",
-     "target": "sidepod",
-     "face": "top",
-     "x": 0.25,
-     "w": 0.2,
-     "text": "MSC",
-     "color": "#FFFFFF"
-    },
-    {
-     "kind": "text",
      "target": "engineCover",
      "face": "side",
-     "x": 0.45,
-     "z": 0.65,
-     "w": 0.24,
-     "text": "enilive",
-     "color": "#FFFFFF",
-     "font": "sans"
+     "x": 0.68,
+     "z": 0.55,
+     "w": 0.38,
+     "h": 0.6,
+     "color": "#0C1018",
+     "shape": "diagRear"
+    },
+    {
+     "kind": "art",
+     "art": "renaultEtech",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.68,
+     "z": 0.42,
+     "w": 0.18,
+     "h": 0.32
     },
     {
      "kind": "text",
-     "target": "nose",
+     "target": "tub",
      "face": "side",
-     "x": 0.6,
-     "z": 0.45,
-     "w": 0.24,
-     "text": "eToro",
-     "color": "#02569E",
-     "font": "sans"
+     "x": 0.28,
+     "z": 0.7,
+     "w": 0.2,
+     "text": "Castrol",
+     "color": "#00C28A",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -1179,9 +1242,10 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
+     "w": 0.65,
      "text": "BWT",
-     "color": "#02569E"
+     "color": "#FFFFFF",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -1190,87 +1254,107 @@
      "x": 0.5,
      "z": 0.68,
      "w": 0.85,
-     "text": "enilive",
+     "text": "ALPINE",
+     "color": "#FD4BC7",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.55,
+     "text": "BWT",
      "color": "#FFFFFF",
-     "font": "sans"
+     "font": "heavy"
     }
    ]
   },
   {
    "id": "cadillac",
    "name": "Cadillac Formula 1 Team",
-   "car": "MAC-26",
+   "car": "Cadillac C01",
    "powerUnit": "Ferrari 067/6",
    "drivers": [
     {
-     "no": 11,
-     "name": "Sergio Perez"
+     "no": 7,
+     "name": "Cadillac Driver 1"
     },
     {
-     "no": 77,
-     "name": "Valtteri Bottas"
+     "no": 22,
+     "name": "Cadillac Driver 2"
     }
    ],
    "paint": {
-    "body": "#EFF1F0",
-    "accent": "#19191B",
-    "detail": "#19191B",
-    "finish": "gloss"
+    "body": "#F5F7FA",
+    "accent": "#D4AF37",
+    "detail": "#14171A",
+    "finish": "gloss",
+    "camo": 0
    },
    "decals": [
+    {
+     "kind": "art",
+     "art": "cadillacCrest",
+     "target": "nose",
+     "face": "top",
+     "x": 0.5,
+     "w": 0.28,
+     "h": 0.35
+    },
+    {
+     "kind": "art",
+     "art": "cadillacCrest",
+     "target": "engineCover",
+     "face": "side",
+     "x": 0.35,
+     "z": 0.7,
+     "w": 0.32,
+     "h": 0.38
+    },
     {
      "kind": "panel",
      "target": "sidepod",
      "face": "side",
-     "x": 0.5,
-     "z": 0.18,
-     "w": 1.0,
-     "h": 0.36,
-     "color": "#19191B",
+     "x": 0.65,
+     "z": 0.45,
+     "w": 0.48,
+     "h": 0.65,
+     "color": "#14171A",
      "shape": "diagRear"
     },
     {
-     "kind": "panel",
+     "kind": "text",
      "target": "engineCover",
      "face": "side",
-     "x": 0.82,
-     "z": 0.45,
-     "w": 0.4,
-     "h": 1.1,
-     "color": "#19191B",
-     "shape": "fadeFront"
+     "x": 0.58,
+     "z": 0.52,
+     "w": 0.34,
+     "text": "CADILLAC",
+     "color": "#D4AF37",
+     "font": "heavy"
     },
     {
      "kind": "text",
      "target": "sidepod",
      "face": "side",
-     "x": 0.42,
-     "z": 0.6,
-     "w": 0.36,
+     "x": 0.34,
+     "z": 0.62,
+     "w": 0.3,
      "text": "TWG",
-     "color": "#19191B",
-     "font": "serif"
+     "color": "#14171A",
+     "font": "heavy"
     },
     {
      "kind": "text",
      "target": "tub",
      "face": "side",
-     "x": 0.3,
-     "z": 0.68,
-     "w": 0.2,
-     "text": "Claro",
-     "color": "#19191B",
+     "x": 0.28,
+     "z": 0.7,
+     "w": 0.22,
+     "text": "Gainbridge",
+     "color": "#14171A",
      "font": "sans"
-    },
-    {
-     "kind": "text",
-     "target": "engineCover",
-     "face": "side",
-     "x": 0.42,
-     "z": 0.62,
-     "w": 0.24,
-     "text": "CADILLAC",
-     "color": "#19191B"
     },
     {
      "kind": "text",
@@ -1278,9 +1362,10 @@
      "face": "side",
      "x": 0.5,
      "z": 0.45,
-     "w": 0.6,
-     "text": "JIM BEAM",
-     "color": "#19191B"
+     "w": 0.65,
+     "text": "CADILLAC",
+     "color": "#D4AF37",
+     "font": "heavy"
     },
     {
      "kind": "text",
@@ -1289,8 +1374,19 @@
      "x": 0.5,
      "z": 0.68,
      "w": 0.85,
-     "text": "IFS",
-     "color": "#FFFFFF"
+     "text": "TWG",
+     "color": "#FFFFFF",
+     "font": "heavy"
+    },
+    {
+     "kind": "text",
+     "target": "rearWingMain",
+     "face": "top",
+     "x": 0.3,
+     "w": 0.6,
+     "text": "CADILLAC",
+     "color": "#D4AF37",
+     "font": "heavy"
     }
    ]
   }
