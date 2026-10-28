@@ -284,8 +284,12 @@ function strip(path, latA, latB, yA, yB, { mask = () => true, vLen = 10, uLen = 
     const rx = path.rx(i), rz = path.rz(i);
     const bank = path.bank ? path.bank[i] : 0;
     const yCenter = path.y ? path.y[i] : 0;
-    pos.set([(path.x[i] + rx * la) * DM, (yCenter + la * bank + yA(i)) * DM, (path.z[i] + rz * la) * DM,
-             (path.x[i] + rx * lb) * DM, (yCenter + lb * bank + yB(i)) * DM, (path.z[i] + rz * lb) * DM], r * 6);
+    // Taper banking slope beyond active track and kerb boundary to prevent runaway vertical distortion in wide verges
+    const maxTrackW = Math.max(path.wr ? path.wr[i] + KERB_W + 1.2 : 10, path.wl ? path.wl[i] + KERB_W + 1.2 : 10);
+    const bankA = Math.max(-maxTrackW, Math.min(maxTrackW, la)) * bank;
+    const bankB = Math.max(-maxTrackW, Math.min(maxTrackW, lb)) * bank;
+    pos.set([(path.x[i] + rx * la) * DM, (yCenter + bankA + yA(i)) * DM, (path.z[i] + rz * la) * DM,
+             (path.x[i] + rx * lb) * DM, (yCenter + bankB + yB(i)) * DM, (path.z[i] + rz * lb) * DM], r * 6);
     const v = path.s[r] / vLen;
     const u0 = uFixed ? uFixed[0] : (uLen ? la / uLen : 0), u1 = uFixed ? uFixed[1] : (uLen ? lb / uLen : 1);
     uv.set([u0, v, u1, v], r * 4);
@@ -429,7 +433,10 @@ export function createRedBullRing() {
     lightOff: new THREE.MeshBasicMaterial({ color: 0x2a0606 }),
     jumbotron: new THREE.MeshBasicMaterial({ map: tex.jumbotron }),
     flags: new THREE.MeshStandardMaterial({ map: tex.flags, roughness: 0.65, side: THREE.DoubleSide }),
-    smoke: new THREE.MeshBasicMaterial({ color: 0xff6200, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide }),
+    treeTrunk: new THREE.MeshStandardMaterial({ map: tex.treeBark, roughness: 0.92 }),
+    spruceFoliage: new THREE.MeshStandardMaterial({ map: tex.pineFoliage, alphaTest: 0.28, roughness: 0.75, side: THREE.DoubleSide }),
+    beechFoliage: new THREE.MeshStandardMaterial({ map: tex.deciduousFoliage, alphaTest: 0.28, roughness: 0.8, side: THREE.DoubleSide }),
+    smokeSoft: new THREE.MeshBasicMaterial({ map: tex.smoke, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }),
   };
   const add = (geo, mat, name, { cast = false, receive = true } = {}) => {
     const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = cast; m.receiveShadow = receive;
@@ -598,15 +605,9 @@ export function createRedBullRing() {
     strip(track, kR, gravR, c(-0.004), c(-0.004), { mask: i => D.gravR[i] > 0.4, vLen: 8, uLen: 8 }),
     strip(track, gravL, kL, c(-0.004), c(-0.004), { mask: i => D.gravL[i] > 0.4, vLen: 8, uLen: 8 }),
   ]), M.gravel, 'RBR_Gravel_Traps');
-  // grass verge from run-off/gravel out to 6 m beyond the barrier (blends into terrain)
-  add(mergeGeometries([
-    strip(track, outR, i => D.barR[i] + 6, c(-0.05), c(-0.2), { vLen: 10, uLen: 10 }),
-    strip(track, i => -D.barL[i] - 6, outL, c(-0.2), c(-0.05), { vLen: 10, uLen: 10 }),
-  ]), M.grass, 'RBR_Grass_Verge');
-
-  // ---------------------------------------------------------------- 2. pit lane
+  // ---------------------------------------------------------------- 2. pit lane setup & verge masking
   const PW = D.pit.w;
-  // pit lane / main track overlap test (for barrier gaps)
+  // pit lane / main track overlap test (for barrier gaps & grass verge masking)
   const nearPit = (x, z, r) => {
     for (let j = 0; j < pit.n; j += 1) { const dx = pit.x[j] - x, dz = pit.z[j] - z; if (dx * dx + dz * dz < r * r) return true; }
     return false;
@@ -617,6 +618,20 @@ export function createRedBullRing() {
     pitSide.push(L.lat > 0 ? -1 : 1); // pit is right of track => track is left of the pit lane
   }
   const bSide = pitSide[Math.floor(pit.n / 2)] * -1; // garages on the side away from the track
+
+  // grass verge from run-off/gravel out to 6 m beyond the barrier (blends into terrain)
+  // Mask out the right verge anywhere it would intersect the pit lane, pit apron, or pit entry/exit
+  const grassMaskR = i => {
+    const rx = track.rx(i), rz = track.rz(i);
+    const midLat = (outR(i) + D.barR[i] + 6) / 2;
+    const x = track.x[i] + rx * midLat, z = track.z[i] + rz * midLat;
+    return !nearPit(x, z, PW / 2 + 5.5);
+  };
+  add(mergeGeometries([
+    strip(track, outR, i => D.barR[i] + 6, c(-0.05), c(-0.2), { mask: grassMaskR, vLen: 10, uLen: 10 }),
+    strip(track, i => -D.barL[i] - 6, outL, c(-0.2), c(-0.05), { vLen: 10, uLen: 10 }),
+  ]), M.grass, 'RBR_Grass_Verge');
+
   add(mergeGeometries([
     strip(pit, c(-PW / 2), c(PW / 2), c(0.0), c(0.0), { vLen: STYLE.pitLane.slab, uLen: STYLE.pitLane.slab }),
     // paddock apron between pit lane and garages
@@ -874,12 +889,36 @@ export function createRedBullRing() {
 
   // ---------------------------------------------------------------- 5. terrain (inner 20 m grid + outer 100 m grid + far ridge ring)
   const forest = (x, z) => fbm(x / 420 + 11.3, z / 420 - 4.1);
-  function terrainMesh(T, mat, name, { colorFn, skipBelow = -250, uv = true }) {
+  function terrainMesh(T, mat, name, { colorFn, skipBelow = -250, uv = true, isInner = false }) {
     const { nx, nz, x0, z0, step } = T;
     const pos = new Float32Array(nx * nz * 3), col = new Float32Array(nx * nz * 3), uvs = new Float32Array(nx * nz * 2);
     const cc = new THREE.Color();
+    const isUnderTrack = new Uint8Array(nx * nz);
+
     for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
-      const k = iz * nx + ix, x = x0 + ix * step, z = z0 + iz * step, h = T.h_[k];
+      const k = iz * nx + ix, x = x0 + ix * step, z = z0 + iz * step;
+      let h = T.h_[k];
+
+      if (isInner) {
+        // Prevent terrain triangles from penetrating through banked track ribbons, runoffs or pit apron
+        const nw = track.nearestWithin(x, z);
+        if (nw && nw.d < Math.max(D.barR[nw.i], D.barL[nw.i]) + 16) {
+          const L = track.locate(x, z, nw.i);
+          const corridor = Math.max(L.barR, L.barL) + 6.0;
+          if (Math.abs(L.lat) < corridor) {
+            h = Math.min(h, L.y - 0.75);
+          }
+          if (Math.abs(L.lat) < Math.max(L.wr, L.wl) + 1.2) {
+            isUnderTrack[k] = 1;
+          }
+        }
+        if (nearPit(x, z, PW / 2 + 10)) {
+          const L = track.locate(x, z, -1);
+          h = Math.min(h, L.y - 0.75);
+          isUnderTrack[k] = 1;
+        }
+      }
+
       pos.set([x * DM, h * DM, z * DM], k * 3);
       colorFn(x, z, h, cc); col.set([cc.r, cc.g, cc.b], k * 3);
       uvs.set([x / 9, z / 9], k * 2);
@@ -888,6 +927,8 @@ export function createRedBullRing() {
     for (let iz = 0; iz < nz - 1; iz++) for (let ix = 0; ix < nx - 1; ix++) {
       const a = iz * nx + ix, b = a + 1, c2 = a + nx, d = c2 + 1;
       if (T.h_[a] < skipBelow || T.h_[b] < skipBelow || T.h_[c2] < skipBelow || T.h_[d] < skipBelow) continue;
+      // Skip triangles entirely inside the asphalt track corridor to eliminate any chance of penetration or z-fighting
+      if (isInner && isUnderTrack[a] && isUnderTrack[b] && isUnderTrack[c2] && isUnderTrack[d]) continue;
       idx.push(a, c2, b, b, c2, d);
     }
     const g = new THREE.BufferGeometry();
@@ -902,7 +943,7 @@ export function createRedBullRing() {
     cc.setRGB(0.55 + v * 0.25, 0.78 + v * 0.18, 0.45 + v * 0.15);
     if (f > 0.58) cc.multiplyScalar(0.72);
   };
-  terrainMesh(terrain, M.terrain, 'RBR_Terrain', { colorFn: grassColor });
+  terrainMesh(terrain, M.terrain, 'RBR_Terrain', { colorFn: grassColor, isInner: true });
   terrainMesh(outerT, M.outer, 'RBR_Terrain_Outer', {
     uv: false,
     colorFn: (x, z, h, cc) => {
@@ -1132,25 +1173,87 @@ export function createRedBullRing() {
   }
 
   // Celebratory Austrian GP Orange Smoke Flare Plumes at Turn 3 and Turn 1 hillsides
+  // Rendered with soft volumetric billboard particle sprites with live wind drift & billowing
   {
     const smokeLocs = [
-      { x: 215, y: 44, z: -570, r: 8, h: 22 },
-      { x: 245, y: 46, z: -595, r: 10, h: 26 },
-      { x: -355, y: 12, z: 35, r: 7, h: 18 }
+      { x: 215, y: 44, z: -570, maxH: 28, count: 32 },
+      { x: 245, y: 46, z: -595, maxH: 32, count: 32 },
+      { x: -355, y: 12, z: 35, maxH: 24, count: 26 }
     ];
-    for (const sm of smokeLocs) {
-      const sq = new THREE.Group();
-      sq.name = 'RBR_Orange_Smoke';
-      for (let l = 0; l < 4; l++) {
-        const rad = sm.r * (0.8 + l * 0.35);
-        const yTop = sm.y + (l + 1) * (sm.h / 4);
-        const geom = new THREE.ConeGeometry(rad * DM, (sm.h / 3) * DM, 8);
-        const m = new THREE.Mesh(geom, M.smoke);
-        m.position.set(sm.x * DM, yTop * DM, sm.z * DM);
-        sq.add(m);
+
+    const totalParticles = smokeLocs.reduce((sum, sm) => sum + sm.count, 0);
+    const puffGeo = new THREE.PlaneGeometry(8.0 * DM, 8.0 * DM);
+    const smokeMesh = new THREE.InstancedMesh(puffGeo, M.smokeSoft, totalParticles);
+    smokeMesh.name = 'RBR_Celebratory_Orange_Smoke';
+    smokeMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(totalParticles * 3), 3);
+
+    const particles = [];
+    const rSmoke = rng(303);
+    const cColor = new THREE.Color();
+    const baseOrange = new THREE.Color(0xff5500); // Vibrant Dutch GP / Max Verstappen flare orange
+    const amberHaze = new THREE.Color(0xff8800);
+
+    smokeLocs.forEach(sm => {
+      for (let p = 0; p < sm.count; p++) {
+        particles.push({
+          x0: sm.x, y0: sm.y, z0: sm.z,
+          maxH: sm.maxH,
+          phase: p / sm.count, // stagger evenly so plume is full from the start
+          speed: 0.12 + rSmoke() * 0.08,
+          spreadX: (rSmoke() - 0.5) * 4.5,
+          spreadZ: (rSmoke() - 0.5) * 4.5,
+          rot: rSmoke() * Math.PI * 2,
+          rotSpeed: (rSmoke() - 0.5) * 0.4
+        });
       }
-      root.add(sq);
+    });
+
+    const m4Puff = new THREE.Matrix4(), qPuff = new THREE.Quaternion(), svPuff = new THREE.Vector3(), pvPuff = new THREE.Vector3();
+    const dummyCamQuat = new THREE.Quaternion();
+
+    function updateSmokePuffs(dt = 0.016, cam = null) {
+      if (cam) dummyCamQuat.copy(cam.quaternion);
+      for (let k = 0; k < particles.length; k++) {
+        const pt = particles[k];
+        pt.phase = (pt.phase + dt * pt.speed) % 1.0;
+        pt.rot += dt * pt.rotSpeed;
+
+        const ph = pt.phase;
+        // Ascends upward with mountain air currents
+        const curY = pt.y0 + Math.pow(ph, 0.85) * pt.maxH;
+        // Expands as smoke rises (tight at ground canister, wide billow high up)
+        const scale = 0.25 + Math.pow(ph, 0.7) * 1.75;
+        // Mountain wind drift towards northeast (+X, +Z)
+        const windX = Math.pow(ph, 1.25) * 18 + Math.sin(ph * 4.5 + pt.rot) * 2.5 + pt.spreadX;
+        const windZ = Math.pow(ph, 1.25) * 12 + Math.cos(ph * 4.5 + pt.rot) * 2.5 + pt.spreadZ;
+        const curX = pt.x0 + windX;
+        const curZ = pt.z0 + windZ;
+
+        pvPuff.set(curX * DM, curY * DM, curZ * DM);
+        svPuff.set(scale, scale, scale);
+
+        // Align puff with camera billboard orientation
+        if (cam) {
+          qPuff.copy(dummyCamQuat);
+        } else {
+          qPuff.setFromAxisAngle(new THREE.Vector3(0, 1, 0), pt.rot);
+        }
+
+        m4Puff.compose(pvPuff, qPuff, svPuff);
+        smokeMesh.setMatrixAt(k, m4Puff);
+
+        // Soft fading: dense orange at ground, fading into hazy amber near top
+        const fade = Math.sin(ph * Math.PI) * (1.0 - ph * 0.45);
+        cColor.copy(baseOrange).lerp(amberHaze, ph).multiplyScalar(fade);
+        smokeMesh.setColorAt(k, cColor);
+      }
+      smokeMesh.instanceMatrix.needsUpdate = true;
+      if (smokeMesh.instanceColor) smokeMesh.instanceColor.needsUpdate = true;
     }
+
+    updateSmokePuffs(0, null);
+    root.add(smokeMesh);
+    root.userData.updateSmoke = updateSmokePuffs;
   }
 
   // ---------------------------------------------------------------- 8. start/finish gantry + start lights
@@ -1341,31 +1444,50 @@ export function createRedBullRing() {
       placed++;
     }
 
-    // Species 1: Detailed Austrian Norway Spruce / Alpine Conifer (Trunk + 5 tiered needle boughs)
-    const spruceParts = [
-      new THREE.CylinderGeometry(0.22 * DM, 0.38 * DM, 3.5 * DM, 6).translate(0, 1.75 * DM, 0),
-      new THREE.ConeGeometry(3.5 * DM, 5.5 * DM, 7).translate(0, 5.0 * DM, 0),
-      new THREE.ConeGeometry(2.9 * DM, 5.0 * DM, 7).translate(0, 8.2 * DM, 0),
-      new THREE.ConeGeometry(2.3 * DM, 4.4 * DM, 7).translate(0, 11.0 * DM, 0),
-      new THREE.ConeGeometry(1.6 * DM, 3.8 * DM, 7).translate(0, 13.5 * DM, 0),
-      new THREE.ConeGeometry(0.9 * DM, 2.8 * DM, 7).translate(0, 15.4 * DM, 0)
+    // Species 1: Detailed Austrian Norway Spruce / Alpine Conifer (Trunk + 5 tiers of textured branch cards)
+    const spruceTrunkGeo = new THREE.CylinderGeometry(0.18 * DM, 0.45 * DM, 14 * DM, 5).translate(0, 7.0 * DM, 0);
+    const spruceFoliagePlanes = [];
+    const spruceTiers = [
+      { y: 3.6, w: 7.4, h: 4.4, tilt: 0.22 },
+      { y: 6.4, w: 6.0, h: 4.0, tilt: 0.18 },
+      { y: 9.0, w: 4.6, h: 3.6, tilt: 0.14 },
+      { y: 11.4, w: 3.4, h: 3.2, tilt: 0.10 },
+      { y: 13.6, w: 2.2, h: 2.8, tilt: 0.05 }
     ];
-    const spruceHiGeo = mergeGeometries(spruceParts.map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
-    const spruceLoGeo = new THREE.ConeGeometry(3.2 * DM, 15.5 * DM, 5).translate(0, 7.75 * DM, 0);
+    spruceTiers.forEach((t, tIdx) => {
+      const rotOffset = (tIdx % 2) * (Math.PI / 6);
+      for (let a = 0; a < 3; a++) {
+        const p = new THREE.PlaneGeometry(t.w * DM, t.h * DM);
+        p.translate(0, (t.h / 2) * DM, 0);
+        p.rotateX(t.tilt);
+        p.rotateY(rotOffset + a * (Math.PI / 3));
+        p.translate(0, t.y * DM, 0);
+        spruceFoliagePlanes.push(p);
+      }
+    });
+    const spruceFoliageGeo = mergeGeometries(spruceFoliagePlanes);
+    const spLo1 = new THREE.PlaneGeometry(6.6 * DM, 15.5 * DM).translate(0, 7.75 * DM, 0);
+    const spLo2 = spLo1.clone().rotateY(Math.PI / 2);
+    const spruceLoGeo = mergeGeometries([spLo1, spLo2]);
 
-    // Species 2: Alpine Deciduous Beech / Larch (Trunk + 4 overlapping rounded canopy foliage clusters)
-    const beechParts = [
-      new THREE.CylinderGeometry(0.3 * DM, 0.45 * DM, 4.0 * DM, 6).translate(0, 2.0 * DM, 0),
-      new THREE.DodecahedronGeometry(2.8 * DM, 1).translate(0, 6.2 * DM, 0),
-      new THREE.DodecahedronGeometry(2.2 * DM, 1).translate(1.2 * DM, 5.5 * DM, 0.6 * DM),
-      new THREE.DodecahedronGeometry(2.0 * DM, 1).translate(-1.0 * DM, 5.8 * DM, -0.8 * DM),
-      new THREE.DodecahedronGeometry(1.8 * DM, 1).translate(0.4 * DM, 7.8 * DM, -0.2 * DM)
-    ];
-    const beechHiGeo = mergeGeometries(beechParts.map(g => { g.deleteAttribute('uv'); return g.toNonIndexed(); }));
-    const beechLoGeo = new THREE.DodecahedronGeometry(3.2 * DM, 0).translate(0, 6.0 * DM, 0);
-
-    const coniferMat = new THREE.MeshLambertMaterial({ color: 0x274e2a });
-    const beechMat = new THREE.MeshLambertMaterial({ color: 0x48762f });
+    // Species 2: Alpine Deciduous Beech / Larch (Trunk + 5 intersecting organic foliage cards)
+    const beechTrunkGeo = new THREE.CylinderGeometry(0.24 * DM, 0.46 * DM, 5.0 * DM, 5).translate(0, 2.5 * DM, 0);
+    const beechFoliagePlanes = [];
+    for (let a = 0; a < 4; a++) {
+      const p = new THREE.PlaneGeometry(7.0 * DM, 6.4 * DM);
+      p.translate(0, 3.2 * DM, 0);
+      p.rotateY(a * (Math.PI / 4));
+      p.translate(0, 4.4 * DM, 0);
+      beechFoliagePlanes.push(p);
+    }
+    const pTop = new THREE.PlaneGeometry(6.2 * DM, 6.2 * DM);
+    pTop.rotateX(Math.PI / 2);
+    pTop.translate(0, 8.2 * DM, 0);
+    beechFoliagePlanes.push(pTop);
+    const beechFoliageGeo = mergeGeometries(beechFoliagePlanes);
+    const beLo1 = new THREE.PlaneGeometry(7.0 * DM, 9.8 * DM).translate(0, 5.2 * DM, 0);
+    const beLo2 = beLo1.clone().rotateY(Math.PI / 2);
+    const beechLoGeo = mergeGeometries([beLo1, beLo2]);
 
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3();
     const tint = new THREE.Color();
@@ -1378,31 +1500,62 @@ export function createRedBullRing() {
       const conifers = list.filter(t => t[5] === 0);
       const beeches = list.filter(t => t[5] === 1);
 
-      const populate = (items, geo, mat, isBeech) => {
+      const populatePair = (items, trunkGeo, foliageGeo, isBeech) => {
         if (!items.length) return new THREE.Object3D();
-        const im = new THREE.InstancedMesh(geo, mat, items.length);
+        const grp = new THREE.Group();
+        const imTrunk = new THREE.InstancedMesh(trunkGeo, M.treeTrunk, items.length);
+        const imFoliage = new THREE.InstancedMesh(foliageGeo, isBeech ? M.beechFoliage : M.spruceFoliage, items.length);
+
         items.forEach((t, k) => {
           q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[4]);
           sv.set(t[3], t[3] * (0.92 + 0.16 * Math.sin(t[4] * 3)), t[3]);
           pv.set((t[0] - cx) * DM, (t[1] - cy - 0.3) * DM, (t[2] - cz) * DM);
-          m4.compose(pv, q, sv); im.setMatrixAt(k, m4);
+          m4.compose(pv, q, sv);
+          imTrunk.setMatrixAt(k, m4);
+          imFoliage.setMatrixAt(k, m4);
+
           if (isBeech) {
-            tint.setHSL(0.24 + 0.05 * Math.sin(t[4] * 5), 0.52, 0.28 + 0.07 * Math.cos(t[4] * 7));
+            tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
           } else {
-            tint.setHSL(0.32 + 0.04 * Math.sin(t[4] * 7), 0.48, 0.19 + 0.06 * Math.cos(t[4] * 5));
+            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.52, 0.35 + 0.07 * Math.cos(t[4] * 5));
+          }
+          imFoliage.setColorAt(k, tint);
+        });
+
+        imTrunk.computeBoundingSphere();
+        imFoliage.computeBoundingSphere();
+        grp.add(imTrunk);
+        grp.add(imFoliage);
+        return grp;
+      };
+
+      const populateLo = (items, geo, mat, isBeech) => {
+        if (!items.length) return new THREE.Object3D();
+        const im = new THREE.InstancedMesh(geo, mat, items.length);
+        items.forEach((t, k) => {
+          q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[4]);
+          sv.set(t[3], t[3], t[3]);
+          pv.set((t[0] - cx) * DM, (t[1] - cy - 0.3) * DM, (t[2] - cz) * DM);
+          m4.compose(pv, q, sv);
+          im.setMatrixAt(k, m4);
+          if (isBeech) {
+            tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
+          } else {
+            tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.52, 0.35 + 0.07 * Math.cos(t[4] * 5));
           }
           im.setColorAt(k, tint);
         });
-        im.computeBoundingSphere(); im.castShadow = false; return im;
+        im.computeBoundingSphere();
+        return im;
       };
 
       const hiGroup = new THREE.Group();
-      if (conifers.length) hiGroup.add(populate(conifers, spruceHiGeo, coniferMat, false));
-      if (beeches.length) hiGroup.add(populate(beeches, beechHiGeo, beechMat, true));
+      if (conifers.length) hiGroup.add(populatePair(conifers, spruceTrunkGeo, spruceFoliageGeo, false));
+      if (beeches.length) hiGroup.add(populatePair(beeches, beechTrunkGeo, beechFoliageGeo, true));
 
       const loGroup = new THREE.Group();
-      if (conifers.length) loGroup.add(populate(conifers, spruceLoGeo, coniferMat, false));
-      if (beeches.length) loGroup.add(populate(beeches, beechLoGeo, beechMat, true));
+      if (conifers.length) loGroup.add(populateLo(conifers, spruceLoGeo, M.spruceFoliage, false));
+      if (beeches.length) loGroup.add(populateLo(beeches, beechLoGeo, M.beechFoliage, true));
 
       lod.addLevel(hiGroup, 0);
       lod.addLevel(loGroup, 4500);
@@ -1412,7 +1565,7 @@ export function createRedBullRing() {
     root.userData.treeCount = placed;
   }
 
-  // ---------------------------------------------------------------- 10b. 3D Volumetric Grass Tufts along track verges
+  // ---------------------------------------------------------------- 10b. 3D Volumetric Grass Tufts along natural track verges
   {
     const gW = 0.65 * DM, gH = 0.45 * DM;
     const q1 = new THREE.PlaneGeometry(gW, gH).translate(0, gH / 2, 0);
@@ -1425,33 +1578,44 @@ export function createRedBullRing() {
     });
 
     const tuftCount = 2800;
-    const imGrass = new THREE.InstancedMesh(grassClumpGeo, grassClumpMat, tuftCount);
-    imGrass.name = 'RBR_3D_Grass_Tufts';
     const m4G = new THREE.Matrix4(), qG = new THREE.Quaternion(), svG = new THREE.Vector3(), pvG = new THREE.Vector3();
     const gTint = new THREE.Color();
     const rG = rng(999);
+    const validTufts = [];
 
     for (let k = 0; k < tuftCount; k++) {
       const sp = (k / tuftCount) * track.length + (rG() - 0.5) * 3;
       const F = track.at(sp);
       const side = rG() < 0.5 ? 1 : -1;
       const kerbWidth = (side > 0 ? D.kerbR[F.i] : D.kerbL[F.i]) ? KERB_W : 0;
-      const baseLat = side > 0 ? (F.wr + kerbWidth + 0.4 + rG() * 2.8) : (-F.wl - kerbWidth - 0.4 - rG() * 2.8);
+      // Guarantee grass tufts ONLY spawn on natural grass verges, NEVER on runoff, gravel, or pit lane
+      const minVergeLatR = Math.max(F.wr + kerbWidth + 0.8, outR(F.i) + 0.8);
+      const minVergeLatL = Math.min(-F.wl - kerbWidth - 0.8, outL(F.i) - 0.8);
+      const baseLat = side > 0 ? (minVergeLatR + rG() * 3.5) : (minVergeLatL - rG() * 3.5);
+
       const gx = F.x + F.rx * baseLat;
       const gz = F.z + F.rz * baseLat;
-      const gy = F.y + baseLat * F.bank;
+      if (nearPit(gx, gz, PW / 2 + 3.0)) continue; // Never inside pit lane
 
-      qG.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rG() * Math.PI * 2);
-      const s = 0.75 + rG() * 0.55;
-      svG.set(s, s * (0.85 + rG() * 0.3), s);
-      pvG.set(gx * DM, gy * DM, gz * DM);
-      m4G.compose(pvG, qG, svG);
-      imGrass.setMatrixAt(k, m4G);
-      gTint.setHSL(0.26 + 0.06 * rG(), 0.52, 0.26 + 0.08 * rG());
-      imGrass.setColorAt(k, gTint);
+      const gy = terrainBase(gx, gz);
+      validTufts.push({ gx, gy, gz, rRot: rG() * Math.PI * 2, scale: 0.75 + rG() * 0.55, tintSeed: rG() });
     }
-    imGrass.computeBoundingSphere();
-    root.add(imGrass);
+
+    if (validTufts.length) {
+      const imGrass = new THREE.InstancedMesh(grassClumpGeo, grassClumpMat, validTufts.length);
+      imGrass.name = 'RBR_3D_Grass_Tufts';
+      validTufts.forEach((tf, k) => {
+        qG.setFromAxisAngle(new THREE.Vector3(0, 1, 0), tf.rRot);
+        svG.set(tf.scale, tf.scale * (0.85 + tf.tintSeed * 0.3), tf.scale);
+        pvG.set(tf.gx * DM, tf.gy * DM, tf.gz * DM);
+        m4G.compose(pvG, qG, svG);
+        imGrass.setMatrixAt(k, m4G);
+        gTint.setHSL(0.26 + 0.06 * tf.tintSeed, 0.52, 0.26 + 0.08 * tf.tintSeed);
+        imGrass.setColorAt(k, gTint);
+      });
+      imGrass.computeBoundingSphere();
+      root.add(imGrass);
+    }
   }
 
   // ---------------------------------------------------------------- 11. sky dome (gradient, ignores fog)

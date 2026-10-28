@@ -255,22 +255,215 @@ export function makeKerbTexture(K, type) {
 
 // ------------------------------------------------------------------ 3. barriers
 /**
- * Sponsor wrap strip for walls and tyre belts. The canvas is tall: v (canvas y) runs along the barrier, u (canvas x) up the
- * barrier, so the same texture works on any strip whose v = distance / (wrapLength * sponsors.length).
+ * Sponsor wrap strip for walls and tyre belts.
+ * High-resolution canvas (256x1024 per sponsor panel):
+ * u (canvas x) runs UP the barrier (0 = ground, 256 = top),
+ * v (canvas y) runs ALONG the barrier (length = wrapLength).
+ * Features authentic Austrian GP sponsor vector logos, metallic trim, panel seams and road splash.
  */
 export function makeSponsorTexture(B) {
-  const n = B.sponsors.length, PH = 512, c = canvas(128, PH * n), x = c.getContext('2d');
+  const n = B.sponsors.length, PH = 1024, PW = 256;
+  const c = canvas(PW, PH * n), x = c.getContext('2d');
+
   B.sponsors.forEach((sp, k) => {
     const y0 = k * PH;
-    x.fillStyle = sp.bg; x.fillRect(0, y0, 128, PH);
-    if (sp.accent) { x.fillStyle = sp.accent; x.fillRect(0, y0, 10, PH); x.fillRect(118, y0, 10, PH); }
-    x.save(); x.translate(64, y0 + PH / 2); x.rotate(Math.PI / 2);
-    x.fillStyle = sp.fg; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.font = `bold ${sp.name.length > 6 ? 70 : 84}px "Helvetica Neue", Arial, sans-serif`;
-    x.fillText(sp.name, 0, 4, PH - 40);
+
+    // Base background
+    x.fillStyle = sp.bg;
+    x.fillRect(0, y0, PW, PH);
+
+    // Subtle brushed metallic horizontal texture
+    x.fillStyle = 'rgba(255,255,255,0.025)';
+    for (let py = 0; py < PH; py += 6) {
+      x.fillRect(0, y0 + py, PW, 3);
+    }
+
+    // Road splash / grime gradient along bottom of barrier (u = 0 to 45)
+    const splashGrad = x.createLinearGradient(0, 0, 50, 0);
+    splashGrad.addColorStop(0, 'rgba(10,12,15,0.5)');
+    splashGrad.addColorStop(1, 'rgba(10,12,15,0)');
+    x.fillStyle = splashGrad;
+    x.fillRect(0, y0, 50, PH);
+
+    // Aluminum top cap edge (u = 246 to 256)
+    x.fillStyle = '#8b939c';
+    x.fillRect(PW - 10, y0, 10, PH);
+    x.fillStyle = '#cfd4da';
+    x.fillRect(PW - 4, y0, 3, PH);
+
+    // Accent pinstripes if defined
+    if (sp.accent) {
+      x.fillStyle = sp.accent;
+      x.fillRect(12, y0, 8, PH);
+      x.fillRect(PW - 18, y0, 6, PH);
+    }
+
+    // Vector drawing in rotated frame:
+    // (0, 0) is panel center, horizontal axis is ALONG barrier (x in -PH/2..PH/2), vertical is ACROSS barrier (y in -PW/2..PW/2)
+    x.save();
+    x.translate(PW / 2, y0 + PH / 2);
+    x.rotate(Math.PI / 2);
+
+    const sName = sp.name.toUpperCase();
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+
+    if (sName.includes('ROLEX')) {
+      // ------------------------------------------------------------- ROLEX CROWN & LOGO
+      x.fillStyle = '#ffd700';
+      // 5-point Rolex crown
+      x.beginPath();
+      x.moveTo(-45, 20);
+      x.lineTo(-58, -12);
+      x.lineTo(-24, 2);
+      x.lineTo(0, -28);
+      x.lineTo(24, 2);
+      x.lineTo(58, -12);
+      x.lineTo(45, 20);
+      x.closePath();
+      x.fill();
+      // Crown round pearls
+      for (const px of [-58, -24, 0, 24, 58]) {
+        x.beginPath();
+        x.arc(px, px === 0 ? -28 : (Math.abs(px) === 58 ? -12 : 2), 5.5, 0, Math.PI * 2);
+        x.fill();
+      }
+      // Serif typography
+      x.font = '900 84px "Times New Roman", Georgia, serif';
+      x.fillText('ROLEX', 0, 68);
+      x.font = 'bold 22px sans-serif';
+      x.fillText('OFFICIAL TIMEKEEPER', 0, 114);
+    } else if (sName.includes('PIRELLI')) {
+      // ------------------------------------------------------------- PIRELLI
+      x.fillStyle = '#fee100';
+      x.font = '900 120px "Arial Black", Impact, sans-serif';
+      x.fillText('PIRELLI', 0, 14);
+      // Stretched P horizontal bar
+      x.fillRect(-280, -48, 560, 14);
+      x.fillStyle = '#ffffff';
+      x.font = 'bold 24px sans-serif';
+      x.fillText('EST. 1872 · POWER IS NOTHING WITHOUT CONTROL', 0, 80);
+    } else if (sName.includes('ARAMCO')) {
+      // ------------------------------------------------------------- ARAMCO
+      x.fillStyle = '#00a3e0';
+      x.font = '900 110px "Arial Black", sans-serif';
+      x.fillText('aramco', 0, -8);
+      // Dual energy rays
+      x.fillStyle = '#00b140';
+      x.fillRect(-240, 52, 480, 14);
+      x.fillStyle = '#0072ce';
+      x.font = 'bold 24px sans-serif';
+      x.fillText('WHERE ENERGY IS OPPORTUNITY', 0, 88);
+    } else if (sName.includes('DHL')) {
+      // ------------------------------------------------------------- DHL
+      x.fillStyle = '#d40511';
+      x.font = 'italic 900 130px "Arial Black", Impact, sans-serif';
+      x.fillText('DHL', 0, 10);
+      x.fillStyle = '#ffcc00';
+      for (let l = 0; l < 4; l++) {
+        x.fillRect(-180 + l * 105, -45, 18, 90);
+      }
+      x.fillStyle = '#d40511';
+      x.font = 'bold 24px sans-serif';
+      x.fillText('EXCELLENCE. SIMPLY DELIVERED.', 0, 82);
+    } else if (sName.includes('QATAR')) {
+      // ------------------------------------------------------------- QATAR AIRWAYS
+      x.fillStyle = '#ffffff';
+      // Arabian Oryx emblem
+      x.beginPath();
+      x.arc(0, -35, 28, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = '#5c0632';
+      x.beginPath();
+      x.arc(-4, -38, 20, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = '#ffffff';
+      x.font = '900 68px "Arial Black", sans-serif';
+      x.fillText('QATAR AIRWAYS', 0, 44);
+      x.font = 'bold 22px sans-serif';
+      x.fillText('GOING PLACES TOGETHER', 0, 84);
+    } else if (sName.includes('HEINEKEN')) {
+      // ------------------------------------------------------------- HEINEKEN 0.0
+      x.fillStyle = '#ffffff';
+      x.font = '900 84px "Arial Black", sans-serif';
+      x.fillText('Heineken', -45, 20);
+      // Red star
+      x.fillStyle = '#e10600';
+      x.beginPath();
+      for (let p = 0; p < 5; p++) {
+        const a0 = -Math.PI / 2 + p * (Math.PI * 2 / 5);
+        const a1 = a0 + Math.PI / 5;
+        const x0 = -220 + Math.cos(a0) * 26, y0 = 12 + Math.sin(a0) * 26;
+        const x1 = -220 + Math.cos(a1) * 11, y1 = 12 + Math.sin(a1) * 11;
+        if (p === 0) x.moveTo(x0, y0); else x.lineTo(x0, y0);
+        x.lineTo(x1, y1);
+      }
+      x.closePath();
+      x.fill();
+      // Cyan 0.0 Badge
+      x.fillStyle = '#00d4ff';
+      x.beginPath();
+      x.arc(205, 16, 42, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = '#0b1630';
+      x.font = '900 44px "Arial Black", sans-serif';
+      x.fillText('0.0', 205, 20);
+      x.fillStyle = '#ffffff';
+      x.font = 'bold 20px sans-serif';
+      x.fillText('WHEN YOU DRIVE, NEVER DRINK', 0, 82);
+    } else if (sName.includes('STEIERMARK')) {
+      // ------------------------------------------------------------- STEIERMARK (STYRIAN PANTHER)
+      x.fillStyle = '#ffffff';
+      x.font = '900 84px "Arial Black", sans-serif';
+      x.fillText('STEIERMARK', 0, 10);
+      x.fillStyle = 'rgba(255,255,255,0.9)';
+      x.font = 'bold 24px sans-serif';
+      x.fillText('DAS GRÜNE HERZ ÖSTERREICHS', 0, 68);
+      // Austrian Alpine fir branches on sides
+      x.fillStyle = '#00e676';
+      x.fillRect(-280, 0, 40, 6);
+      x.fillRect(240, 0, 40, 6);
+    } else if (sName.includes('RED BULL')) {
+      // ------------------------------------------------------------- RED BULL
+      // Golden Sun
+      x.fillStyle = '#f8d000';
+      x.beginPath();
+      x.arc(0, -15, 48, 0, Math.PI * 2);
+      x.fill();
+      // Red Bull font
+      x.fillStyle = '#e10600';
+      x.font = '900 96px "Arial Black", Impact, sans-serif';
+      x.fillText('Red Bull', 0, 48);
+      x.fillStyle = '#f8d000';
+      x.font = 'bold 22px sans-serif';
+      x.fillText('GIVES YOU WINGS · SPIELBERG', 0, 92);
+    } else {
+      // Generic bold F1 styling
+      x.fillStyle = sp.fg;
+      x.font = `900 ${sp.name.length > 7 ? 80 : 100}px "Arial Black", sans-serif`;
+      x.fillText(sp.name, 0, 20);
+    }
+
     x.restore();
-    x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, y0, 128, 2);   // panel joint
+
+    // Panel vertical joint with steel fastener bolts
+    x.fillStyle = 'rgba(15,18,22,0.85)';
+    x.fillRect(0, y0, PW, 3);
+    x.fillStyle = 'rgba(220,225,230,0.6)';
+    x.fillRect(0, y0 + 3, PW, 1.5);
+    // Bolts
+    for (const bx of [20, PW / 2, PW - 20]) {
+      x.fillStyle = '#1a1f26';
+      x.beginPath();
+      x.arc(bx, y0 + 8, 3.5, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = '#8a94a0';
+      x.beginPath();
+      x.arc(bx - 0.8, y0 + 7.2, 1.8, 0, Math.PI * 2);
+      x.fill();
+    }
   });
+
   return tex(c, { aniso: 16 });
 }
 /** concrete wall face: light concrete with panel joints every 4 m along v and a darker splash zone at the bottom (u = 0) */

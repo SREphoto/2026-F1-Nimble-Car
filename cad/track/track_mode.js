@@ -997,6 +997,8 @@ export function initTrackMode(ctx) {
       if (!mode.circuit) return;
       dt = Math.min(dt, 0.05);
       if (mode.driving || mode.cam !== 'free') updateCamera(dt);
+      // Animate celebratory soft-particle smoke plumes drifting with mountain wind
+      circuit.group?.userData?.updateSmoke?.(dt, camera);
       // keep the sun's shadow frustum around the car
       if (sunLight) {
         const c = carCentre(new THREE.Vector3());

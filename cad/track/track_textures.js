@@ -475,6 +475,198 @@ export function makeTrackTextures() {
     }
   }, { aniso: 8 });
 
+  // 10. Photorealistic Austrian Norway Spruce Needle Foliage (512x512 with Organic Alpha Cutout)
+  const pineFoliage = canvasTex(512, 512, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    const r = rng(777);
+
+    // Main central woody stem & branching secondary twigs
+    ctx.strokeStyle = '#3e2a17';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h);
+    ctx.bezierCurveTo(w / 2 - 10, h * 0.65, w / 2 + 10, h * 0.35, w / 2, 20);
+    ctx.stroke();
+
+    // Secondary side twigs
+    ctx.lineWidth = 6;
+    for (let side of [-1, 1]) {
+      for (let y = h * 0.85; y > 60; y -= 45) {
+        ctx.beginPath();
+        ctx.moveTo(w / 2, y);
+        const targetX = w / 2 + side * (70 + (y / h) * 110 + r() * 40);
+        const targetY = y - 35 - r() * 25;
+        ctx.quadraticCurveTo(w / 2 + side * 40, y - 10, targetX, targetY);
+        ctx.stroke();
+      }
+    }
+
+    // High-density individual needle clusters (16,000 layered pine needles)
+    const needleColors = [
+      '#132b17', '#1a3a20', '#224d2b', '#2b5f36',
+      '#357342', '#418a4f', '#18331d', '#285532'
+    ];
+    for (let i = 0; i < 16000; i++) {
+      const t = r();
+      const stemY = 40 + t * (h - 60);
+      const spread = (1 - t * 0.65) * 190;
+      const side = r() < 0.5 ? -1 : 1;
+      const nx = w / 2 + side * (r() * spread);
+      const ny = stemY + (r() - 0.5) * 45;
+
+      const angle = (side > 0 ? 0.35 : -0.35) * Math.PI + (r() - 0.5) * 0.45;
+      const len = 14 + r() * 18;
+
+      ctx.strokeStyle = needleColors[(r() * needleColors.length) | 0];
+      ctx.lineWidth = 1.4 + r() * 1.2;
+      ctx.beginPath();
+      ctx.moveTo(nx, ny);
+      ctx.lineTo(nx + Math.cos(angle) * len, ny - Math.sin(Math.abs(angle)) * len);
+      ctx.stroke();
+    }
+
+    // Sunlit fresh needle tips (bright lime flecks on outer periphery)
+    ctx.strokeStyle = '#5bb862';
+    ctx.lineWidth = 1.6;
+    for (let i = 0; i < 1800; i++) {
+      const t = r();
+      const stemY = 40 + t * (h - 70);
+      const spread = (1 - t * 0.65) * 195;
+      const side = r() < 0.5 ? -1 : 1;
+      const nx = w / 2 + side * (spread * (0.8 + r() * 0.25));
+      const ny = stemY + (r() - 0.5) * 30;
+      ctx.beginPath();
+      ctx.moveTo(nx, ny);
+      ctx.lineTo(nx + side * (6 + r() * 10), ny - 4 - r() * 8);
+      ctx.stroke();
+    }
+
+    // Small Austrian pine cones hanging along lower boughs
+    for (let c = 0; c < 6; c++) {
+      const cx = w / 2 + (c % 2 === 0 ? 1 : -1) * (50 + r() * 70);
+      const cy = h * 0.4 + r() * (h * 0.4);
+      ctx.fillStyle = '#4a2c14';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 7, 13, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#6b4322';
+      for (let s = -8; s <= 8; s += 4) {
+        ctx.fillRect(cx - 5, cy + s, 10, 2);
+      }
+    }
+  }, { aniso: 16 });
+
+  // 11. Photorealistic European Beech Foliage (512x512 with Organic Leaf Clump Cutout)
+  const deciduousFoliage = canvasTex(512, 512, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    const r = rng(888);
+
+    // Natural multi-fork woody branches
+    ctx.strokeStyle = '#483c32';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h);
+    ctx.quadraticCurveTo(w / 2 - 20, h * 0.6, w * 0.35, h * 0.3);
+    ctx.moveTo(w / 2, h * 0.7);
+    ctx.quadraticCurveTo(w / 2 + 15, h * 0.5, w * 0.7, h * 0.25);
+    ctx.moveTo(w / 2, h * 0.5);
+    ctx.quadraticCurveTo(w / 2, h * 0.3, w / 2, 40);
+    ctx.stroke();
+
+    // Overlapping organic deciduous leaves (1,200 individual serrated leaves)
+    const leafShades = [
+      '#2d501c', '#396523', '#467d2d', '#549537',
+      '#64ad42', '#72c24c', '#355c20', '#4a822f'
+    ];
+    for (let i = 0; i < 1400; i++) {
+      const cx = 50 + r() * (w - 100);
+      const cy = 30 + r() * (h - 70);
+      const radX = 14 + r() * 18;
+      const radY = 22 + r() * 26;
+      const rot = (r() - 0.5) * Math.PI * 1.5;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+
+      // Leaf body
+      ctx.fillStyle = leafShades[(r() * leafShades.length) | 0];
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radX, radY, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Leaf center vein
+      ctx.strokeStyle = 'rgba(160,220,120,0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, -radY * 0.9);
+      ctx.lineTo(0, radY * 0.9);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }, { aniso: 16 });
+
+  // 12. Rough Furrowed Tree Bark (256x512)
+  const treeBark = canvasTex(256, 512, (ctx, w, h) => {
+    // Rich forest trunk base
+    ctx.fillStyle = '#3c2e22';
+    ctx.fillRect(0, 0, w, h);
+    const r = rng(333);
+
+    // Vertical furrowed dark fissures
+    for (let x = 0; x < w; x += 12) {
+      ctx.strokeStyle = '#1a130d';
+      ctx.lineWidth = 3 + r() * 4;
+      ctx.beginPath();
+      ctx.moveTo(x + r() * 6, 0);
+      for (let y = 0; y <= h; y += 40) {
+        ctx.lineTo(x + (r() - 0.5) * 16, y);
+      }
+      ctx.stroke();
+    }
+
+    // Raised bark ridges with lichen and moss patches
+    for (let i = 0; i < 4000; i++) {
+      const c = r();
+      ctx.fillStyle = c < 0.4 ? '#544234' : (c < 0.75 ? '#6a5442' : (c < 0.9 ? '#4a5b32' : '#2d2218'));
+      ctx.fillRect(r() * w, r() * h, 2 + r() * 4, 8 + r() * 18);
+    }
+  }, { aniso: 16 });
+
+  // 13. Soft Volumetric Celebratory Smoke Puff Texture (256x256)
+  const smoke = canvasTex(256, 256, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    const r = rng(444);
+
+    // Multi-octave overlapping turbulent lobes with Gaussian radial falloff
+    const lobes = [
+      { x: 128, y: 128, rad: 110, op: 0.8 },
+      { x: 110, y: 110, rad: 85, op: 0.65 },
+      { x: 145, y: 115, rad: 80, op: 0.6 },
+      { x: 115, y: 145, rad: 85, op: 0.65 },
+      { x: 145, y: 145, rad: 75, op: 0.55 },
+      { x: 128, y: 95, rad: 70, op: 0.5 },
+      { x: 128, y: 160, rad: 70, op: 0.5 },
+      { x: 95, y: 128, rad: 70, op: 0.5 },
+      { x: 160, y: 128, rad: 70, op: 0.5 },
+    ];
+
+    for (const lb of lobes) {
+      const g = ctx.createRadialGradient(lb.x, lb.y, 4, lb.x, lb.y, lb.rad);
+      g.addColorStop(0, `rgba(255,255,255,${lb.op})`);
+      g.addColorStop(0.35, `rgba(255,255,255,${lb.op * 0.7})`);
+      g.addColorStop(0.7, `rgba(255,255,255,${lb.op * 0.25})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(lb.x, lb.y, lb.rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }, { repeat: false, aniso: 8 });
+
   return {
     asphalt: runoff, // fallback
     runoff,
@@ -491,7 +683,11 @@ export function makeTrackTextures() {
     garage,
     glass,
     jumbotron,
-    flags
+    flags,
+    pineFoliage,
+    deciduousFoliage,
+    treeBark,
+    smoke
   };
 }
 
@@ -520,43 +716,276 @@ export const SIGN_CELLS = [
   { key: 'TRAP', text: 'SPEED TRAP', bg: '#f2c200', fg: '#111111' },
 ];
 // corner names from the FIA circuit map (2025)
-const TURN_NAME = { 1: 'NIKI LAUDA', 3: 'REMUS', 4: 'RAUCH', 9: 'JOCHEN RINDT' };
+const TURN_NAME = {
+  1: 'NIKI LAUDA', 2: 'TURN 2', 3: 'REMUS', 4: 'RAUCH',
+  5: 'TURN 5', 6: 'TURN 6', 7: 'WÜRTH', 8: 'TURN 8',
+  9: 'JOCHEN RINDT', 10: 'RED BULL MOBILE'
+};
 for (let i = 1; i <= 10; i++) SIGN_CELLS.push({ key: 'T' + i, text: String(i), bg: '#0b1630', fg: '#ffffff', sub: TURN_NAME[i] || 'TURN', turn: true });
 
 /** extraCells: more cells from circuit style data, e.g. sponsor billboards { key, text, bg, fg, accent } */
 export function makeSignAtlas(extraCells = []) {
   const CELLS = [...SIGN_CELLS, ...extraCells];
-  const cw = 512, ch = 128, cols = 4;
+  const cw = 512, ch = 160, cols = 4;
   const rows = Math.ceil(CELLS.length / cols);
   const c = document.createElement('canvas');
   c.width = cw * cols; c.height = ch * rows;
   const ctx = c.getContext('2d');
   const uv = {};
+
   CELLS.forEach((cell, idx) => {
     const x = (idx % cols) * cw, y = Math.floor(idx / cols) * ch;
-    ctx.fillStyle = cell.bg; ctx.fillRect(x, y, cw, ch);
-    const dist = /^B\d+$/.test(cell.key);
-    ctx.strokeStyle = dist ? '#111111' : 'rgba(255,255,255,0.35)'; ctx.lineWidth = dist ? 10 : 6; ctx.strokeRect(x + 6, y + 6, cw - 12, ch - 12);
-    if (cell.accent) { ctx.fillStyle = cell.accent; ctx.fillRect(x, y + ch - 16, cw, 16); }
-    ctx.fillStyle = cell.fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    if (cell.ring) {
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, cw, ch);
-      ctx.strokeStyle = '#d0021b'; ctx.lineWidth = 14;
-      ctx.beginPath(); ctx.arc(x + cw / 2, y + ch / 2, 50, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = '#111'; ctx.font = 'bold 54px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 2);
-    } else if (cell.turn) {
-      ctx.font = `bold ${cell.sub.length > 8 ? 26 : 30}px sans-serif`; ctx.fillText(cell.sub, x + 150, y + ch / 2 + 2, 270);
-      ctx.font = 'bold 96px sans-serif'; ctx.fillText(cell.text, x + 340, y + ch / 2 + 6);
-    } else if (cell.sub) {
-      ctx.font = 'bold 56px sans-serif'; ctx.fillText(cell.text, x + cw / 2, y + 50);
-      ctx.font = 'bold 26px sans-serif'; ctx.globalAlpha = 0.85; ctx.fillText(cell.sub, x + cw / 2, y + 100); ctx.globalAlpha = 1;
-    } else {
-      ctx.font = `bold ${cell.text.length > 6 ? 64 : 100}px "Helvetica Neue", Arial, sans-serif`; ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 6, cw - 40);
+
+    // 1. Base card with subtle metallic bevel & carbon texture
+    ctx.fillStyle = cell.bg || '#11151c';
+    ctx.fillRect(x, y, cw, ch);
+
+    // Carbon weave micro-texture for dark cards
+    if (cell.bg === '#0b1630' || cell.bg === '#111111' || cell.bg === '#0c1626') {
+      ctx.fillStyle = 'rgba(255,255,255,0.035)';
+      for (let py = 0; py < ch; py += 4) {
+        ctx.fillRect(x, y + py, cw, 2);
+      }
     }
+
+    const dist = /^B\d+$/.test(cell.key);
+    const isSponsor = cell.key.startsWith('SP_');
+
+    if (dist) {
+      // ------------------------------------------------------------- BRAKING DISTANCE BOARD
+      // Clean reflective white background with black FIA race border
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 4, y + 4, cw - 8, ch - 8);
+
+      // Heavy race border
+      ctx.strokeStyle = '#14171c';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(x + 5, y + 5, cw - 10, ch - 10);
+
+      // High-visibility yellow & black diagonal hazard stripes on side tabs
+      const drawChevrons = (bx) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(bx, y + 10, 24, ch - 20);
+        ctx.clip();
+        ctx.fillStyle = '#f5c400';
+        ctx.fillRect(bx, y + 10, 24, ch - 20);
+        ctx.fillStyle = '#111111';
+        for (let cy = y; cy < y + ch + 30; cy += 18) {
+          ctx.beginPath();
+          ctx.moveTo(bx, cy);
+          ctx.lineTo(bx + 24, cy - 14);
+          ctx.lineTo(bx + 24, cy - 6);
+          ctx.lineTo(bx, cy + 8);
+          ctx.fill();
+        }
+        ctx.restore();
+      };
+      drawChevrons(x + 10);
+      drawChevrons(x + cw - 34);
+
+      // Bold distance numeral with subtle drop shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.font = '900 110px "Arial Black", Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(cell.text, x + cw / 2 + 3, y + ch / 2 + 5);
+
+      ctx.fillStyle = '#0f1218';
+      ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 2);
+
+      // Micro "METRES" subtitle and FIA track safety seal
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillStyle = '#555e6d';
+      ctx.fillText('METRES', x + cw / 2, y + ch - 18);
+    } else if (cell.ring) {
+      // ------------------------------------------------------------- PIT SPEED LIMIT (80 KM/H)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 4, y + 4, cw - 8, ch - 8);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(x + 4, y + 4, cw - 8, ch - 8);
+
+      // International FIA Red Speed Ring
+      ctx.strokeStyle = '#d5001c';
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.arc(x + 100, y + ch / 2, 58, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#111111';
+      ctx.font = '900 68px "Arial Black", Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(cell.text, x + 100, y + ch / 2 + 4);
+
+      ctx.textAlign = 'left';
+      ctx.font = '900 38px "Arial Black", sans-serif';
+      ctx.fillStyle = '#111111';
+      ctx.fillText('PIT SPEED LIMIT', x + 185, y + ch / 2 - 10);
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillStyle = '#d5001c';
+      ctx.fillText('MAX 80 KM/H · STRICTLY ENFORCED', x + 185, y + ch / 2 + 28);
+    } else if (cell.turn) {
+      // ------------------------------------------------------------- TURN BOARD (T1 to T10)
+      // Fluorescent green apex indicator strip along left border
+      ctx.fillStyle = '#00e676';
+      ctx.fillRect(x + 6, y + 6, 16, ch - 12);
+
+      // Outer safety border
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x + 6, y + 6, cw - 12, ch - 12);
+
+      // Giant corner numeral on the right
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '900 114px "Arial Black", Impact, sans-serif';
+      ctx.fillText(cell.text, x + 380, y + ch / 2 + 6);
+
+      // Corner name and FIA designation on the left
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#00e676';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('FORMULA 1 AUSTRIAN GP', x + 40, y + 42);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 36px "Arial Black", sans-serif';
+      ctx.fillText(cell.sub, x + 40, y + 84, 250);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('SPIELBERG · TURN ' + cell.text, x + 40, y + 122);
+    } else if (isSponsor) {
+      // ------------------------------------------------------------- AUTHENTIC SPONSOR BILLBOARDS
+      const spName = cell.key.replace('SP_', '');
+      ctx.fillStyle = cell.bg;
+      ctx.fillRect(x + 4, y + 4, cw - 8, ch - 8);
+      ctx.strokeStyle = cell.accent || 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(x + 6, y + 6, cw - 12, ch - 12);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (spName === 'ROLEX') {
+        // Rolex Green & Gold Crown
+        ctx.fillStyle = '#ffd700';
+        // 5-point Rolex crown
+        const cx = x + cw / 2, cy = y + 45;
+        ctx.beginPath();
+        ctx.moveTo(cx - 36, cy + 18);
+        ctx.lineTo(cx - 44, cy - 8);
+        ctx.lineTo(cx - 18, cy + 4);
+        ctx.lineTo(cx, cy - 18);
+        ctx.lineTo(cx + 18, cy + 4);
+        ctx.lineTo(cx + 44, cy - 8);
+        ctx.lineTo(cx + 36, cy + 18);
+        ctx.closePath();
+        ctx.fill();
+        for (let pt of [-44, -18, 0, 18, 44]) {
+          ctx.beginPath();
+          ctx.arc(cx + pt, cy + (Math.abs(pt) === 44 ? -8 : (pt === 0 ? -18 : 4)), 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.font = '900 52px "Times New Roman", Georgia, serif';
+        ctx.fillText('ROLEX', cx, y + 104);
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('OFFICIAL TIMEKEEPER', cx, y + 138);
+      } else if (spName === 'PIRELLI') {
+        // Red with Speed-Yellow stretched P
+        const cx = x + cw / 2, cy = y + ch / 2;
+        ctx.fillStyle = '#fdd400';
+        ctx.font = '900 68px "Arial Black", Impact, sans-serif';
+        ctx.fillText('PIRELLI', cx, cy - 8);
+        ctx.fillRect(cx - 180, cy - 42, 360, 8); // iconic horizontal stretched P bar
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('POWER IS NOTHING WITHOUT CONTROL', cx, cy + 40);
+      } else if (spName === 'ARAMCO') {
+        // Aramco dual-tone energy rays
+        const cx = x + cw / 2, cy = y + ch / 2;
+        ctx.fillStyle = '#00a3e0';
+        ctx.font = '900 64px "Arial Black", sans-serif';
+        ctx.fillText('aramco', cx, cy - 8);
+        ctx.fillStyle = '#00b140';
+        ctx.fillRect(cx - 160, cy + 30, 320, 8);
+        ctx.fillStyle = '#0072ce';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('WHERE ENERGY IS OPPORTUNITY', cx, cy + 54);
+      } else if (spName === 'DHL') {
+        // DHL Yellow & Red Italic with speed cuts
+        const cx = x + cw / 2, cy = y + ch / 2;
+        ctx.fillStyle = '#d40511';
+        ctx.font = 'italic 900 82px "Arial Black", Impact, sans-serif';
+        ctx.fillText('DHL', cx, cy - 4);
+        ctx.fillStyle = '#ffcc00';
+        for (let l = 0; l < 4; l++) {
+          ctx.fillRect(cx - 120 + l * 65, cy - 35, 12, 50);
+        }
+        ctx.fillStyle = '#d40511';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('EXCELLENCE. SIMPLY DELIVERED.', cx, cy + 48);
+      } else {
+        // Generic high-contrast sponsor
+        ctx.fillStyle = cell.fg;
+        ctx.font = `900 ${cell.text.length > 8 ? 48 : 64}px "Arial Black", sans-serif`;
+        ctx.fillText(cell.text, x + cw / 2, y + ch / 2 - 10);
+        if (cell.sub) {
+          ctx.font = 'bold 20px sans-serif';
+          ctx.fillText(cell.sub, x + cw / 2, y + ch / 2 + 36);
+        }
+      }
+    } else {
+      // ------------------------------------------------------------- GENERAL TRACKSIDE SIGNS
+      ctx.strokeStyle = cell.accent || 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(x + 6, y + 6, cw - 12, ch - 12);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (cell.key === 'RBR' || cell.key === 'SPIELBERG') {
+        // Circuit name header
+        ctx.fillStyle = '#e10600';
+        ctx.fillRect(x + 10, y + 10, cw - 20, 10);
+        ctx.fillStyle = cell.fg;
+        ctx.font = '900 52px "Arial Black", Impact, sans-serif';
+        ctx.fillText(cell.text, x + cw / 2, y + ch / 2 - 8);
+        ctx.fillStyle = cell.key === 'RBR' ? '#f5c400' : '#e10600';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText(cell.sub, x + cw / 2, y + ch / 2 + 38);
+      } else if (cell.key === 'PITIN' || cell.key === 'PITOUT') {
+        ctx.fillStyle = cell.key === 'PITIN' ? '#f5c400' : '#00e676';
+        ctx.fillRect(x + 10, y + 10, cw - 20, 12);
+        ctx.fillStyle = cell.fg;
+        ctx.font = '900 54px "Arial Black", sans-serif';
+        ctx.fillText(cell.text, x + cw / 2, y + ch / 2 - 8);
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillText(cell.sub, x + cw / 2, y + ch / 2 + 36);
+      } else if (cell.sub) {
+        ctx.fillStyle = cell.fg;
+        ctx.font = '900 50px "Arial Black", sans-serif';
+        ctx.fillText(cell.text, x + cw / 2, y + 54);
+        ctx.font = 'bold 24px sans-serif';
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(cell.sub, x + cw / 2, y + 112);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = cell.fg;
+        ctx.font = `900 ${cell.text.length > 6 ? 64 : 88}px "Arial Black", sans-serif`;
+        ctx.fillText(cell.text, x + cw / 2, y + ch / 2 + 4, cw - 40);
+      }
+    }
+
+    // Normalized UV coordinates for atlas cell
     uv[cell.key] = [x / c.width, 1 - (y + ch) / c.height, (x + cw) / c.width, 1 - y / c.height];
   });
+
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 16; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.anisotropy = 16;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
   return { tex, uv };
 }

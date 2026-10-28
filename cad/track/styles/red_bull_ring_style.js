@@ -32,11 +32,14 @@ export const RED_BULL_RING_STYLE = {
   barriers: {
     wallHeight: 1.05,
     sponsors: [
-      { name: 'Red Bull', bg: '#0b1a44', fg: '#d8102e', accent: '#f3c11b' },
-      { name: 'PIRELLI', bg: '#fdd400', fg: '#111111' },
-      { name: 'aramco', bg: '#ffffff', fg: '#0072ce', accent: '#84bd00' },
-      { name: 'ROLEX', bg: '#006039', fg: '#c9a54c' },
-      { name: 'DHL', bg: '#ffcc00', fg: '#d40511' },
+      { name: 'Red Bull', bg: '#081226', fg: '#d8102e', accent: '#f3c11b' },
+      { name: 'ROLEX', bg: '#006039', fg: '#ffd700', accent: '#ffd700' },
+      { name: 'PIRELLI', bg: '#d52b1e', fg: '#fee100', accent: '#fee100' },
+      { name: 'aramco', bg: '#ffffff', fg: '#00a3e0', accent: '#00b140' },
+      { name: 'DHL', bg: '#ffcc00', fg: '#d40511', accent: '#d40511' },
+      { name: 'QATAR AIRWAYS', bg: '#5c0632', fg: '#ffffff', accent: '#d4af37' },
+      { name: 'Heineken 0.0', bg: '#0b1630', fg: '#ffffff', accent: '#00d4ff' },
+      { name: 'STEIERMARK', bg: '#006837', fg: '#ffffff', accent: '#ffffff' },
     ],
     wrapLength: 9,              // metres per sponsor panel on walls and tyre belts
     tecpro: { length: 1.5, height: 1.0, depth: 0.9, colors: ['#1f4fa8', '#f4f4f4'] },
