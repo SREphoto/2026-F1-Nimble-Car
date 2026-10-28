@@ -5,48 +5,90 @@
  * The builder (garage_builder.js) only reads this file, so another garage layout is a new data object.
  */
 export const GARAGE_LAYOUT = {
-  x0: -75, x1: 115, halfWidth: 36, height: 46,           // 19 m deep, 7.2 m wide, 4.6 m high
-  lowerBand: 11,                                          // black lower band on the walls (dm)
-  panelTop: 34,                                           // team colour wall panels from the band up to here
+  x0: -75, x1: 175, halfWidth: 68, height: 52,           // 25 m deep, 13.6 m wide, 5.2 m high (Huge, spacious works-team bay)
+  lowerBand: 12,                                          // black lower band on the walls (dm)
+  panelTop: 38,                                           // team colour wall panels from the band up to here
   brick: { pale: '#ddd6c8', grey: '#8d8f93' },
   floor: {
-    color: '#9a9ea3', roughness: 0.42, clearcoat: 1.0, clearcoatRoughness: 0.1,   // glossy light grey epoxy
-    reflect: 0.15,                                         // share of the mirror image mixed into the floor (high quality)
-    lanes: { z0: 11.5, z1: 19, x0: -75, x1: 56, color: '#80858c', chevron: '#e2e4e7' },   // grey chevron parking lanes beside the car
+    color: '#9ba0a6', roughness: 0.38, clearcoat: 1.0, clearcoatRoughness: 0.08,   // glossy light grey epoxy
+    reflect: 0.18,                                         // share of the mirror image mixed into the floor (high quality)
+    lanes: { z0: 12, z1: 22, x0: -75, x1: 75, color: '#7c828a', chevron: '#e2e5ea' },   // grey chevron parking lanes beside the car
+    subLanes: { z0: -48, z1: -38, x0: -60, x1: 65, color: '#7c828a', chevron: '#e2e5ea' },
     signs: [                                              // painted floor direction signs [text, x, z, rotation]
-      ['PADDOCK  ▶', 96, -22, Math.PI / 2], ['TELEMETRY ROOM  ▶', 88, -22, Math.PI / 2], ['ENGINE ROOM  ▶', 80, -22, Math.PI / 2],
+      ['PADDOCK EXIT  ▶', 160, -48, Math.PI / 2],
+      ['STRATEGY & TELEMETRY  ▶', 145, -48, Math.PI / 2],
+      ['POWER UNIT WORKSHOP  ▶', 128, -48, Math.PI / 2],
+      ['800V DC HIGH VOLTAGE BAY ⚡', 24, 38, 0],
+      ['CAR 1 · SERVICE BAY', -8, 0, 0],
+      ['FIA SCRUTINEERING & SETUP  ▶', 88, -48, Math.PI / 2],
     ],
   },
   pitLaneStrip: { color: '#c3262b', width: 6, text: 'PIT-LANE' },
-  truss: { y: 39, size: 2.4, seg: 10, runsX: [-13, 13], runsZ: [-40, 0, 40, 80] },     // aluminium box truss grid under the ceiling
-  canopy: { x0: -8, x1: 46, halfWidth: 11, y: 33, depth: 2.4 },                         // light canopy over the car
-  tubeLights: { y: 43.2, zs: [-29, -21, 21, 29], x0: -66, x1: 108, step: 16, length: 12 },
-  ducts: { zs: [-24, 24], y: 43, r: 2.0 },
-  cableTrays: { zs: [-32, 32], y: 41.5, width: 3.6 },
-  rollerDoor: { y: 38, windows: 6 },                      // door raised to 3.8 m, bottom slats with a row of windows
+  truss: { y: 45, size: 2.6, seg: 10, runsX: [-44, -20, 20, 44], runsZ: [-50, -10, 30, 70, 110, 150] },     // aluminium box truss grid under the ceiling
+  canopy: { x0: -10, x1: 56, halfWidth: 13.5, y: 37, depth: 2.6 },                         // light canopy over the car
+  tubeLights: { y: 49.5, zs: [-54, -36, -18, 18, 36, 54], x0: -68, x1: 165, step: 18, length: 14 },
+  ducts: { zs: [-46, 46], y: 49.2, r: 2.4 },
+  cableTrays: { zs: [-60, 60], y: 47.5, width: 4.0 },
+  rollerDoor: { y: 42, windows: 10 },                      // door raised to 4.2 m, bottom slats with a row of windows
   pitLane: { apron: 40, fastLane: 60, wall: 1.1, length: 340 },                          // outside the door (dm)
   // props: kind, position [x, z], rotation (rad around y, local +z faces the room), optional count and step (dm)
   props: [
-    { kind: 'wallUnit', at: [42, -35], rot: 0, count: 6, step: 9.4 },
-    { kind: 'wallUnit', at: [92, 35], rot: Math.PI, count: 4, step: 9.4 },
-    { kind: 'helmetShelf', at: [58, -34.6], rot: 0 },
-    { kind: 'helmetShelf', at: [78, -34.6], rot: 0 },
-    { kind: 'tyreTrolley', at: [-46, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
-    { kind: 'tyreTrolley', at: [-30, -27], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
-    { kind: 'tyreTrolley', at: [104, -27], rot: Math.PI / 2, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
-    { kind: 'flightCase', at: [-13, -29], rot: 0 }, { kind: 'flightCase', at: [-60, -29], rot: 0.08 },
-    { kind: 'lockerCase', at: [6, 28.5], rot: Math.PI },
-    { kind: 'drawerCase', at: [30, 29], rot: Math.PI },
-    { kind: 'flightCase', at: [-16, 29], rot: Math.PI },
-    { kind: 'extinguisherStand', at: [-70, -32], rot: 0.4 }, { kind: 'extinguisherStand', at: [-70, 32], rot: Math.PI - 0.4 }, { kind: 'extinguisherStand', at: [110, 31], rot: Math.PI },
-    { kind: 'gasCart', at: [-52, 26], rot: Math.PI - 0.5 },
-    { kind: 'fuelDrum', at: [100, 30] }, { kind: 'fuelDrum', at: [106, 25] },
-    { kind: 'barStool', at: [83, -6] }, { kind: 'barStool', at: [83, 14] }, { kind: 'barStool', at: [36, -22] }, { kind: 'barStool', at: [62, 22] },
-    { kind: 'directorChair', at: [86, 2], rot: Math.PI / 2 }, { kind: 'directorChair', at: [86, 9], rot: Math.PI / 2 }, { kind: 'directorChair', at: [72, -24], rot: 0.5 },
-    { kind: 'racingSeat', at: [104, -14], rot: -Math.PI / 2 },
-    { kind: 'pillarTV', at: [-71.5, -34] }, { kind: 'pillarTV', at: [-71.5, 34] },
+    // Right Wall Units (Full length along z = 67)
+    { kind: 'wallUnit', at: [18, 67], rot: Math.PI, count: 12, step: 9.4 },
+    // Left Wall Units (Full length along z = -67)
+    { kind: 'wallUnit', at: [18, -67], rot: 0, count: 12, step: 9.4 },
+
+    // Driver Helmet Display Shelves on Left Wall
+    { kind: 'helmetShelf', at: [68, -66.4], rot: 0 },
+    { kind: 'helmetShelf', at: [96, -66.4], rot: 0 },
+
+    // Pirelli Tyre Trolleys with Heated Tire Blankets (Spaced nicely in Left Operations Zone z = -46)
+    { kind: 'tyreTrolley', at: [-55, -46], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'tyreTrolley', at: [-35, -46], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'tyreTrolley', at: [-15, -46], rot: 0, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+    { kind: 'tyreTrolley', at: [145, -46], rot: Math.PI / 2, labels: ['LEFT FRONT', 'RIGHT FRONT', 'LEFT REAR', 'RIGHT REAR'] },
+
+    // Diagnostic & Tool Flight Cases on Right Side (z = 46 to 58)
+    { kind: 'flightCase', at: [-35, 52], rot: 0.05 },
+    { kind: 'flightCase', at: [-15, 52], rot: -0.08 },
+    { kind: 'flightCase', at: [55, 54], rot: 0.12 },
+    { kind: 'lockerCase', at: [5, 55], rot: Math.PI },
+    { kind: 'drawerCase', at: [35, 55], rot: Math.PI },
+
+    // Fire Extinguisher Safety Stations
+    { kind: 'extinguisherStand', at: [-70, -60], rot: 0.35 },
+    { kind: 'extinguisherStand', at: [-70, 60], rot: Math.PI - 0.35 },
+    { kind: 'extinguisherStand', at: [168, -58], rot: 0 },
+    { kind: 'extinguisherStand', at: [168, 58], rot: Math.PI },
+
+    // Nitrogen Gas Bottle Charging Cart
+    { kind: 'gasCart', at: [-56, 42], rot: Math.PI - 0.4 },
+
+    // High-Octane Fuel Drums & Pumping Station
+    { kind: 'fuelDrum', at: [136, 56] },
+    { kind: 'fuelDrum', at: [144, 50] },
+
+    // Strategy Island Stools & Director Chairs
+    { kind: 'barStool', at: [136, -16] },
+    { kind: 'barStool', at: [136, 16] },
+    { kind: 'barStool', at: [136, -6] },
+    { kind: 'barStool', at: [136, 6] },
+    { kind: 'directorChair', at: [140, -10], rot: Math.PI / 2 },
+    { kind: 'directorChair', at: [140, 10], rot: Math.PI / 2 },
+    { kind: 'directorChair', at: [120, -32], rot: 0.6 },
+    { kind: 'directorChair', at: [120, 32], rot: -0.6 },
+
+    // Driver Debrief Carbon Bucket Chairs
+    { kind: 'racingSeat', at: [125, -20], rot: -Math.PI / 2 },
+    { kind: 'racingSeat', at: [125, 20], rot: Math.PI / 2 },
+
+    // Live Timing Pillar TVs at Entrance and Mid-Aisle
+    { kind: 'pillarTV', at: [-71.5, -64] },
+    { kind: 'pillarTV', at: [-71.5, 64] },
+    { kind: 'pillarTV', at: [85, -64] },
+    { kind: 'pillarTV', at: [85, 64] },
   ],
-  desk: { at: [96, 4], length: 34, depth: 8, height: 7.5, monitorWall: { cols: 4, rows: 2, w: 8, h: 5 } },
+  desk: { at: [154, 0], length: 48, depth: 9, height: 7.5, monitorWall: { cols: 4, rows: 2, w: 9.6, h: 5.8 } },
   stands: { raise: 1.8 },                                 // the car is lifted 18 cm onto stands when the wheels are off
   sponsors: ['SREdesigns', 'NIMBLE CAR 2026', 'APEX FUELS', 'TORQUE LABS', 'CARBONWORKS', 'GRIDLINE DATA'],   // made-up names, plain text only
 };
