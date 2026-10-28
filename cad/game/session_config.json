@@ -10,7 +10,11 @@
                { "name": "Q1", "minutes": 18, "knockOut": 6 },
                { "name": "Q2", "minutes": 15, "knockOut": 6 },
                { "name": "Q3", "minutes": 12, "knockOut": 0 }
-             ] }
+             ] },
+    "RACE": { "type": "race", "label": "Austrian Grand Prix (Race)",
+              "lapsOptions": [5, 18, 36, 71],
+              "defaultLaps": 5,
+              "mandatoryPitRule": true }
   },
   "clockSpeeds": [1, 5, 20, 60],
   "tyres": {

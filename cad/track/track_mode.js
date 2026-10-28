@@ -11,6 +11,11 @@ import { createRedBullRing, DM } from './red_bull_ring.js';
 import { createRideModel } from './ride_model.js';
 import { soundEngine } from '../../sfx.js';
 import { raceStartSequence } from '../audio/race_start_sequence.js';
+import { AiCarManager } from '../ai/ai_car_manager.js';
+import { CrashPhysicsEngine } from '../physics/crash_physics.js';
+import { RaceControl } from '../physics/race_control.js';
+import { GeminiAudioClient } from '../audio/gemini_audio_client.js';
+import { SimTelemetryHud } from '../game/sim_telemetry_hud.js';
 
 const WHEELBASE = 3.4;          // m (2026 regs)
 const MASS = 800;               // kg incl. driver
@@ -115,11 +120,38 @@ export function initTrackMode(ctx) {
   }
 
   // ------------------------------------------------------------------ vehicle state (metres, rear-axle reference)
-  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0, inPit: false, pitS: -1, pitLimiter: false };
+  const car = { x: WHEELBASE, z: 0, h: Math.PI, v: 0, idx: -1, rlIdx: -1, sp: 0, prevSp: 0, lapStart: null, lap: 0, last: null, best: null, surf: 'asphalt', hits: 0, sectors: [null, null, null], secStart: 0, inPit: false, pitS: -1, pitLimiter: false, wingHealth: 1.0, latOffset: 0, aLong: 0, aLat: 0 };
   const ride = createRideModel(ctx.rideSpec);   // body heave / pitch / roll + per-corner travel (data in ride_model.js)
   const mode = { circuit: true, driving: false, autopilot: false, cam: 'free', lastShift: 0, tvSpot: -1, simTime: 0, pitReq: false, pitPhase: null, pitT: 0, pitTyresChanged: false };
   const keys = new Set();
   const tmp = { f: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), m: new THREE.Matrix4(), front: new THREE.Vector3(), rear: new THREE.Vector3() };
+
+  // ------------------------------------------------------------------ multi-car AI grid, physics & audio
+  let aiManager = null;
+  const crashPhysics = new CrashPhysicsEngine({ scene, track });
+  const raceControl = new RaceControl({ circuit });
+  const audioClient = new GeminiAudioClient();
+  const telemetryHud = new SimTelemetryHud();
+
+  raceControl.onEvent((ev) => {
+    audioClient.speak({ text: ev.message, role: 'engineer' });
+    telemetryHud.showRadioOverlay('🏁 RACE CONTROL', ev.message);
+  });
+
+  audioClient.onSpeech((ev) => {
+    telemetryHud.showRadioOverlay(ev.speakerTitle, ev.text);
+  });
+
+  // Load 2026 grid configuration and initialize 21 AI opponents
+  const gridUrl = new URL('../game/grid_2026.json', import.meta.url).href;
+  fetch(gridUrl).then(r => r.json()).then(gridConfig => {
+    aiManager = new AiCarManager({ scene, circuit, gridConfig });
+    window.__aiManager__ = aiManager;
+  }).catch(e => console.warn('[track_mode] Failed to load grid_2026.json', e));
+
+  window.__audioClient__ = audioClient;
+  window.__telemetryHud__ = telemetryHud;
+  window.__raceControl__ = raceControl;
 
   function parkOnGrid() {
     const F = track.at(0);
@@ -246,10 +278,13 @@ export function initTrackMode(ctx) {
     // lateral: kinematic bicycle model with grip-limited yaw rate (understeer at the limit)
     const delta = THREE.MathUtils.degToRad(state.steeringDeg);
     let yaw = (nv * Math.tan(delta)) / WHEELBASE;
-    const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45) * tyreGrip;
+    const wingFactor = 0.65 + 0.35 * (car.wingHealth || 1.0);
+    const grip = latLimit(Math.abs(nv)) * (car.surf === 'asphalt' || car.surf === 'runoff' ? 1 : 0.45) * tyreGrip * wingFactor;
     if (Math.abs(nv * yaw) > grip) yaw = Math.sign(yaw) * grip / Math.max(1, Math.abs(nv));
     car.h += yaw * dt;
-    ride.update(dt, { aLong: (nv - v) / dt, aLat: nv * yaw, speed: Math.abs(nv), road: car.inPit ? null : kerbRoad() });
+    car.aLong = (nv - v) / dt;
+    car.aLat = nv * yaw;
+    ride.update(dt, { aLong: car.aLong, aLat: car.aLat, speed: Math.abs(nv), road: car.inPit ? null : kerbRoad() });
     car.x += Math.cos(car.h) * nv * dt;
     car.z += Math.sin(car.h) * nv * dt;
     // barriers
@@ -264,11 +299,34 @@ export function initTrackMode(ctx) {
         const rx = -Lb.tz, rz = Lb.tx;
         car.x -= rx * sgn * push; car.z -= rz * sgn * push;
         car.v *= 0.55; car.hits++;
+
+        // Barrier collision sparks and wing debris
+        crashPhysics.emitSparks(car.x, car.y || 0, car.z, rx * 4, 2, rz * 4, 18);
+        if (Math.abs(car.v) > 12) {
+          crashPhysics.emitDebris(car.x, car.y || 0, car.z, 12);
+          car.wingHealth = Math.max(0.35, (car.wingHealth || 1.0) - 0.25);
+        }
+
         // align heading with the barrier
         const th = Math.atan2(Lb.tz, Lb.tx) + (car.v < 0 ? Math.PI : 0);
         let dh = ((th - car.h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         car.h += dh * 0.5;
       }
+    }
+
+    // Car-to-Car collisions with AI grid
+    if (aiManager && aiManager.cars.length) {
+      crashPhysics.checkCollisions(car, aiManager.cars, (crash) => {
+        if (crash.isPlayerInvolved) {
+          soundEngine?.playShiftPop?.();
+          if ((car.wingHealth || 1.0) < 0.7) {
+            audioClient?.speak({
+              text: 'Damage reported on front wing! Box this lap for a replacement.',
+              role: 'engineer',
+            });
+          }
+        }
+      });
     }
     poseCar();
   }
@@ -418,9 +476,10 @@ export function initTrackMode(ctx) {
       if (prevT === 0 && mode.pitT > 0) {
         soundEngine?.playShiftPop?.();
       }
-      // Service tyres at t = 1.2s: fit fresh tyres, repair any blown corners, reset session wear
+      // Service tyres & repair front wing at t = 1.2s: fit fresh tyres, repair any blown corners, reset session wear
       if (!mode.pitTyresChanged && mode.pitT >= 1.2) {
         mode.pitTyresChanged = true;
+        car.wingHealth = 1.0;
         if (window.tyreStates) {
           try {
             window.tyreStates.setBlown('all', false);
@@ -526,11 +585,18 @@ export function initTrackMode(ctx) {
       const camZ = cz - P.rz * bs * 6.5 * DM + P.tz * 1.5 * DM;
       controls.target.set(cx, cy + 1.2 * DM, cz);
       camera.position.set(camX, camY, camZ); controls.update();
+    } else if (m === 'grid') {
+      const F = track.at(0);
+      const cx = F.x * DM, cy = (F.y + 3) * DM, cz = F.z * DM;
+      controls.target.set(cx - 35 * DM, cy + 0.5 * DM, cz);
+      camera.position.set(cx + 45 * DM, cy + 14 * DM, cz + 25 * DM);
+      camera.lookAt(controls.target);
+      controls.update();
     }
     carCentre(lastCarPos);
     document.querySelectorAll('.rbr-cam').forEach(b => b.classList.toggle('active', b.dataset.cam === m));
   }
-  function cycleCam() { const order = ['chase', 'tv', 'orbit', 'overview', 'pit']; setCam(order[(order.indexOf(mode.cam) + 1) % order.length]); }
+  function cycleCam() { const order = ['chase', 'grid', 'tv', 'orbit', 'overview', 'pit']; setCam(order[(order.indexOf(mode.cam) + 1) % order.length]); }
 
   function updateCamera(dt) {
     const c = carCentre(new THREE.Vector3());
@@ -637,6 +703,7 @@ export function initTrackMode(ctx) {
         <button type="button" id="rbr-reset" class="rbr-btn" title="Back to the pole-position grid box">Reset to grid</button>
       </div>
       <div class="rbr-row">
+        <button type="button" class="rbr-btn rbr-cam" data-cam="grid" title="View all 22 cars lined up on the starting grid">Grid</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="chase">Chase</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="tv">TV</button>
         <button type="button" class="rbr-btn rbr-cam" data-cam="orbit">Orbit car</button>
@@ -695,14 +762,60 @@ export function initTrackMode(ctx) {
     parkOnGrid();
     setCam('chase');
     ensureEngine();
-    raceStartSequence.start({
-      onLightsOut: () => {
-        setBrake(0);
-        setThrottle(1.0);
-        setGear('1');
-        setDriving(true);
+
+    // 1. Position all 22 cars in staggered 2-by-2 grid slots
+    if (aiManager) {
+      const gridOrder = window.__sessionEngine__?.finalGrid || [
+        { id: 'player', no: 3 },
+        ...aiManager.cars.map(c => ({ id: c.id, no: c.no }))
+      ];
+      aiManager.alignToGrid(gridOrder);
+    }
+
+    // 2. Precompile session speech pack if connected to server
+    audioClient?.precompileSessionPack('race');
+
+    // 3. FIA 5 Red Lights Starting Gantry on actual 3D track overhead gantry
+    let redCount = 0;
+    circuit.group?.userData?.setStartLights?.(0);
+    telemetryHud?.hideGantry();
+
+    const lightInterval = setInterval(() => {
+      redCount++;
+      // Illuminate the actual lights on the overhead track gantry
+      circuit.group?.userData?.setStartLights?.(redCount);
+      soundEngine?.playShiftPop?.();
+
+      if (redCount === 5) {
+        clearInterval(lightInterval);
+        const holdDelay = 1000 + Math.random() * 1500;
+        setTimeout(() => {
+          // LIGHTS OUT: 3D track lights extinguish instantly, 2D UI dismissed
+          circuit.group?.userData?.setStartLights?.(0);
+          telemetryHud?.hideGantry();
+          setBrake(0);
+          setThrottle(1.0);
+          selectGear(1);
+          setDriving(true);
+
+          audioClient?.speak({
+            key: 'race_start',
+            text: 'And it is lights out and away we go for the Austrian Grand Prix!',
+            role: 'announcer'
+          });
+
+          // Launch AI grid
+          if (aiManager) {
+            aiManager.cars.forEach((aiCar, idx) => {
+              const reaction = 0.15 + (idx * 0.03) + Math.random() * 0.1;
+              setTimeout(() => {
+                aiCar.v = 5 + Math.random() * 4;
+              }, reaction * 1000);
+            });
+          }
+        }, holdDelay);
       }
-    });
+    }, 1000);
   }
   $('rbr-race-start')?.addEventListener('click', triggerRaceStart);
   $('rbr-drive')?.addEventListener('click', () => setDriving(!mode.driving));
@@ -749,8 +862,28 @@ export function initTrackMode(ctx) {
     }
     mctx.clearRect(0, 0, mapC.width, mapC.height);
     mctx.drawImage(mapXf.bg, 0, 0);
+
+    // AI opponent dots on mini-map
+    if (aiManager && aiManager.cars) {
+      aiManager.cars.forEach((ai) => {
+        if (ai.retired) return;
+        const ax = ai.x * mapXf.s + mapXf.ox, az = ai.z * mapXf.s + mapXf.oz;
+        mctx.fillStyle = ai.colour || '#ff8800';
+        mctx.beginPath();
+        mctx.arc(ax, az, 3, 0, Math.PI * 2);
+        mctx.fill();
+      });
+    }
+
+    // Player car dot on mini-map (larger with white ring)
     const X = car.x * mapXf.s + mapXf.ox, Z = car.z * mapXf.s + mapXf.oz;
-    mctx.fillStyle = '#00d4e8'; mctx.beginPath(); mctx.arc(X, Z, 4, 0, Math.PI * 2); mctx.fill();
+    mctx.strokeStyle = '#ffffff';
+    mctx.lineWidth = 1.5;
+    mctx.fillStyle = '#00d4e8';
+    mctx.beginPath();
+    mctx.arc(X, Z, 4.5, 0, Math.PI * 2);
+    mctx.fill();
+    mctx.stroke();
   }
   const fmt = t => t == null ? '–' : `${Math.floor(t / 60)}:${(t % 60).toFixed(3).padStart(6, '0')}`;
   let hudT = 0;
@@ -802,7 +935,7 @@ export function initTrackMode(ctx) {
 
   // ------------------------------------------------------------------ public API (called from app.js)
   applyCircuit(true);
-  setCam('free');
+  setCam('grid');
   const api = {
     circuit, car, mode, ride,
     /** per-corner suspension travel from the ride model (dm, + = bump); zeros when not driving */
@@ -825,6 +958,36 @@ export function initTrackMode(ctx) {
         car.v = 0;
       }
       if (!mode.driving) ride.reset();
+      if (aiManager) {
+        aiManager.update(dt, car, raceControl);
+      }
+      if (crashPhysics) {
+        crashPhysics.updateParticles(dt);
+      }
+      if (raceControl) {
+        raceControl.update(dt, [car, ...(aiManager ? aiManager.cars : [])]);
+      }
+      if (telemetryHud && aiManager) {
+        const currentLap = car.lap || 1;
+        const totalLaps = window.__sessionEngine__?.state?.totalLaps || 5;
+        const board = [
+          { id: 'player', name: 'YOU', no: 3, colour: '#00d4e8', sp: car.sp, lap: car.lap || 0, v: car.v, compound: state.tyreCompound || 'soft' },
+          ...aiManager.cars.map(c => ({ id: c.id, name: c.name, no: c.no, colour: c.colour, sp: c.sp, lap: c.lap || 0, v: c.v, compound: c.tyreCompound || 'soft' }))
+        ];
+        board.sort((a, b) => (b.lap - a.lap) || (b.sp - a.sp));
+        const leadSp = board[0].sp;
+        board.forEach((r, i) => {
+          r.pos = i + 1;
+          r.gap = i === 0 ? null : Math.abs(leadSp - r.sp) / Math.max(10, r.v || 20);
+        });
+        telemetryHud.updateTimingTower(board, currentLap, totalLaps);
+        telemetryHud.updateVehicleTelemetry({
+          car,
+          aeroMode: state.aeroMode,
+          tyreGrip: state.tyreGrip,
+          wingHealth: car.wingHealth || 1.0,
+        });
+      }
       updateHud(dt);
     },
     beforeRender(dt) {

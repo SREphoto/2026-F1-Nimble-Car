@@ -12,6 +12,7 @@ const TYRE_INK = { soft: '#e3122b', medium: '#f5c400', hard: '#f2f2ee', inter: '
 export async function initSessions({ trackMode, tyreStates }) {
   const [config, grid, circuit] = await Promise.all(['./session_config.json', './grid_2026.json', '../track/circuits/red_bull_ring.json'].map(p => fetch(url(p)).then(r => r.json())));
   const eng = createSessionEngine({ config, grid, circuit });
+  window.__sessionEngine__ = eng;
   const car = () => trackMode?.car;
   const ui = { speed: 1, paused: false };
   const player = { run: 'garage', box: false, compound: 'soft', wear: 0, lapSeen: 0, offT: 0, lapStartAt: null, laps: [] };
@@ -33,6 +34,7 @@ export async function initSessions({ trackMode, tyreStates }) {
         <button type="button" id="sp-start" class="sp-btn">Start session</button>
         <button type="button" id="sp-pause" class="sp-btn">Pause</button>
         <label>Clock <select id="sp-speed">${config.clockSpeeds.map(s => `<option value="${s}">${s}×</option>`).join('')}</select></label>
+        <label id="sp-race-laps-lbl" style="display:none;">Laps <select id="sp-race-laps"><option value="5">5 Laps</option><option value="18">18 Laps (25%)</option><option value="36">36 Laps (50%)</option><option value="71">71 Laps (100%)</option></select></label>
       </div>
       <div class="sp-row">
         <label>Tyre <select id="sp-tyre">${config.tyres.compounds.map(c => `<option value="${c}">${c}</option>`).join('')}</select></label>
@@ -92,8 +94,12 @@ export async function initSessions({ trackMode, tyreStates }) {
   function startSession(key) {
     wasFinished = false;
     if (!key) { eng.stop(); toGarage(); render(); return; }
-    eng.start(key);
+    const customLaps = key === 'RACE' ? parseInt($('sp-race-laps')?.value || 5) : null;
+    eng.start(key, customLaps);
     player.laps = []; player.wear = 0; toGarage(); applyTyres(); render();
+    if (key === 'RACE' && trackMode) {
+      trackMode.triggerRaceStart();
+    }
   }
   function toGarage() {
     player.run = 'garage'; player.box = false; eng.state && (eng.state.playerOnLapSince = null);
@@ -171,7 +177,12 @@ export async function initSessions({ trackMode, tyreStates }) {
 
   // ---------------------------------------------------------------- events + loop
   $('sp-start').onclick = () => { const S = eng.state; if (S && S.type === 'qualifying' && S.segOver && !S.finished) { eng.nextSegment(); toGarage(); player.laps = player.laps; render(); } else startSession($('sp-pick').value); };
-  $('sp-pick').onchange = () => startSession($('sp-pick').value);
+  $('sp-pick').onchange = () => {
+    const isRace = $('sp-pick').value === 'RACE';
+    const raceLapsLbl = $('sp-race-laps-lbl');
+    if (raceLapsLbl) raceLapsLbl.style.display = isRace ? 'inline-block' : 'none';
+    startSession($('sp-pick').value);
+  };
   $('sp-pause').onclick = () => { ui.paused = !ui.paused; render(); };
   $('sp-speed').onchange = e => { ui.speed = +e.target.value; };
   $('sp-tyre').onchange = e => { player.compound = e.target.value; player.wear = 0; applyTyres(); render(); };

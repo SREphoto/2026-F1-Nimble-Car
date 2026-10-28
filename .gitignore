@@ -22,3 +22,10 @@ unity_pits/[Mm]emoryCaptures/
 .claude-brain/
 .agents/
 
+# Environment secrets and generated audio
+.env
+*.env
+server/.env
+assets/audio/generated/*.wav
+assets/audio/generated/*.mp3
+

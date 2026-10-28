@@ -875,7 +875,10 @@ export function createRedBullRing() {
     // 5 start-light pods x 2 rows (facing the grid = -tangent)
     const pod = new THREE.BoxGeometry(0.5 * DM, 1.6 * DM, 0.35 * DM);
     const lamp = new THREE.SphereGeometry(0.17 * DM, 10, 8);
-    const podI = new THREE.InstancedMesh(pod, M.lightOff, 10), lampI = new THREE.InstancedMesh(lamp, new THREE.MeshBasicMaterial({ color: 0xff1a1a }), 20);
+    const podI = new THREE.InstancedMesh(pod, M.lightOff, 10);
+    const lampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const lampI = new THREE.InstancedMesh(lamp, lampMat, 20);
+    lampI.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(20 * 3), 3);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-F.rz, F.rx));
     let pi = 0, li = 0;
     for (const off of [-1.6, 1.6]) for (let k = 0; k < 5; k++) {
@@ -891,6 +894,20 @@ export function createRedBullRing() {
     root.add(podI, lampI);
     root.userData.startLights = lampI;
     root.userData.gantry = { F, H, latL, latR };
+
+    const darkCol = new THREE.Color(0x180404);
+    const litCol = new THREE.Color(0xff1818);
+    root.userData.setStartLights = (count) => {
+      for (let k = 0; k < 5; k++) {
+        const c = k < count ? litCol : darkCol;
+        lampI.setColorAt(k * 2, c);
+        lampI.setColorAt(k * 2 + 1, c);
+        lampI.setColorAt(10 + k * 2, c);
+        lampI.setColorAt(10 + k * 2 + 1, c);
+      }
+      if (lampI.instanceColor) lampI.instanceColor.needsUpdate = true;
+    };
+    root.userData.setStartLights(0);
   }
 
   // ---------------------------------------------------------------- 9. signage (single atlas texture, single draw call)

@@ -216,11 +216,11 @@ class F1RaceStartSequence {
     const outTimer = setTimeout(() => {
       if (!this.active) return;
 
-      // LIGHTS OUT!
+      // LIGHTS OUT: Hide 2D UI immediately so the focus is entirely on the track and cars!
       this.setLightCount(0);
-      if (this.subText) {
-        this.subText.textContent = "LIGHTS OUT! AWAY WE GO!";
-        this.subText.classList.add('lights-out');
+      if (this.overlay) {
+        this.overlay.classList.remove('is-visible');
+        this.overlay.style.display = 'none';
       }
 
       // Play F1 Lights Out horn/buzzer
