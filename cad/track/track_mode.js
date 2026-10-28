@@ -1040,13 +1040,13 @@ export function initTrackMode(ctx) {
       if (mode.driving || mode.cam !== 'free') updateCamera(dt);
       // Animate celebratory soft-particle smoke plumes drifting with mountain wind
       circuit.group?.userData?.updateSmoke?.(dt, camera);
-      // keep the sun's shadow frustum around the car
+      // keep the sun's shadow frustum around the car with smooth 140m coverage
       if (sunLight) {
         const c = carCentre(new THREE.Vector3());
         sunLight.target.position.copy(c);
-        sunLight.position.set(c.x + 600, c.y + 1400, c.z + 500);
+        sunLight.position.set(c.x - 900, c.y + 1150, c.z - 950);
         const sc = sunLight.shadow.camera;
-        if (sc.far !== 4000) { sc.near = 10; sc.far = 4000; sc.left = -160; sc.right = 160; sc.top = 160; sc.bottom = -160; sc.updateProjectionMatrix(); }
+        if (sc.left !== -700) { sc.near = 10; sc.far = 4000; sc.left = -700; sc.right = 700; sc.top = 700; sc.bottom = -700; sc.updateProjectionMatrix(); }
       }
     },
     setDriving, setAutopilot, setCam, parkOnGrid, applyCircuit, requestPitStop, locatePit, pitAt, BOX_S, pitEntrySp, triggerRaceStart,

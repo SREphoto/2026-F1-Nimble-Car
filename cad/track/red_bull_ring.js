@@ -421,7 +421,7 @@ export function createRedBullRing() {
     chequer: new THREE.MeshStandardMaterial({ map: tex.chequer, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
     concrete: new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.85 }),
     concreteDark: new THREE.MeshStandardMaterial({ color: 0x8d9197, roughness: 0.9 }),
-    steel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.45, metalness: 0.7 }),
+    steel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.45, metalness: 0.7, side: THREE.DoubleSide }),
     pitConcrete: new THREE.MeshStandardMaterial({ map: makePitConcreteTexture(STYLE.pitLane), roughness: 0.8 }),
     fastLane: new THREE.MeshStandardMaterial({ color: STYLE.pitLane.fastLane.color, roughness: 0.7 }),
     fence: new THREE.MeshStandardMaterial({ map: fenceTex, alphaToCoverage: true, alphaTest: 0.04, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.6 }),
@@ -515,13 +515,11 @@ export function createRedBullRing() {
       { sp0: 1140, sp1: 1265, lat: -1.0, w: 2.2 },  // Turn 3 Remus hairpin entry
       { sp0: 1990, sp1: 2085, lat: -0.8, w: 2.2 }   // Turn 4 Rauch entry
     ];
-    for (const sz of skidZones) {
-      const g = strip(track, i => sz.lat - sz.w / 2, i => sz.lat + sz.w / 2, c(0.004), c(0.004), {
-        mask: i => { const sp = track.spOf(i); return sp >= sz.sp0 && sp <= sz.sp1; },
-        vLen: 6
-      });
-      add(g, M.skidMarks, 'RBR_Lockup_Skids');
-    }
+    const skidGeos = skidZones.map(sz => strip(track, i => sz.lat - sz.w / 2, i => sz.lat + sz.w / 2, c(0.004), c(0.004), {
+      mask: i => { const sp = track.spOf(i); return sp >= sz.sp0 && sp <= sz.sp1; },
+      vLen: 6
+    }));
+    add(mergeGeometries(skidGeos), M.skidMarks, 'RBR_Lockup_Skids');
   }
   /** wet sheen: 0 = dry, 1 = damp (lower roughness, darker), for the Wet sheen button */
   root.userData.setWet = (w) => {
@@ -581,10 +579,10 @@ export function createRedBullRing() {
   {
     const SA = KERB_W + 0.35, SB = SA + KS.sausage.width / 2, SC = SB + KS.sausage.width / 2, SH = KS.sausage.height;
     const g = [
-      strip(track, i => wr(i) + SA, i => wr(i) + SB, c(0.03), c(SH), { mask: i => sausR.m[i] }),
-      strip(track, i => wr(i) + SB, i => wr(i) + SC, c(SH), c(0.03), { mask: i => sausR.m[i] }),
-      strip(track, i => -wl(i) - SB, i => -wl(i) - SA, c(SH), c(0.03), { mask: i => sausL.m[i] }),
-      strip(track, i => -wl(i) - SC, i => -wl(i) - SB, c(0.03), c(SH), { mask: i => sausL.m[i] }),
+      strip(track, i => wr(i) + SA, i => wr(i) + SB, c(-0.012), c(SH), { mask: i => sausR.m[i] }),
+      strip(track, i => wr(i) + SB, i => wr(i) + SC, c(SH), c(-0.012), { mask: i => sausR.m[i] }),
+      strip(track, i => -wl(i) - SB, i => -wl(i) - SA, c(SH), c(-0.012), { mask: i => sausL.m[i] }),
+      strip(track, i => -wl(i) - SC, i => -wl(i) - SB, c(-0.012), c(SH), { mask: i => sausL.m[i] }),
     ];
     add(mergeGeometries(g.map(x => { x.deleteAttribute('uv'); return x; })), M.sausage, 'RBR_Kerbs_Sausage', { cast: true });
     /** kerb / sausage height (m) under a point found with track.locate: used by the drive mode so the car bumps over kerbs */
@@ -900,7 +898,7 @@ export function createRedBullRing() {
     // In open mountain / meadow zones: low FIA galvanized steel barrier cap rail
     add(mergeGeometries([
       wallStrip(track, i => barRi(i) + WT * 0.5, c(WH), c(WH + 0.10), { mask: openMR }),
-      wallStrip(track, i => barLi(i) - WT * 0.5, c(WH), c(WH + 0.10), { mask: openML }),
+      wallStrip(track, i => barLi(i) - WT * 0.5, c(WH + 0.10), c(WH), { mask: openML }),
     ].map(g => { g.deleteAttribute('uv'); return g; })), M.steel, 'RBR_Open_Guardrail_Caps', { receive: false });
 
     // Slender 48mm round tubular steel fence posts & angled arms in spectator zones
@@ -1296,7 +1294,15 @@ export function createRedBullRing() {
 
     // Trackside Giant LED Jumbotron Screens facing major grandstands
     if (gs.name.includes('Start/Ziel') || gs.name.includes('Steiermark') || gs.name.includes('Nord') || gs.name.includes('T10')) {
-      const jPos = frontC.clone().addScaledVector(face, -16);
+      const L = track.locate(frontC.x, frontC.y);
+      const isRight = L.lat > 0;
+      const bW = isRight ? barRi(L.i) : -barLi(L.i);
+      const bPt = new THREE.Vector2(L.x + L.rx * bW, L.z + L.rz * bW);
+      const vToBarrier = bPt.clone().sub(frontC);
+      const distToBar = Math.abs(vToBarrier.dot(face));
+      // Safely clamp screen position so support pylons remain at least 4.5m behind the barrier line
+      const jOffset = Math.max(3.2, distToBar > 9 ? distToBar - 4.5 : 3.5);
+      const jPos = frontC.clone().addScaledVector(face, jOffset);
       const jH = ground + 12;
       const jW = 16, jHeight = 9;
       const jBox = new THREE.Group();
@@ -1308,8 +1314,9 @@ export function createRedBullRing() {
       jBox.add(new THREE.Mesh(merge(pylons), M.steel));
       jBox.add(new THREE.Mesh(boxAt(jW + 0.8, jHeight + 0.8, 0.8, jPos.x, jH + jHeight / 2, jPos.y, ax.x, ax.y), M.concreteDark));
       const jq = new QuadBatch();
-      const pL = [jPos.x - ax.x * (jW / 2) + face.x * 0.45, ground + jH, jPos.y - ax.y * (jW / 2) + face.y * 0.45];
-      const pR = [jPos.x + ax.x * (jW / 2) + face.x * 0.45, ground + jH, jPos.y + ax.y * (jW / 2) + face.y * 0.45];
+      // Screen face oriented towards grandstand spectators (-face direction)
+      const pL = [jPos.x + ax.x * (jW / 2) - face.x * 0.45, ground + jH, jPos.y + ax.y * (jW / 2) - face.y * 0.45];
+      const pR = [jPos.x - ax.x * (jW / 2) - face.x * 0.45, ground + jH, jPos.y - ax.y * (jW / 2) - face.y * 0.45];
       jq.add([pL, pR, [pR[0], ground + jH + jHeight, pR[2]], [pL[0], ground + jH + jHeight, pL[2]]], [0, 0, 1, 1]);
       jBox.add(new THREE.Mesh(jq.geometry(), M.jumbotron));
       root.add(jBox);
@@ -1773,7 +1780,7 @@ export function createRedBullRing() {
       if (birches.length) loGroup.add(populateLo(birches, birchLoGeo, M.beechFoliage, 2));
 
       lod.addLevel(hiGroup, 0);
-      lod.addLevel(loGroup, 4500);
+      lod.addLevel(loGroup, 1800);
       lod.addLevel(new THREE.Object3D(), 60000);
       root.add(lod);
     }
@@ -1835,7 +1842,7 @@ export function createRedBullRing() {
 
   // ---------------------------------------------------------------- 11. sky dome (gradient, ignores fog)
   {
-    const g = new THREE.SphereGeometry(180000, 32, 16);
+    const g = new THREE.SphereGeometry(180000, 64, 32);
     const col = [], p = g.attributes.position;
     const top = new THREE.Color(0x3d6fb0), hor = new THREE.Color(0xc9d9e8), tmp = new THREE.Color();
     for (let i = 0; i < p.count; i++) { const t = Math.max(0, p.getY(i) / 180000); tmp.copy(hor).lerp(top, Math.pow(t, 0.55)); col.push(tmp.r, tmp.g, tmp.b); }
