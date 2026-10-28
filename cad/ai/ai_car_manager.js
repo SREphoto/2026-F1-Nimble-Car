@@ -7,8 +7,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 import { AiRacingCorridor } from './ai_racing_corridor.js';
 import { F1_TEAMS } from '../../teams.js';
+import { createTeamDecalTexture } from '../procedural_livery.js';
+import { addCarbonSplit } from '../../materials.js';
 
 const DM = 10;            // Scene units per metre (decimetres)
 const WHEELBASE = 3.4;    // 34 dm
@@ -32,6 +35,7 @@ export class AiCarManager {
     this.cars = [];
     this.rb22Template = null;
     this.teamMaterials = {};
+    this.teamBodyTemplates = {};
 
     this.tmpBasis = {
       f: new THREE.Vector3(),
@@ -171,43 +175,63 @@ export class AiCarManager {
   applyHighFidelityBody(carData) {
     if (!this.rb22Template || !carData.mesh) return;
 
-    // Clone the real 2026 F1 RB22 body (shares all BufferGeometries in GPU memory!)
-    const bodyClone = this.rb22Template.clone(true);
-    bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
-
     const isRedBull = carData.teamSlug === 'red-bull';
     const team = carData.teamPreset || {};
 
-    let teamPaintMat = this.teamMaterials[carData.teamSlug]?.paint;
-    let teamAccentMat = this.teamMaterials[carData.teamSlug]?.accent;
-
-    if (!teamPaintMat) {
-      teamPaintMat = new THREE.MeshPhysicalMaterial({
-        color: isRedBull ? 0x18245e : (team.bodyColor ?? 0xd4001f),
-        roughness: team.roughness ?? 0.32,
-        metalness: team.metalness ?? 0.12,
-        clearcoat: team.clearcoat ?? 0.95,
-        clearcoatRoughness: team.clearcoatRoughness ?? 0.06,
-        side: THREE.DoubleSide,
+    let bodyClone;
+    if (isRedBull) {
+      bodyClone = this.rb22Template.clone(true);
+      bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
+      bodyClone.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+        }
       });
+    } else if (this.teamBodyTemplates[carData.teamSlug]) {
+      // Re-use pre-configured and decorated template for teammates
+      bodyClone = this.teamBodyTemplates[carData.teamSlug].clone(true);
+      bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
+    } else {
+      bodyClone = this.rb22Template.clone(true);
+      bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
 
-      teamAccentMat = new THREE.MeshStandardMaterial({
-        color: team.accentColor ?? 0xffe500,
-        roughness: 0.35,
-        metalness: 0.25,
-        side: THREE.DoubleSide,
-      });
+      let teamPaintMat = this.teamMaterials[carData.teamSlug]?.paint;
+      let teamAccentMat = this.teamMaterials[carData.teamSlug]?.accent;
 
-      this.teamMaterials[carData.teamSlug] = { paint: teamPaintMat, accent: teamAccentMat };
-    }
+      if (!teamPaintMat) {
+        teamPaintMat = new THREE.MeshPhysicalMaterial({
+          color: team.bodyColor ?? 0xd4001f,
+          roughness: team.roughness ?? 0.32,
+          metalness: team.metalness ?? 0.12,
+          clearcoat: team.clearcoat ?? 0.95,
+          clearcoatRoughness: team.clearcoatRoughness ?? 0.06,
+          side: THREE.DoubleSide,
+        });
 
-    bodyClone.traverse((o) => {
-      if (o.isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-        const mname = (o.material?.name || '').replace(/\.\d+$/, '');
+        addCarbonSplit(teamPaintMat, {
+          splitY: 1.45,
+          stripeColor: team.stripeColor ?? team.accentColor ?? 0xffe500,
+          stripeWidth: 0.08,
+          camo: team.camo ?? 0.0,
+        });
 
-        if (!isRedBull) {
+        teamAccentMat = new THREE.MeshStandardMaterial({
+          color: team.accentColor ?? 0xffe500,
+          roughness: 0.35,
+          metalness: 0.25,
+          side: THREE.DoubleSide,
+        });
+
+        this.teamMaterials[carData.teamSlug] = { paint: teamPaintMat, accent: teamAccentMat };
+      }
+
+      bodyClone.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          const mname = (o.material?.name || '').replace(/\.\d+$/, '');
+
           if (mname === 'redbull_paint') {
             o.material = teamPaintMat;
           } else if (mname === 'redbull_color') {
@@ -217,12 +241,138 @@ export class AiCarManager {
             o.visible = false;
           }
         }
-      }
-    });
+      });
+
+      // Build and apply team livery decals on rival cars
+      this.buildAiTeamDecals(bodyClone, carData.teamPreset);
+
+      // Cache template for teammate car
+      this.teamBodyTemplates[carData.teamSlug] = bodyClone.clone(true);
+    }
 
     carData.mesh.add(bodyClone);
     carData.highFidelityBody = bodyClone;
     this.poseCarOnTrack(carData);
+  }
+
+  buildAiTeamDecals(bodyClone, teamPreset) {
+    const data = teamPreset?.livery;
+    if (!data || !data.decals || data.bespokeDecals) return;
+
+    bodyClone.updateMatrixWorld(true);
+    const worldToCar = bodyClone.matrixWorld.clone().invert();
+
+    const findPaintMesh = (parentName) => {
+      let found = null;
+      const grp = bodyClone.getObjectByName(parentName);
+      if (grp) {
+        grp.traverse((o) => {
+          if (!found && o.isMesh && (o.material?.name || '').startsWith('redbull_paint')) {
+            found = o;
+          }
+        });
+        if (!found) {
+          grp.traverse((o) => {
+            if (!found && o.isMesh) found = o;
+          });
+        }
+      }
+      return found;
+    };
+
+    const targetMeshes = {
+      tub: findPaintMesh('Body_RB22_Chassis_Tub'),
+      nose: findPaintMesh('Body_RB22_Nose'),
+      engineCover: findPaintMesh('Body_RB22_EngineCover_Airbox'),
+      sidepodL: findPaintMesh('Body_RB22_Sidepod_LH'),
+      sidepodR: findPaintMesh('Body_RB22_Sidepod_RH'),
+      frontEndplateL: findPaintMesh('Body_RB22_FrontWing_LH'),
+      frontEndplateR: findPaintMesh('Body_RB22_FrontWing_RH'),
+    };
+
+    const targetFor = (t, s) => {
+      if (t === 'sidepod' || t === 'sidepodRidge') return s > 0 ? targetMeshes.sidepodR : targetMeshes.sidepodL;
+      if (t === 'frontEndplate') return s > 0 ? targetMeshes.frontEndplateR : targetMeshes.frontEndplateL;
+      return targetMeshes[t] || null;
+    };
+
+    const raycaster = new THREE.Raycaster();
+    const sides = [1, -1];
+
+    (data.decals || []).forEach((spec, i) => {
+      const faceSides = spec.face === 'top' && spec.target !== 'sidepod' ? [1] : sides;
+      faceSides.forEach((s) => {
+        const mesh = targetFor(spec.target, s);
+        if (!mesh) return;
+
+        mesh.updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(mesh).applyMatrix4(worldToCar);
+        const L = b.max.x - b.min.x;
+        const H = b.max.z - b.min.z;
+        const Wy = b.max.y - b.min.y;
+
+        const frontIsLeft = s < 0;
+        const { texture, aspect } = createTeamDecalTexture(spec, { frontIsLeft });
+        if (!texture) return;
+
+        let origin, dir, up, w, h;
+        if (spec.face === 'top') {
+          const span = spec.target === 'rearWingMain' ? Wy : L;
+          w = span * spec.w;
+          h = spec.h ? span * spec.h : w / (aspect || 4);
+          const yc = spec.target === 'sidepod' ? (b.min.y + b.max.y) / 2 : 0;
+          origin = [b.min.x + L * spec.x, yc, b.max.z + 5];
+          dir = [0, 0, -1];
+          up = spec.target === 'sidepod' ? [0, -s, 0] : (spec.target === 'nose' ? [1, 0, 0] : [-1, 0, 0]);
+        } else {
+          w = L * spec.w;
+          h = spec.h ? H * spec.h : w / (aspect || 4);
+          let zf = spec.z ?? 0.5;
+          origin = [b.min.x + L * spec.x, s * (Math.max(Math.abs(b.min.y), Math.abs(b.max.y)) + 5), b.min.z + H * zf];
+          dir = [0, -s, 0];
+          up = [0, 0, 1];
+        }
+
+        const rayStart = new THREE.Vector3(...origin).applyMatrix4(bodyClone.matrixWorld);
+        const rayDir = new THREE.Vector3(...dir).transformDirection(bodyClone.matrixWorld).normalize();
+        raycaster.set(rayStart, rayDir);
+        raycaster.far = 200;
+        const hit = raycaster.intersectObject(mesh, false)[0];
+        if (!hit) return;
+
+        const zAxis = rayDir.clone().negate();
+        const upW = new THREE.Vector3(...up).transformDirection(bodyClone.matrixWorld).normalize();
+        const xAxis = new THREE.Vector3().crossVectors(upW, zAxis).normalize();
+        const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
+        const rotMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+        const rot = new THREE.Euler().setFromRotationMatrix(rotMat);
+
+        const geo = new DecalGeometry(mesh, hit.point, rot, new THREE.Vector3(w, h, 1.2));
+        if (!geo.attributes.position || geo.attributes.position.count === 0) {
+          geo.dispose();
+          return;
+        }
+
+        geo.applyMatrix4(mesh.matrixWorld.clone().invert());
+        const decalMat = new THREE.MeshPhysicalMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: false,
+          polygonOffset: true,
+          polygonOffsetFactor: -6,
+          polygonOffsetUnits: -10,
+          roughness: 0.45,
+          metalness: 0.0,
+          clearcoat: 0.4,
+          side: THREE.FrontSide,
+        });
+
+        const decalMesh = new THREE.Mesh(geo, decalMat);
+        decalMesh.name = `AI_Decal_${spec.kind}_${i}_${s > 0 ? 'R' : 'L'}`;
+        decalMesh.renderOrder = spec.kind === 'panel' ? 1 : 3;
+        mesh.add(decalMesh);
+      });
+    });
   }
 
   buildPirelliWheels(carRoot, carData) {
