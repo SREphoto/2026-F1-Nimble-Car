@@ -30,6 +30,7 @@ const REPLACED = [
   'Cockpit_Headrest_Assembly',
   'Nosecone_FIS_Assembly', // the RB22's own nose is used: one smooth top line from tip to cockpit
   'Sidepod_Assembly_LH_RH', 'Engine_Cover_Airbox_Fin_Assembly', 'Floor_Underbody_Diffuser_Assembly',
+  'Assembly_Active_Rear_Wing', // the RB22's own rear wing & tail are used for outside body
 ];
 
 // 2x2 twill carbon weave, tiled over the wing flaps of non-Red Bull teams (their baked art is removed)
@@ -163,7 +164,8 @@ export async function installRb22Body(carModel, renderer) {
       const m = toCar.clone().multiply(o.matrixWorld), pos = o.geometry.attributes.position, ix = o.geometry.index.array, keep = [];
       for (let t = 0; t < ix.length; t += 3) {
         let cx = 0, cz = 0; for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pos, ix[t + k]).applyMatrix4(m); cx += v.x / 3; cz += v.z / 3; }
-        if (!(cx > 32 && cz > 4.7)) keep.push(ix[t], ix[t + 1], ix[t + 2]);
+        const isClutter = cx > 32 && cz > 4.7 && cz < 6.0;
+        if (!isClutter) keep.push(ix[t], ix[t + 1], ix[t + 2]);
       }
       o.geometry = o.geometry.clone(); o.geometry.setIndex(keep); o.userData.rb22Trimmed = (ix.length - keep.length) / 3;
     });
@@ -212,6 +214,17 @@ export async function installRb22Body(carModel, renderer) {
   });
   carModel.traverse((o) => { if (/^FrontWing_/.test(o.name) && !o.parent?.name?.startsWith('Body_RB22')) { o.visible = false; o.userData.replacedByRb22 = true; } });
 
+  // The RB22's own rear wing & tail (Body_RB22_Tail) are used for the outside body, so our procedural wing is hidden
+  ['Assembly_Active_Rear_Wing'].forEach((n) => {
+    const o = carModel.getObjectByName(n); if (o) { o.visible = false; o.userData.replacedByRb22 = true; }
+  });
+  carModel.traverse((o) => {
+    if ((/^RearWing_/.test(o.name) || o.name === 'Assembly_Active_Rear_Wing' || /^RainLED_/.test(o.name)) && !o.parent?.name?.startsWith('Body_RB22')) {
+      o.visible = false;
+      o.userData.replacedByRb22 = true;
+    }
+  });
+
   // One set of suspension: the RB22's wishbones, push/pull rods, track rods and upright bodies are in the
   // body file (Body_RB22_Suspension). Hide our arms, rockers, rack and tethers; keep our wheel corners
   // (tyres, rims, hubs, brakes) on their Wheel_Spindle_* pivots so steering and wheels-off still work.
@@ -233,13 +246,15 @@ export async function installRb22Body(carModel, renderer) {
 
   // Our powertrain, gearbox, wiring and coolers were sized for the old body: parts of them (gearbox casing,
   // exhaust downpipe, MGU-K, crankcase sump, rear-wing LED looms) poke through the RB22 floor and tail.
-  // The RB22 body is closed, so they are hidden in normal view and only shown when the car is exploded.
+  // The RB22 body is closed, so they are hidden in normal view and only shown when the car is exploded or in the garage.
   const internals = [];
   ['Powertrain_Moving_Internals_Assembly', 'Transmission_Moving_Gears_Assembly', 'Electrical_Wiring_Harness_Assembly'].forEach((n) => {
     const asm = carModel.getObjectByName(n); if (!asm) return;
     asm.children.forEach((c) => { if (c.name !== 'Kinematic_Driveshafts_Assembly') internals.push(c); });
   });
-  ['Body_FireSuppression_System'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) internals.push(o); });
+  ['Body_FireSuppression_System', 'Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => {
+    const o = carModel.getObjectByName(n); if (o) internals.push(o);
+  });
   let internalsShown = null;
   const showInternals = (v) => { if (v === internalsShown) return; internalsShown = v; internals.forEach((o) => { o.visible = v; o.userData.rb22Internal = true; }); };
   showInternals(false);
