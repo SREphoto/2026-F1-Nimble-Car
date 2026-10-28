@@ -963,3 +963,210 @@ body {
     font-size: 0.72rem;
   }
 }
+
+/* =========================================================================
+   ON-SCREEN DISPLAYS & HUD DROPDOWN SYSTEM
+   Tucks away intrusive floating boxes into an organized dropdown menu.
+   ========================================================================= */
+.hud-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.hud-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--key, #161f2e);
+  color: var(--text, #e2e8f0);
+  border: 1px solid var(--border, #2a3545);
+  padding: 6px 11px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-dropdown-btn:hover,
+.hud-dropdown-btn.active {
+  background: var(--team-primary, #e10600);
+  color: var(--team-text-on-primary, #fff);
+  border-color: var(--team-primary, #e10600);
+  box-shadow: 0 0 12px var(--team-accent-glow, rgba(225, 6, 0, 0.35));
+}
+
+.hud-btn-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.hud-btn-arrow {
+  font-size: 9px;
+  transition: transform 0.2s ease;
+}
+
+.hud-dropdown-btn.active .hud-btn-arrow {
+  transform: rotate(180deg);
+}
+
+.hud-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1000;
+  width: 310px;
+  background: rgba(10, 15, 24, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 212, 232, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, sans-serif;
+  animation: hudDropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hudDropdownFade {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hud-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hud-popover-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #00d4e8;
+}
+
+.hud-popover-close {
+  background: none;
+  border: none;
+  color: #8b9bb0;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.hud-popover-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hud-popover-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 8px 0 10px;
+  line-height: 1.35;
+}
+
+.hud-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  background: rgba(19, 28, 46, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.hud-option-item:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.hud-option-item input[type="checkbox"] {
+  accent-color: #00d4e8;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hud-item-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.hud-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hud-item-info strong {
+  font-size: 0.76rem;
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+}
+
+.hud-item-info small {
+  font-size: 0.67rem;
+  color: #8899aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-popover-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-popover-footer .view-btn {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+}
+
+/* =========================================================================
+   TUCKED-AWAY OVERLAYS
+   By default, floating HUD panels are hidden to prevent visual clutter.
+   They only render when their checkbox in the Displays & HUD menu is checked
+   (which assigns .overlay-active to the element).
+   ========================================================================= */
+#f1-timing-tower,
+#sim-telemetry-panel,
+#rbr-hud,
+#sess-panel,
+#wx-panel {
+  display: none !important;
+}
+
+#f1-timing-tower.overlay-active,
+#sim-telemetry-panel.overlay-active,
+#rbr-hud.overlay-active,
+#sess-panel.overlay-active,
+#wx-panel.overlay-active {
+  display: block !important;
+}
+
+/* When the cockpit sidebar is tucked away, also make sure the instrument panel
+   doesn't take up column space in the grid */
+.workspace.panels-hidden .instrument {
+  display: none !important;
+}

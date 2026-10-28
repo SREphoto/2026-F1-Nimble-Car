@@ -48,3 +48,153 @@ when(() => $('wx-panel'), (panel) => {
 when(() => $('sess-panel') && document.querySelector('.stage'), () => {
   const p = $('sess-panel'); p.classList.add('ui-docked'); document.querySelector('.stage').appendChild(p);
 });
+
+// ---------------------------------------------------------------------------
+// On-Screen Displays & HUD Dropdown System
+// Tucks away intrusive floating boxes into an organized dropdown menu.
+// ---------------------------------------------------------------------------
+function initHudDropdown() {
+  const wrap = $('hud-dropdown-wrap');
+  const trigger = $('btn-hud-menu');
+  const popover = $('hud-dropdown-popover');
+  const closeBtn = $('btn-hud-close');
+  const allOffBtn = $('btn-hud-all-off');
+  const allOnBtn = $('btn-hud-all-on');
+
+  if (!wrap || !trigger || !popover) return;
+
+  function togglePopover(show) {
+    const isHidden = popover.hasAttribute('hidden');
+    const open = show !== undefined ? show : isHidden;
+    if (open) {
+      popover.removeAttribute('hidden');
+      trigger.classList.add('active');
+      trigger.setAttribute('aria-expanded', 'true');
+    } else {
+      popover.setAttribute('hidden', '');
+      trigger.classList.remove('active');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePopover();
+  });
+
+  closeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePopover(false);
+  });
+
+  // Close when clicking outside or pressing Escape
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) togglePopover(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !popover.hasAttribute('hidden')) togglePopover(false);
+  });
+
+  const OVERLAY_MAP = {
+    'chk-hud-timing': 'f1-timing-tower',
+    'chk-hud-track': 'rbr-hud',
+    'chk-hud-telem': 'sim-telemetry-panel',
+    'chk-hud-session': 'sess-panel',
+    'chk-hud-weather': 'wx-panel',
+  };
+
+  function applyOverlay(chkId, targetId, checked) {
+    const el = $(targetId);
+    if (!el) return;
+    if (checked) {
+      el.classList.add('overlay-active');
+      if (targetId === 'wx-panel') el.classList.add('open');
+    } else {
+      el.classList.remove('overlay-active');
+      if (targetId === 'wx-panel') el.classList.remove('open');
+    }
+  }
+
+  // Handle standard overlays
+  Object.entries(OVERLAY_MAP).forEach(([chkId, targetId]) => {
+    const chk = $(chkId);
+    if (!chk) return;
+    chk.checked = false; // Tucked away by default
+
+    chk.addEventListener('change', () => {
+      applyOverlay(chkId, targetId, chk.checked);
+    });
+
+    // When the element is mounted in the DOM later, ensure it's tucked away or synced
+    when(() => $(targetId), (el) => {
+      applyOverlay(chkId, targetId, chk.checked);
+    });
+  });
+
+  // Handle Cockpit Controls Sidebar
+  const chkCockpit = $('chk-hud-cockpit');
+  const workspace = document.querySelector('.workspace');
+  if (workspace) {
+    // Start tucked away (clean car view)
+    workspace.classList.add('panels-hidden');
+    if (chkCockpit) chkCockpit.checked = false;
+
+    chkCockpit?.addEventListener('change', () => {
+      if (chkCockpit.checked) {
+        workspace.classList.remove('panels-hidden');
+      } else {
+        workspace.classList.add('panels-hidden');
+      }
+      const btnToggle = $('btn-toggle-panels');
+      if (btnToggle) btnToggle.textContent = chkCockpit.checked ? 'Hide Panels' : 'Show Panels';
+    });
+
+    // Also sync if the user clicks the existing "Hide Panels" button in view-toolbar
+    const btnToggle = $('btn-toggle-panels');
+    if (btnToggle) {
+      btnToggle.textContent = 'Show Panels';
+      btnToggle.addEventListener('click', () => {
+        setTimeout(() => {
+          if (chkCockpit) chkCockpit.checked = !workspace.classList.contains('panels-hidden');
+        }, 50);
+      });
+    }
+  }
+
+  // Hide All button
+  allOffBtn?.addEventListener('click', () => {
+    Object.entries(OVERLAY_MAP).forEach(([chkId, targetId]) => {
+      const chk = $(chkId);
+      if (chk) {
+        chk.checked = false;
+        applyOverlay(chkId, targetId, false);
+      }
+    });
+    if (chkCockpit) {
+      chkCockpit.checked = false;
+      workspace?.classList.add('panels-hidden');
+      const btnToggle = $('btn-toggle-panels');
+      if (btnToggle) btnToggle.textContent = 'Show Panels';
+    }
+  });
+
+  // Show All button
+  allOnBtn?.addEventListener('click', () => {
+    Object.entries(OVERLAY_MAP).forEach(([chkId, targetId]) => {
+      const chk = $(chkId);
+      if (chk) {
+        chk.checked = true;
+        applyOverlay(chkId, targetId, true);
+      }
+    });
+    if (chkCockpit) {
+      chkCockpit.checked = true;
+      workspace?.classList.remove('panels-hidden');
+      const btnToggle = $('btn-toggle-panels');
+      if (btnToggle) btnToggle.textContent = 'Hide Panels';
+    }
+  });
+}
+
+when(() => $('btn-hud-menu'), initHudDropdown);
+

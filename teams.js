@@ -405,14 +405,14 @@ export function getSavedTeam() {
   } catch (e) {
     console.warn('Could not read team from localStorage', e);
   }
-  return 'ferrari';
+  return 'red-bull';
 }
 
 /**
  * Apply team theme across both UI CSS variables and 3D Three.js materials
  */
 export function applyTeamTheme(teamId, { carModel, materials, renderer, updateLcd } = {}) {
-  const team = F1_TEAMS[teamId] || F1_TEAMS['ferrari'];
+  const team = F1_TEAMS[teamId] || F1_TEAMS['red-bull'];
   activeTeam = team;
 
   // 1. Update HTML document data-team attribute

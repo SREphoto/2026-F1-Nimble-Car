@@ -67,9 +67,9 @@
           <span class="team-setting-text">Team Theme:</span>
         </label>
         <select id="team-select" class="team-dropdown" aria-label="Select Formula 1 Team Theme & Livery">
-          <option value="ferrari" selected>🔴 Scuderia Ferrari</option>
+          <option value="red-bull" selected>🔵 Red Bull Racing</option>
+          <option value="ferrari">🔴 Scuderia Ferrari</option>
           <option value="mclaren">🟠 McLaren F1 Team</option>
-          <option value="red-bull">🔵 Red Bull Racing</option>
           <option value="mercedes">⚪ Mercedes-AMG Petronas</option>
           <option value="aston-martin">🟢 Aston Martin Aramco</option>
           <option value="williams">🔷 Williams Racing</option>
@@ -79,6 +79,82 @@
           <option value="haas">🏁 Haas F1 Team</option>
           <option value="cadillac">⬜ Cadillac F1 Team</option>
         </select>
+
+        <!-- On-Screen HUD & Displays Dropdown Menu -->
+        <div class="hud-dropdown-wrap" id="hud-dropdown-wrap">
+          <button type="button" class="view-btn hud-dropdown-btn" id="btn-hud-menu" aria-haspopup="true" aria-expanded="false" title="Customize on-screen HUD displays & telemetry overlays">
+            <span class="hud-btn-icon">⊞</span> Displays &amp; HUD <span class="hud-btn-arrow">▾</span>
+          </button>
+          <div class="hud-dropdown-popover" id="hud-dropdown-popover" hidden>
+            <div class="hud-popover-header">
+              <span class="hud-popover-title">On-Screen Displays</span>
+              <button type="button" class="hud-popover-close" id="btn-hud-close" title="Close menu">✕</button>
+            </div>
+            <p class="hud-popover-hint">Toggle overlay boxes on/off. Keep unchecked for a clean, uncluttered view of the car.</p>
+            
+            <div class="hud-options-list">
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-timing" data-target="f1-timing-tower" />
+                <span class="hud-item-icon">🏁</span>
+                <span class="hud-item-info">
+                  <strong>F1 Timing Tower</strong>
+                  <small>Floating Grand Prix leaderboard on the left</small>
+                </span>
+              </label>
+
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-track" data-target="rbr-hud" />
+                <span class="hud-item-icon">🗺️</span>
+                <span class="hud-item-info">
+                  <strong>Circuit HUD &amp; Mini-Map</strong>
+                  <small>Red Bull Ring controls, sectors &amp; mini-map</small>
+                </span>
+              </label>
+
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-telem" data-target="sim-telemetry-panel" />
+                <span class="hud-item-icon">🛞</span>
+                <span class="hud-item-info">
+                  <strong>Vehicle Telemetry</strong>
+                  <small>Tyre temps, brake heat &amp; G-force meter</small>
+                </span>
+              </label>
+
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-session" data-target="sess-panel" />
+                <span class="hud-item-icon">⏱️</span>
+                <span class="hud-item-info">
+                  <strong>Session &amp; Standings</strong>
+                  <small>Practice, Qualifying &amp; Race session timings</small>
+                </span>
+              </label>
+
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-cockpit" data-target="panel-instrument" />
+                <span class="hud-item-icon">🎛️</span>
+                <span class="hud-item-info">
+                  <strong>Cockpit Controls Sidebar</strong>
+                  <small>Right sidebar instruments, LCD &amp; pedals</small>
+                </span>
+              </label>
+
+              <label class="hud-option-item">
+                <input type="checkbox" id="chk-hud-weather" data-target="wx-panel" />
+                <span class="hud-item-icon">🌦️</span>
+                <span class="hud-item-info">
+                  <strong>Weather &amp; Track Grip</strong>
+                  <small>Cloud cover, rain, mist &amp; water sliders</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="hud-popover-footer">
+              <button type="button" class="view-btn" id="btn-hud-all-off">Hide All</button>
+              <button type="button" class="view-btn" id="btn-hud-all-on">Show All</button>
+            </div>
+          </div>
+        </div>
+
         <button type="button" class="view-btn" id="btn-regulations" title="Open the 2026 regulations sheet">Regulations</button>
         <button type="button" class="view-btn btn-design-modal" id="btn-design-modal" title="View Design Principles & Inspiration Sources">✦ Design Inspiration</button>
       </div>

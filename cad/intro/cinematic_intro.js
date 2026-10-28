@@ -84,10 +84,9 @@ function injectCss() {
 #intro-overlay.is-veiled #intro-veil{opacity:1}
 #intro-start{
   position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 50% 40%,#1a1008 0%,#05070c 70%);
+  background:radial-gradient(ellipse at 50% 40%,#0a1628 0%,#05070c 70%);
   color:#f0e6d8;cursor:pointer;user-select:none;
 }
-#intro-start .intro-mark{font-size:.72rem;letter-spacing:.35em;text-transform:uppercase;opacity:.55;margin-bottom:14px}
 #intro-start .intro-title{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;letter-spacing:.04em;margin:0 0 8px}
 #intro-start .intro-sub{font-size:.95rem;opacity:.65;margin:0 0 28px}
 #intro-start .intro-cta{
@@ -142,7 +141,6 @@ function buildOverlay(seq) {
   root.innerHTML = `
     <div id="intro-veil"></div>
     <div id="intro-start" role="button" tabindex="0" aria-label="Click to start">
-      <div class="intro-mark">SREdesigns</div>
       <h1 class="intro-title"></h1>
       <p class="intro-sub"></p>
       <div class="intro-cta">Click to start</div>
@@ -156,10 +154,10 @@ function buildOverlay(seq) {
   runtime.titleEl = root.querySelector('#intro-titlecard');
   runtime.skipEl = root.querySelector('#intro-skip');
   runtime.startEl.querySelector('.intro-title').textContent = seq.title || '2026 F1 Nimble Car';
-  runtime.startEl.querySelector('.intro-sub').textContent = seq.subtitle || '';
+  runtime.startEl.querySelector('.intro-sub').textContent = seq.subtitle || 'SREdesigns - Samuel R Erwin III';
   runtime.skipEl.textContent = seq.skipHint || 'Press any key or click to skip';
   runtime.titleEl.querySelector('h1').textContent = seq.title || '2026 F1 Nimble Car';
-  runtime.titleEl.querySelector('p').textContent = seq.subtitle || 'SREdesigns';
+  runtime.titleEl.querySelector('p').textContent = seq.subtitle || 'SREdesigns - Samuel R Erwin III';
 }
 
 function buildReplayButton() {
@@ -178,57 +176,12 @@ function buildReplayButton() {
   runtime.replayBtn = btn;
 }
 
-function makeSilhouette(x, z, scale = 1) {
-  const g = new THREE.Group();
-  const mat = new THREE.MeshBasicMaterial({ color: 0x050505 });
-  let body;
-  if (THREE.CapsuleGeometry) {
-    body = new THREE.Mesh(new THREE.CapsuleGeometry(0.45 * scale, 2.2 * scale, 4, 6), mat);
-    body.position.y = 1.8 * scale;
-  } else {
-    body = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * scale, 0.5 * scale, 2.6 * scale, 8), mat);
-    body.position.y = 1.5 * scale;
-  }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42 * scale, 8, 8), mat);
-  head.position.y = 3.35 * scale;
-  g.add(body, head);
-  g.position.set(x, 0, z);
-  return g;
+function ensureCrew() {
+  return null;
 }
 
-function ensureCrew(scene) {
-  if (runtime.crewGroup) return runtime.crewGroup;
-  const g = new THREE.Group();
-  g.name = 'Intro_CrewSilhouettes';
-  const spots = [
-    [-40, 148], [-28, 152], [-10, 150], [8, 154], [22, 149],
-    [40, 151], [55, 147], [-55, 145], [70, 153], [-15, 142],
-  ];
-  spots.forEach(([x, z], i) => g.add(makeSilhouette(x, z, 0.85 + (i % 3) * 0.08)));
-  g.visible = false;
-  scene.add(g);
-  runtime.crewGroup = g;
-  return g;
-}
-
-function ensureHeat(scene) {
-  if (runtime.heatGroup) return runtime.heatGroup;
-  const g = new THREE.Group();
-  g.name = 'Intro_HeatShimmer';
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0xffaa66, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false,
-  });
-  for (let i = 0; i < 10; i++) {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.4), mat.clone());
-    p.position.set((Math.random() - 0.5) * 3, 1 + Math.random() * 2, (Math.random() - 0.5) * 2);
-    p.userData.phase = Math.random() * Math.PI * 2;
-    p.userData.speed = 0.6 + Math.random() * 0.8;
-    g.add(p);
-  }
-  g.visible = false;
-  scene.add(g);
-  runtime.heatGroup = g;
-  return g;
+function ensureHeat() {
+  return null;
 }
 
 function applyLighting(name) {
@@ -329,7 +282,32 @@ function showTitle(on) {
 function beginPlayback() {
   const { controls, scene, carModel } = ctx();
   snapshotScene();
-  setClassicForIntro();
+
+  // 1. Ensure team is Red Bull
+  try {
+    if (typeof window.applyTeamTheme === 'function') {
+      window.applyTeamTheme('red-bull');
+    }
+    const teamSel = document.getElementById('team-select');
+    if (teamSel && teamSel.value !== 'red-bull') {
+      teamSel.value = 'red-bull';
+      teamSel.dispatchEvent(new Event('change'));
+    }
+  } catch (e) {
+    console.warn('[intro] Red Bull theme switch error:', e);
+  }
+
+  // 2. Enter team garage for shiny lighting & reflections
+  try {
+    if (window.garageInspect?.enterGarageInspect) {
+      window.garageInspect.enterGarageInspect();
+    } else {
+      document.getElementById('btn-garage')?.click();
+    }
+  } catch (e) {
+    console.warn('[intro] Garage enter error:', e);
+  }
+
   runtime.active = true;
   runtime.waiting = false;
   runtime.shotIndex = 0;
@@ -343,16 +321,14 @@ function beginPlayback() {
     controls.enabled = false;
     controls.autoRotate = false;
   }
-  ensureCrew(scene);
-  ensureHeat(scene);
   const first = runtime.seq.shots[0];
-  if (first) applyLighting(first.lighting || 'dawn');
+  if (first) applyLighting(first.lighting || 'garageGlow');
   if (carModel) {
     carModel.position.set(0, 0, 0);
     carModel.rotation.set(...CAR_BASE_ROT);
   }
   if (window.f1Music?.playContext) {
-    window.f1Music.playContext('game_start');
+    window.f1Music.playContext('garage');
   } else {
     window.f1Music?.start?.();
   }
@@ -366,11 +342,21 @@ function endIntro({ skipped = false } = {}) {
   runtime.overlay?.classList.remove('is-playing', 'is-interactive', 'is-veiled');
   if (runtime.startEl) runtime.startEl.style.display = 'none';
   showTitle(false);
-  if (runtime.crewGroup) runtime.crewGroup.visible = false;
-  if (runtime.heatGroup) runtime.heatGroup.visible = false;
   const key = runtime.seq?.storageKey || DEFAULT_STORAGE;
   writeSeen(key);
-  restoreScene();
+
+  // Smoothly hand over camera inside the team garage inspection view
+  const { camera, controls } = ctx();
+  if (camera && controls) {
+    camera.position.set(-42, 22, 34);
+    controls.target.set(18, 4, 0);
+    controls.enabled = true;
+    controls.update();
+  }
+  if (typeof window.setCameraView === 'function') {
+    window.setCameraView('CAM_ISO');
+  }
+
   window.f1Music?.setDriving?.(false);
   window.f1Music?.returnToGeneral?.();
   if (typeof runtime.onDone === 'function') runtime.onDone({ skipped });
@@ -383,34 +369,31 @@ function skipIntro() {
 
 function updateShot(shot, u, dt) {
   const { camera, controls, carModel } = ctx();
-  if (!shot || !camera) return;
-  const ease = easeFns[shot.easing] || easeFns.easeInOut;
-  const t = ease(Math.min(1, Math.max(0, u)));
-  lerp3(runtime._tmpPos, shot.from.pos, shot.to.pos, t);
-  lerp3(runtime._tmpTgt, shot.from.target, shot.to.target, t);
-  camera.position.set(...runtime._tmpPos);
-  controls.target.set(...runtime._tmpTgt);
-  camera.lookAt(controls.target);
+  if (!shot || !camera || !controls) return;
 
-  if (runtime.crewGroup) runtime.crewGroup.visible = !!shot.showCrew;
-  if (runtime.heatGroup) {
-    runtime.heatGroup.visible = !!shot.heatShimmer;
-    if (shot.heatShimmer && carModel) {
-      runtime.heatGroup.position.set(carModel.position.x + 38, 2.5, carModel.position.z);
-      runtime.heatGroup.children.forEach((p) => {
-        p.userData.phase += dt * p.userData.speed;
-        p.position.y = 1 + (Math.sin(p.userData.phase) * 0.5 + 0.5) * 3;
-        p.material.opacity = 0.04 + Math.sin(p.userData.phase * 1.7) * 0.03;
-        p.lookAt(camera.position);
-      });
-    }
+  if (shot.orbit) {
+    const center = shot.orbit.center || [16, 3.8, 0];
+    const radius = shot.orbit.radius || 48;
+    const startAng = shot.orbit.startAngle || 0.8;
+    const rots = shot.orbit.rotations || 1.0;
+    const angle = startAng + u * Math.PI * 2 * rots;
+    const camX = center[0] + radius * Math.cos(angle);
+    const camZ = center[2] + radius * Math.sin(angle);
+    const camY = center[1] + 11 + 3.8 * Math.sin(angle * 2);
+    camera.position.set(camX, camY, camZ);
+    controls.target.set(center[0], center[1], center[2]);
+    camera.lookAt(controls.target);
+  } else {
+    const ease = easeFns[shot.easing] || easeFns.easeInOut;
+    const t = ease(Math.min(1, Math.max(0, u)));
+    lerp3(runtime._tmpPos, shot.from.pos, shot.to.pos, t);
+    lerp3(runtime._tmpTgt, shot.from.target, shot.to.target, t);
+    camera.position.set(...runtime._tmpPos);
+    controls.target.set(...runtime._tmpTgt);
+    camera.lookAt(controls.target);
   }
 
-  if (shot.carRoll && carModel) {
-    const x = lerp(shot.carRoll.fromX, shot.carRoll.toX, t);
-    carModel.position.set(x, shot.carRoll.y || 0, shot.carRoll.z || 0);
-    carModel.rotation.set(...CAR_BASE_ROT);
-  } else if (shot.resetCar && carModel && u < 0.05) {
+  if (carModel) {
     carModel.position.set(0, 0, 0);
     carModel.rotation.set(...CAR_BASE_ROT);
   }
