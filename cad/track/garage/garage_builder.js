@@ -558,6 +558,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
 
   // ---------------------------------------------------------------- light canopy over the car: team colour frame, black band, glowing panel, air lines
   const C = L.canopy, CW = C.x1 - C.x0, CX = (C.x0 + C.x1) / 2, CHW = C.halfWidth;
+  let hangingTools = null;
   {
     const t = 1.6, top = C.y + C.depth;
     for (const s of [-1, 1]) {
@@ -577,7 +578,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     [[C.x0 + 4, -CHW + 2], [C.x0 + 4, CHW - 2], [C.x1 - 6, -CHW + 2], [C.x1 - 6, CHW - 2], [CX, -CHW + 1.5], [CX, CHW - 1.5]].forEach(([x, z], k) => (k % 3 === 2 ? yel : hoses).push(coil(x, C.y, 15 + (k % 2) * 3, z, 0.85, 8)));
     put(M.rubber, mergeGeometries(hoses)); put(M.yellowHose, mergeGeometries(yel));
     // hanging pneumatic wheel guns, tyre pressure gauge, and umbilical connector attached to the cables
-    const hangingTools = buildHangingTools(M, C);
+    hangingTools = buildHangingTools(M, C);
     g.add(hangingTools);
     g.userData.hangingTools = hangingTools;
   }
@@ -685,7 +686,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   g.add(cableRamps);
 
   const clickables = [mon, sheet, deskWheelMon, deskSreMon, laptopScreen, ...wallScreenMeshes, pitPerch];
-  hangingTools.traverse(o => { if (o.userData?.click) clickables.push(o); });
+  if (hangingTools) hangingTools.traverse(o => { if (o.userData?.click) clickables.push(o); });
   toolChest.userData.drawers.forEach(dr => clickables.push(dr));
   toolChest.traverse(o => { if (o.userData?.click && !clickables.includes(o)) clickables.push(o); });
 

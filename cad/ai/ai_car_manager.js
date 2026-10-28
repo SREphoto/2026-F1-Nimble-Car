@@ -1,15 +1,19 @@
 /**
- * ai_car_manager.js — 21 AI Opponent Cars: Visuals, Kinematics, Wheel Rotation & Grid Management.
+ * ai_car_manager.js — Photorealistic 2026 F1 AI Opponent Cars with Real RB22 3D Geometry,
+ * Authentic Team Liveries, Pirelli 18" Wheels, Rotating Spindles & Starting Grid Alignment.
  * 2026 Formula 1 "Nimble Car" · SREdesigns - Samuel R Erwin III
  */
 
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { AiRacingCorridor } from './ai_racing_corridor.js';
+import { F1_TEAMS } from '../../teams.js';
 
 const DM = 10;            // Scene units per metre (decimetres)
 const WHEELBASE = 3.4;    // 34 dm
 const WHEEL_R = 0.36;     // 3.6 dm
-const TRACK_WIDTH = 1.8;  // 18 dm
+const BASE_MODELS = new URL('../../assets/models/', import.meta.url);
 
 export class AiCarManager {
   constructor({ scene, circuit, gridConfig, playerConfig }) {
@@ -26,6 +30,9 @@ export class AiCarManager {
 
     this.corridor = new AiRacingCorridor({ circuit, gridConfig });
     this.cars = [];
+    this.rb22Template = null;
+    this.teamMaterials = {};
+
     this.tmpBasis = {
       f: new THREE.Vector3(),
       r: new THREE.Vector3(),
@@ -35,18 +42,56 @@ export class AiCarManager {
       rear: new THREE.Vector3(),
     };
 
+    // Shared wheel geometries for all 84 AI wheels (shared VBOs = 0 extra VRAM)
+    this.wheelGeos = this.createSharedWheelGeometries();
+
     this.initOpponents();
+    this.loadHighFidelityRb22Model();
+  }
+
+  createSharedWheelGeometries() {
+    // 18" bead seat (2.286 dm), 710mm tyre diameter (3.55 dm radius)
+    // CylinderGeometry height is along local Y axis (matching the car lateral wheel axle)
+    const frontTyre = new THREE.CylinderGeometry(3.55, 3.55, 2.80, 32);
+    const rearTyre = new THREE.CylinderGeometry(3.55, 3.55, 3.75, 32);
+
+    // Rim lip / aero disc cover: circle geometry in X-Z plane
+    // Left side (+Y outboard): normal points along +Y
+    const coverLeftGeo = new THREE.CircleGeometry(2.286, 32);
+    coverLeftGeo.rotateX(-Math.PI / 2);
+
+    // Right side (-Y outboard): normal points along -Y
+    const coverRightGeo = new THREE.CircleGeometry(2.286, 32);
+    coverRightGeo.rotateX(Math.PI / 2);
+
+    // Pirelli yellow compound band (RingGeometry)
+    const bandLeftGeo = new THREE.RingGeometry(2.35, 2.70, 32);
+    bandLeftGeo.rotateX(-Math.PI / 2);
+
+    const bandRightGeo = new THREE.RingGeometry(2.35, 2.70, 32);
+    bandRightGeo.rotateX(Math.PI / 2);
+
+    // Center lock nut (small cylinder along Y)
+    const nutLeftGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.4, 16);
+    nutLeftGeo.translate(0, 0.2, 0);
+
+    const nutRightGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.4, 16);
+    nutRightGeo.translate(0, -0.2, 0);
+
+    return { frontTyre, rearTyre, coverLeftGeo, coverRightGeo, bandLeftGeo, bandRightGeo, nutLeftGeo, nutRightGeo };
   }
 
   initOpponents() {
     const teams = this.gridConfig.teams || [];
-    let carIndex = 0;
 
     teams.forEach((t) => {
       const drivers = t.drivers || [];
       drivers.forEach((d) => {
-        // Skip player car
+        // Skip player car (replaces Max Verstappen)
         if (d.name === this.playerConfig.replaces) return;
+
+        const teamKey = t.slug === 'audi' ? 'sauber' : (F1_TEAMS[t.slug] ? t.slug : 'haas');
+        const teamPreset = F1_TEAMS[teamKey] || F1_TEAMS['red-bull'];
 
         const carData = {
           id: `#${d.no}`,
@@ -54,10 +99,11 @@ export class AiCarManager {
           name: d.name,
           team: t.team,
           teamSlug: t.slug,
-          colour: t.colour || '#00d4e8',
-          accentColour: t.accent || '#ffffff',
+          colour: teamPreset.bodyColor ? '#' + teamPreset.bodyColor.toString(16).padStart(6, '0') : t.colour,
+          accentColour: teamPreset.accentColor ? '#' + teamPreset.accentColor.toString(16).padStart(6, '0') : t.accent || '#ffffff',
+          teamPreset,
           pacePct: t.sim_pace_pct || 0,
-          driverPct: (Math.sin(d.no * 97) * 0.15), // Repeatable driver variation
+          driverPct: Math.sin(d.no * 97) * 0.15,
           x: 0,
           z: 0,
           y: 0,
@@ -81,203 +127,165 @@ export class AiCarManager {
           steerAngle: 0,
         };
 
-        const carMesh = this.createCarMesh(carData);
-        carData.mesh = carMesh;
-        this.group.add(carMesh);
+        // Create base car group
+        const carRoot = new THREE.Group();
+        carRoot.name = `AI_Car_${carData.no}_${carData.teamSlug}`;
+
+        // Build authentic 18" wheels with Pirelli P Zero markings
+        const wheelData = this.buildPirelliWheels(carRoot, carData);
+        carData.steerPivots = wheelData.steerPivots;
+        carData.wheelRollers = wheelData.wheelRollers;
+
+        // Build driver helmet seated in cockpit
+        this.buildCockpitDriver(carRoot, carData);
+
+        carData.mesh = carRoot;
+        this.group.add(carRoot);
         this.cars.push(carData);
-        carIndex++;
       });
     });
 
     console.info(`[AiCarManager] Initialized ${this.cars.length} AI opponent cars on track.`);
-    // Immediately position all 21 cars on the starting grid slots
     this.alignToGrid();
   }
 
-  createCarMesh(carData) {
-    const carRoot = new THREE.Group();
-    carRoot.name = `AI_Car_${carData.no}_${carData.teamSlug}`;
+  /**
+   * Load the official 2026 Red Bull RB22 GLB model and clone it for every AI opponent
+   */
+  async loadHighFidelityRb22Model() {
+    try {
+      const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
+      const gltf = await loader.loadAsync(new URL('rb22_body.glb', BASE_MODELS).href);
+      this.rb22Template = gltf.scene;
+      console.info('[AiCarManager] Loaded 2026 RB22 3D mesh for AI grid. Upgrading all cars with photorealistic chassis...');
 
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(carData.colour),
-      roughness: 0.35,
-      metalness: 0.25,
-    });
-
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(carData.accentColour),
-      roughness: 0.35,
-      metalness: 0.35,
-    });
-
-    const carbonMat = new THREE.MeshStandardMaterial({
-      color: 0x151618,
-      roughness: 0.75,
-      metalness: 0.1,
-    });
-
-    const haloMat = new THREE.MeshStandardMaterial({
-      color: 0x222428,
-      roughness: 0.4,
-      metalness: 0.8,
-    });
-
-    // 1. Monocoque Tub & Nose (dm coordinates)
-    const noseGeo = new THREE.ConeGeometry(3.5, 15, 8);
-    noseGeo.rotateZ(Math.PI / 2);
-    noseGeo.translate(-4.5, 2.5, 0);
-    const noseMesh = new THREE.Mesh(noseGeo, bodyMat);
-    carRoot.add(noseMesh);
-
-    const tubGeo = new THREE.BoxGeometry(22, 5.0, 7.2);
-    tubGeo.translate(14, 2.8, 0);
-    const tubMesh = new THREE.Mesh(tubGeo, bodyMat);
-    carRoot.add(tubMesh);
-
-    // 2. Engine Cover & Shark Fin
-    const finShape = new THREE.Shape();
-    finShape.moveTo(10, 5.0);
-    finShape.lineTo(33, 5.0);
-    finShape.lineTo(33, 9.5);
-    finShape.lineTo(16, 9.0);
-    finShape.closePath();
-    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.3, bevelEnabled: false });
-    finGeo.translate(0, 0, -0.15);
-    const finMesh = new THREE.Mesh(finGeo, accentMat);
-    carRoot.add(finMesh);
-
-    // 3. Sidepods
-    const podGeo = new THREE.BoxGeometry(16, 4.2, 5.0);
-    const podLeft = new THREE.Mesh(podGeo, bodyMat);
-    podLeft.position.set(16, 2.4, 5.2);
-    const podRight = new THREE.Mesh(podGeo, bodyMat);
-    podRight.position.set(16, 2.4, -5.2);
-    carRoot.add(podLeft, podRight);
-
-    // 4. Front Wing Assembly
-    const fwMainGeo = new THREE.BoxGeometry(2.5, 0.4, 18.0);
-    const fwMain = new THREE.Mesh(fwMainGeo, bodyMat);
-    fwMain.position.set(-11.5, 1.2, 0);
-
-    const fwPlateGeo = new THREE.BoxGeometry(4.0, 3.0, 0.3);
-    const fwPlateL = new THREE.Mesh(fwPlateGeo, accentMat);
-    fwPlateL.position.set(-11.5, 2.2, 9.0);
-    const fwPlateR = new THREE.Mesh(fwPlateGeo, accentMat);
-    fwPlateR.position.set(-11.5, 2.2, -9.0);
-    carRoot.add(fwMain, fwPlateL, fwPlateR);
-    carData.frontWingMesh = fwMain;
-
-    // 5. Rear Wing Assembly
-    const rwMainGeo = new THREE.BoxGeometry(3.2, 0.5, 14.0);
-    const rwMain = new THREE.Mesh(rwMainGeo, accentMat);
-    rwMain.position.set(38.0, 8.8, 0);
-
-    const rwPlateGeo = new THREE.BoxGeometry(6.0, 7.5, 0.3);
-    const rwPlateL = new THREE.Mesh(rwPlateGeo, bodyMat);
-    rwPlateL.position.set(38.0, 6.0, 7.0);
-    const rwPlateR = new THREE.Mesh(rwPlateGeo, bodyMat);
-    rwPlateR.position.set(38.0, 6.0, -7.0);
-    carRoot.add(rwMain, rwPlateL, rwPlateR);
-
-    // 6. Halo
-    const haloTorusGeo = new THREE.TorusGeometry(3.5, 0.45, 8, 16, Math.PI);
-    haloTorusGeo.rotateX(Math.PI / 2);
-    haloTorusGeo.rotateZ(Math.PI);
-    haloTorusGeo.translate(14, 7.2, 0);
-    const haloMesh = new THREE.Mesh(haloTorusGeo, haloMat);
-    carRoot.add(haloMesh);
-
-    // 7. Driver Helmet
-    const helmetGeo = new THREE.SphereGeometry(1.4, 12, 10);
-    helmetGeo.scale(1, 1.15, 1);
-    const helmetMesh = new THREE.Mesh(helmetGeo, accentMat);
-    helmetMesh.position.set(13.5, 6.2, 0);
-    carRoot.add(helmetMesh);
-
-    // 8. Floor / Underbody
-    const floorGeo = new THREE.BoxGeometry(36, 0.6, 17.5);
-    floorGeo.translate(15, 0.5, 0);
-    const floorMesh = new THREE.Mesh(floorGeo, carbonMat);
-    carRoot.add(floorMesh);
-
-    // 9. Wheels & Spindles
-    const wheelMats = this.createWheelMaterials(carData.tyreCompound);
-    const wheelData = this.buildWheelCorners(carRoot, wheelMats);
-    carData.steerPivots = wheelData.steerPivots;
-    carData.wheelRollers = wheelData.wheelRollers;
-
-    // Decal Number Badge on Nose
-    const badgeTexture = this.createNumberBadgeTexture(carData.no, carData.colour, carData.accentColour);
-    const badgeGeo = new THREE.PlaneGeometry(2.4, 2.4);
-    badgeGeo.rotateX(-Math.PI / 2);
-    badgeGeo.rotateZ(Math.PI / 2);
-    const badgeMat = new THREE.MeshBasicMaterial({ map: badgeTexture, transparent: true });
-    const badgeMesh = new THREE.Mesh(badgeGeo, badgeMat);
-    badgeMesh.position.set(-5.5, 3.8, 0);
-    carRoot.add(badgeMesh);
-
-    return carRoot;
+      this.cars.forEach((car) => {
+        this.applyHighFidelityBody(car);
+      });
+    } catch (err) {
+      console.warn('[AiCarManager] High-fidelity RB22 GLB load failed:', err.message);
+    }
   }
 
-  createWheelMaterials(compound) {
-    const compoundColors = {
-      soft: 0xe3122b,
-      medium: 0xf5c400,
-      hard: 0xffffff,
-      inter: 0x25a84a,
-      wet: 0x1d6fe8,
-    };
-    const cColor = compoundColors[compound] || 0xf5c400;
+  applyHighFidelityBody(carData) {
+    if (!this.rb22Template || !carData.mesh) return;
 
-    const rubberMat = new THREE.MeshStandardMaterial({
-      color: 0x18181a,
-      roughness: 0.85,
-      metalness: 0.1,
+    // Clone the real 2026 F1 RB22 body (shares all BufferGeometries in GPU memory!)
+    const bodyClone = this.rb22Template.clone(true);
+    bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
+
+    const isRedBull = carData.teamSlug === 'red-bull';
+    const team = carData.teamPreset || {};
+
+    let teamPaintMat = this.teamMaterials[carData.teamSlug]?.paint;
+    let teamAccentMat = this.teamMaterials[carData.teamSlug]?.accent;
+
+    if (!teamPaintMat) {
+      teamPaintMat = new THREE.MeshPhysicalMaterial({
+        color: isRedBull ? 0x18245e : (team.bodyColor ?? 0xd4001f),
+        roughness: team.roughness ?? 0.32,
+        metalness: team.metalness ?? 0.12,
+        clearcoat: team.clearcoat ?? 0.95,
+        clearcoatRoughness: team.clearcoatRoughness ?? 0.06,
+        side: THREE.DoubleSide,
+      });
+
+      teamAccentMat = new THREE.MeshStandardMaterial({
+        color: team.accentColor ?? 0xffe500,
+        roughness: 0.35,
+        metalness: 0.25,
+        side: THREE.DoubleSide,
+      });
+
+      this.teamMaterials[carData.teamSlug] = { paint: teamPaintMat, accent: teamAccentMat };
+    }
+
+    bodyClone.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+        const mname = (o.material?.name || '').replace(/\.\d+$/, '');
+
+        if (!isRedBull) {
+          if (mname === 'redbull_paint') {
+            o.material = teamPaintMat;
+          } else if (mname === 'redbull_color') {
+            o.material = teamAccentMat;
+          } else if (mname === 'redbull_decals' || mname === 'redbull_number_3') {
+            // Hide Red Bull specific sponsor decals on rival cars
+            o.visible = false;
+          }
+        }
+      }
     });
 
-    const rimMat = new THREE.MeshStandardMaterial({
-      color: 0x1f232b,
-      roughness: 0.4,
-      metalness: 0.8,
-    });
-
-    const stripeMat = new THREE.MeshBasicMaterial({
-      color: cColor,
-    });
-
-    return { rubberMat, rimMat, stripeMat };
+    carData.mesh.add(bodyClone);
+    carData.highFidelityBody = bodyClone;
+    this.poseCarOnTrack(carData);
   }
 
-  buildWheelCorners(carRoot, { rubberMat, rimMat, stripeMat }) {
+  buildPirelliWheels(carRoot, carData) {
     const steerPivots = [];
     const wheelRollers = [];
 
-    // Corner positions: [x, z (horizontal lateral), isFront, isLeft]
+    // Yellow Pirelli P Zero compound color & rubber
+    const rubberMat = new THREE.MeshStandardMaterial({
+      color: 0x141416,
+      roughness: 0.82,
+      metalness: 0.1,
+    });
+
+    const sidewallBandMat = new THREE.MeshBasicMaterial({
+      color: 0xf5c400, // Pirelli Yellow medium
+    });
+
+    const wheelCoverMat = new THREE.MeshStandardMaterial({
+      color: 0x1d2127,
+      roughness: 0.35,
+      metalness: 0.75,
+    });
+
+    const nutMat = new THREE.MeshStandardMaterial({
+      color: 0xe6d200,
+      roughness: 0.3,
+      metalness: 0.8,
+    });
+
+    // In CAD frame: X longitudinal (0=front axle, 34=rear axle), Y lateral (left=+Y, right=-Y), Z vertical (ground=0, axle=3.55)
     const corners = [
-      { name: 'FL', x: 0, z: 7.2, isFront: true, isLeft: true },
-      { name: 'FR', x: 0, z: -7.2, isFront: true, isLeft: false },
-      { name: 'RL', x: 34, z: 6.8, isFront: false, isLeft: true },
-      { name: 'RR', x: 34, z: -6.8, isFront: false, isLeft: false },
+      { name: 'FL', x: 0.0, y: 7.8, z: 3.55, isFront: true, isLeft: true },
+      { name: 'FR', x: 0.0, y: -7.8, z: 3.55, isFront: true, isLeft: false },
+      { name: 'RL', x: 34.0, y: 7.4, z: 3.55, isFront: false, isLeft: true },
+      { name: 'RR', x: 34.0, y: -7.4, z: 3.55, isFront: false, isLeft: false },
     ];
-
-    const tyreGeo = new THREE.CylinderGeometry(WHEEL_R * DM, WHEEL_R * DM, 3.2, 18);
-    tyreGeo.rotateX(Math.PI / 2);
-
-    const rimGeo = new THREE.CylinderGeometry(WHEEL_R * DM * 0.65, WHEEL_R * DM * 0.65, 3.25, 14);
-    rimGeo.rotateX(Math.PI / 2);
 
     corners.forEach((c) => {
       const pivot = new THREE.Group();
       pivot.name = `Pivot_${c.name}`;
-      pivot.position.set(c.x, WHEEL_R * DM, c.z);
+      pivot.position.set(c.x, c.y, c.z);
 
       const roller = new THREE.Group();
       roller.name = `Roller_${c.name}`;
 
-      const tMesh = new THREE.Mesh(tyreGeo, rubberMat);
-      const rMesh = new THREE.Mesh(rimGeo, rimMat);
-      roller.add(tMesh, rMesh);
+      const tGeo = c.isFront ? this.wheelGeos.frontTyre : this.wheelGeos.rearTyre;
+      const tyreMesh = new THREE.Mesh(tGeo, rubberMat);
 
+      const coverGeo = c.isLeft ? this.wheelGeos.coverLeftGeo : this.wheelGeos.coverRightGeo;
+      const coverMesh = new THREE.Mesh(coverGeo, wheelCoverMat);
+      const halfW = (c.isFront ? 2.80 : 3.75) * 0.5;
+      const outSign = c.isLeft ? 1 : -1;
+      coverMesh.position.y = outSign * (halfW + 0.01);
+
+      const bandGeo = c.isLeft ? this.wheelGeos.bandLeftGeo : this.wheelGeos.bandRightGeo;
+      const bandMesh = new THREE.Mesh(bandGeo, sidewallBandMat);
+      bandMesh.position.y = outSign * (halfW + 0.02);
+
+      const nutGeo = c.isLeft ? this.wheelGeos.nutLeftGeo : this.wheelGeos.nutRightGeo;
+      const nutMesh = new THREE.Mesh(nutGeo, nutMat);
+      nutMesh.position.y = outSign * halfW;
+
+      roller.add(tyreMesh, coverMesh, bandMesh, nutMesh);
       pivot.add(roller);
       carRoot.add(pivot);
 
@@ -288,33 +296,45 @@ export class AiCarManager {
     return { steerPivots, wheelRollers };
   }
 
-  createNumberBadgeTexture(no, bgColor, textColor) {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 128;
-    const ctx = canvas.getContext('2d');
+  buildCockpitDriver(carRoot, carData) {
+    const driverGroup = new THREE.Group();
+    driverGroup.name = 'Driver_Cockpit';
 
-    ctx.fillStyle = bgColor;
-    ctx.beginPath();
-    if (ctx.roundRect) {
-      ctx.roundRect(4, 4, 120, 120, 20);
-    } else {
-      ctx.rect(4, 4, 120, 120);
-    }
-    ctx.fill();
+    const helmetColours = carData.teamPreset?.driverHelmetColours || {
+      base: carData.colour,
+      crown: '#ffffff',
+      stripe: carData.accentColour,
+    };
 
-    ctx.strokeStyle = textColor;
-    ctx.lineWidth = 6;
-    ctx.stroke();
+    const helmetMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(helmetColours.base),
+      roughness: 0.28,
+      metalness: 0.2,
+    });
 
-    ctx.fillStyle = textColor;
-    ctx.font = 'bold 72px "Arial Black", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(no), 64, 66);
+    const visorMat = new THREE.MeshPhysicalMaterial({
+      color: 0x111115,
+      roughness: 0.08,
+      metalness: 0.95,
+      clearcoat: 1.0,
+      reflectivity: 1.0,
+    });
 
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
+    // Helmet dome (X longitudinal, Y lateral, Z vertical)
+    const domeGeo = new THREE.SphereGeometry(1.4, 20, 16);
+    domeGeo.scale(1.0, 0.95, 1.1);
+    const dome = new THREE.Mesh(domeGeo, helmetMat);
+
+    // Visor strip facing forward (-X)
+    const visorGeo = new THREE.CylinderGeometry(1.42, 1.42, 0.5, 16, 1, false, -Math.PI / 3, (2 * Math.PI) / 3);
+    visorGeo.rotateZ(Math.PI / 2);
+    const visor = new THREE.Mesh(visorGeo, visorMat);
+    visor.position.set(-0.3, 0, 0.15);
+
+    driverGroup.add(dome, visor);
+    // Position inside cockpit behind steering wheel (x=13.8, y=0, z=6.4)
+    driverGroup.position.set(13.8, 0, 6.4);
+    carRoot.add(driverGroup);
   }
 
   /**
@@ -326,7 +346,7 @@ export class AiCarManager {
       ...this.cars.map((c) => ({ id: c.id, no: c.no })),
     ];
 
-    const poleSide = (this.circuit?.data?.meta?.pole_side === 'right') ? -1 : 1;
+    const poleSide = this.circuit?.data?.meta?.pole_side === 'right' ? -1 : 1;
     const gridHalf = this.circuit?.data?.meta?.grid_half_m ?? 2.6;
 
     list.forEach((entry, k) => {
@@ -372,24 +392,18 @@ export class AiCarManager {
       // 3. Pose car on track surface (pitch, roll, yaw)
       this.poseCarOnTrack(car);
 
-      // 4. Spin wheels and steer front wheels
+      // 4. Spin wheels along local Y axle
       const wheelTravel = (car.v * dt) / WHEEL_R;
       car.wheelRot += wheelTravel;
       car.wheelRollers.forEach((roller) => {
-        roller.rotation.z = car.wheelRot;
+        roller.rotation.y = -car.wheelRot;
       });
 
-      // Front steering angle from yaw rate
+      // 5. Front steering angle around vertical Z kingpin
       const steerRad = Math.atan2(car.latOffset, 15);
       car.steerPivots.forEach((pivot) => {
-        pivot.rotation.y = steerRad;
+        pivot.rotation.z = -steerRad;
       });
-
-      // 5. Visual damage: front wing angle if broken
-      if (car.frontWingMesh && car.wingHealth < 0.9) {
-        car.frontWingMesh.rotation.x = 0.15;
-        car.frontWingMesh.position.y = 0.8;
-      }
     }
   }
 

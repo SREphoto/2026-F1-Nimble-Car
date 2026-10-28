@@ -99,6 +99,18 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   let garage = null, builder = null;
   const QUALITY = /[?&]garage=low\b/.test(location.search) ? 'low' : 'high';
   const L = GARAGE_LAYOUT;
+  const GARAGE_VIEWS = {
+    CAM_ISO: { pos: [-40, 22, 28], target: [16, 4, 0] },
+    CAM_FRONT: { pos: [-62, 6, 0], target: [10, 3, 0] },
+    CAM_SIDE: { pos: [16, 7, 31], target: [16, 3.5, 0] },
+    CAM_TOP: { pos: [14, 41, 0.5], target: [14, 0, 0] },
+    CAM_REAR: { pos: [80, 9, 0], target: [30, 4, 0] },
+    CAM_STEERING: { pos: [12.0, 5.6, 0], target: [9.0, 4.2, 0] },
+    CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
+    CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
+    CAM_EXPLODED: { pos: [-48, 30, 30], target: [14, 6, 0] },
+    STATE_ACTIVE: { pos: [-40, 18, 28], target: [10, 3.2, 0] },
+  };
   const st = {
     active: false,
     wasCircuit: false,
@@ -748,12 +760,21 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     if (st.active) return;
     if (entering) return entering;
     $('btn-garage')?.classList.add('active');
-    entering = (async () => {
-      builder = builder || await import('./garage_builder.js');
-      garage = builder.buildGarage(GARAGE_LAYOUT, getTeamId(), { quality: QUALITY });
-      scene.add(garage);
-    })();
-    try { await entering; } finally { entering = null; }
+    try {
+      entering = (async () => {
+        builder = builder || await import('./garage_builder.js');
+        garage = builder.buildGarage(GARAGE_LAYOUT, getTeamId(), { quality: QUALITY });
+        scene.add(garage);
+      })();
+      await entering;
+    } catch (err) {
+      console.error('Failed to enter garage:', err);
+      $('btn-garage')?.classList.remove('active');
+      entering = null;
+      return;
+    } finally {
+      entering = null;
+    }
 
     st.active = true;
     st.wasCircuit = !!trackMode?.mode?.circuit;
@@ -772,7 +793,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     scene.fog = null;
 
     scene.traverse(o => {
-      if (o.isLight && !garage.userData.lights.includes(o) && o.visible) {
+      if (o.isLight && !garage?.userData?.lights?.includes(o) && o.visible) {
         st.saved.lights.push([o, o.intensity, o.castShadow]);
         o.intensity = 0;
         o.castShadow = false;
@@ -785,7 +806,13 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       o.layers.enable(builder.REFLECT_LAYER);
     });
 
-    scene.environment = garage.userData.captureEnv(renderer, scene, [carModel]);
+    try {
+      if (garage.userData?.captureEnv) {
+        scene.environment = garage.userData.captureEnv(renderer, scene, [carModel]);
+      }
+    } catch (e) {
+      console.warn('Garage captureEnv error:', e);
+    }
     st.saved.exposure = renderer.toneMappingExposure;
     renderer.toneMappingExposure = 1.0;
     st.saved.shadowAuto = renderer.shadowMap.autoUpdate;
