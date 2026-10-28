@@ -112,19 +112,15 @@ export async function installRb22Body(carModel, renderer) {
 
   // The RB22 tail carries exposed gearbox/exhaust detail (copper pipes, white brackets) above its crash
   // structure behind the cover. Drop those triangles: X > 32, Z > 4.7 in the car frame.
-  // Also trim any overextended tail stinger beyond the rear wing trailing edge (X > 37.15 dm)
-  // so the rear impact structure and FIA rain light terminate cleanly right under the wing.
   {
     carModel.updateMatrixWorld(true);
     const toCar = carModel.matrixWorld.clone().invert(); const v = new THREE.Vector3();
     body.traverse((o) => {
-      if (!o.isMesh || !/^Body_RB22_Tail/.test(o.name) || !o.geometry.index) return;
+      if (!o.isMesh || !/^Body_RB22_Tail_redbull_detail/.test(o.name) || !o.geometry.index) return;
       const m = toCar.clone().multiply(o.matrixWorld), pos = o.geometry.attributes.position, ix = o.geometry.index.array, keep = [];
       for (let t = 0; t < ix.length; t += 3) {
         let cx = 0, cz = 0; for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pos, ix[t + k]).applyMatrix4(m); cx += v.x / 3; cz += v.z / 3; }
-        const isHighClutter = /_detail/.test(o.name) && (cx > 32 && cz > 4.7);
-        const isOverextended = cx > 37.15;
-        if (!isHighClutter && !isOverextended) keep.push(ix[t], ix[t + 1], ix[t + 2]);
+        if (!(cx > 32 && cz > 4.7)) keep.push(ix[t], ix[t + 1], ix[t + 2]);
       }
       o.geometry = o.geometry.clone(); o.geometry.setIndex(keep); o.userData.rb22Trimmed = (ix.length - keep.length) / 3;
     });
@@ -190,13 +186,7 @@ export async function installRb22Body(carModel, renderer) {
       });
     });
   });
-  ['Assembly_HPAS_Steering_Rack'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
-  // Ensure the central Inconel exhaust tailpipe is prominently visible between the twin pylons
-  const exh = carModel.getObjectByName('PU_Exhaust_Tailpipe_Assembly');
-  if (exh) { exh.visible = true; exh.userData.replacedByRb22 = false; }
-  // Ensure our 15-LED pulsing FIA rain light is visible at the trimmed tail tip
-  const rainLight = carModel.getObjectByName('Assembly_RearImpactStructure_RainLight');
-  if (rainLight) { rainLight.visible = true; rainLight.userData.replacedByRb22 = false; }
+  ['Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
 
   // Our powertrain, gearbox, wiring and coolers were sized for the old body: parts of them (gearbox casing,
   // exhaust downpipe, MGU-K, crankcase sump, rear-wing LED looms) poke through the RB22 floor and tail.

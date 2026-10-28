@@ -120,7 +120,7 @@ export function createSuspensionSteering(options = {}) {
     cornerGroup.position.set(xPos, yPos, zPos);
     cornerGroup.name = `Assembly_WheelCorner_${isRear ? 'Rear' : 'Front'}_${isLeft ? 'Left' : 'Right'}`;
 
-    const tyreWidth = isRear ? 4.05 : 3.05; // Full F1 405mm Rear, 305mm Front
+    const tyreWidth = isRear ? 3.75 : 2.80; // Rear 375mm, Front 280mm
     const tyreRadius = 3.55;               // 710mm diameter = 3.55 dm radius
     const rimRadius = 2.286;               // 18 inches = 457.2mm diameter = 2.286 dm radius
 
