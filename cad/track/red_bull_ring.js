@@ -951,12 +951,6 @@ export function createRedBullRing() {
           }
         }
         if (nearPit(x, z, PW / 2 + 10)) {
-          isUnderTrack[k] = 1;
-        }
-      }
-          }
-        }
-        if (nearPit(x, z, PW / 2 + 10)) {
           const L = track.locate(x, z, -1);
           h = Math.min(h, L.y - 0.75);
           isUnderTrack[k] = 1;
