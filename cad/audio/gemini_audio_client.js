@@ -13,7 +13,12 @@ export class GeminiAudioClient {
     this.radioGainNode = null;
     this.listeners = [];
 
-    this.checkServer();
+    // Ensure any stuck or crashing speech synthesis in the browser is canceled and disabled
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (_) {}
+    }
   }
 
   onSpeech(callback) {
@@ -25,17 +30,8 @@ export class GeminiAudioClient {
   }
 
   async checkServer() {
-    try {
-      const res = await fetch(`${this.serverUrl}/api/health`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        this.serverAvailable = data.status === 'ok';
-        console.info('[GeminiAudioClient] Connected to local audio server.', data);
-      }
-    } catch {
-      this.serverAvailable = false;
-      console.info('[GeminiAudioClient] Local audio server not detected; using Web Speech API fallback.');
-    }
+    // Speech server disabled per user preference to prevent speech audio issues
+    this.serverAvailable = false;
   }
 
   initAudioContext() {
@@ -101,12 +97,10 @@ export class GeminiAudioClient {
   }
 
   /**
-   * Speak a line either from precompiled pack, live TTS, or Web Speech fallback
+   * Display line subtitles without speech synthesis or TTS audio to prevent browser speech crashes
    */
-  async speak({ text, role = 'announcer', key = null }) {
-    this.initAudioContext();
-
-    // Dispatch subtitle event to HUD immediately
+  async speak({ text, role = 'announcer' }) {
+    if (!text) return;
     this.notify({
       type: 'SPEECH_START',
       role,
@@ -114,80 +108,9 @@ export class GeminiAudioClient {
       speakerTitle: role === 'engineer' ? '📻 TEAM RADIO · RACE ENGINEER' : '🎙️ F1 COMMENTARY',
     });
 
-    if (role === 'engineer') {
-      this.playRadioBeep(true);
-    }
-
-    // 1. Check precompiled pack
-    if (key && this.cachedAudioPack[key]?.audioUrl) {
-      const audioUrl = `${this.serverUrl}${this.cachedAudioPack[key].audioUrl}`;
-      await this.playAudioUrl(audioUrl, role === 'engineer');
-      return;
-    }
-
-    // 2. Query server for live TTS if available
-    if (this.serverAvailable) {
-      try {
-        const res = await fetch(`${this.serverUrl}/api/tts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, role }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.audioUrl) {
-            await this.playAudioUrl(`${this.serverUrl}${json.audioUrl}`, role === 'engineer');
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('[GeminiAudioClient] Live TTS failed, falling back to Web Speech:', e.message);
-      }
-    }
-
-    // 3. Fallback: Browser Web Speech API
-    this.fallbackWebSpeech(text, role);
-  }
-
-  async playAudioUrl(url, applyRadioFilter = false) {
-    try {
-      const audio = new Audio(url);
-      audio.crossOrigin = 'anonymous';
-
-      if (applyRadioFilter && this.audioCtx && this.radioFilterNode) {
-        const source = this.audioCtx.createMediaElementSource(audio);
-        source.connect(this.radioFilterNode);
-      }
-
-      await audio.play();
-      audio.onended = () => {
-        if (applyRadioFilter) this.playRadioBeep(false);
-        this.notify({ type: 'SPEECH_END' });
-      };
-    } catch (e) {
-      console.warn('[GeminiAudioClient] Audio play failed:', e.message);
+    const readDurationMs = Math.min(6000, Math.max(2500, text.length * 60));
+    setTimeout(() => {
       this.notify({ type: 'SPEECH_END' });
-    }
-  }
-
-  fallbackWebSpeech(text, role) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (role === 'engineer') {
-      utterance.pitch = 0.9;
-      utterance.rate = 1.05;
-    } else {
-      utterance.pitch = 1.15;
-      utterance.rate = 1.15;
-    }
-
-    utterance.onend = () => {
-      if (role === 'engineer') this.playRadioBeep(false);
-      this.notify({ type: 'SPEECH_END' });
-    };
-
-    window.speechSynthesis.speak(utterance);
+    }, readDurationMs);
   }
 }

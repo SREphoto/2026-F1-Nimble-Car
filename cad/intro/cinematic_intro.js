@@ -297,17 +297,6 @@ function beginPlayback() {
     console.warn('[intro] Red Bull theme switch error:', e);
   }
 
-  // 2. Enter team garage for shiny lighting & reflections
-  try {
-    if (window.garageInspect?.enterGarageInspect) {
-      window.garageInspect.enterGarageInspect();
-    } else {
-      document.getElementById('btn-garage')?.click();
-    }
-  } catch (e) {
-    console.warn('[intro] Garage enter error:', e);
-  }
-
   runtime.active = true;
   runtime.waiting = false;
   runtime.shotIndex = 0;

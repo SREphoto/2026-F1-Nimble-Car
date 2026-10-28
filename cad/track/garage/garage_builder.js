@@ -524,20 +524,27 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(D, 2 * W), M.floor); floor.rotation.x = -Math.PI / 2; floor.position.set(XM, 0.03, 0); floor.receiveShadow = true; floor.name = 'Garage_Floor'; floor.renderOrder = 1; g.add(floor);
   let mirror = null;
   if (high) {
-    mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0x8f9298, multisample: 4 });
+    mirror = new Reflector(new THREE.PlaneGeometry(D, 2 * W), { textureWidth: 1024, textureHeight: 512, clipBias: 0.003, color: 0x8f9298, multisample: 0 });
     mirror.rotation.x = -Math.PI / 2; mirror.position.set(XM, 0.0, 0); mirror.name = 'Garage_Floor_Mirror';
     mirror.camera.layers.set(REFLECT_LAYER);
     // the mirror image is only redrawn when the view changed (camera moved, wheels or bodywork toggled, part picked), and
     // at most once per screen frame (three.js would otherwise redo it inside the transmission pass of the car's glass).
     // A still view keeps the last image, which is identical, so nothing is lost.
-    const drawMirror = mirror.onBeforeRender; let fresh = false, dirty = true; const lastM = new Float64Array(32);
+    const drawMirror = mirror.onBeforeRender; let fresh = false, dirty = true, isRenderingMirror = false; const lastM = new Float64Array(32);
     mirror.onBeforeRender = function (renderer, scene, cam, ...rest) {
-      if (fresh) return;
+      if (fresh || isRenderingMirror) return;
       const a = cam.matrixWorld.elements, b = cam.projectionMatrix.elements; let same = !dirty;
       for (let i = 0; same && i < 16; i++) same = Math.abs(a[i] - lastM[i]) < 1e-7 && Math.abs(b[i] - lastM[16 + i]) < 1e-7;
       if (same) return;
       fresh = true; requestAnimationFrame(() => (fresh = false)); lastM.set(a); lastM.set(b, 16); dirty = false;
-      drawMirror.call(this, renderer, scene, cam, ...rest);
+      isRenderingMirror = true;
+      try {
+        drawMirror.call(this, renderer, scene, cam, ...rest);
+      } catch (err) {
+        console.warn('Reflector render error:', err);
+      } finally {
+        isRenderingMirror = false;
+      }
     };
     g.userData.refreshMirror = () => { fresh = false; dirty = true; };
     g.add(mirror);
@@ -798,7 +805,12 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     const mats = place.helmetShelf;
     for (const [mat, gs] of byMat) {
       const one = mergeGeometries(gs);
-      const geo = mergeGeometries(shelfHelmet.hs.map(([x, y]) => one.clone().translate(x, y + 0.2 + 1.45, 1.6)));
+      if (!one) continue;
+      const shelfGeos = shelfHelmet.hs.map(([x, y]) => one.clone().translate(x, y + 0.2 + 1.45, 1.6));
+      const geo = mergeGeometries(shelfGeos);
+      one.dispose();
+      shelfGeos.forEach(g => g.dispose());
+      if (!geo) continue;
       const im = new THREE.InstancedMesh(geo, mat, mats.length); mats.forEach((m, i) => im.setMatrixAt(i, m));
       im.name = 'Garage_helmetShelf_Model'; im.userData.shelfHelmetModel = true; im.castShadow = true; im.receiveShadow = true; im.computeBoundingSphere(); g.add(im);
     }
@@ -1006,11 +1018,11 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   area(24, 10, 88, TL.y - 0.4, 54, 1.8);                                   // over PU diagnostics station
   const spot = new THREE.SpotLight(0xffffff, 1.8, 0, 0.95, 1.0, 0);
   spot.position.set(CX, C.y - 0.5, 0); spot.target.position.set(CX, 0, 0); spot.castShadow = true;
-  spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 70;
+  spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 70;
   lights.push(spot, spot.target);
   const sun = new THREE.DirectionalLight(0xfff1dc, 1.1);
   sun.position.set(X0 - 260, 300, -140); sun.target.position.set(X0 - 40, 0, 0); sun.castShadow = true;
-  Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 10, far: 1000 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
+  Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 10, far: 1000 }); sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   sun.shadow.camera.layers.set(SHELL_LAYER);   // sunlight only needs the walls, roof and facade to cast shadows (keeps the car out of this pass)
   lights.push(sun, sun.target);
   lights.forEach(l => g.add(l));
@@ -1022,13 +1034,24 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   // ---------------------------------------------------------------- environment map captured from the garage (reflections on paint, floor and metal)
   let envRT = null;
   g.userData.captureEnv = (renderer, scene, hide = []) => {
-    const cubeRT = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
-    const cam = new THREE.CubeCamera(1, 2000, cubeRT); cam.position.set(18, 14, 0);
-    const vis = hide.map(o => o.visible); hide.forEach(o => (o.visible = false)); if (mirror) mirror.visible = false;
-    cam.update(renderer, scene);
-    hide.forEach((o, i) => (o.visible = vis[i])); if (mirror) mirror.visible = true;
-    const pm = new THREE.PMREMGenerator(renderer); envRT = pm.fromCubemap(cubeRT.texture); pm.dispose(); cubeRT.dispose();
-    return envRT.texture;
+    try {
+      const cubeRT = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
+      const cam = new THREE.CubeCamera(1, 2000, cubeRT); cam.position.set(18, 14, 0);
+      const vis = hide.map(o => o.visible); hide.forEach(o => (o.visible = false)); if (mirror) mirror.visible = false;
+      const prevShadowAuto = renderer.shadowMap.autoUpdate;
+      renderer.shadowMap.autoUpdate = false;
+      try {
+        cam.update(renderer, scene);
+      } finally {
+        renderer.shadowMap.autoUpdate = prevShadowAuto;
+        hide.forEach((o, i) => (o.visible = vis[i])); if (mirror) mirror.visible = true;
+      }
+      const pm = new THREE.PMREMGenerator(renderer); envRT = pm.fromCubemap(cubeRT.texture); pm.dispose(); cubeRT.dispose();
+      return envRT?.texture || null;
+    } catch (e) {
+      console.warn('Garage captureEnv error:', e);
+      return null;
+    }
   };
 
   g.userData.setTeam = (id) => {
@@ -1067,7 +1090,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     Object.values(M).forEach(m => mats.add(m));
     mats.forEach(m => { for (const k of ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'bumpMap', 'alphaMap']) if (m[k]) texs.add(m[k]); m.dispose(); });
     texs.forEach(t => t.dispose());
-    if (mirror) mirror.dispose?.();
+    if (mirror) {
+      try {
+        mirror.getRenderTarget?.()?.dispose?.();
+        mirror.material?.dispose?.();
+        mirror.geometry?.dispose?.();
+        mirror.removeFromParent?.();
+      } catch (_) {}
+    }
     if (envRT) envRT.dispose();
     g.removeFromParent();
   };
