@@ -24,6 +24,16 @@ const CSS = `
 #garage-bar button.perch-btn:hover{background:#2563eb;color:#fff}
 #garage-bar button.chest-btn{background:#1e293b;border-color:#f59e0b;color:#fde68a}
 #garage-bar button.chest-btn:hover{background:#d97706;color:#fff}
+#garage-bar button.views-btn{background:#0284c7;color:#fff;border-color:#38bdf8;font-weight:600}
+#garage-bar button.views-btn:hover{background:#0369a1}
+#garage-bar button.menu-btn{background:#4f46e5;color:#fff;border-color:#818cf8;font-weight:600}
+#garage-bar button.menu-btn:hover{background:#4338ca}
+#garage-views-popover{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);background:rgba(8,12,20,.96);border:1px solid #38bdf8;border-radius:10px;padding:12px 14px;z-index:32;display:none;flex-direction:column;gap:8px;box-shadow:0 12px 40px rgba(0,0,0,.8);min-width:320px;max-width:92vw}
+#garage-views-popover.on{display:flex}
+#garage-views-popover .popover-section-title{font-size:11px;font-weight:bold;color:#38bdf8;letter-spacing:.05em}
+#garage-views-popover .popover-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+#garage-views-popover .view-pill{background:#131c2e;border:1px solid #2a3a52;color:#e2e8f0;padding:6px 8px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s}
+#garage-views-popover .view-pill:hover{background:#0284c7;border-color:#38bdf8;color:#fff}
 #garage-bar button.exit{background:#c8161d;border-color:#c8161d;color:#fff}
 #garage-bar .hint{opacity:.75;margin-left:6px;white-space:nowrap;font-size:11px}
 #garage-card{position:absolute;display:none;max-width:280px;background:rgba(8,12,20,.96);border:1px solid #00d4e8;border-radius:8px;padding:12px 14px;color:#e6edf5;font:12px/1.4 system-ui,sans-serif;z-index:31;pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)}
@@ -110,6 +120,10 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
     CAM_EXPLODED: { pos: [-48, 30, 30], target: [14, 6, 0] },
     STATE_ACTIVE: { pos: [-40, 18, 28], target: [10, 3.2, 0] },
+    CAM_OVERVIEW: { pos: [-56, 19, 15], target: [16, 4, 0] },
+    CAM_DESK: { pos: [72, 17, 38], target: [95, 11, 38] },
+    CAM_PERCH: { pos: [-162, 11.5, 0], target: [-174, 9.8, -1.0] },
+    CAM_TOOLCHEST: { pos: [30, 14, 18], target: [30, 7.5, 28] },
   };
   const st = {
     active: false,
@@ -136,6 +150,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   const bar = document.createElement('div');
   bar.id = 'garage-bar';
   bar.innerHTML = `
+    <button type="button" id="garage-views-btn" class="views-btn" title="Camera Perspectives & Viewpoints">🎥 Views ▾</button>
     <button type="button" id="garage-wheels" class="active" title="Toggle wheels on stands">Wheels on</button>
     <button type="button" id="garage-body" class="active" title="Toggle active bodywork">Bodywork on</button>
     <button type="button" id="garage-wheel-tool" title="PCU-8D Steering Wheel Tool">Steering Wheel</button>
@@ -146,9 +161,37 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     <button type="button" id="garage-sredesigns" title="SREdesigns.com Design Showcase">SREdesigns</button>
     <button type="button" id="garage-regs" title="Technical Check Sheet & Regulations">Regulations</button>
     <button type="button" id="garage-credits" title="Project Credits & Acknowledgements">Credits</button>
+    <button type="button" id="garage-menu-btn" class="menu-btn" title="Open Full Pause & Navigation Menu (Esc / P)">☰ Menu</button>
     <button type="button" id="garage-exit" class="exit" title="Leave the garage">Exit Garage</button>
     <span class="hint">Click screens or tools · W A S D to walk · Drag to look</span>`;
   host.appendChild(bar);
+
+  // In-Garage Camera Views Popover
+  const viewsPop = document.createElement('div');
+  viewsPop.id = 'garage-views-popover';
+  viewsPop.innerHTML = `
+    <div class="popover-section-title">CAMERA PERSPECTIVES</div>
+    <div class="popover-grid">
+      <button type="button" class="view-pill" data-cam="CAM_ISO">📐 ISO 3/4</button>
+      <button type="button" class="view-pill" data-cam="CAM_FRONT">🏎️ Front</button>
+      <button type="button" class="view-pill" data-cam="CAM_SIDE">↔️ Side</button>
+      <button type="button" class="view-pill" data-cam="CAM_TOP">🔝 Top</button>
+      <button type="button" class="view-pill" data-cam="CAM_REAR">🏁 Rear</button>
+      <button type="button" class="view-pill" data-cam="CAM_STEERING">🕹️ Steering</button>
+      <button type="button" class="view-pill" data-cam="CAM_COCKPIT">🎮 Cockpit</button>
+      <button type="button" class="view-pill" data-cam="CAM_WHEEL">🛞 Wheel</button>
+      <button type="button" class="view-pill" data-cam="CAM_EXPLODED">💥 Exploded</button>
+      <button type="button" class="view-pill" data-cam="STATE_ACTIVE">⚡ Active</button>
+    </div>
+    <div class="popover-section-title" style="margin-top:6px">GARAGE HOTSPOTS</div>
+    <div class="popover-grid">
+      <button type="button" class="view-pill" id="pop-view-garage">🏢 Overview</button>
+      <button type="button" class="view-pill" id="pop-view-desk">💼 Engineers' Desk</button>
+      <button type="button" class="view-pill" id="pop-view-perch">🪑 Pit Wall Stand</button>
+      <button type="button" class="view-pill" id="pop-view-toolchest">🧰 Tool Chest</button>
+    </div>
+  `;
+  host.appendChild(viewsPop);
 
   // Floating Info Card
   const card = document.createElement('div');
@@ -448,6 +491,42 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAllModals();
+  });
+
+  $('garage-views-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    viewsPop.classList.toggle('on');
+  });
+  $('garage-menu-btn')?.addEventListener('click', () => {
+    if (window.openPauseMenu) window.openPauseMenu();
+    else if (window.togglePauseMenu) window.togglePauseMenu();
+  });
+  viewsPop.querySelectorAll('[data-cam]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.setCameraView) window.setCameraView(btn.dataset.cam);
+      viewsPop.classList.remove('on');
+    });
+  });
+  $('pop-view-garage')?.addEventListener('click', () => {
+    if (window.setCameraView) window.setCameraView('CAM_OVERVIEW');
+    viewsPop.classList.remove('on');
+  });
+  $('pop-view-desk')?.addEventListener('click', () => {
+    zoomToDesk();
+    viewsPop.classList.remove('on');
+  });
+  $('pop-view-perch')?.addEventListener('click', () => {
+    zoomToPitPerch();
+    viewsPop.classList.remove('on');
+  });
+  $('pop-view-toolchest')?.addEventListener('click', () => {
+    zoomToToolChest();
+    viewsPop.classList.remove('on');
+  });
+  document.addEventListener('click', (e) => {
+    if (viewsPop.classList.contains('on') && !viewsPop.contains(e.target) && e.target !== $('garage-views-btn')) {
+      viewsPop.classList.remove('on');
+    }
   });
 
   $('garage-wheels')?.addEventListener('click', () => setWheels(!st.wheels));
@@ -864,6 +943,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   function exitGarageInspect() {
     if (!st.active) return;
     clearSel();
+    viewsPop?.classList.remove('on');
     setWheels(true);
     setBody(true);
     closeAllModals();

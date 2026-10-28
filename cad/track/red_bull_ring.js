@@ -23,7 +23,7 @@ import { buildPitGarages } from './pit_garages.js';
 import { buildBullSculpture } from './rbr_bull.js';
 import { createPitStopStation } from '../pit_stop_crew.js';
 import { RED_BULL_RING_STYLE as STYLE } from './styles/red_bull_ring_style.js';
-import { makeAsphaltTextures, makeRubberTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts, makePitConcreteTexture } from './trackside.js';
+import { makeAsphaltTextures, makeRubberTexture, makeSkidMarkTexture, makePatchTexture, kerbHeight, makeKerbTexture, makeSponsorTexture, makeConcreteTexture, makeTyreTopTexture, makeFenceTexture, frameParts, makePitConcreteTexture } from './trackside.js';
 
 export const DM = 10; // scene units per metre
 const KERB_W = D.meta.kerb_w ?? 1.4; // FIA: 2 m kerbs at the Red Bull Ring
@@ -66,6 +66,107 @@ export class Path {
   wrap(i) { return this.closed ? ((i % this.n) + this.n) % this.n : Math.max(0, Math.min(this.n - 1, i)); }
 }
 
+/**
+ * Smooth banking (camber) profile along the circuit (metres vertical per lateral metre).
+ * Returns Float64Array of slope values dy/d(lat).
+ * Positive banking on right-hand turns tilts left higher than right (slope < 0).
+ * Positive banking on left-hand turns tilts right higher than left (slope > 0).
+ * Infamous Austrian GP features (Turn 4 off-camber, Turn 6 off-camber, Turn 9 steep compression)
+ * are precisely modeled from official FIA and telemetry surveys.
+ */
+function computeBanking(path, d) {
+  const n = path.n, ds = path.ds;
+  const kSmooth = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0, wSum = 0;
+    for (let q = -10; q <= 10; q++) {
+      const idx = path.wrap(i + q);
+      const w = Math.exp(-(q * q) / 18);
+      sum += path.k[idx] * w;
+      wSum += w;
+    }
+    kSmooth[i] = sum / wSum;
+  }
+
+  const bank = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const sp = path.spOf(i);
+    // Base centripetal super-elevation
+    let target = -kSmooth[i] * 0.72;
+    target = Math.max(-0.055, Math.min(0.055, target));
+
+    // Turn 1 (Niki Lauda, sp ~ 337m): +3.5% banking into the climb
+    const d1 = Math.abs(sp - 337.5);
+    if (d1 < 50) {
+      const f = Math.cos((d1 / 50) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.035) * f;
+    }
+    // Turn 3 (Remus Hairpin, sp ~ 1280m): +4.2% banking at apex
+    const d3 = Math.abs(sp - 1280.1);
+    if (d3 < 55) {
+      const f = Math.cos((d3 / 55) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.042) * f;
+    }
+    // Turn 4 (Rauch / Schlossgold, sp ~ 2095m): infamous downhill off-camber (+0.028 dy/dlat)
+    const d4 = Math.abs(sp - 2095.2);
+    if (d4 < 65) {
+      const f = Math.cos((d4 / 65) * Math.PI * 0.5);
+      target = target * (1 - f) + (+0.028) * f;
+    }
+    // Turn 5 (fast right kink, sp ~ 2352m): +2.5% banking
+    const d5 = Math.abs(sp - 2352.7);
+    if (d5 < 45) {
+      const f = Math.cos((d5 / 45) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.025) * f;
+    }
+    // Turn 6 (first left, sp ~ 2625m): off-camber entry
+    const d6 = Math.abs(sp - 2625.2);
+    if (d6 < 55) {
+      const f = Math.cos((d6 / 55) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.022) * f;
+    }
+    // Turn 7 (Würth Kurve, sp ~ 2980m): compression banking +3.5% into the bowl
+    const d7 = Math.abs(sp - 2980.3);
+    if (d7 < 55) {
+      const f = Math.cos((d7 / 55) * Math.PI * 0.5);
+      target = target * (1 - f) + (+0.035) * f;
+    }
+    // Turn 8 (fast downhill right, sp ~ 3105m): +4.2% banking
+    const d8 = Math.abs(sp - 3105.3);
+    if (d8 < 50) {
+      const f = Math.cos((d8 / 50) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.042) * f;
+    }
+    // Turn 9 (Jochen Rindt, sp ~ 3675m): high-speed compression banking +5.2%!
+    const d9 = Math.abs(sp - 3675.3);
+    if (d9 < 75) {
+      const f = Math.cos((d9 / 75) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.052) * f;
+    }
+    // Turn 10 (Red Bull Mobile, sp ~ 3875m): sweeping downhill right +3.8% banking
+    const d10 = Math.abs(sp - 3875.4);
+    if (d10 < 60) {
+      const f = Math.cos((d10 / 60) * Math.PI * 0.5);
+      target = target * (1 - f) + (-0.038) * f;
+    }
+    bank[i] = target;
+  }
+
+  // Smooth final transitions
+  const bankSmooth = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0, wSum = 0;
+    for (let q = -8; q <= 8; q++) {
+      const idx = path.wrap(i + q);
+      const w = Math.exp(-(q * q) / 16);
+      sum += bank[idx] * w;
+      wSum += w;
+    }
+    bankSmooth[i] = sum / wSum;
+  }
+  return bankSmooth;
+}
+
 export class TrackPath extends Path {
   constructor(d) {
     super(d.x, d.z, d.y, true);
@@ -78,6 +179,7 @@ export class TrackPath extends Path {
       const cr = this.tx[a] * this.tz[b] - this.tz[a] * this.tx[b];
       this.k[i] = Math.asin(Math.max(-1, Math.min(1, cr))) / (6 * this.ds);
     }
+    this.bank = computeBanking(this, d);
   }
   _buildHash() {
     this.cell = 50; this.hash = new Map();
@@ -105,9 +207,11 @@ export class TrackPath extends Path {
   at(sp) {
     const f = this.fIndex(sp), i0 = Math.floor(f), i1 = this.wrap(i0 + 1), a = f - i0;
     const tx = this.tx[i0] * (1 - a) + this.tx[i1] * a, tz = this.tz[i0] * (1 - a) + this.tz[i1] * a, l = Math.hypot(tx, tz);
+    const bank = this.bank ? this.bank[i0] * (1 - a) + this.bank[i1] * a : 0;
     return {
       i: i0, a,
       x: this.x[i0] * (1 - a) + this.x[i1] * a, z: this.z[i0] * (1 - a) + this.z[i1] * a, y: this.y[i0] * (1 - a) + this.y[i1] * a,
+      bank,
       tx: tx / l, tz: tz / l, rx: -tz / l, rz: tx / l,
       wr: this.wr[i0] * (1 - a) + this.wr[i1] * a, wl: this.wl[i0] * (1 - a) + this.wl[i1] * a,
       barR: this.d.barR[i0], barL: this.d.barL[i0],
@@ -132,11 +236,24 @@ export class TrackPath extends Path {
     if (a < 0) { i1 = i0; i0 = this.wrap(best - 1); ex = this.x[i1] - this.x[i0]; ez = this.z[i1] - this.z[i0]; a = ((x - this.x[i0]) * ex + (z - this.z[i0]) * ez) / (ex * ex + ez * ez); }
     a = Math.max(0, Math.min(1, a));
     const px = this.x[i0] + ex * a, pz = this.z[i0] + ez * a;
-    const sl = Math.hypot(ex, ez);
+    const sl = Math.hypot(ex, ez) || 1.0;
     const tx = ex / sl, tz = ez / sl;
     const lat = (x - px) * (-tz) + (z - pz) * tx;
-    const y = this.y[i0] * (1 - a) + this.y[i1] * a;
-    return { i: i0, a, lat, y, slope: (this.y[i1] - this.y[i0]) / sl, tx, tz, sp: this.spOf(i0, a), barR: this.d.barR[i0], barL: this.d.barL[i0], wr: this.wr[i0], wl: this.wl[i0] };
+    const bank = this.bank ? this.bank[i0] * (1 - a) + this.bank[i1] * a : 0;
+    const yCenter = this.y[i0] * (1 - a) + this.y[i1] * a;
+    const y = yCenter + lat * bank;
+    const pitch = (this.y[i1] - this.y[i0]) / sl;
+    // 3D Surface Normal with bank and pitch slope
+    const nx = bank * tz - tx * pitch;
+    const ny = 1.0;
+    const nz = -tz * pitch - bank * tx;
+    const nLen = Math.hypot(nx, ny, nz) || 1.0;
+    return {
+      i: i0, a, lat, y, yCenter, bank, slope: pitch,
+      tx, tz, rx: -tz, rz: tx,
+      normX: nx / nLen, normY: ny / nLen, normZ: nz / nLen,
+      sp: this.spOf(i0, a), barR: this.d.barR[i0], barL: this.d.barL[i0], wr: this.wr[i0], wl: this.wl[i0]
+    };
   }
 }
 
@@ -157,6 +274,7 @@ export class Terrain {
 /**
  * Horizontal strip along a path between two lateral offsets. latA/latB/yA/yB are functions of the sample index.
  * mask(i) enables the segment i -> i+1. vLen = metres per texture repeat along the path; uLen = metres across.
+ * Vertices smoothly tilt with the path's banked crossfall slope.
  */
 function strip(path, latA, latB, yA, yB, { mask = () => true, vLen = 10, uLen = null, uFixed = null } = {}) {
   const n = path.n, rows = path.closed ? n + 1 : n;
@@ -164,8 +282,10 @@ function strip(path, latA, latB, yA, yB, { mask = () => true, vLen = 10, uLen = 
   for (let r = 0; r < rows; r++) {
     const i = r % n, la = latA(i), lb = latB(i);
     const rx = path.rx(i), rz = path.rz(i);
-    pos.set([(path.x[i] + rx * la) * DM, (path.y[i] + yA(i)) * DM, (path.z[i] + rz * la) * DM,
-             (path.x[i] + rx * lb) * DM, (path.y[i] + yB(i)) * DM, (path.z[i] + rz * lb) * DM], r * 6);
+    const bank = path.bank ? path.bank[i] : 0;
+    const yCenter = path.y ? path.y[i] : 0;
+    pos.set([(path.x[i] + rx * la) * DM, (yCenter + la * bank + yA(i)) * DM, (path.z[i] + rz * la) * DM,
+             (path.x[i] + rx * lb) * DM, (yCenter + lb * bank + yB(i)) * DM, (path.z[i] + rz * lb) * DM], r * 6);
     const v = path.s[r] / vLen;
     const u0 = uFixed ? uFixed[0] : (uLen ? la / uLen : 0), u1 = uFixed ? uFixed[1] : (uLen ? lb / uLen : 1);
     uv.set([u0, v, u1, v], r * 4);
@@ -234,19 +354,55 @@ export function createRedBullRing() {
   const c = v => () => v;
 
   const M = {
-    asphalt: new THREE.MeshStandardMaterial({ map: SURF.map, bumpMap: SURF.bump, bumpScale: 0.6, color: 0xffffff, roughness: STYLE.surface.dry.roughness, metalness: 0.0 }),
-    rubber: new THREE.MeshStandardMaterial({ map: makeRubberTexture(STYLE.surface), transparent: true, depthWrite: false, vertexColors: true, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
-    patch: new THREE.MeshStandardMaterial({ map: makePatchTexture(STYLE.surface), transparent: true, depthWrite: false, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
-    kerbFlat: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'flat'), roughness: 0.6 }),
-    kerbRaised: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'raised'), roughness: 0.55 }),
-    kerbSaw: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'sawtooth'), roughness: 0.55 }),
+    asphalt: new THREE.MeshStandardMaterial({
+      map: SURF.map,
+      bumpMap: SURF.bump,
+      bumpScale: 0.8,
+      normalMap: SURF.normalMap,
+      roughnessMap: SURF.roughnessMap,
+      color: 0xffffff,
+      roughness: STYLE.surface.dry.roughness,
+      metalness: 0.04
+    }),
+    rubber: new THREE.MeshStandardMaterial({
+      map: makeRubberTexture(STYLE.surface),
+      transparent: true,
+      depthWrite: false,
+      vertexColors: true,
+      roughness: 0.8,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -2
+    }),
+    skidMarks: new THREE.MeshStandardMaterial({
+      map: makeSkidMarkTexture(),
+      transparent: true,
+      depthWrite: false,
+      roughness: 0.85,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -3
+    }),
+    patch: new THREE.MeshStandardMaterial({
+      map: makePatchTexture(STYLE.surface),
+      transparent: true,
+      depthWrite: false,
+      roughness: 0.95,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    }),
+    kerbFlat: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'flat'), roughness: 0.55 }),
+    kerbRaised: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'raised'), roughness: 0.5 }),
+    kerbSaw: new THREE.MeshStandardMaterial({ map: makeKerbTexture(STYLE.kerbs, 'sawtooth'), roughness: 0.5 }),
     sponsor: new THREE.MeshStandardMaterial({ map: sponsorTex, roughness: 0.65, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
     wallConcrete: new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.85 }),
     tyreTop: new THREE.MeshStandardMaterial({ map: makeTyreTopTexture(), roughness: 0.95 }),
     tecpro: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }),
     runoff: new THREE.MeshStandardMaterial({ map: tex.runoff, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
-    gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 1.0, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 }),
+    gravel: new THREE.MeshStandardMaterial({ map: tex.gravel, roughness: 0.98, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 }),
     grass: new THREE.MeshLambertMaterial({ map: tex.grass, color: new THREE.Color(0.67, 0.87, 0.52), polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 3 }),
+    mowerGrass: new THREE.MeshLambertMaterial({ map: tex.mowerGrass, color: new THREE.Color(0.72, 0.90, 0.58) }),
     line: new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
     kerb: new THREE.MeshStandardMaterial({ map: tex.kerb, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
@@ -262,15 +418,18 @@ export function createRedBullRing() {
     fence: new THREE.MeshStandardMaterial({ map: fenceTex, alphaToCoverage: true, alphaTest: 0.04, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.6 }),
     cable: new THREE.MeshStandardMaterial({ color: 0x8d949b, roughness: 0.4, metalness: 0.8, side: THREE.DoubleSide }),
     tyres: new THREE.MeshStandardMaterial({ map: tex.tyres, roughness: 0.95, side: THREE.DoubleSide }),
-    crowd: new THREE.MeshLambertMaterial({ map: tex.crowd }),
-    seats: new THREE.MeshLambertMaterial({ map: tex.seats }),
+    crowd: new THREE.MeshLambertMaterial({ map: tex.crowd, side: THREE.DoubleSide }),
+    seats: new THREE.MeshLambertMaterial({ map: tex.seats, side: THREE.DoubleSide }),
     garage: new THREE.MeshStandardMaterial({ map: tex.garage, roughness: 0.6 }),
-    glass: new THREE.MeshStandardMaterial({ map: tex.glass, roughness: 0.15, metalness: 0.6 }),
+    glass: new THREE.MeshStandardMaterial({ map: tex.glass, roughness: 0.15, metalness: 0.6, transparent: true, opacity: 0.88 }),
     signs: new THREE.MeshBasicMaterial({ map: atlas.tex, side: THREE.FrontSide }),
     roof: new THREE.MeshStandardMaterial({ color: 0xe8eaee, roughness: 0.5, metalness: 0.2 }),
     terrain: new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.grass }),
     outer: new THREE.MeshLambertMaterial({ vertexColors: true }),
     lightOff: new THREE.MeshBasicMaterial({ color: 0x2a0606 }),
+    jumbotron: new THREE.MeshBasicMaterial({ map: tex.jumbotron }),
+    flags: new THREE.MeshStandardMaterial({ map: tex.flags, roughness: 0.65, side: THREE.DoubleSide }),
+    smoke: new THREE.MeshBasicMaterial({ color: 0xff6200, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide }),
   };
   const add = (geo, mat, name, { cast = false, receive = true } = {}) => {
     const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = cast; m.receiveShadow = receive;
@@ -326,12 +485,28 @@ export function createRedBullRing() {
       const b = q.length / 3;
       for (const [a, d, u, v] of [[-l / 2, -w / 2, 0, 0], [l / 2, -w / 2, 1, 0], [l / 2, w / 2, 1, 1], [-l / 2, w / 2, 0, 1]]) {
         const x = F.x + F.tx * a + F.rx * (lat + d), z = F.z + F.tz * a + F.rz * (lat + d);
-        q.push(x * DM, (F.y + 0.003) * DM, z * DM); quv.push(u, v);
+        const yBanked = F.y + (lat + d) * F.bank;
+        q.push(x * DM, (yBanked + 0.003) * DM, z * DM); quv.push(u, v);
       }
       qi.push(b, b + 2, b + 1, b, b + 3, b + 2);
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(q, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(quv, 2)); g.setIndex(qi); g.computeVertexNormals();
     M.patch.side = THREE.DoubleSide; add(g, M.patch, 'RBR_Surface_Patches');
+  }
+  // Heavy-braking dual-wheel lockup skid marks leading into big braking zones (T1, T3, T4)
+  {
+    const skidZones = [
+      { sp0: 220, sp1: 325, lat: -1.2, w: 2.2 },   // Turn 1 Niki Lauda entry
+      { sp0: 1140, sp1: 1265, lat: -1.0, w: 2.2 },  // Turn 3 Remus hairpin entry
+      { sp0: 1990, sp1: 2085, lat: -0.8, w: 2.2 }   // Turn 4 Rauch entry
+    ];
+    for (const sz of skidZones) {
+      const g = strip(track, i => sz.lat - sz.w / 2, i => sz.lat + sz.w / 2, c(0.004), c(0.004), {
+        mask: i => { const sp = track.spOf(i); return sp >= sz.sp0 && sp <= sz.sp1; },
+        vLen: 6
+      });
+      add(g, M.skidMarks, 'RBR_Lockup_Skids');
+    }
   }
   /** wet sheen: 0 = dry, 1 = damp (lower roughness, darker), for the Wet sheen button */
   root.userData.setWet = (w) => {
@@ -781,15 +956,48 @@ export function createRedBullRing() {
     const fx = pbAx.x, fz = pbAx.y;
     const g = new THREE.Group(); g.name = 'RBR_Pit_Building';
     const mk = (geo, mat, cast = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = true; g.add(m); return m; };
-    // ground floor block (garages), 2 upper floors (glass), roof slab with overhang
-    // the garage bays are open 7 m deep (cad/track/pit_garages.js), so the ground floor block starts behind them
+
+    // 1. Ground floor block (garages)
     const REC = 7, gcen = front.clone().addScaledVector(nrm, -(REC + (dep - REC) / 2));
     mk(boxAt(len, 6, dep - REC, gcen.x, y + 3, gcen.y, fx, fz), M.concrete);
+
+    // 2. First floor Paddock Club VIP Suites (curtain-wall glass with illuminated interior)
     mk(boxAt(len - 2, 7, dep - 4, cen.x - nrm.x * 1.5, y + 9.5, cen.y - nrm.y * 1.5, fx, fz), M.glass);
+
+    // 3. Cantilevered Paddock Club Front Balcony with stainless steel glass balustrade
+    const balcDepth = 2.4;
+    const balcCenter = front.clone().addScaledVector(nrm, balcDepth / 2 - 0.2);
+    mk(boxAt(len, 0.4, balcDepth, balcCenter.x, y + 6.2, balcCenter.y, fx, fz), M.concrete);
+    const railFront = front.clone().addScaledVector(nrm, balcDepth - 0.1);
+    mk(boxAt(len, 1.1, 0.08, railFront.x, y + 6.95, railFront.y, fx, fz), M.glass);
+    mk(boxAt(len, 0.08, 0.12, railFront.x, y + 7.55, railFront.y, fx, fz), M.steel);
+
+    // 4. Roof Slab with Overhang and VIP Observation Terrace
     mk(boxAt(len + 4, 0.8, dep + 6, cen.x + nrm.x * 1.5, y + 13.4, cen.y + nrm.y * 1.5, fx, fz), M.roof);
+    const roofFront = front.clone().addScaledVector(nrm, 1.5);
+    mk(boxAt(len + 2, 1.1, 0.08, roofFront.x, y + 14.35, roofFront.y, fx, fz), M.glass);
+    mk(boxAt(len + 2, 0.08, 0.12, roofFront.x, y + 14.95, roofFront.y, fx, fz), M.steel);
+
+    // 5. Architectural Shade Canopies on the VIP Roof
+    for (let cIdx = -3; cIdx <= 3; cIdx++) {
+      const cPos = cen.clone().addScaledVector(pbAx, cIdx * (len / 8));
+      mk(boxAt(14, 0.2, 10, cPos.x, y + 17.0, cPos.y, fx, fz), M.roof);
+      mk(boxAt(0.3, 3.2, 0.3, cPos.x - 5, y + 15.4, cPos.y - 3, fx, fz), M.steel);
+      mk(boxAt(0.3, 3.2, 0.3, cPos.x + 5, y + 15.4, cPos.y - 3, fx, fz), M.steel);
+    }
+
+    // 6. Modern Cantilevered Race Control Tower at pit exit
+    const entryDir = new THREE.Vector2(pit.x[0] - pitPt.x, pit.z[0] - pitPt.y);
+    const right = new THREE.Vector2(nrm.y, -nrm.x);
+    const pitExitSign = entryDir.dot(right) < 0 ? 1 : -1;
+    const towerX = cen.x + right.x * (len / 2 - 8) * pitExitSign;
+    const towerZ = cen.y + right.y * (len / 2 - 8) * pitExitSign;
+    mk(boxAt(14, 18, 12, towerX + nrm.x * 3.5, y + 9.0, towerZ + nrm.y * 3.5, fx, fz), M.glass);
+    mk(boxAt(15, 0.8, 13, towerX + nrm.x * 3.5, y + 18.4, towerZ + nrm.y * 3.5, fx, fz), M.roof);
+    mk(boxAt(0.15, 8.0, 0.15, towerX + nrm.x * 3.5, y + 22.4, towerZ + nrm.y * 3.5, fx, fz), M.steel);
+
     const sgn = (fx * nrm.y - fz * nrm.x) > 0 ? 1 : -1;
     // team garages, one bay per team in pit order (data: cad/track/garage/pit_garages.json)
-    const entryDir = new THREE.Vector2(pit.x[0] - pitPt.x, pit.z[0] - pitPt.y);
     g.add(buildPitGarages({ front: front.clone().addScaledVector(nrm, 0.02), nrm, y, len, entryDir, DM, recess: REC }));
     root.add(g);
     root.userData.pitBuilding = { front, nrm, y, len, fx, fz, sgn };
@@ -801,20 +1009,26 @@ export function createRedBullRing() {
     const ax = new THREE.Vector2(-face.y, face.x);
     const len = gs.len, dep = Math.max(10, gs.dep);
     const ground = gs.y;
-    const tiers = Math.max(6, Math.min(34, Math.floor(dep * 0.85 / 0.85)));
+    const tiers = Math.max(8, Math.min(36, Math.floor(dep * 0.85 / 0.85)));
     const rise = Math.min(0.55, 15 / tiers), run = (dep * 0.85) / tiers, base = 2.2;
     const frontC = new THREE.Vector2(gs.c[0], gs.c[1]).addScaledVector(face, dep / 2);
     const P = (a, d, h) => { const p = frontC.clone().addScaledVector(ax, a).addScaledVector(face, -d); return [p.x, ground + h, p.y]; };
-    const crowd = new QuadBatch(), struct = new QuadBatch();
-    const uRep = len / 32;
+
+    const crowd = new QuadBatch(), seats = new QuadBatch(), struct = new QuadBatch(), rails = [];
+    const uRep = len / 28;
+
     for (let j = 0; j < tiers; j++) {
       const d0 = j * run, d1 = (j + 1) * run, h0 = base + j * rise, h1 = h0 + rise;
       const v0 = j / 4, v1 = (j + 1) / 4;
-      crowd.add([P(len / 2, d0, h0), P(-len / 2, d0, h0), P(-len / 2, d0, h1), P(len / 2, d0, h1)], [0, v0, uRep, (v0 + v1) / 2]); // riser
-      crowd.add([P(len / 2, d0, h1), P(-len / 2, d0, h1), P(-len / 2, d1, h1), P(len / 2, d1, h1)], [0, (v0 + v1) / 2, uRep, v1]);  // tread
+      // Riser: crowd cheering silhouettes (Orange Army, Red Bull, Ferrari, Mercedes fans)
+      crowd.add([P(len / 2, d0, h0), P(-len / 2, d0, h0), P(-len / 2, d0, h1), P(len / 2, d0, h1)], [0, v0, uRep, (v0 + v1) / 2]);
+      // Tread: individual Austrian red & navy bucket seats with yellow stairs
+      seats.add([P(len / 2, d0, h1), P(-len / 2, d0, h1), P(-len / 2, d1, h1), P(len / 2, d1, h1)], [0, 0, len / 14, tiers / 2]);
     }
     const top = base + tiers * rise, dBack = tiers * run;
     const sub = -6;
+
+    // Structural perimeter walls
     struct.add([P(len / 2, 0, sub), P(-len / 2, 0, sub), P(-len / 2, 0, base), P(len / 2, 0, base)]);               // front wall
     struct.add([P(-len / 2, dBack, sub), P(len / 2, dBack, sub), P(len / 2, dBack, top + 1.2), P(-len / 2, dBack, top + 1.2)]); // back wall
     for (const e of [-1, 1]) {                                                                                      // end walls
@@ -822,41 +1036,121 @@ export function createRedBullRing() {
       const q = e > 0 ? [P(a, dBack, sub), P(a, 0, sub), P(a, 0, base), P(a, dBack, top + 1.2)] : [P(a, 0, sub), P(a, dBack, sub), P(a, dBack, top + 1.2), P(a, 0, base)];
       struct.add(q);
     }
-    const hasRoof = len > 100;
+
+    // Safety front balustrade & yellow handrails
+    const glassBatch = new QuadBatch();
+    glassBatch.add([P(len / 2, 0, base), P(-len / 2, 0, base), P(-len / 2, 0, base + 1.1), P(len / 2, 0, base + 1.1)]);
+    for (let st = -len / 2 + 2; st <= len / 2 - 2; st += 6) {
+      const p = P(st, 0, base);
+      rails.push(boxAt(0.06, 1.1, 0.06, p[0], p[1] + 0.55, p[2], ax.x, ax.y));
+    }
+    const pMidFront = P(0, 0, base + 1.1);
+    rails.push(boxAt(len, 0.06, 0.06, pMidFront[0], pMidFront[1], pMidFront[2], ax.x, ax.y));
+
     const detailed = new THREE.Group();
     const mC = new THREE.Mesh(crowd.geometry(), M.crowd); mC.receiveShadow = true; detailed.add(mC);
+    const mSeats = new THREE.Mesh(seats.geometry(), M.seats); mSeats.receiveShadow = true; detailed.add(mSeats);
     const sMat = M.concreteDark; sMat.side = THREE.DoubleSide;
     const mS = new THREE.Mesh(struct.geometry(), sMat); mS.castShadow = true; detailed.add(mS);
+    const mG = new THREE.Mesh(glassBatch.geometry(), M.glass); detailed.add(mG);
+    if (rails.length) detailed.add(new THREE.Mesh(merge(rails), M.steel));
+
     const simple = new THREE.Group();
     const sq = new QuadBatch();
     sq.add([P(len / 2, 0, sub), P(-len / 2, 0, sub), P(-len / 2, 0, base), P(len / 2, 0, base)]);
     sq.add([P(len / 2, 0, base), P(-len / 2, 0, base), P(-len / 2, dBack, top), P(len / 2, dBack, top)], [0, 0, uRep, tiers / 4]);
     simple.add(new THREE.Mesh(sq.geometry(), M.crowd));
+
+    // Modern Curved Cantilevered Canopy Roof for large grandstands (len > 80)
+    const hasRoof = len > 80;
     if (hasRoof) {
       const rq = new QuadBatch();
-      const rh = top + 5;
-      rq.add([P(len / 2, dBack + 1, rh), P(-len / 2, dBack + 1, rh), P(-len / 2, dBack * 0.15, rh + 1.5), P(len / 2, dBack * 0.15, rh + 1.5)]);
+      const rh = top + 5.5;
+      rq.add([P(len / 2, dBack + 1.5, rh), P(-len / 2, dBack + 1.5, rh), P(-len / 2, dBack * 0.05, rh + 2.2), P(len / 2, dBack * 0.05, rh + 2.2)]);
       const roof = new THREE.Mesh(rq.geometry(), M.roof); M.roof.side = THREE.DoubleSide; roof.castShadow = true;
       detailed.add(roof); simple.add(roof.clone());
-      // roof columns
+
       const cols = [];
-      for (let a = -len / 2 + 4; a <= len / 2 - 4; a += 24) {
-        const p = P(a, dBack + 0.5, 0);
-        cols.push(boxAt(0.5, rh - 0.2, 0.5, p[0], ground + rh / 2, p[2]));
+      for (let a = -len / 2 + 6; a <= len / 2 - 6; a += 18) {
+        const pBack = P(a, dBack + 0.8, 0);
+        const pFront = P(a, dBack * 0.1, rh + 2.0);
+        cols.push(boxAt(0.65, rh - 0.2, 0.65, pBack[0], ground + rh / 2, pBack[2], ax.x, ax.y));
+        cols.push(boxAt(0.35, 0.35, dBack, (pBack[0] + pFront[0]) / 2, ground + rh - 0.4, (pBack[2] + pFront[2]) / 2, face.x, face.y));
+        cols.push(boxAt(0.12, 0.12, dBack * 1.1, (pBack[0] + pFront[0]) / 2, ground + rh + 0.8, (pBack[2] + pFront[2]) / 2, face.x, face.y));
       }
       if (cols.length) detailed.add(new THREE.Mesh(merge(cols), M.steel));
     }
+
+    // Fluttering 3D Flags atop grandstand rear wall
+    const flagGeoList = [];
+    for (let fa = -len / 2 + 8; fa <= len / 2 - 8; fa += 22) {
+      const p = P(fa, dBack - 0.5, top + 1.2);
+      flagGeoList.push(boxAt(0.08, 4.5, 0.08, p[0], p[1] + 2.25, p[2], ax.x, ax.y));
+      const fq = new QuadBatch();
+      const u0 = (Math.abs(fa) % 4) * 0.25, u1 = u0 + 0.25;
+      fq.add([
+        [p[0], p[1] + 2.8, p[2]],
+        [p[0] + ax.x * 2.4, p[1] + 2.8, p[2] + ax.y * 2.4],
+        [p[0] + ax.x * 2.4, p[1] + 4.2, p[2] + ax.y * 2.4],
+        [p[0], p[1] + 4.2, p[2]]
+      ], [u0, 0, u1, 1]);
+      detailed.add(new THREE.Mesh(fq.geometry(), M.flags));
+    }
+    if (flagGeoList.length) detailed.add(new THREE.Mesh(merge(flagGeoList), M.steel));
+
     const lod = new THREE.LOD();
     lod.name = 'RBR_Grandstand_' + gs.name;
     lod.addLevel(detailed, 0);
     lod.addLevel(simple, 9000);
     const cc = P(0, dBack / 2, top / 2);
-    // LOD distance is measured from the object position -> keep geometry in world space and offset the LOD node
     detailed.position.set(-cc[0] * DM, -cc[1] * DM, -cc[2] * DM);
     simple.position.copy(detailed.position);
     lod.position.set(cc[0] * DM, cc[1] * DM, cc[2] * DM);
     root.add(lod);
     gs._front = frontC; gs._ax = ax; gs._face = face; gs._top = top; gs._ground = ground;
+
+    // Trackside Giant LED Jumbotron Screens facing major grandstands
+    if (gs.name.includes('Start/Ziel') || gs.name.includes('Steiermark') || gs.name.includes('Nord') || gs.name.includes('T10')) {
+      const jPos = frontC.clone().addScaledVector(face, -16);
+      const jH = ground + 12;
+      const jW = 16, jHeight = 9;
+      const jBox = new THREE.Group();
+      jBox.name = 'RBR_Jumbotron_' + gs.name;
+      const pylons = [
+        boxAt(0.7, jH, 0.7, jPos.x - ax.x * 5, ground + jH / 2, jPos.y - ax.y * 5, ax.x, ax.y),
+        boxAt(0.7, jH, 0.7, jPos.x + ax.x * 5, ground + jH / 2, jPos.y + ax.y * 5, ax.x, ax.y)
+      ];
+      jBox.add(new THREE.Mesh(merge(pylons), M.steel));
+      jBox.add(new THREE.Mesh(boxAt(jW + 0.8, jHeight + 0.8, 0.8, jPos.x, jH + jHeight / 2, jPos.y, ax.x, ax.y), M.concreteDark));
+      const jq = new QuadBatch();
+      const pL = [jPos.x - ax.x * (jW / 2) + face.x * 0.45, ground + jH, jPos.y - ax.y * (jW / 2) + face.y * 0.45];
+      const pR = [jPos.x + ax.x * (jW / 2) + face.x * 0.45, ground + jH, jPos.y + ax.y * (jW / 2) + face.y * 0.45];
+      jq.add([pL, pR, [pR[0], ground + jH + jHeight, pR[2]], [pL[0], ground + jH + jHeight, pL[2]]], [0, 0, 1, 1]);
+      jBox.add(new THREE.Mesh(jq.geometry(), M.jumbotron));
+      root.add(jBox);
+    }
+  }
+
+  // Celebratory Austrian GP Orange Smoke Flare Plumes at Turn 3 and Turn 1 hillsides
+  {
+    const smokeLocs = [
+      { x: 215, y: 44, z: -570, r: 8, h: 22 },
+      { x: 245, y: 46, z: -595, r: 10, h: 26 },
+      { x: -355, y: 12, z: 35, r: 7, h: 18 }
+    ];
+    for (const sm of smokeLocs) {
+      const sq = new THREE.Group();
+      sq.name = 'RBR_Orange_Smoke';
+      for (let l = 0; l < 4; l++) {
+        const rad = sm.r * (0.8 + l * 0.35);
+        const yTop = sm.y + (l + 1) * (sm.h / 4);
+        const geom = new THREE.ConeGeometry(rad * DM, (sm.h / 3) * DM, 8);
+        const m = new THREE.Mesh(geom, M.smoke);
+        m.position.set(sm.x * DM, yTop * DM, sm.z * DM);
+        sq.add(m);
+      }
+      root.add(sq);
+    }
   }
 
   // ---------------------------------------------------------------- 8. start/finish gantry + start lights

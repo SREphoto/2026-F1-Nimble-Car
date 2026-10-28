@@ -85,6 +85,66 @@ export function buildPitGarages({ front, nrm, y, len, entryDir, DM, recess = 7, 
     const gw = W * 0.82, gh = gw / 1024 * 96;
     box(gw, gh, 0.35, trimM, cx, height + 0.55, 0.25);
     plane(gw, gh, signM, cx, height + 0.55, 0.43);
+
+    // Roll-up sectional door guide rails & corrugated shutter in upper section
+    const doorH = height * 0.35; // upper 35% corrugated door
+    box(W - 0.4, doorH, 0.08, mat({ color: 0x383e48, roughness: 0.65, metalness: 0.4 }), cx, height - doorH / 2, -0.05);
+
+    // Overhead carbon-fiber swinging pit stop boom / service gantry extending over the pit box
+    const boomL = 4.2; // 4.2 m reach over the pit apron
+    box(0.12, 0.12, boomL, mat({ color: 0x181a1f, roughness: 0.4, metalness: 0.8 }), cx + 1.2, height - 0.2, boomL / 2);
+    // Boom diagonal tension tie-rod
+    box(0.04, 0.04, boomL * 0.95, mat({ color: 0x8a929b, roughness: 0.3, metalness: 0.9 }), cx + 1.2, height + 0.35, boomL * 0.45, 0.2);
+    // Suspended pneumatic air hose drop reels & digital lollipop signal light
+    box(0.08, 1.4, 0.08, mat({ color: 0x00d4e8, roughness: 0.5 }), cx + 1.2, height - 0.9, boomL - 0.4);
+    box(0.24, 0.18, 0.24, mat({ color: 0x111111, roughness: 0.5 }), cx + 1.2, height - 1.6, boomL - 0.4);
+    // Pit lollipop green/red LED signal disk
+    const sigM = new THREE.MeshBasicMaterial({ color: 0x00e676 });
+    plane(0.22, 0.22, sigM, cx + 1.2, height - 1.6, boomL - 0.27);
+
+    // Tyre warming racks with heated tyre blankets stacked in the bay (left side)
+    const tyreR = 0.36, tyreW = 0.32;
+    const tyreMat = mat({ color: 0x18181c, roughness: 0.95 });
+    const blanketSoft = mat({ color: 0xd4202c, roughness: 0.6 }); // red blanket
+    const blanketMed = mat({ color: 0xf2c200, roughness: 0.6 });  // yellow blanket
+    const blanketHard = mat({ color: 0xf5f5f5, roughness: 0.6 }); // white blanket
+    const blankets = [blanketSoft, blanketMed, blanketHard];
+    const tx = cx - (W / 2 - 1.1), tz = -recess + 1.6;
+    // Tyre rack frame
+    box(tyreW * 2 + 0.3, 1.4, 0.8, mat({ color: 0x4a525d, roughness: 0.5, metalness: 0.7 }), tx, 0.7, tz);
+    // 4 tyres in blankets on rack
+    for (let ti = 0; ti < 4; ti++) {
+      const bM = blankets[ti % blankets.length];
+      const tyPos = 0.45 + (ti % 2) * (tyreR * 2 + 0.08);
+      const tzPos = tz - 0.2 + Math.floor(ti / 2) * 0.45;
+      box(tyreW, tyreR * 1.8, tyreR * 1.8, bM, tx, tyPos, tzPos);
+    }
+
+    // Heavy-duty mechanics mobile tool chest & diagnostic telemetry cart (right side)
+    const toolX = cx + (W / 2 - 1.0), toolZ = -recess + 1.8;
+    // Tool cabinet in team trim color
+    box(1.2, 1.1, 0.7, trimM, toolX, 0.55, toolZ);
+    // Cabinet drawers & stainless steel worktop
+    box(1.25, 0.08, 0.75, mat({ color: 0xd8dde4, roughness: 0.3, metalness: 0.85 }), toolX, 1.14, toolZ);
+    // Telemetry monitor display screen
+    const screenTex = canvasTex(256, 128, (x, w, h) => {
+      x.fillStyle = '#080c14'; x.fillRect(0, 0, w, h);
+      x.fillStyle = T.trim; x.fillRect(0, 0, w, 8);
+      x.fillStyle = '#00d4e8'; x.font = 'bold 16px monospace'; x.fillText('TELEMETRY LIVE', 12, 30);
+      x.fillStyle = '#f8d000'; x.fillText('SYS OK · 800V DC', 12, 55);
+      // Graph wave
+      x.strokeStyle = '#00e676'; x.lineWidth = 2;
+      x.beginPath();
+      for (let px = 10; px < w - 10; px += 10) x.lineTo(px, 90 + Math.sin(px * 0.1) * 15);
+      x.stroke();
+    });
+    const monM = mat({ map: screenTex, emissive: 0xffffff, emissiveMap: screenTex, emissiveIntensity: 0.6 });
+    plane(0.65, 0.4, monM, toolX, 1.45, toolZ + 0.1);
+    box(0.68, 0.43, 0.05, mat({ color: 0x111111, roughness: 0.6 }), toolX, 1.45, toolZ + 0.07);
+
+    // Front quick-lift carbon pit jack standing ready at pit box line
+    box(0.45, 0.75, 0.06, mat({ color: 0x15171a, roughness: 0.5, metalness: 0.8 }), cx - 1.6, 0.38, 1.6);
+    box(0.04, 0.9, 0.04, mat({ color: 0xd4202c, roughness: 0.4 }), cx - 1.6, 0.45, 1.4, 0.35); // red handle
   }
   // fascia band between the doors and the glass floor above
   box(len, 1.1, 0.5, fasciaMat, 0, height + 0.55, -0.05);

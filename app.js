@@ -29,11 +29,13 @@ import { initGlobe } from './cad/game/globe.js';
 import { initWeather } from './cad/weather/weather.js';
 import { F1_TEAMS, applyTeamTheme, getSavedTeam, getCurrentTeam } from './teams.js';
 import { initWheelControls, loadWheelMap } from './cad/wheel_controls.js';
+import { initPauseMenu } from './cad/ui_pause_menu.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
 // =========================================================================
 const state = {
+  paused: false,
   engineOn: false,
   rpm: 0,
   speedKmH: 0,
@@ -999,6 +1001,25 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = clock.getDelta();
 
+  // If simulation is paused, freeze kinematics and silence audio while maintaining 3D orbital control
+  if (state.paused) {
+    soundEngine.update({
+      rpm: 0,
+      throttle: 0,
+      speedKmH: 0,
+      gear: 'N',
+      aeroMode: state.aeroMode,
+      brakeKgf: 0,
+      engineOn: false
+    });
+    if (!state.tourActive) {
+      controls.update();
+    }
+    garageInspect?.update(0);
+    renderer.render(scene, camera);
+    return;
+  }
+
   // Dynamic Powertrain Simulation
   if (state.engineOn && !state.pyrofuseCut) {
     if (typeof state.gear === 'number' && state.gear > 0) {
@@ -1137,6 +1158,25 @@ loadWheelMap().then((map) => {
   });
   if (wheelControls) { state.wheel = wheelControls.state; window.wheelControls = wheelControls; }
 }).catch(err => console.error('Wheel controls failed to initialise:', err));
+
+// Global Simulation Pause & Navigation Hub API
+window.setSimulationPaused = (p) => {
+  state.paused = !!p;
+};
+window.isSimulationPaused = () => state.paused;
+window.toggleSimulationPaused = () => {
+  state.paused = !state.paused;
+  return state.paused;
+};
+
+// Initialize F1 Pause & Navigation Menu ("Hamburger Menu")
+let pauseMenu = null;
+try {
+  pauseMenu = initPauseMenu();
+  window.pauseMenu = pauseMenu;
+} catch (err) {
+  console.error('Pause menu failed to initialise:', err);
+}
 
 animate();
 

@@ -7,9 +7,12 @@
 const css = document.createElement('style');
 css.textContent = `
 #btn-regulations,#btn-design-modal,.topbar-status,#btn-auto-rotate{display:none!important}
-#garage-views{position:absolute;left:12px;top:140px;z-index:30;display:none;flex-direction:column;gap:6px;width:190px;background:rgba(10,14,20,.86);border:1px solid #2a3545;border-radius:8px;padding:8px}
+#garage-views{position:absolute;left:14px;top:120px;z-index:30;display:none;flex-direction:column;gap:6px;width:200px;background:rgba(8,14,26,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(0,212,232,.35);border-radius:10px;padding:10px;box-shadow:0 12px 36px rgba(0,0,0,.7)}
 body.garage-mode #garage-views{display:flex}
+#garage-views .garage-views-title{font:700 11px monospace,system-ui;color:#00d4e8;letter-spacing:.08em;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center}
 #garage-views .cam-presets{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#garage-views .view-btn{background:#131c2e;border:1px solid #2a3a52;color:#e2e8f0;padding:6px 6px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
+#garage-views .view-btn:hover{background:#0284c7;border-color:#38bdf8;color:#fff}
 #garage-bar{white-space:nowrap}
 body.garage-mode .stage-hint{display:none}
 #wx-panel .wx-moved{display:grid;grid-template-columns:78px 1fr 46px;align-items:center;gap:6px;margin:4px 0}
@@ -28,6 +31,10 @@ function when(test, fn) {
 // garage-only view tools
 when(() => document.querySelector('.stage'), (stage) => {
   const box = document.createElement('div'); box.id = 'garage-views';
+  const title = document.createElement('div');
+  title.className = 'garage-views-title';
+  title.innerHTML = '<span>🎥 CAMERAS</span><span style="font-size:10px;color:#94a3b8">PERSPECTIVE</span>';
+  box.appendChild(title);
   [$('btn-cutaway'), $('btn-explode'), document.querySelector('.cam-presets'), $('btn-view-reset')].forEach(n => n && box.appendChild(n));
   stage.appendChild(box);
 });

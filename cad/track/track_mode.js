@@ -177,12 +177,15 @@ export function initTrackMode(ctx) {
     if (car.inPit) { Lr.y = locatePit(car.x, car.z).y; Lf.y = locatePit(frx, frz).y; }
     tmp.rear.set(car.x, Lr.y, car.z); tmp.front.set(frx, Lf.y, frz);
     tmp.f.subVectors(tmp.front, tmp.rear).normalize();
-    tmp.r.set(-fz, 0, fx).normalize();
+    // Up vector from 3D ground normal (aligns car roll to banked track super-elevation)
+    tmp.u.set(Lf.normX || 0, Lf.normY || 1, Lf.normZ || 0).normalize();
+    tmp.r.crossVectors(tmp.f, tmp.u).normalize();
     tmp.u.crossVectors(tmp.r, tmp.f).normalize();
     tmp.m.makeBasis(tmp.f.clone().negate(), tmp.r, tmp.u);
     carModel.quaternion.setFromRotationMatrix(tmp.m);
     carModel.position.set(frx * DM, Lf.y * DM, frz * DM);
     car.pitch = Math.asin(THREE.MathUtils.clamp(tmp.f.y, -1, 1));
+    car.roll = Math.asin(THREE.MathUtils.clamp(tmp.r.y, -1, 1));
     // chassis rides on its springs: same plane fit as the tyre-state stance (dz = c0 + cx*x + cy*y)
     const b = ride.body;
     if (b.c0 || b.cx || b.cy) {

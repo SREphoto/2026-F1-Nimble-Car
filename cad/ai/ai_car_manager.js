@@ -435,7 +435,8 @@ export class AiCarManager {
     tmp.front.set(frontX, Lf.y, frontZ);
 
     tmp.f.subVectors(tmp.front, tmp.rear).normalize();
-    tmp.r.set(-tz, 0, tx).normalize();
+    tmp.u.set(Lf.normX || 0, Lf.normY || 1, Lf.normZ || 0).normalize();
+    tmp.r.crossVectors(tmp.f, tmp.u).normalize();
     tmp.u.crossVectors(tmp.r, tmp.f).normalize();
     tmp.m.makeBasis(tmp.f.clone().negate(), tmp.r, tmp.u);
 

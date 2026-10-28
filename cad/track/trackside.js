@@ -18,41 +18,185 @@ function tex(c, { srgb = true, aniso = 8, repeat = true } = {}) {
 }
 
 // ------------------------------------------------------------------ 1. surface
-/** asphalt colour map (fine aggregate grain, paving seam at texture column 0) and a grey bump map from the same grain */
+/**
+ * asphalt colour map (fine aggregate grain, paving seam at texture column 0),
+ * true tangent-space normal map, bump map and roughness map for realistic sunlight micro-sheen.
+ */
 export function makeAsphaltTextures(S) {
-  const W = 512, c = canvas(W, W), x = c.getContext('2d'), r = rng(4242);
+  const W = 1024, c = canvas(W, W), x = c.getContext('2d'), r = rng(4242);
   x.fillStyle = S.base; x.fillRect(0, 0, W, W);
-  // large soft tone variation, then fine stones
-  for (let i = 0; i < 60; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '0,0,0' : '255,255,255'},${0.006 + r() * 0.008})`; x.beginPath(); x.arc(r() * W, r() * W, 40 + r() * 90, 0, 7); x.fill(); }
-  for (let i = 0; i < 26000; i++) { x.fillStyle = S.grain[(r() * S.grain.length) | 0]; const s = 0.8 + r() * 1.8; x.fillRect(r() * W, r() * W, s, s); }
-  for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(200,200,205,${0.25 + r() * 0.3})`; x.fillRect(r() * W, r() * W, 1, 1); } // light chips catch the sun
-  // paving seam (sealed joint) along the centre line
-  x.fillStyle = 'rgba(18,18,20,0.55)'; x.fillRect(0, 0, 2, W); x.fillStyle = 'rgba(255,255,255,0.05)'; x.fillRect(2, 0, 1, W);
+
+  // Large-scale rolling compaction streaks and bitumen variation
+  for (let i = 0; i < 90; i++) {
+    x.fillStyle = `rgba(${r() < 0.5 ? '10,12,15' : '230,235,240'},${0.008 + r() * 0.014})`;
+    x.beginPath();
+    x.ellipse(r() * W, r() * W, 30 + r() * 60, 90 + r() * 180, (r() - 0.5) * 0.2, 0, Math.PI * 2);
+    x.fill();
+  }
+
+  // Micro-aggregate stones & fine gravel matrix (55,000 chips)
+  for (let i = 0; i < 55000; i++) {
+    x.fillStyle = S.grain[(r() * S.grain.length) | 0];
+    const s = 1.0 + r() * 2.2;
+    x.fillRect(r() * W, r() * W, s, s);
+  }
+
+  // Quartzite and basalt crystalline chips that catch direct sun glints
+  for (let i = 0; i < 2800; i++) {
+    x.fillStyle = `rgba(215,220,230,${0.35 + r() * 0.45})`;
+    x.fillRect(r() * W, r() * W, 1.2, 1.2);
+  }
+
+  // Dark bitumen binder pools and micro-pores
+  for (let i = 0; i < 3500; i++) {
+    x.fillStyle = `rgba(12,14,16,${0.3 + r() * 0.4})`;
+    x.fillRect(r() * W, r() * W, 1.5, 1.5);
+  }
+
+  // Longitudinal paving seams (sealed asphalt expansion joints)
+  x.fillStyle = 'rgba(14,15,18,0.7)'; x.fillRect(0, 0, 3, W);
+  x.fillStyle = 'rgba(255,255,255,0.08)'; x.fillRect(3, 0, 1, W);
   const map = tex(c, { aniso: 16 });
-  // bump: grain only (no colour), 256 px
-  const b = canvas(256, 256), bx = b.getContext('2d'), rb = rng(77);
-  bx.fillStyle = '#808080'; bx.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 9000; i++) { const v = (rb() * 255) | 0; bx.fillStyle = `rgb(${v},${v},${v})`; const s = 0.7 + rb() * 1.4; bx.fillRect(rb() * 256, rb() * 256, s, s); }
-  const bump = tex(b, { srgb: false, aniso: 8 });
-  return { map, bump };
+
+  // Tangent-space Normal Map & Height Bump (512x512)
+  const NW = 512;
+  const heightData = new Float32Array(NW * NW);
+  const rh = rng(88);
+  for (let i = 0; i < NW * NW; i++) {
+    heightData[i] = 0.5 + (rh() - 0.5) * 0.22;
+  }
+  // Coarse aggregate height peaks
+  for (let k = 0; k < 12000; k++) {
+    const px = Math.floor(rh() * NW), py = Math.floor(rh() * NW);
+    const rad = 1 + Math.floor(rh() * 3);
+    const hDelta = (rh() - 0.4) * 0.4;
+    for (let dy = -rad; dy <= rad; dy++) {
+      for (let dx = -rad; dx <= rad; dx++) {
+        const nx = (px + dx + NW) % NW, ny = (py + dy + NW) % NW;
+        heightData[ny * NW + nx] = Math.max(0, Math.min(1, heightData[ny * NW + nx] + hDelta * (1 - Math.hypot(dx, dy) / (rad + 1))));
+      }
+    }
+  }
+
+  const nc = canvas(NW, NW), nxCtx = nc.getContext('2d'), imgData = nxCtx.createImageData(NW, NW), pix = imgData.data;
+  const strength = 2.4;
+  for (let y = 0; y < NW; y++) {
+    for (let xCoord = 0; xCoord < NW; xCoord++) {
+      const idx = y * NW + xCoord;
+      const xL = (xCoord - 1 + NW) % NW, xR = (xCoord + 1) % NW;
+      const yU = (y - 1 + NW) % NW, yD = (y + 1) % NW;
+      const dx = (heightData[y * NW + xR] - heightData[y * NW + xL]) * strength;
+      const dy = (heightData[yD * NW + xCoord] - heightData[yU * NW + xCoord]) * strength;
+      const len = Math.hypot(dx, dy, 1.0);
+      const nxVal = (-dx / len) * 0.5 + 0.5;
+      const nyVal = (-dy / len) * 0.5 + 0.5;
+      const nzVal = (1.0 / len) * 0.5 + 0.5;
+      const pIdx = idx * 4;
+      pix[pIdx] = Math.floor(nxVal * 255);
+      pix[pIdx + 1] = Math.floor(nyVal * 255);
+      pix[pIdx + 2] = Math.floor(nzVal * 255);
+      pix[pIdx + 3] = 255;
+    }
+  }
+  nxCtx.putImageData(imgData, 0, 0);
+  const normalMap = tex(nc, { srgb: false, aniso: 8 });
+
+  // Bump Map (512x512)
+  const bc = canvas(NW, NW), bctx = bc.getContext('2d'), bImg = bctx.createImageData(NW, NW), bPix = bImg.data;
+  for (let i = 0; i < NW * NW; i++) {
+    const v = Math.floor(heightData[i] * 255);
+    const pIdx = i * 4;
+    bPix[pIdx] = bPix[pIdx + 1] = bPix[pIdx + 2] = v;
+    bPix[pIdx + 3] = 255;
+  }
+  bctx.putImageData(bImg, 0, 0);
+  const bump = tex(bc, { srgb: false, aniso: 8 });
+
+  // Roughness Map (512x512): higher roughness off-line, polished bitumen on stones
+  const rc = canvas(NW, NW), rctx = rc.getContext('2d'), rImg = rctx.createImageData(NW, NW), rPix = rImg.data;
+  for (let i = 0; i < NW * NW; i++) {
+    const h = heightData[i];
+    const rough = Math.floor((0.70 + (1 - h) * 0.28) * 255);
+    const pIdx = i * 4;
+    rPix[pIdx] = rPix[pIdx + 1] = rPix[pIdx + 2] = rough;
+    rPix[pIdx + 3] = 255;
+  }
+  rctx.putImageData(rImg, 0, 0);
+  const roughnessMap = tex(rc, { srgb: false, aniso: 8 });
+
+  return { map, bump, normalMap, roughnessMap };
 }
-/** racing line rubber: dark across-gradient (u across the line), alpha fades at both sides */
+
+/** racing line rubber: dark across-gradient with realistic rubber clumping, grain and streaks */
 export function makeRubberTexture(S) {
-  const c = canvas(64, 64), x = c.getContext('2d'), r = rng(9);
-  const g = x.createLinearGradient(0, 0, 64, 0);
-  g.addColorStop(0, 'rgba(20,20,22,0)'); g.addColorStop(0.3, 'rgba(20,20,22,0.8)'); g.addColorStop(0.5, 'rgba(20,20,22,1)'); g.addColorStop(0.7, 'rgba(20,20,22,0.8)'); g.addColorStop(1, 'rgba(20,20,22,0)');
-  x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-  x.globalCompositeOperation = 'destination-out';           // streaky: tyre marks are not even
-  for (let i = 0; i < 160; i++) { x.fillStyle = `rgba(0,0,0,${0.15 + r() * 0.3})`; x.fillRect(r() * 64, 0, 1 + r() * 2, 64); }
+  const c = canvas(128, 128), x = c.getContext('2d'), r = rng(9);
+  const g = x.createLinearGradient(0, 0, 128, 0);
+  g.addColorStop(0, 'rgba(16,17,20,0)');
+  g.addColorStop(0.2, 'rgba(14,15,18,0.75)');
+  g.addColorStop(0.5, 'rgba(12,13,15,0.98)');
+  g.addColorStop(0.8, 'rgba(14,15,18,0.75)');
+  g.addColorStop(1, 'rgba(16,17,20,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+
+  // Micro streaks and tyre tread transfer grooves
+  x.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 320; i++) {
+    x.fillStyle = `rgba(0,0,0,${0.12 + r() * 0.35})`;
+    x.fillRect(r() * 128, 0, 1 + r() * 2.5, 128);
+  }
   x.globalCompositeOperation = 'source-over';
+
+  // Hot rubber deposit flecks
+  for (let i = 0; i < 400; i++) {
+    x.fillStyle = 'rgba(8,9,11,0.4)';
+    x.fillRect(15 + r() * 98, r() * 128, 1.2, 2.5);
+  }
   return tex(c, { srgb: true, aniso: 8 });
 }
+
+/** Dual-tire heavy braking lockup skid marks with progressive deceleration darkness */
+export function makeSkidMarkTexture() {
+  const c = canvas(256, 128), x = c.getContext('2d'), r = rng(19);
+  x.clearRect(0, 0, 256, 128);
+
+  // Two parallel tyre tracks (left and right wheels)
+  const tracks = [
+    { y0: 16, h: 36 },
+    { y0: 76, h: 36 }
+  ];
+
+  for (const tr of tracks) {
+    const g = x.createLinearGradient(0, tr.y0, 0, tr.y0 + tr.h);
+    g.addColorStop(0, 'rgba(10,10,12,0.1)');
+    g.addColorStop(0.2, 'rgba(10,10,12,0.85)');
+    g.addColorStop(0.8, 'rgba(10,10,12,0.85)');
+    g.addColorStop(1, 'rgba(10,10,12,0.1)');
+    x.fillStyle = g;
+    x.fillRect(0, tr.y0, 256, tr.h);
+
+    // Tread scrubbing striations
+    x.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 200; i++) {
+      x.fillStyle = `rgba(0,0,0,${0.1 + r() * 0.3})`;
+      x.fillRect(0, tr.y0 + r() * tr.h, 256, 1 + r() * 2);
+    }
+    x.globalCompositeOperation = 'source-over';
+  }
+  return tex(c, { srgb: true, aniso: 8 });
+}
+
 /** repair patch decal: slightly different asphalt tone with a dark sealed edge */
 export function makePatchTexture(S) {
   const c = canvas(128, 128), x = c.getContext('2d'), r = rng(31);
-  x.fillStyle = 'rgba(52,54,58,0.9)'; x.fillRect(4, 4, 120, 120);
-  for (let i = 0; i < 2500; i++) { x.fillStyle = S.grain[(r() * S.grain.length) | 0]; x.fillRect(4 + r() * 120, 4 + r() * 120, 1.2, 1.2); }
-  x.strokeStyle = 'rgba(15,15,17,0.85)'; x.lineWidth = 4; x.strokeRect(4, 4, 120, 120);
+  x.fillStyle = 'rgba(52,54,58,0.92)'; x.fillRect(4, 4, 120, 120);
+  for (let i = 0; i < 3500; i++) { x.fillStyle = S.grain[(r() * S.grain.length) | 0]; x.fillRect(4 + r() * 120, 4 + r() * 120, 1.2, 1.2); }
+  x.strokeStyle = 'rgba(15,15,17,0.9)'; x.lineWidth = 4; x.strokeRect(4, 4, 120, 120);
+  // Tar crack seal lines branching off patch
+  x.strokeStyle = 'rgba(14,14,16,0.7)'; x.lineWidth = 1.5;
+  x.beginPath();
+  x.moveTo(4, 30); x.lineTo(0, 32);
+  x.moveTo(124, 75); x.lineTo(128, 77);
+  x.stroke();
   return tex(c, { repeat: false, aniso: 8 });
 }
 
@@ -66,23 +210,46 @@ export function kerbHeight(K, type, u, along = 0) {
   if (type === 'sawtooth' && u > 0.6 * P[P.length - 1][0]) h += K.sawtoothAmp * (0.5 + 0.5 * Math.cos((along / K.sawtoothPeriod) * Math.PI * 2));
   return h;
 }
-/** kerb paint: red/white blocks along v (one red + one white per repeat), u across; sawtooth gets ridge shading on its outer part */
+/** kerb paint: high-res 256x512 red/white blocks, bevel highlights, chipped paint micro-details, and tyre scrub marks */
 export function makeKerbTexture(K, type) {
-  const c = canvas(128, 256), x = c.getContext('2d');
-  x.fillStyle = K.colors.red; x.fillRect(0, 0, 128, 128);
-  x.fillStyle = K.colors.white; x.fillRect(0, 128, 128, 128);
-  // worn paint and rubber pick-up near the track edge (u = 0 side)
-  const g = x.createLinearGradient(0, 0, 128, 0); g.addColorStop(0, 'rgba(20,20,22,0.35)'); g.addColorStop(0.3, 'rgba(20,20,22,0.05)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = g; x.fillRect(0, 0, 128, 256);
+  const c = canvas(256, 512), x = c.getContext('2d'), r = rng(103);
+  x.fillStyle = K.colors.red; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = K.colors.white; x.fillRect(0, 256, 256, 256);
+
+  // Micro concrete texture undertone & chipped paint flecks
+  for (let i = 0; i < 4000; i++) {
+    x.fillStyle = `rgba(${r() < 0.5 ? '20,20,24' : '240,240,245'},${0.03 + r() * 0.08})`;
+    x.fillRect(r() * 256, r() * 512, 1.2, 1.2);
+  }
+
+  // Heavy rubber pick-up and black tyre scuff streaks along the apex contact edge (u = 0 to 80)
+  const g = x.createLinearGradient(0, 0, 256, 0);
+  g.addColorStop(0, 'rgba(12,12,14,0.65)');
+  g.addColorStop(0.15, 'rgba(15,15,18,0.45)');
+  g.addColorStop(0.35, 'rgba(20,20,24,0.12)');
+  g.addColorStop(0.65, 'rgba(0,0,0,0)');
+  x.fillStyle = g;
+  x.fillRect(0, 0, 256, 512);
+
+  // Serrated ridges and bevel shading for raised / sawtooth kerbs
   if (type === 'sawtooth' || type === 'raised') {
-    const n = type === 'sawtooth' ? 8 : 4;                // ridges per block pair
+    const n = type === 'sawtooth' ? 16 : 8; // ridges per block pair
     for (let k = 0; k < n; k++) {
-      const y = (k + 0.5) * 256 / n;
-      x.fillStyle = 'rgba(0,0,0,0.28)'; x.fillRect(type === 'sawtooth' ? 70 : 40, y, 128, 5);
-      x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(type === 'sawtooth' ? 70 : 40, y - 3, 128, 3);
+      const y = (k + 0.5) * 512 / n;
+      const xStart = type === 'sawtooth' ? 120 : 70;
+      // Shadow groove
+      x.fillStyle = 'rgba(0,0,0,0.38)';
+      x.fillRect(xStart, y, 256, 9);
+      // Highlight crest
+      x.fillStyle = 'rgba(255,255,255,0.28)';
+      x.fillRect(xStart, y - 6, 256, 6);
     }
   }
-  x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(124, 0, 4, 256);   // outer edge shadow line
+
+  // Inner track edge seal line
+  x.fillStyle = 'rgba(10,10,12,0.45)'; x.fillRect(0, 0, 4, 512);
+  // Outer edge dirt drop-off shadow line
+  x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(250, 0, 6, 512);
   return tex(c, { aniso: 16 });
 }
 
