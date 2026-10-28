@@ -156,32 +156,32 @@ export async function installRb22Body(carModel, renderer) {
   let collar = null;
   if (!parts.Body_RB22_Nose) try { collar = buildNoseCollar(carModel, host, parts.Body_RB22_Chassis_Tub?.group, collarMat); } catch (e) { console.warn('RB22 nose collar failed', e); }
 
-  // The RB22 tail carries exposed gearbox/exhaust detail (copper pipes, white brackets) above its crash
-  // structure behind the cover. Drop those triangles: X > 32, Z > 4.7 in the car frame.
+  // The Sketchfab model carries an overextended tail stinger and old rear light out to X = 41.48 dm
+  // (250 mm behind the rear wing). In the 2026 Nimble Car, the rear impact structure and FIA rain light
+  // terminate cleanly right under the wing at X ~ 38.45 dm.
+  // 1. Hide the Sketchfab model's long weird rear light (Body_RB22_Tail_rear_light_2 at X = 41.48)
+  // 2. Trim the overextended tail stinger triangles from Body_RB22_Tail (cx > 38.45)
+  // 3. Drop clutter triangles above gearbox/exhaust (cx > 32 && cz > 4.7 && cz < 6.0)
   {
     carModel.updateMatrixWorld(true);
     const toCar = carModel.matrixWorld.clone().invert(); const v = new THREE.Vector3();
     body.traverse((o) => {
-      if (!o.isMesh || !/^Body_RB22_Tail_redbull_detail/.test(o.name) || !o.geometry.index) return;
+      if (!o.isMesh) return;
+      if (o.name.includes('rear_light_2')) {
+        o.visible = false;
+        o.userData.replacedByRb22 = true;
+      }
+      if (!/^Body_RB22_Tail/.test(o.name) || !o.geometry.index) return;
       const m = toCar.clone().multiply(o.matrixWorld), pos = o.geometry.attributes.position, ix = o.geometry.index.array, keep = [];
       for (let t = 0; t < ix.length; t += 3) {
         let cx = 0, cz = 0; for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pos, ix[t + k]).applyMatrix4(m); cx += v.x / 3; cz += v.z / 3; }
-        const isClutter = cx > 32 && cz > 4.7 && cz < 6.0;
-        if (!isClutter) keep.push(ix[t], ix[t + 1], ix[t + 2]);
+        const isClutter = /_detail/.test(o.name) && (cx > 32 && cz > 4.7 && cz < 6.0);
+        const isStinger = cx > 38.45;
+        if (!isClutter && !isStinger) keep.push(ix[t], ix[t + 1], ix[t + 2]);
       }
       o.geometry = o.geometry.clone(); o.geometry.setIndex(keep); o.userData.rb22Trimmed = (ix.length - keep.length) / 3;
     });
   }
-  // Close the back of the engine cover: the RB22 cover stops at X ~32 and leaves its gearbox/exhaust
-  // detail open to view. Loft a skin from the cover's rear edge back onto the crash structure.
-  let tailCap = null;
-  try {
-    const cover = []; const tailM = [];
-    body.traverse((o) => { if (!o.isMesh) return;
-      if (/^Body_RB22_EngineCover_Airbox_redbull_(paint|carbon2)/.test(o.name)) cover.push(o);
-      if (/^Body_RB22_Tail_redbull_(paint|carbon2)/.test(o.name)) tailM.push(o); });
-    tailCap = loftBetween(carModel, host, cover, 31.6, tailM, 35.6, 4.6, collarMat, 'Body_RB22_EngineCover_RearClosure');
-  } catch (e) { console.warn('RB22 tail closure failed', e); }
 
   // The model's floor stays (thin rods from the chassis/sidepod down to the floor edge) came out white in
   // its texture. Move those small, long, thin pieces into their own carbon-black mesh.
@@ -237,7 +237,10 @@ export async function installRb22Body(carModel, renderer) {
       });
     });
   });
-  ['Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
+  ['Assembly_HPAS_Steering_Rack'].forEach((n) => { const o = carModel.getObjectByName(n); if (o) hideOurs(o); });
+  // Ensure our authentic FIA 15-LED pulsing rain light sits at X = 38.45 directly beneath the rear wing trailing edge
+  const rainLight = carModel.getObjectByName('Assembly_RearImpactStructure_RainLight');
+  if (rainLight) { rainLight.visible = true; rainLight.userData.replacedByRb22 = false; }
 
   // Our powertrain, gearbox, wiring and coolers were sized for the old body: parts of them (gearbox casing,
   // exhaust downpipe, MGU-K, crankcase sump, rear-wing LED looms) poke through the RB22 floor and tail.
@@ -245,9 +248,13 @@ export async function installRb22Body(carModel, renderer) {
   const internals = [];
   ['Powertrain_Moving_Internals_Assembly', 'Transmission_Moving_Gears_Assembly', 'Electrical_Wiring_Harness_Assembly'].forEach((n) => {
     const asm = carModel.getObjectByName(n); if (!asm) return;
-    asm.children.forEach((c) => { if (c.name !== 'Kinematic_Driveshafts_Assembly') internals.push(c); });
+    asm.children.forEach((c) => {
+      if (c.name !== 'Kinematic_Driveshafts_Assembly' && c.name !== 'Assembly_RearImpactStructure_RainLight') {
+        internals.push(c);
+      }
+    });
   });
-  ['Body_FireSuppression_System', 'Assembly_HPAS_Steering_Rack', 'Assembly_RearImpactStructure_RainLight'].forEach((n) => {
+  ['Body_FireSuppression_System', 'Assembly_HPAS_Steering_Rack'].forEach((n) => {
     const o = carModel.getObjectByName(n); if (o) internals.push(o);
   });
   let internalsShown = null;
@@ -361,7 +368,7 @@ export async function installRb22Body(carModel, renderer) {
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m); if (Math.abs(v.y) > ay - 0.5) b.expandByPoint(v); }
     boxCache.set(mesh, b); return b;
   }
-  const api = { ...api0, tailCap, showInternals, boxFor, body, parts, collar, targets, paint, splitUniforms, setTeam, isBaked, credit: RB22_CREDIT };
+  const api = { ...api0, showInternals, boxFor, body, parts, collar, targets, paint, splitUniforms, setTeam, isBaked, credit: RB22_CREDIT };
   carModel.userData.rb22 = api;
   return api;
 }

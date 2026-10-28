@@ -22,7 +22,7 @@ import { GARAGE_TEAM_COLORS } from './garage_team_colors.js';
 import { createDriverHelmet, HELMET_SPEC } from '../../driver_helmet.js';
 import { loadHelmetModels, buildHelmetModel } from '../../helmet_models.js';
 import { createGarageScreenTextures, redrawScreen } from './garage_screens.js';
-import { buildHangingTools, createInteractiveToolChest, buildFloorCableRamps } from './garage_tools.js';
+import { createInteractiveToolChest, buildFloorCableRamps } from './garage_tools.js';
 import { buildPitPerch } from './garage_pit_perch.js';
 
 export const REFLECT_LAYER = 5;   // objects seen in the floor mirror (garage, car, lights)
@@ -805,9 +805,8 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   };
   loadHelmetModels().then((m) => { shelfModels = m; rebuildShelfHelmets(); }).catch((e) => console.warn('Garage helmet models failed', e));
 
-  // ---------------------------------------------------------------- light canopy over the car: team colour frame, black band, glowing panel, air lines
+  // ---------------------------------------------------------------- light canopy over the car: team colour frame, black band, glowing panel
   const C = L.canopy, CW = C.x1 - C.x0, CX = (C.x0 + C.x1) / 2, CHW = C.halfWidth;
-  let hangingTools = null;
   {
     const t = 1.6, top = C.y + C.depth;
     for (const s of [-1, 1]) {
@@ -832,15 +831,6 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
       B(0.2, 0.2, 2 * CHW + 2 * t + 0.4, C.x1 + t + 0.06, C.y, 0),
     ];
     g.add(new THREE.Mesh(merged(neonBeams), neonMat));
-
-    // coiled air lines hanging from the canopy (wheel guns, tyre gauges, and telemetry harness)
-    const hoses = [], yel = [];
-    [[C.x0 + 4, -CHW + 2], [C.x0 + 4, CHW - 2], [C.x1 - 6, -CHW + 2], [C.x1 - 6, CHW - 2], [CX, -CHW + 1.5], [CX, CHW - 1.5]].forEach(([x, z], k) => (k % 3 === 2 ? yel : hoses).push(coil(x, C.y, 16 + (k % 2) * 3, z, 0.85, 8)));
-    put(M.rubber, mergeGeometries(hoses)); put(M.yellowHose, mergeGeometries(yel));
-    // hanging pneumatic wheel guns, tyre pressure gauge, and umbilical connector attached to the cables
-    hangingTools = buildHangingTools(M, C);
-    g.add(hangingTools);
-    g.userData.hangingTools = hangingTools;
   }
 
   // ---------------------------------------------------------------- engineers' desk with the monitor wall, regulations monitor and printed sheet
@@ -959,7 +949,6 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   g.add(debriefLounge);
 
   const clickables = [mon, sheet, deskWheelMon, deskSreMon, laptopScreen, ...wallScreenMeshes, pitPerch, setupPlatform, wingRacks, puStation, debriefLounge];
-  if (hangingTools) hangingTools.traverse(o => { if (o.userData?.click) clickables.push(o); });
   toolChest.userData.drawers.forEach(dr => clickables.push(dr));
   toolChest.traverse(o => { if (o.userData?.click && !clickables.includes(o)) clickables.push(o); });
 

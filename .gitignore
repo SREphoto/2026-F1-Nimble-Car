@@ -21,6 +21,7 @@ unity_pits/[Mm]emoryCaptures/
 # Local agent scratch & brain
 .claude-brain/
 .agents/
+tools/sketchfab-cli/
 
 # Environment secrets and generated audio
 .env

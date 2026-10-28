@@ -31,23 +31,23 @@ import { createWingElement, elementEdges } from './aero_profiles.js';
  * (Samuel's choice). The single swan neck from his reference car is kept as pylon.style 'swan_neck'.
  */
 export const REAR_WING_SPEC = {
-  endplateOuterY: 5.2,  // rear tyre inner face is at +-5.42
+  endplateOuterY: 5.25, // rear tyre inner face is at +-5.525
   endplate: {
     // [local z, outer face y, leading x, trailing x] from the top crest down to the diffuser
     // (group origin x 36.8, z 7.4; local z -5.2 is world z 2.2, the diffuser top)
     // R10: rounded top front corner (first four rows), thick walls, curled leading edge
     stations: [
-      [1.55, 5.02, -0.55, 2.0], [1.49, 5.08, -1.1, 2.05], [1.37, 5.15, -1.42, 2.08], [1.15, 5.2, -1.56, 2.1],
-      [0.4, 5.2, -1.6, 2.05], [-0.15, 5.2, -1.6, 1.9],
-      [-0.9, 5.08, -1.5, 1.6], [-1.8, 4.82, -1.3, 1.3], [-2.8, 4.55, -1.1, 1.0], [-3.9, 4.3, -0.95, 0.6],
-      [-5.2, 4.1, -0.9, 0.05], // ends on the diffuser trailing edge (x 36.85)
+      [1.55, 5.06, -0.55, 2.05], [1.49, 5.14, -1.1, 2.10], [1.37, 5.20, -1.42, 2.12], [1.15, 5.25, -1.56, 2.15],
+      [0.4, 5.25, -1.6, 2.08], [-0.15, 5.25, -1.6, 1.95],
+      [-0.9, 5.12, -1.5, 1.65], [-1.8, 4.88, -1.3, 1.35], [-2.8, 4.60, -1.1, 1.05], [-3.9, 4.35, -0.95, 0.65],
+      [-5.2, 4.15, -0.9, 0.05], // ends on the diffuser trailing edge (x 36.85)
     ],
     thickness: 0.27,                  // thick moulded wall (R10)
     leCurl: { width: 0.2, depth: 0.14 }, // leading edge curls inward over this part of the chord
   },
   spoonDip: 0.5, // mainplane and flap dip this much at the centre line (deep spoon, R10)
   ledStrip: { zTop: 1.3, zBottom: -0.9, count: 16 }, // red rain LEDs along each endplate trailing edge
-  flapChordScale: 1.25, // deeper flap for the big sponsor area seen from behind
+  flapChordScale: 1.35, // deeper, bolder flap for commanding 2026 active aero presence & rear sponsor visibility
   flapModeAngles: { Z_MODE: -0.45, X_MODE: -0.05 },
   pylon: {
     style: 'underslung_twin',         // 'underslung_twin' (2026 rules, Samuel's choice) | 'swan_neck'

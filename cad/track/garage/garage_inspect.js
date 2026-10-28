@@ -779,24 +779,6 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
         isOpen ? 'Drawer opened. Custom laser-cut shadow foam organizer revealed with precision tool set.' : 'Drawer closed.',
         point
       );
-    } else if (action === 'tool_wheel_gun') {
-      showItemCard(
-        targetObj.userData.toolName || 'Paoli DP 4000 F1 Wheel Gun',
-        'Pneumatic high-torque carbon-and-magnesium impact wrench suspended from overhead spring balancer. Delivers >4,200 Nm of torque in 0.2 seconds for sub-2-second F1 pit stops.',
-        point
-      );
-    } else if (action === 'tool_tyre_gauge') {
-      showItemCard(
-        targetObj.userData.toolName || 'Digital Tyre Pressure & Temperature Gauge',
-        'Intercomp digital pressure transducer (0.01 PSI precision) with integrated pyrometer needle for carcass thermal profile inspection.',
-        point
-      );
-    } else if (action === 'tool_umbilical') {
-      showItemCard(
-        targetObj.userData.toolName || 'Aerospace Telemetry Umbilical Connector',
-        'Mil-Spec Deutsch circular quick-connect umbilical. Plugs into the survival cell port behind the driver headrest for high-speed CAN-bus logging and 800V battery conditioning in the garage.',
-        point
-      );
     } else if (action === 'tool_caliper') {
       showItemCard(
         targetObj.userData.toolName || 'Digital Vernier Caliper',
