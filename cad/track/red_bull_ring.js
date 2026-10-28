@@ -439,6 +439,9 @@ export function createRedBullRing() {
     jumbotron: new THREE.MeshBasicMaterial({ map: tex.jumbotron }),
     flags: new THREE.MeshStandardMaterial({ map: tex.flags, roughness: 0.65, side: THREE.DoubleSide }),
     treeTrunk: new THREE.MeshStandardMaterial({ map: tex.treeBark, roughness: 0.92 }),
+    birchTrunk: new THREE.MeshStandardMaterial({ color: 0xefede6, roughness: 0.85 }),
+    seat3D: new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05 }),
+    spectator3D: new THREE.MeshStandardMaterial({ roughness: 0.72, metalness: 0.0 }),
     spruceFoliage: new THREE.MeshStandardMaterial({ map: tex.pineFoliage, alphaTest: 0.28, roughness: 0.75, side: THREE.DoubleSide }),
     beechFoliage: new THREE.MeshStandardMaterial({ map: tex.deciduousFoliage, alphaTest: 0.28, roughness: 0.8, side: THREE.DoubleSide }),
     smokeSoft: new THREE.MeshBasicMaterial({ map: tex.smoke, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }),
@@ -1220,22 +1223,24 @@ export function createRedBullRing() {
 
     // Add 3D bucket seats
     if (seatTransforms.length) {
-      const imSeats = new THREE.InstancedMesh(seatMeshGeo, M.seats, seatTransforms.length);
+      const imSeats = new THREE.InstancedMesh(seatMeshGeo, M.seat3D, seatTransforms.length);
       seatTransforms.forEach((m, idx) => {
         imSeats.setMatrixAt(idx, m);
         imSeats.setColorAt(idx, seatColors[idx]);
       });
+      if (imSeats.instanceColor) imSeats.instanceColor.needsUpdate = true;
       imSeats.name = 'Grandstand_3D_Seats_' + gs.name;
       imSeats.computeBoundingSphere();
       detailed.add(imSeats);
     }
     // Add 3D spectator figures
     if (specTransforms.length) {
-      const imSpec = new THREE.InstancedMesh(spectatorGeo, M.crowd, specTransforms.length);
+      const imSpec = new THREE.InstancedMesh(spectatorGeo, M.spectator3D, specTransforms.length);
       specTransforms.forEach((m, idx) => {
         imSpec.setMatrixAt(idx, m);
         imSpec.setColorAt(idx, specColors[idx]);
       });
+      if (imSpec.instanceColor) imSpec.instanceColor.needsUpdate = true;
       imSpec.name = 'Grandstand_3D_Spectators_' + gs.name;
       imSpec.computeBoundingSphere();
       detailed.add(imSpec);
@@ -1605,7 +1610,7 @@ export function createRedBullRing() {
 
       const gh = T.height(gx, gz);
       const isHighAltitude = gh > 42;
-      const groveSpecies = isHighAltitude ? (rand() < 0.88 ? 0 : 1) : (rand() < 0.65 ? 0 : 1);
+      const groveSpecies = isHighAltitude ? 0 : (rand() < 0.60 ? 0 : (rand() < 0.65 ? 1 : 2));
       const groveSize = Math.floor(18 + rand() * 32);
       const groveRadius = 30 + rand() * 45;
 
@@ -1680,6 +1685,21 @@ export function createRedBullRing() {
     const beLo2 = beLo1.clone().rotateY(Math.PI / 2);
     const beechLoGeo = mergeGeometries([beLo1, beLo2]);
 
+    // Species 3: Alpine Silver Birch (Betula pendula) — slender white trunk & weeping canopy
+    const birchTrunkGeo = new THREE.CylinderGeometry(0.14 * DM, 0.28 * DM, 7.5 * DM, 5).translate(0, 3.75 * DM, 0);
+    const birchFoliagePlanes = [];
+    for (let a = 0; a < 4; a++) {
+      const p = new THREE.PlaneGeometry(5.2 * DM, 5.8 * DM);
+      p.translate(0, 2.9 * DM, 0);
+      p.rotateY(a * (Math.PI / 4));
+      p.translate(0, 4.8 * DM, 0);
+      birchFoliagePlanes.push(p);
+    }
+    const birchFoliageGeo = mergeGeometries(birchFoliagePlanes);
+    const biLo1 = new THREE.PlaneGeometry(5.4 * DM, 8.8 * DM).translate(0, 4.4 * DM, 0);
+    const biLo2 = biLo1.clone().rotateY(Math.PI / 2);
+    const birchLoGeo = mergeGeometries([biLo1, biLo2]);
+
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3();
     const tint = new THREE.Color();
 
@@ -1690,12 +1710,15 @@ export function createRedBullRing() {
 
       const conifers = list.filter(t => t[5] === 0);
       const beeches = list.filter(t => t[5] === 1);
+      const birches = list.filter(t => t[5] === 2);
 
-      const populatePair = (items, trunkGeo, foliageGeo, isBeech) => {
+      const populatePair = (items, trunkGeo, foliageGeo, treeType) => {
         if (!items.length) return new THREE.Object3D();
         const grp = new THREE.Group();
-        const imTrunk = new THREE.InstancedMesh(trunkGeo, M.treeTrunk, items.length);
-        const imFoliage = new THREE.InstancedMesh(foliageGeo, isBeech ? M.beechFoliage : M.spruceFoliage, items.length);
+        const tMat = treeType === 2 ? M.birchTrunk : M.treeTrunk;
+        const fMat = treeType === 0 ? M.spruceFoliage : M.beechFoliage;
+        const imTrunk = new THREE.InstancedMesh(trunkGeo, tMat, items.length);
+        const imFoliage = new THREE.InstancedMesh(foliageGeo, fMat, items.length);
 
         items.forEach((t, k) => {
           q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[4]);
@@ -1705,8 +1728,10 @@ export function createRedBullRing() {
           imTrunk.setMatrixAt(k, m4);
           imFoliage.setMatrixAt(k, m4);
 
-          if (isBeech) {
+          if (treeType === 1) {
             tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
+          } else if (treeType === 2) {
+            tint.setHSL(0.28 + 0.05 * Math.sin(t[4] * 5), 0.60, 0.48 + 0.06 * Math.cos(t[4] * 7));
           } else {
             // Authentic Alpine conifer deep evergreen with mountain needle sheen
             tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.54, 0.32 + 0.06 * Math.cos(t[4] * 5));
@@ -1721,7 +1746,7 @@ export function createRedBullRing() {
         return grp;
       };
 
-      const populateLo = (items, geo, mat, isBeech) => {
+      const populateLo = (items, geo, mat, treeType) => {
         if (!items.length) return new THREE.Object3D();
         const im = new THREE.InstancedMesh(geo, mat, items.length);
         items.forEach((t, k) => {
@@ -1730,8 +1755,10 @@ export function createRedBullRing() {
           pv.set((t[0] - cx) * DM, (t[1] - cy - 0.3) * DM, (t[2] - cz) * DM);
           m4.compose(pv, q, sv);
           im.setMatrixAt(k, m4);
-          if (isBeech) {
+          if (treeType === 1) {
             tint.setHSL(0.25 + 0.04 * Math.sin(t[4] * 5), 0.55, 0.42 + 0.08 * Math.cos(t[4] * 7));
+          } else if (treeType === 2) {
+            tint.setHSL(0.28 + 0.05 * Math.sin(t[4] * 5), 0.60, 0.48 + 0.06 * Math.cos(t[4] * 7));
           } else {
             tint.setHSL(0.33 + 0.03 * Math.sin(t[4] * 7), 0.54, 0.32 + 0.06 * Math.cos(t[4] * 5));
           }
@@ -1742,12 +1769,14 @@ export function createRedBullRing() {
       };
 
       const hiGroup = new THREE.Group();
-      if (conifers.length) hiGroup.add(populatePair(conifers, spruceTrunkGeo, spruceFoliageGeo, false));
-      if (beeches.length) hiGroup.add(populatePair(beeches, beechTrunkGeo, beechFoliageGeo, true));
+      if (conifers.length) hiGroup.add(populatePair(conifers, spruceTrunkGeo, spruceFoliageGeo, 0));
+      if (beeches.length) hiGroup.add(populatePair(beeches, beechTrunkGeo, beechFoliageGeo, 1));
+      if (birches.length) hiGroup.add(populatePair(birches, birchTrunkGeo, birchFoliageGeo, 2));
 
       const loGroup = new THREE.Group();
-      if (conifers.length) loGroup.add(populateLo(conifers, spruceLoGeo, M.spruceFoliage, false));
-      if (beeches.length) loGroup.add(populateLo(beeches, beechLoGeo, M.beechFoliage, true));
+      if (conifers.length) loGroup.add(populateLo(conifers, spruceLoGeo, M.spruceFoliage, 0));
+      if (beeches.length) loGroup.add(populateLo(beeches, beechLoGeo, M.beechFoliage, 1));
+      if (birches.length) loGroup.add(populateLo(birches, birchLoGeo, M.beechFoliage, 2));
 
       lod.addLevel(hiGroup, 0);
       lod.addLevel(loGroup, 4500);

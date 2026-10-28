@@ -58,7 +58,7 @@ export function initTrackMode(ctx) {
         skyScene.add(skyMesh);
         const pmremTarget = pmrem.fromScene(skyScene, 0.04);
         skyEnvTexture = pmremTarget.texture;
-        skyMesh.geometry.dispose();
+        pmrem.dispose();
       }
     } catch (e) {
       console.warn('[TrackMode] PMREM sky environment fallback:', e);
