@@ -36,6 +36,7 @@ export class AiCarManager {
     this.rb22Template = null;
     this.teamMaterials = {};
     this.teamBodyTemplates = {};
+    this.texLoader = new THREE.TextureLoader();
 
     this.tmpBasis = {
       f: new THREE.Vector3(),
@@ -196,25 +197,68 @@ export class AiCarManager {
       bodyClone = this.rb22Template.clone(true);
       bodyClone.name = `Body_RB22_${carData.teamSlug}_${carData.no}`;
 
+      const key = (carData.teamSlug || '').toLowerCase().replace(/_/g, '-');
+      const TEAM_LIVERY_FILES = {
+        'ferrari': 'ferrari', 'mercedes': 'mercedes', 'mclaren': 'mclaren',
+        'aston-martin': 'aston_martin', 'audi': 'audi', 'cadillac': 'cadillac',
+        'haas': 'haas', 'williams': 'williams'
+      };
+      const baseName = TEAM_LIVERY_FILES[key];
+      const hasBakedLivery = !!baseName;
+
       let teamPaintMat = this.teamMaterials[carData.teamSlug]?.paint;
       let teamAccentMat = this.teamMaterials[carData.teamSlug]?.accent;
+      let teamDecalMat = this.teamMaterials[carData.teamSlug]?.decal;
 
       if (!teamPaintMat) {
-        teamPaintMat = new THREE.MeshPhysicalMaterial({
-          color: team.bodyColor ?? 0xd4001f,
-          roughness: team.roughness ?? 0.32,
-          metalness: team.metalness ?? 0.12,
-          clearcoat: team.clearcoat ?? 0.95,
-          clearcoatRoughness: team.clearcoatRoughness ?? 0.06,
-          side: THREE.DoubleSide,
-        });
+        if (hasBakedLivery) {
+          const pTex = this.texLoader.load(new URL(`../../assets/models/liveries/${baseName}_paint.webp`, import.meta.url).href);
+          pTex.colorSpace = THREE.SRGBColorSpace;
+          pTex.flipY = false;
+          pTex.anisotropy = 4;
 
-        addCarbonSplit(teamPaintMat, {
-          splitY: 1.45,
-          stripeColor: team.stripeColor ?? team.accentColor ?? 0xffe500,
-          stripeWidth: 0.08,
-          camo: team.camo ?? 0.0,
-        });
+          const dTex = this.texLoader.load(new URL(`../../assets/models/liveries/${baseName}_decals.webp`, import.meta.url).href);
+          dTex.colorSpace = THREE.SRGBColorSpace;
+          dTex.flipY = false;
+          dTex.anisotropy = 4;
+
+          teamPaintMat = new THREE.MeshPhysicalMaterial({
+            map: pTex,
+            roughness: team.roughness ?? 0.30,
+            metalness: Math.min(0.25, team.metalness ?? 0.10),
+            clearcoat: team.clearcoat ?? 0.95,
+            clearcoatRoughness: team.clearcoatRoughness ?? 0.05,
+            side: THREE.DoubleSide,
+          });
+
+          teamDecalMat = new THREE.MeshPhysicalMaterial({
+            map: dTex,
+            transparent: true,
+            depthWrite: false,
+            alphaTest: 0.04,
+            polygonOffset: true,
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -2,
+            roughness: 0.5,
+            side: THREE.FrontSide,
+          });
+        } else {
+          teamPaintMat = new THREE.MeshPhysicalMaterial({
+            color: team.bodyColor ?? 0xd4001f,
+            roughness: team.roughness ?? 0.32,
+            metalness: team.metalness ?? 0.12,
+            clearcoat: team.clearcoat ?? 0.95,
+            clearcoatRoughness: team.clearcoatRoughness ?? 0.06,
+            side: THREE.DoubleSide,
+          });
+
+          addCarbonSplit(teamPaintMat, {
+            splitY: 1.45,
+            stripeColor: team.stripeColor ?? team.accentColor ?? 0xffe500,
+            stripeWidth: 0.08,
+            camo: team.camo ?? 0.0,
+          });
+        }
 
         teamAccentMat = new THREE.MeshStandardMaterial({
           color: team.accentColor ?? 0xffe500,
@@ -223,7 +267,7 @@ export class AiCarManager {
           side: THREE.DoubleSide,
         });
 
-        this.teamMaterials[carData.teamSlug] = { paint: teamPaintMat, accent: teamAccentMat };
+        this.teamMaterials[carData.teamSlug] = { paint: teamPaintMat, accent: teamAccentMat, decal: teamDecalMat };
       }
 
       bodyClone.traverse((o) => {
@@ -236,15 +280,23 @@ export class AiCarManager {
             o.material = teamPaintMat;
           } else if (mname === 'redbull_color') {
             o.material = teamAccentMat;
-          } else if (mname === 'redbull_decals' || mname === 'redbull_number_3') {
-            // Hide Red Bull specific sponsor decals on rival cars
+          } else if (mname === 'redbull_decals') {
+            if (hasBakedLivery && teamDecalMat) {
+              o.material = teamDecalMat;
+              o.visible = true;
+            } else {
+              o.visible = false;
+            }
+          } else if (mname === 'redbull_number_3') {
             o.visible = false;
           }
         }
       });
 
-      // Build and apply team livery decals on rival cars
-      this.buildAiTeamDecals(bodyClone, carData.teamPreset);
+      // Build and apply team livery decals only for procedural rival cars
+      if (!hasBakedLivery) {
+        this.buildAiTeamDecals(bodyClone, carData.teamPreset);
+      }
 
       // Cache template for teammate car
       this.teamBodyTemplates[carData.teamSlug] = bodyClone.clone(true);

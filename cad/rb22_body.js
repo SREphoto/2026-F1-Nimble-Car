@@ -60,7 +60,48 @@ export async function installRb22Body(carModel, renderer) {
   const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.() || 8;
 
   const parts = {};
-  let paint = null; let bakedMap = null; let splitUniforms = null; const paintMeshes = []; const accentMeshes = []; const fwDetail = [];
+  const texLoader = new THREE.TextureLoader();
+  const teamTextureCache = new Map();
+  let paint = null; let bakedMap = null; let bakedDecalMap = null; let splitUniforms = null;
+  const paintMeshes = []; const accentMeshes = []; const fwDetail = []; const decalMeshes = [];
+
+  const TEAM_LIVERY_FILES = {
+    'ferrari': 'ferrari',
+    'mercedes': 'mercedes',
+    'mclaren': 'mclaren',
+    'aston-martin': 'aston_martin',
+    'aston_martin': 'aston_martin',
+    'audi': 'audi',
+    'sauber': 'audi',
+    'cadillac': 'cadillac',
+    'haas': 'haas',
+    'williams': 'williams',
+  };
+
+  function getTeamTextures(teamId) {
+    const key = (teamId || '').toLowerCase().replace(/_/g, '-');
+    const baseName = TEAM_LIVERY_FILES[key];
+    if (!baseName) return null;
+    if (teamTextureCache.has(baseName)) return teamTextureCache.get(baseName);
+
+    const paintUrl = new URL(`liveries/${baseName}_paint.webp`, BASE).href;
+    const decalsUrl = new URL(`liveries/${baseName}_decals.webp`, BASE).href;
+
+    const pTex = texLoader.load(paintUrl);
+    pTex.colorSpace = THREE.SRGBColorSpace;
+    pTex.flipY = false;
+    pTex.anisotropy = maxAniso;
+
+    const dTex = texLoader.load(decalsUrl);
+    dTex.colorSpace = THREE.SRGBColorSpace;
+    dTex.flipY = false;
+    dTex.anisotropy = maxAniso;
+
+    const result = { paint: pTex, decals: dTex };
+    teamTextureCache.set(baseName, result);
+    return result;
+  }
+
   body.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true; o.receiveShadow = true;
@@ -71,9 +112,11 @@ export async function installRb22Body(carModel, renderer) {
       o.name = `${part}_${mname}`;
       if (/^redbull_(detail|carbon\d)$/.test(mname) && /^Body_RB22_FrontWing/.test(part)) { o.material = mat.clone(); fwDetail.push(o); } // wing flaps carry baked Red Bull/VISA/Mobil art
       if (mname === 'redbull_decals') { // the atlas carries a crisp alpha: cut the logos from it, not from the coarse decal polygons
-        // blend the edges (bilinear alpha) instead of a hard 0.5 cut, which left texel stair-steps on every logo
-        mat.alphaTest = 0.04; mat.transparent = true; mat.depthWrite = false; mat.alphaToCoverage = false;
-        mat.polygonOffset = true; mat.polygonOffsetFactor = -2; mat.polygonOffsetUnits = -2; mat.needsUpdate = true; o.renderOrder = 2;
+        o.material = mat.clone();
+        o.material.alphaTest = 0.04; o.material.transparent = true; o.material.depthWrite = false; o.material.alphaToCoverage = false;
+        o.material.polygonOffset = true; o.material.polygonOffsetFactor = -2; o.material.polygonOffsetUnits = -2; o.material.needsUpdate = true; o.renderOrder = 2;
+        decalMeshes.push(o);
+        if (!bakedDecalMap) bakedDecalMap = mat.map;
       }
       if (mname === 'redbull_color') { o.userData.rb22Accent = true; o.material = mat.clone(); accentMeshes.push(o); }
       if (mname === 'redbull_paint') {
@@ -212,23 +255,51 @@ export async function installRb22Body(carModel, renderer) {
   });
 
   const plainForced = typeof location !== 'undefined' && /[?&]rb22Paint=plain/.test(location.search);
-  const isBaked = (team) => (team?.livery?.bodyTexture === 'baked') && !plainForced;
+  const isBaked = (team) => {
+    if (plainForced) return false;
+    const tid = (team?.id || '').toLowerCase().replace(/_/g, '-');
+    if (tid === 'red-bull' || tid === 'redbull') return true;
+    if (TEAM_LIVERY_FILES[tid]) return true;
+    return team?.livery?.bodyTexture === 'baked';
+  };
+
   function setTeam(team) {
     const baked = isBaked(team);
-    paint.map = baked ? bakedMap : null; // other teams: clean team colour, no leftover Red Bull art
+    const teamId = (team?.id || '').toLowerCase().replace(/_/g, '-');
+    const isRedBull = teamId === 'red-bull' || teamId === 'redbull';
+    const teamTex = (!isRedBull && baked) ? getTeamTextures(teamId) : null;
+
+    if (isRedBull) {
+      paint.map = bakedMap;
+      if (bakedDecalMap) {
+        decalMeshes.forEach((m) => { m.material.map = bakedDecalMap; m.material.needsUpdate = true; });
+      }
+    } else if (teamTex) {
+      paint.map = teamTex.paint;
+      decalMeshes.forEach((m) => { m.material.map = teamTex.decals; m.material.needsUpdate = true; });
+    } else {
+      paint.map = null;
+    }
+
     paint.color.set(baked ? 0xffffff : (team?.bodyColor ?? 0xffffff));
     if (team && !baked) {
       paint.roughness = team.roughness ?? 0.32;
       paint.clearcoat = team.clearcoat ?? 0.95;
       paint.clearcoatRoughness = team.clearcoatRoughness ?? 0.05;
       paint.metalness = Math.min(0.35, team.metalness ?? 0.12);
+    } else {
+      paint.roughness = team?.roughness ?? 0.30;
+      paint.clearcoat = team?.clearcoat ?? 0.95;
+      paint.clearcoatRoughness = team?.clearcoatRoughness ?? 0.05;
+      paint.metalness = Math.min(0.25, team?.metalness ?? 0.10);
     }
     paint.needsUpdate = true;
+
     if (splitUniforms) {
       if (baked) {
         splitUniforms.uSplitY.value = -999.0;
         splitUniforms.uStripeW.value = 0.0;
-        splitUniforms.uCamo.value = team?.camo ?? 0.2;
+        splitUniforms.uCamo.value = 0.0;
       } else {
         splitUniforms.uSplitY.value = 1.45;
         splitUniforms.uStripeW.value = 0.08;
@@ -236,21 +307,28 @@ export async function installRb22Body(carModel, renderer) {
         splitUniforms.uCamo.value = team?.camo ?? 0.0;
       }
     }
-    collarMat.color.set(baked ? 0x1b1f48 : (team?.bodyColor ?? 0xffffff));
+
+    collarMat.color.set(baked ? (team?.bodyColor ?? 0x1b1f48) : (team?.bodyColor ?? 0xffffff));
     collarMat.roughness = paint.roughness; collarMat.clearcoat = paint.clearcoat;
     collarMat.needsUpdate = true;
+
     accentMeshes.forEach((m) => { // airbox-top camera pod: Red Bull yellow art, team accent elsewhere
       if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
-      m.material.map = baked ? m.userData.bakedMap : null;
-      m.material.color.set(baked ? 0xffffff : (team?.accentColor ?? 0xffffff)); m.material.needsUpdate = true;
+      m.material.map = isRedBull ? m.userData.bakedMap : null;
+      m.material.color.set(isRedBull ? 0xffffff : (team?.accentColor ?? 0xffffff));
+      m.material.needsUpdate = true;
     });
+
     if (decalsBaked) decalsBaked.visible = baked;
+    body.traverse((o) => { if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) o.visible = baked; });
+
     fwDetail.forEach((m) => { // other teams: plain dark carbon flaps, team colour comes from endplates + decals
       if (!m.userData.bakedMap) m.userData.bakedMap = m.material.map;
-      m.material.map = baked ? m.userData.bakedMap : carbonWeave();
-      m.material.color.set(baked ? 0xffffff : 0x9a9ca2); m.material.needsUpdate = true;
+      m.material.map = isRedBull ? m.userData.bakedMap : carbonWeave();
+      m.material.color.set(isRedBull ? 0xffffff : 0x9a9ca2);
+      m.material.needsUpdate = true;
     });
-    body.traverse((o) => { if (/^Body_RB22_(FrontWing_)?(Baked)?Decals/.test(o.name)) o.visible = baked; });
+
     return baked;
   }
 
