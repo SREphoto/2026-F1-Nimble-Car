@@ -916,19 +916,6 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   }
 
   // ---------------------------------------------------------------- Camera Constraints & Views
-  const GARAGE_VIEWS = {
-    CAM_ISO: { pos: [-40, 22, 28], target: [16, 4, 0] },
-    CAM_FRONT: { pos: [-62, 6, 0], target: [10, 3, 0] },
-    CAM_SIDE: { pos: [16, 7, 31], target: [16, 3.5, 0] },
-    CAM_TOP: { pos: [14, 41, 0.5], target: [14, 0, 0] },
-    CAM_REAR: { pos: [80, 9, 0], target: [30, 4, 0] },
-    CAM_STEERING: { pos: [12.0, 5.6, 0], target: [9.0, 4.2, 0] },
-    CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
-    CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
-    CAM_EXPLODED: { pos: [-48, 30, 30], target: [14, 6, 0] },
-    STATE_ACTIVE: { pos: [-40, 18, 28], target: [10, 3.2, 0] },
-  };
-
   const camRay = new THREE.Raycaster(), cDir = new THREE.Vector3();
   const roomBox = () => ({
     x0: st.viewingPitPerch ? -185 : L.x0 - 45,
