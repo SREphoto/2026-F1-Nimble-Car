@@ -643,20 +643,32 @@ export function buildFloorCableRamps(materials, layout) {
   const blackMat = materials.rubber || new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.85 });
   const yellowMat = materials.yellowHose || new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
 
-  // Ramp crosses from back desk (x = 88) across to the car bay (x = 52) along z = 18
-  const len = 36;
   const rampW = 3.2;
   const rampH = 0.35;
 
-  const baseGeo = B(len, rampH, rampW, 70, rampH / 2 + 0.03, 18);
-  group.add(new THREE.Mesh(baseGeo, blackMat));
+  // 1. Longitudinal ramp connecting car setup bay (x = 62) to the Strategy Island (x = 142) along z = 24
+  const lenLong = 80;
+  const centerX = 102;
+  const rampZ = 24;
+  group.add(new THREE.Mesh(B(lenLong, rampH, rampW, centerX, rampH / 2 + 0.03, rampZ), blackMat));
 
-  // Yellow high-visibility hazard stripes along the top of the ramp
-  const stripeList = [];
-  for (let x = 54; x < 86; x += 3.6) {
-    stripeList.push(B(1.6, 0.02, rampW - 0.2, x, rampH + 0.04, 18));
+  const stripesLong = [];
+  for (let x = centerX - lenLong / 2 + 2; x < centerX + lenLong / 2 - 2; x += 3.6) {
+    stripesLong.push(B(1.8, 0.02, rampW - 0.2, x, rampH + 0.04, rampZ));
   }
-  group.add(new THREE.Mesh(merged(stripeList), yellowMat));
+  group.add(new THREE.Mesh(merged(stripesLong), yellowMat));
+
+  // 2. Lateral cross-aisle ramp at x = 75 across z = -32 to +24
+  const lenLat = 56;
+  const centerZ = -4;
+  const rampX = 75;
+  group.add(new THREE.Mesh(B(rampW, rampH, lenLat, rampX, rampH / 2 + 0.03, centerZ), blackMat));
+
+  const stripesLat = [];
+  for (let z = centerZ - lenLat / 2 + 2; z < centerZ + lenLat / 2 - 2; z += 3.6) {
+    stripesLat.push(B(rampW - 0.2, 0.02, 1.8, rampX, rampH + 0.04, z));
+  }
+  group.add(new THREE.Mesh(merged(stripesLat), yellowMat));
 
   return group;
 }

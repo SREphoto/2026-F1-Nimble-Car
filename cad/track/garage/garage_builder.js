@@ -98,6 +98,200 @@ function caseParts(w, h, d, { castor = 1.7, t = 0.32 } = {}) {
   return { body, alu, caps, dark, wheels, forks, y0, y1 };
 }
 
+// ---------------------------------------------------------------------------
+// Advanced Detail Geometry Builders: Setup Table, Wing Trees, PU Station, Debrief
+// ---------------------------------------------------------------------------
+function buildSetupPlatform(M, T) {
+  const g = new THREE.Group();
+  g.name = 'Garage_Setup_Platform';
+
+  // 1. Carbon composite surface plate base
+  g.add(new THREE.Mesh(B(54, 0.6, 22, 22, 0.3, -44), M.dark));
+  g.add(new THREE.Mesh(B(53.6, 0.06, 21.6, 22, 0.61, -44), M.alu));
+
+  // 2. 4 Corner Titanium Wheel Scale Pads with loadcell sensors
+  const scalePads = [
+    B(8.0, 0.25, 4.8, 4, 0.73, -51.5),   // Front-Left
+    B(8.0, 0.25, 4.8, 4, 0.73, -36.5),   // Front-Right
+    B(8.5, 0.25, 5.0, 38, 0.73, -51.5),  // Rear-Left
+    B(8.5, 0.25, 5.0, 38, 0.73, -36.5),  // Rear-Right
+  ];
+  g.add(new THREE.Mesh(merged(scalePads), M.chrome));
+
+  // 3. Precision laser ride-height bridge across center
+  const bridge = [
+    rod([22, 0.6, -54], [22, 5.4, -54], 0.18, 6),
+    rod([22, 0.6, -34], [22, 5.4, -34], 0.18, 6),
+    rod([22, 5.4, -54], [22, 5.4, -34], 0.22, 6),
+    B(0.8, 0.5, 0.8, 22, 5.4, -44),
+  ];
+  g.add(new THREE.Mesh(merged(bridge), M.alu));
+
+  // 4. Digital Corner-Weight Display Console Pillar
+  const consolePillar = [
+    Cy(0.3, 8.5, -4, 4.25, -34, 10),
+    B(3.4, 2.4, 0.6, -4, 9.2, -34),
+  ];
+  g.add(new THREE.Mesh(merged(consolePillar), M.dark));
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x00e676 });
+  const ledScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.8), ledMat);
+  ledScreen.rotation.y = Math.PI * 0.35;
+  ledScreen.position.set(-4, 9.2, -33.68);
+  g.add(ledScreen);
+
+  g.userData.click = 'setup_platform';
+  g.userData.title = 'FIA Scrutineering Setup Table';
+  return g;
+}
+
+function buildWingRacks(M, T) {
+  const g = new THREE.Group();
+  g.name = 'Garage_Wing_Racks';
+
+  // 1. Front Wing Assembly Tree at x = -42, z = 52
+  const fwX = -42, fwZ = 52;
+  const fwTree = [
+    B(7, 0.5, 5, fwX, 0.25, fwZ),
+    rod([fwX, 0.5, fwZ], [fwX, 16, fwZ], 0.35, 8),
+    B(1.6, 0.25, 12, fwX, 8, fwZ),
+    B(1.6, 0.25, 12, fwX, 12, fwZ),
+  ];
+  g.add(new THREE.Mesh(merged(fwTree), M.alu));
+
+  // Spare 2026 Nimble Car Front Wing (Carbon with Team Livery)
+  const fwGeos = [
+    B(4.8, 0.35, 18, fwX, 8.3, fwZ),
+    B(3.4, 0.28, 17, fwX - 1.2, 9.2, fwZ),
+    B(2.6, 0.22, 16.5, fwX - 2.2, 10.0, fwZ),
+    B(6.0, 3.2, 0.2, fwX - 0.8, 9.2, fwZ - 9),
+    B(6.0, 3.2, 0.2, fwX - 0.8, 9.2, fwZ + 9),
+  ];
+  g.add(new THREE.Mesh(merged(fwGeos), M.team));
+
+  // 2. Rear Wing & DRS Tree at x = -22, z = 52
+  const rwX = -22, rwZ = 52;
+  const rwTree = [
+    B(6, 0.5, 5, rwX, 0.25, rwZ),
+    rod([rwX, 0.5, rwZ], [rwX, 15, rwZ], 0.35, 8),
+    B(1.4, 0.25, 10, rwX, 7.5, rwZ),
+    B(1.4, 0.25, 10, rwX, 11.5, rwZ),
+  ];
+  g.add(new THREE.Mesh(merged(rwTree), M.alu));
+
+  // Spare Rear Wing Assembly with DRS actuator pod
+  const rwGeos = [
+    B(3.8, 0.4, 13, rwX, 11.8, rwZ),
+    B(2.8, 0.3, 12.6, rwX - 0.9, 12.8, rwZ),
+    B(0.8, 1.2, 0.8, rwX - 0.4, 12.8, rwZ),
+    B(4.5, 4.0, 0.2, rwX - 0.5, 12.2, rwZ - 6.5),
+    B(4.5, 4.0, 0.2, rwX - 0.5, 12.2, rwZ + 6.5),
+  ];
+  g.add(new THREE.Mesh(merged(rwGeos), M.team));
+
+  g.userData.click = 'wing_rack';
+  g.userData.title = '2026 Active-Aero Wing Assembly Rack';
+  return g;
+}
+
+function buildPowerUnitStation(M, T) {
+  const g = new THREE.Group();
+  g.name = 'Garage_Power_Unit_Station';
+
+  const bx = 88, bz = 54;
+  g.add(new THREE.Mesh(B(26, 8.2, 8.5, bx, 4.1, bz), M.team));
+  g.add(new THREE.Mesh(B(27, 0.6, 9.2, bx, 8.7, bz), M.chrome));
+
+  // Articulating inspection lamp with LED halo ring
+  const lamp = [
+    Cy(0.8, 0.3, bx - 8, 9.1, bz - 2, 12),
+    rod([bx - 8, 9.2, bz - 2], [bx - 8, 14, bz - 1], 0.12, 6),
+    rod([bx - 8, 14, bz - 1], [bx - 6, 17, bz], 0.12, 6),
+    new THREE.TorusGeometry(0.85, 0.18, 6, 18).rotateX(Math.PI / 2).translate(bx - 6, 17, bz),
+  ];
+  g.add(new THREE.Mesh(merged(lamp), M.dark));
+  const lampLight = new THREE.Mesh(new THREE.CircleGeometry(0.7, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  lampLight.position.set(bx - 6, 16.95, bz);
+  g.add(lampLight);
+
+  // Digital oscilloscope & telemetry terminal
+  const oscBox = [
+    B(4.5, 3.2, 2.5, bx + 5, 10.6, bz - 1),
+    B(0.4, 0.6, 0.4, bx + 5, 9.1, bz - 1),
+  ];
+  g.add(new THREE.Mesh(merged(oscBox), M.dark));
+  const oscScreen = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 2.4).rotateY(-Math.PI / 2), M.screen);
+  oscScreen.position.set(bx + 2.74, 10.6, bz - 1);
+  g.add(oscScreen);
+
+  // Torque wrench & precision multimeter tool tray
+  const toolTray = [
+    B(7, 0.3, 4, bx, 9.15, bz + 1.5),
+    CyX(0.18, 4.5, bx, 9.4, bz + 1),
+    B(0.8, 0.35, 0.6, bx + 2.2, 9.4, bz + 1),
+    B(2.2, 0.4, 1.4, bx - 1.5, 9.4, bz + 2.5),
+  ];
+  g.add(new THREE.Mesh(merged(toolTray), M.alu));
+
+  g.userData.click = 'power_unit_station';
+  g.userData.title = 'Power Unit & High-Voltage Diagnostics';
+  return g;
+}
+
+function buildDebriefLounge(M, T) {
+  const g = new THREE.Group();
+  g.name = 'Garage_Debrief_Lounge';
+
+  const lx = 125, lz = 0;
+  g.add(new THREE.Mesh(B(14, 4.2, 7.5, lx, 2.1, lz), M.dark));
+  g.add(new THREE.Mesh(B(14.4, 0.2, 7.8, lx, 4.3, lz), M.glass));
+
+  // Dual telemetry tablet iPads with live track data
+  const ipadMat = M.screen;
+  const ipads = [
+    B(2.8, 0.1, 1.9, lx - 3, 4.5, lz - 1.2),
+    B(2.8, 0.1, 1.9, lx + 3, 4.5, lz + 1.2),
+  ];
+  g.add(new THREE.Mesh(merged(ipads), M.dark));
+
+  const ipadScreens = [
+    new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.6).rotateX(-Math.PI / 2), ipadMat),
+    new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.6).rotateX(-Math.PI / 2), ipadMat),
+  ];
+  ipadScreens[0].position.set(lx - 3, 4.56, lz - 1.2);
+  ipadScreens[1].position.set(lx + 3, 4.56, lz + 1.2);
+  g.add(ipadScreens[0], ipadScreens[1]);
+
+  // Two team intercom carbon headsets with boom mics
+  const headsetMat = M.dark;
+  const foamMat = M.rubber;
+  for (const sz of [-1, 1]) {
+    const hx = lx - 1, hz = sz * 2.2;
+    const band = new THREE.TorusGeometry(0.7, 0.08, 6, 16, Math.PI).rotateX(Math.PI / 2).translate(hx, 4.9, hz);
+    const cups = [
+      Cy(0.35, 0.3, hx - 0.7, 4.5, hz, 10),
+      Cy(0.35, 0.3, hx + 0.7, 4.5, hz, 10),
+      rod([hx + 0.7, 4.5, hz], [hx + 1.4, 4.2, hz + 0.5], 0.05, 5),
+    ];
+    g.add(new THREE.Mesh(band, headsetMat));
+    g.add(new THREE.Mesh(merged(cups), foamMat));
+  }
+
+  // Driver drink bottles with intake straws
+  for (const sz of [-1, 1]) {
+    const bx = lx + 1, bz = sz * 2.4;
+    const bottle = [
+      Cy(0.4, 1.8, bx, 5.3, bz, 12),
+      Cy(0.15, 0.4, bx, 6.3, bz, 8),
+      rod([bx, 6.4, bz], [bx + 0.3, 7.0, bz], 0.04, 5),
+    ];
+    g.add(new THREE.Mesh(merged(bottle), M.alu));
+  }
+
+  g.userData.click = 'debrief_table';
+  g.userData.title = 'Driver Debrief & Strategy Station';
+  return g;
+}
+
 export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 'high' } = {}) {
   if (!rectInit) { RectAreaLightUniformsLib.init(); rectInit = true; }
   const high = quality !== 'low';
@@ -106,25 +300,80 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const W = L.halfWidth, X0 = L.x0, X1 = L.x1, H = L.height, D = X1 - X0, XM = (X0 + X1) / 2;
   const F = L.floor, LN = F.lanes;
 
-  // ---------------------------------------------------------------- textures (small canvases)
-  const floorTex = canvasTex(1536, 584, (x, w, h) => {
+  // ---------------------------------------------------------------- textures (crisp high-res canvases)
+  const floorTex = canvasTex(2048, 1024, (x, w, h) => {
     const sx = w / D, sz = h / (2 * W), px = v => (v - X0) * sx, pz = v => (v + W) * sz, r = rng(11);
     x.fillStyle = F.color; x.fillRect(0, 0, w, h);
-    for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '120,124,130' : '255,255,255'},${0.025 + r() * 0.035})`; const s = 2 + r() * 10; x.fillRect(r() * w, r() * h, s, s); }
-    // grey chevron parking lanes on both sides of the car, chevrons point out to the pit lane
+    for (let i = 0; i < 3500; i++) {
+      x.fillStyle = `rgba(${r() < 0.5 ? '120,124,130' : '255,255,255'},${0.025 + r() * 0.035})`;
+      const s = 2 + r() * 10;
+      x.fillRect(r() * w, r() * h, s, s);
+    }
+
+    // 1. Primary chevron lanes beside the active car (Car 1)
     for (const s of [-1, 1]) {
       const za = s > 0 ? LN.z0 : -LN.z1, zb = s > 0 ? LN.z1 : -LN.z0;
       x.fillStyle = LN.color; x.fillRect(px(LN.x0), pz(za), (LN.x1 - LN.x0) * sx, (zb - za) * sz);
       x.strokeStyle = LN.chevron; x.lineWidth = 5; x.lineCap = 'square';
-      for (let cx = LN.x0 + 10; cx < LN.x1 - 4; cx += 9) { x.beginPath(); x.moveTo(px(cx + 4), pz(za + 1)); x.lineTo(px(cx), pz((za + zb) / 2)); x.lineTo(px(cx + 4), pz(zb - 1)); x.stroke(); }
+      for (let cx = LN.x0 + 10; cx < LN.x1 - 4; cx += 10) {
+        x.beginPath();
+        x.moveTo(px(cx + 4), pz(za + 1));
+        x.lineTo(px(cx), pz((za + zb) / 2));
+        x.lineTo(px(cx + 4), pz(zb - 1));
+        x.stroke();
+      }
     }
-    x.strokeStyle = 'rgba(40,42,46,0.45)'; x.lineWidth = 3; x.strokeRect(1, 1, w - 2, h - 2);
-    // painted direction signs
-    x.fillStyle = 'rgba(38,40,44,0.85)'; x.font = 'bold 30px Arial, sans-serif'; x.textBaseline = 'middle';
-    for (const [txt, fx, fz, ang] of F.signs) { x.save(); x.translate(px(fx), pz(fz)); x.rotate(-(ang || 0) + Math.PI / 2); x.textAlign = 'center'; x.fillText(txt, 0, 0); x.restore(); }
-    // red PIT-LANE threshold strip at the door, lettering reads from the pit lane
+
+    // 2. Secondary chevron lanes for left sub-assembly & setup bay
+    if (F.subLanes) {
+      const SLN = F.subLanes;
+      const za = SLN.z0, zb = SLN.z1;
+      x.fillStyle = SLN.color; x.fillRect(px(SLN.x0), pz(za), (SLN.x1 - SLN.x0) * sx, (zb - za) * sz);
+      x.strokeStyle = SLN.chevron; x.lineWidth = 5; x.lineCap = 'square';
+      for (let cx = SLN.x0 + 10; cx < SLN.x1 - 4; cx += 10) {
+        x.beginPath();
+        x.moveTo(px(cx + 4), pz(za + 1));
+        x.lineTo(px(cx), pz((za + zb) / 2));
+        x.lineTo(px(cx + 4), pz(zb - 1));
+        x.stroke();
+      }
+    }
+
+    // 3. Precision Laser Guide Alignment Line down car center
+    x.strokeStyle = '#00d4e8'; x.lineWidth = 4; x.setLineDash([16, 14]);
+    x.beginPath(); x.moveTo(px(-75), pz(0)); x.lineTo(px(72), pz(0)); x.stroke();
+    x.setLineDash([]);
+
+    // 4. FIA Scrutineering Wheel Stop Boxes [ T ]
+    x.strokeStyle = '#facc15'; x.lineWidth = 6;
+    x.strokeRect(px(-4), pz(-11), 12 * sx, 4 * sz);
+    x.strokeRect(px(-4), pz(7), 12 * sx, 4 * sz);
+    x.strokeRect(px(34), pz(-11), 14 * sx, 4 * sz);
+    x.strokeRect(px(34), pz(7), 14 * sz, 4 * sz);
+
+    // 5. 800V DC High-Voltage Safety Hazard Striping
+    x.strokeStyle = '#eab308'; x.lineWidth = 4;
+    x.strokeRect(px(10), pz(28), 40 * sx, 22 * sz);
+    x.fillStyle = 'rgba(234, 179, 8, 0.08)';
+    x.fillRect(px(10), pz(28), 40 * sx, 22 * sz);
+
+    // Floor edge border
+    x.strokeStyle = 'rgba(40,42,46,0.45)'; x.lineWidth = 4; x.strokeRect(1, 1, w - 2, h - 2);
+
+    // 6. Painted Directional Signs & Stencils
+    x.fillStyle = 'rgba(38,40,44,0.85)'; x.font = 'bold 28px Arial, sans-serif'; x.textBaseline = 'middle';
+    for (const [txt, fx, fz, ang] of F.signs) {
+      x.save();
+      x.translate(px(fx), pz(fz));
+      x.rotate(-(ang || 0) + Math.PI / 2);
+      x.textAlign = 'center';
+      x.fillText(txt, 0, 0);
+      x.restore();
+    }
+
+    // 7. Red PIT-LANE Threshold Strip at the door
     x.fillStyle = L.pitLaneStrip.color; x.fillRect(0, 0, L.pitLaneStrip.width * sx, h);
-    x.save(); x.translate(L.pitLaneStrip.width * sx * 0.5, h / 2); x.rotate(Math.PI / 2); x.fillStyle = '#ffffff'; x.font = 'bold 34px Arial'; x.textAlign = 'center'; x.fillText(L.pitLaneStrip.text, 0, 2); x.restore();
+    x.save(); x.translate(L.pitLaneStrip.width * sx * 0.5, h / 2); x.rotate(Math.PI / 2); x.fillStyle = '#ffffff'; x.font = 'bold 44px Arial'; x.textAlign = 'center'; x.fillText(L.pitLaneStrip.text, 0, 2); x.restore();
   }, { aniso: 16 });
   const brickTex = canvasTex(256, 256, (x, w, h) => {
     const r = rng(3); x.fillStyle = '#b9b2a4'; x.fillRect(0, 0, w, h);
@@ -294,7 +543,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     g.add(mirror);
   }
   // soft contact shadow under the car
-  { const s = new THREE.Mesh(new THREE.PlaneGeometry(70, 30), M.shadow); s.rotation.x = -Math.PI / 2; s.position.set(17, 0.06, 0); s.name = 'Garage_Contact_Shadow'; s.renderOrder = 2; g.add(s); }
+  { const s = new THREE.Mesh(new THREE.PlaneGeometry(80, 32), M.shadow); s.rotation.x = -Math.PI / 2; s.position.set(17, 0.06, 0); s.name = 'Garage_Contact_Shadow'; s.renderOrder = 2; g.add(s); }
 
   // ---------------------------------------------------------------- walls: black band, team panels, pale brick, grey brick back wall
   for (const s of [-1, 1]) {
@@ -308,12 +557,12 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   }
   box(M.greyBrick, 1, H, 2 * W, X1 + 0.5, H / 2, 0);
   box(M.band, 0.8, L.lowerBand, 2 * W - 2, X1 - 0.6, L.lowerBand / 2, 0);
-  for (const z of [-28, 28]) box(M.team, 0.6, L.panelTop - L.lowerBand, 14, X1 - 0.7, (L.panelTop + L.lowerBand) / 2, z);
+  for (const z of [-52, -34, 34, 52]) box(M.team, 0.6, L.panelTop - L.lowerBand, 16, X1 - 0.7, (L.panelTop + L.lowerBand) / 2, z);
   // sponsor and team name boards: team name over the back wall, sponsor boards high on the side walls
-  quad(M.signs, X1 - 0.8, 39, 0, 40, 5, -1, 0, atlasUV(0));
-  [[-20, 1], [10, 2], [40, 3], [70, 4]].forEach(([x, k]) => quad(M.signs, x, 38.5, -W + 0.9, 18, 2.6, 0, 1, atlasUV(k)));
-  [[-20, 5], [10, 6], [40, 1], [70, 2]].forEach(([x, k]) => quad(M.signs, x, 38.5, W - 0.9, 18, 2.6, 0, -1, atlasUV(k)));
-  quad(M.signs, X0 + 14, 26, -W + 0.85, 9, 2.2, 0, 1, atlasUV(0)); quad(M.signs, X0 + 14, 26, W - 0.85, 9, 2.2, 0, -1, atlasUV(0));
+  quad(M.signs, X1 - 0.8, 44, 0, 60, 6.5, -1, 0, atlasUV(0));
+  [[-35, 1], [5, 2], [45, 3], [85, 4], [125, 5]].forEach(([x, k]) => quad(M.signs, x, 44.5, -W + 0.9, 22, 2.8, 0, 1, atlasUV(k % 7)));
+  [[-35, 6], [5, 1], [45, 2], [85, 3], [125, 4]].forEach(([x, k]) => quad(M.signs, x, 44.5, W - 0.9, 22, 2.8, 0, -1, atlasUV(k % 7)));
+  quad(M.signs, X0 + 14, 28, -W + 0.85, 10, 2.5, 0, 1, atlasUV(0)); quad(M.signs, X0 + 14, 28, W - 0.85, 10, 2.5, 0, -1, atlasUV(0));
 
   // ---------------------------------------------------------------- front: door opening, raised roller door with windows, pit building facade
   const OW = W;   // the door opening is the full garage width
@@ -570,12 +819,23 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
     box(M.dark, CW, 0.3, 2 * CHW, CX, top - 0.15, 0);
     { const p = new THREE.PlaneGeometry(CW - 0.4, 2 * CHW - 0.4); p.rotateX(Math.PI / 2); p.translate(CX, C.y + 0.4, 0); put(M.canopyPanel, p); }
     for (let x = C.x0 + 9; x < C.x1 - 4; x += 9) box(M.dark, 0.25, 0.4, 2 * CHW, x, C.y + 0.5, 0);   // panel ribs
-    for (const x of [C.x0 + 3, C.x1 - 3]) for (const z of [-CHW + 1, CHW - 1]) put(M.galv, rod([x, top, z], [x, L.truss.y - L.truss.size / 2, Math.sign(z) * 13], 0.08, 4));
+    for (const x of [C.x0 + 3, C.x1 - 3]) for (const z of [-CHW + 1, CHW - 1]) put(M.galv, rod([x, top, z], [x, L.truss.y - L.truss.size / 2, Math.sign(z) * 18], 0.08, 4));
     // number boards at the ends of the canopy (team name on the atlas)
-    quad(M.signs, C.x0 - t - 0.05, C.y + C.depth * 0.7, 0, 12, 1.2, -1, 0, atlasUV(0)); quad(M.signs, C.x1 + t + 0.05, C.y + C.depth * 0.7, 0, 12, 1.2, 1, 0, atlasUV(0));
+    quad(M.signs, C.x0 - t - 0.05, C.y + C.depth * 0.7, 0, 14, 1.4, -1, 0, atlasUV(0)); quad(M.signs, C.x1 + t + 0.05, C.y + C.depth * 0.7, 0, 14, 1.4, 1, 0, atlasUV(0));
+
+    // High-tech glowing neon perimeter accent rim around the canopy bottom
+    const neonMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(T().accent || 0x00d4e8) });
+    const neonBeams = [
+      B(CW + 2 * t + 0.4, 0.2, 0.2, CX, C.y, -CHW - t - 0.06),
+      B(CW + 2 * t + 0.4, 0.2, 0.2, CX, C.y, CHW + t + 0.06),
+      B(0.2, 0.2, 2 * CHW + 2 * t + 0.4, C.x0 - t - 0.06, C.y, 0),
+      B(0.2, 0.2, 2 * CHW + 2 * t + 0.4, C.x1 + t + 0.06, C.y, 0),
+    ];
+    g.add(new THREE.Mesh(merged(neonBeams), neonMat));
+
     // coiled air lines hanging from the canopy (wheel guns, tyre gauges, and telemetry harness)
     const hoses = [], yel = [];
-    [[C.x0 + 4, -CHW + 2], [C.x0 + 4, CHW - 2], [C.x1 - 6, -CHW + 2], [C.x1 - 6, CHW - 2], [CX, -CHW + 1.5], [CX, CHW - 1.5]].forEach(([x, z], k) => (k % 3 === 2 ? yel : hoses).push(coil(x, C.y, 15 + (k % 2) * 3, z, 0.85, 8)));
+    [[C.x0 + 4, -CHW + 2], [C.x0 + 4, CHW - 2], [C.x1 - 6, -CHW + 2], [C.x1 - 6, CHW - 2], [CX, -CHW + 1.5], [CX, CHW - 1.5]].forEach(([x, z], k) => (k % 3 === 2 ? yel : hoses).push(coil(x, C.y, 16 + (k % 2) * 3, z, 0.85, 8)));
     put(M.rubber, mergeGeometries(hoses)); put(M.yellowHose, mergeGeometries(yel));
     // hanging pneumatic wheel guns, tyre pressure gauge, and umbilical connector attached to the cables
     hangingTools = buildHangingTools(M, C);
@@ -589,7 +849,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   box(M.team, 0.6, DK.height - 0.3, DK.length, dx - DK.depth / 2 + 0.3, (DK.height - 0.3) / 2, dz);
   for (const s of [-1, 1]) box(M.dark, DK.depth - 1, DK.height, 0.6, dx, DK.height / 2, dz + s * (DK.length / 2 - 0.5));
   const MW = DK.monitorWall, mwX = X1 - 0.9;
-  box(M.band, 0.6, MW.rows * (MW.h + 0.9) + 1.4, MW.cols * (MW.w + 0.9) + 1.4, mwX, 17 + (MW.rows - 1) * (MW.h + 0.9) / 2, dz);
+  box(M.band, 0.6, MW.rows * (MW.h + 0.9) + 1.4, MW.cols * (MW.w + 0.9) + 1.4, mwX, 19 + (MW.rows - 1) * (MW.h + 0.9) / 2, dz);
 
   // 8 High-Fidelity Monitors on the Wall:
   // Row 1: Standings & Schedule, Weather Radar, Steering Wheel Guide, SREdesigns.com Showcase
@@ -608,7 +868,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const wallScreenMeshes = [];
   wallScreensConfig.forEach(cfg => {
     const cz = dz - (MW.cols - 1) / 2 * (MW.w + 0.9) + cfg.c * (MW.w + 0.9);
-    const cy = 17 + cfg.r * (MW.h + 0.9);
+    const cy = 19 + cfg.r * (MW.h + 0.9);
     box(M.dark, 0.5, MW.h + 0.45, MW.w + 0.45, mwX - 0.5, cy, cz);
 
     const sMat = std({ map: cfg.tex, emissive: 0xffffff, emissiveMap: cfg.tex, emissiveIntensity: 0.95, roughness: 0.25 });
@@ -626,29 +886,29 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const regMon = canvasTex(1024, 768, (x, w, h) => drawRegulations(x, w, h, { dark: true, team: team() }), { aniso: 16 });
   const regSheet = canvasTex(768, 1024, (x, w, h) => drawRegulations(x, w, h, { dark: false, team: team() }), { aniso: 16 });
   const mon = new THREE.Mesh(new THREE.PlaneGeometry(8, 6), std({ map: regMon, emissive: 0xffffff, emissiveMap: regMon, emissiveIntensity: 0.9 }));
-  mon.rotation.y = -Math.PI / 2; mon.position.set(dx + 1.5, DK.height + 4.6, dz - 6); mon.name = 'Garage_Desk_Monitor'; mon.userData.click = 'regulations'; g.add(mon);
-  box(M.dark, 0.5, 6.6, 8.6, dx + 1.85, DK.height + 4.6, dz - 6); box(M.dark, 0.5, 3, 0.5, dx + 2, DK.height + 1.5, dz - 6); box(M.dark, 2.5, 0.3, 2.5, dx + 2, DK.height + 0.4, dz - 6);
+  mon.rotation.y = -Math.PI / 2; mon.position.set(dx + 1.5, DK.height + 4.6, dz - 14); mon.name = 'Garage_Desk_Monitor'; mon.userData.click = 'regulations'; g.add(mon);
+  box(M.dark, 0.5, 6.6, 8.6, dx + 1.85, DK.height + 4.6, dz - 14); box(M.dark, 0.5, 3, 0.5, dx + 2, DK.height + 1.5, dz - 14); box(M.dark, 2.5, 0.3, 2.5, dx + 2, DK.height + 0.4, dz - 14);
 
   // Secondary desk monitors:
-  // At oz = 3: Steering Wheel Tool Monitor
-  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 3);
-  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 3);
+  // At oz = 4: Steering Wheel Tool Monitor
+  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 4);
+  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 4);
   const deskWheelMat = std({ map: screenTextures.steeringWheel, emissive: 0xffffff, emissiveMap: screenTextures.steeringWheel, emissiveIntensity: 0.95, roughness: 0.25 });
   const deskWheelMon = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), deskWheelMat);
   deskWheelMon.rotation.y = -Math.PI / 2;
-  deskWheelMon.position.set(dx + 1.55, DK.height + 3.6, dz + 3);
+  deskWheelMon.position.set(dx + 1.55, DK.height + 3.6, dz + 4);
   deskWheelMon.name = 'Garage_Desk_Wheel_Monitor';
   deskWheelMon.userData.click = 'screen_steering_wheel';
   deskWheelMon.userData.title = 'PCU-8D Steering Wheel Tool';
   g.add(deskWheelMon);
 
-  // At oz = 11: SREdesigns Showcase Monitor
-  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 11);
-  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 11);
+  // At oz = 12: SREdesigns Showcase Monitor
+  box(M.dark, 0.5, 4.6, 6.6, dx + 1.85, DK.height + 3.6, dz + 12);
+  box(M.dark, 0.5, 2, 0.5, dx + 2, DK.height + 1, dz + 12);
   const deskSreMat = std({ map: screenTextures.sredesigns, emissive: 0xffffff, emissiveMap: screenTextures.sredesigns, emissiveIntensity: 0.95, roughness: 0.25 });
   const deskSreMon = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), deskSreMat);
   deskSreMon.rotation.y = -Math.PI / 2;
-  deskSreMon.position.set(dx + 1.55, DK.height + 3.6, dz + 11);
+  deskSreMon.position.set(dx + 1.55, DK.height + 3.6, dz + 12);
   deskSreMon.name = 'Garage_Desk_SRE_Monitor';
   deskSreMon.userData.click = 'screen_sredesigns';
   deskSreMon.userData.title = 'SREdesigns.com Portfolio & Lab';
@@ -656,14 +916,14 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
 
   // Printed Regulations sheet
   const sheet = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.97), std({ map: regSheet, roughness: 0.9 }));
-  sheet.rotation.set(-Math.PI / 2, 0, Math.PI / 2 + 0.2); sheet.position.set(dx - 1, DK.height + 0.27, dz + 2); sheet.name = 'Garage_Regs_Sheet'; sheet.userData.click = 'regulations'; g.add(sheet);
+  sheet.rotation.set(-Math.PI / 2, 0, Math.PI / 2 + 0.2); sheet.position.set(dx - 1, DK.height + 0.27, dz - 5); sheet.name = 'Garage_Regs_Sheet'; sheet.userData.click = 'regulations'; g.add(sheet);
 
   // Workstation laptop on desk
-  box(M.dark, 2.4, 0.15, 3.4, dx - 1.2, DK.height + 0.33, dz + 7.2);
+  box(M.dark, 2.4, 0.15, 3.4, dx - 1.2, DK.height + 0.33, dz + 19);
   const laptopMat = std({ map: screenTextures.laptop, emissive: 0xffffff, emissiveMap: screenTextures.laptop, emissiveIntensity: 0.95, roughness: 0.25 });
   const laptopScreen = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), laptopMat);
   laptopScreen.rotation.y = -Math.PI / 2;
-  laptopScreen.position.set(dx + 0.05, DK.height + 1.5, dz + 7.2);
+  laptopScreen.position.set(dx + 0.05, DK.height + 1.5, dz + 19);
   laptopScreen.name = 'Garage_Desk_Laptop_Screen';
   laptopScreen.userData.click = 'screen_acknowledgements';
   laptopScreen.userData.title = 'Project Acknowledgements & Diagnostics';
@@ -671,7 +931,7 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
 
   // Interactive Roll-Cab Tool Chest with 5 sliding drawers
   const toolChest = createInteractiveToolChest(M, { teamColor: T().panel });
-  toolChest.position.set(30, 0, 28);
+  toolChest.position.set(28, 0, 34);
   toolChest.rotation.y = Math.PI;
   g.add(toolChest);
   g.userData.toolChest = toolChest;
@@ -685,15 +945,28 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
   const cableRamps = buildFloorCableRamps(M, L);
   g.add(cableRamps);
 
-  const clickables = [mon, sheet, deskWheelMon, deskSreMon, laptopScreen, ...wallScreenMeshes, pitPerch];
+  // Advanced Detail Assemblies: Setup Table, Wing Trees, Power Unit Station, Debrief Lounge
+  const setupPlatform = buildSetupPlatform(M, T);
+  g.add(setupPlatform);
+
+  const wingRacks = buildWingRacks(M, T);
+  g.add(wingRacks);
+
+  const puStation = buildPowerUnitStation(M, T);
+  g.add(puStation);
+
+  const debriefLounge = buildDebriefLounge(M, T);
+  g.add(debriefLounge);
+
+  const clickables = [mon, sheet, deskWheelMon, deskSreMon, laptopScreen, ...wallScreenMeshes, pitPerch, setupPlatform, wingRacks, puStation, debriefLounge];
   if (hangingTools) hangingTools.traverse(o => { if (o.userData?.click) clickables.push(o); });
   toolChest.userData.drawers.forEach(dr => clickables.push(dr));
   toolChest.traverse(o => { if (o.userData?.click && !clickables.includes(o)) clickables.push(o); });
 
   g.userData.clickables = clickables;
-  g.userData.deskView = { target: [dx + 1, DK.height + 3, dz - 2], pos: [dx - 22, DK.height + 9, dz - 2] };
+  g.userData.deskView = { target: [dx, DK.height + 4, dz], pos: [dx - 26, DK.height + 11, dz - 6] };
   g.userData.pitPerchView = { target: [-174, 9.8, -1.0], pos: [-162, 11.5, 0] };
-  g.userData.toolChestView = { target: [30, 7.5, 28], pos: [30, 14, 18] };
+  g.userData.toolChestView = { target: [28, 7.5, 34], pos: [28, 14, 22] };
 
   // ---------------------------------------------------------------- car stands and jacks (shown when the wheels are off, placed from the car)
   const stands = new THREE.Group(); stands.name = 'Garage_Car_Stands'; stands.visible = false;
@@ -735,14 +1008,16 @@ export function buildGarage(L = GARAGE_LAYOUT, teamId = 'red-bull', { quality = 
 
   // ---------------------------------------------------------------- lights: soft area lights, a shadow casting spot over the car, sun outside
   const lights = [];
-  const hemi = new THREE.HemisphereLight(0xf2f5ff, 0x5c6066, 0.28); lights.push(hemi);
+  const hemi = new THREE.HemisphereLight(0xf2f5ff, 0x5c6066, 0.35); lights.push(hemi);
   const area = (w, h, x, y, z, I) => { const r = new THREE.RectAreaLight(0xf4f7ff, I, w, h); r.position.set(x, y, z); r.lookAt(x, 0, z); lights.push(r); return r; };
-  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 4.0);                         // the canopy panel
-  for (const z of [-25, 25]) area(TL.x1 - TL.x0, 9, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 1.5);   // tube light rows
-  area(30, 10, 92, TL.y - 0.4, 0, 2.2);                                     // over the desk
-  const spot = new THREE.SpotLight(0xffffff, 1.6, 0, 0.95, 1.0, 0);
+  area(CW - 1, 2 * CHW - 1, CX, C.y + 0.2, 0, 4.5);                         // the canopy panel
+  for (const z of [-45, -18, 18, 45]) area(TL.x1 - TL.x0, 10, (TL.x0 + TL.x1) / 2, TL.y - 0.4, z, 1.2);   // tube light rows
+  area(DK.length, DK.depth + 4, dx, TL.y - 0.4, dz, 2.8);                   // over the strategy desk
+  area(36, 16, 22, TL.y - 0.4, -44, 2.0);                                  // over setup table
+  area(24, 10, 88, TL.y - 0.4, 54, 1.8);                                   // over PU diagnostics station
+  const spot = new THREE.SpotLight(0xffffff, 1.8, 0, 0.95, 1.0, 0);
   spot.position.set(CX, C.y - 0.5, 0); spot.target.position.set(CX, 0, 0); spot.castShadow = true;
-  spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 60;
+  spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.camera.near = 4; spot.shadow.camera.far = 70;
   lights.push(spot, spot.target);
   const sun = new THREE.DirectionalLight(0xfff1dc, 1.1);
   sun.position.set(X0 - 260, 300, -140); sun.target.position.set(X0 - 40, 0, 0); sun.castShadow = true;

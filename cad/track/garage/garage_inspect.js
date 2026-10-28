@@ -110,20 +110,20 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
   const QUALITY = /[?&]garage=low\b/.test(location.search) ? 'low' : 'high';
   const L = GARAGE_LAYOUT;
   const GARAGE_VIEWS = {
-    CAM_ISO: { pos: [-40, 22, 28], target: [16, 4, 0] },
-    CAM_FRONT: { pos: [-62, 6, 0], target: [10, 3, 0] },
-    CAM_SIDE: { pos: [16, 7, 31], target: [16, 3.5, 0] },
-    CAM_TOP: { pos: [14, 41, 0.5], target: [14, 0, 0] },
-    CAM_REAR: { pos: [80, 9, 0], target: [30, 4, 0] },
+    CAM_ISO: { pos: [-42, 22, 34], target: [18, 4, 0] },
+    CAM_FRONT: { pos: [-65, 6, 0], target: [12, 3, 0] },
+    CAM_SIDE: { pos: [18, 9, 46], target: [18, 4, 0] },
+    CAM_TOP: { pos: [22, 50, 0.5], target: [22, 0, 0] },
+    CAM_REAR: { pos: [92, 10, 0], target: [32, 4.5, 0] },
     CAM_STEERING: { pos: [12.0, 5.6, 0], target: [9.0, 4.2, 0] },
     CAM_COCKPIT: { pos: [13.2, 6.2, 0], target: [-8, 3.8, 0] },
     CAM_WHEEL: { pos: [0, 3.5, 14], target: [0, 3.5, 8] },
-    CAM_EXPLODED: { pos: [-48, 30, 30], target: [14, 6, 0] },
-    STATE_ACTIVE: { pos: [-40, 18, 28], target: [10, 3.2, 0] },
-    CAM_OVERVIEW: { pos: [-56, 19, 15], target: [16, 4, 0] },
-    CAM_DESK: { pos: [72, 17, 38], target: [95, 11, 38] },
+    CAM_EXPLODED: { pos: [-52, 32, 36], target: [16, 6, 0] },
+    STATE_ACTIVE: { pos: [-42, 20, 32], target: [12, 3.2, 0] },
+    CAM_OVERVIEW: { pos: [-72, 24, 34], target: [24, 5, 0] },
+    CAM_DESK: { pos: [126, 18, 14], target: [154, 11, 0] },
     CAM_PERCH: { pos: [-162, 11.5, 0], target: [-174, 9.8, -1.0] },
-    CAM_TOOLCHEST: { pos: [30, 14, 18], target: [30, 7.5, 28] },
+    CAM_TOOLCHEST: { pos: [28, 14, 22], target: [28, 7.5, 34] },
   };
   const st = {
     active: false,
@@ -190,6 +190,8 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       <button type="button" class="view-pill" id="pop-view-desk">💼 Engineers' Desk</button>
       <button type="button" class="view-pill" id="pop-view-perch">🪑 Pit Wall Stand</button>
       <button type="button" class="view-pill" id="pop-view-toolchest">🧰 Tool Chest</button>
+      <button type="button" class="view-pill" id="pop-view-setup">🔬 Setup Table</button>
+      <button type="button" class="view-pill" id="pop-view-pu">⚡ PU Station</button>
     </div>
   `;
   host.appendChild(viewsPop);
@@ -524,6 +526,14 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     zoomToToolChest();
     viewsPop.classList.remove('on');
   });
+  $('pop-view-setup')?.addEventListener('click', () => {
+    zoomToSetupPlatform();
+    viewsPop.classList.remove('on');
+  });
+  $('pop-view-pu')?.addEventListener('click', () => {
+    zoomToPowerUnitStation();
+    viewsPop.classList.remove('on');
+  });
   document.addEventListener('click', (e) => {
     if (viewsPop.classList.contains('on') && !viewsPop.contains(e.target) && e.target !== $('garage-views-btn')) {
       viewsPop.classList.remove('on');
@@ -805,6 +815,30 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
         'Panasonic Toughbook telemetry terminal running CAN-bus diagnostics and SREdesigns telemetry suite.',
         point
       );
+    } else if (action === 'setup_platform') {
+      showItemCard(
+        targetObj.userData.title || 'FIA Scrutineering Setup Table',
+        'Precision titanium & carbon alignment surface plate with 4-corner load cell scales, laser ride-height bridges, and camber/toe measurement targets for the 2026 Nimble Car.',
+        point
+      );
+    } else if (action === 'wing_rack') {
+      showItemCard(
+        targetObj.userData.title || '2026 Active-Aero Wing Assembly Rack',
+        'Modular quick-swap front and rear wing assemblies with active flap actuators (X-Mode straight-line drag reduction) and ground-effect strakes.',
+        point
+      );
+    } else if (action === 'power_unit_station') {
+      showItemCard(
+        targetObj.userData.title || 'Power Unit & High-Voltage Diagnostics',
+        'Sub-assembly workstation for 1.6L V6 Turbo internal combustion engine, 350 kW MGU-K motor generator, and 800V DC energy storage system diagnostics.',
+        point
+      );
+    } else if (action === 'debrief_table') {
+      showItemCard(
+        targetObj.userData.title || 'Driver Debrief & Strategy Station',
+        'Central telemetry debrief table equipped with live timing iPads, sector deltas, driver hydration supplies, and radio intercom headsets.',
+        point
+      );
     } else {
       showItemCard(
         targetObj.userData.title || 'Garage Equipment',
@@ -877,6 +911,42 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
         showItemCard(
           'Interactive Tool Chest',
           '5-drawer mobile roll-cab cabinet. Click individual drawers to slide them open and inspect custom laser-cut tool shadow foam sets.'
+        );
+      },
+    };
+  }
+
+  function zoomToSetupPlatform() {
+    st.viewingPitPerch = false;
+    st.tween = {
+      start: performance.now(),
+      t: 0,
+      p0: camera.position.clone(),
+      t0: controls.target.clone(),
+      p1: new THREE.Vector3(22, 16, -26),
+      t1: new THREE.Vector3(22, 4, -44),
+      done: () => {
+        showItemCard(
+          'FIA Scrutineering Setup Table',
+          'Precision titanium & carbon alignment surface plate with 4-corner load cell scales, laser ride-height bridges, and camber/toe measurement targets for the 2026 Nimble Car.'
+        );
+      },
+    };
+  }
+
+  function zoomToPowerUnitStation() {
+    st.viewingPitPerch = false;
+    st.tween = {
+      start: performance.now(),
+      t: 0,
+      p0: camera.position.clone(),
+      t0: controls.target.clone(),
+      p1: new THREE.Vector3(88, 16, 36),
+      t1: new THREE.Vector3(88, 8, 54),
+      done: () => {
+        showItemCard(
+          'Power Unit & High-Voltage Diagnostics',
+          'Sub-assembly workstation for 1.6L V6 Turbo internal combustion engine, 350 kW MGU-K motor generator, and 800V DC energy storage system diagnostics.'
         );
       },
     };
@@ -956,7 +1026,7 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     st.saved.maxPolar = controls.maxPolarAngle;
     st.saved.setView = window.setCameraView;
 
-    controls.maxDistance = 180;
+    controls.maxDistance = 250;
     controls.minDistance = 2;
     controls.maxPolarAngle = Math.PI * 0.53;
     camera.up.set(0, 1, 0);
@@ -975,8 +1045,8 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
       keepInside();
     };
 
-    camera.position.set(-56, 19, 15);
-    controls.target.set(16, 4, 0);
+    camera.position.set(-68, 22, 28);
+    controls.target.set(22, 4.5, 0);
     controls.enabled = true;
     controls.update();
 
@@ -1158,6 +1228,8 @@ export function initGarageInspect({ scene, camera, controls, renderer, carModel,
     openAcknowledgements: () => openModal(ackOv, true),
     zoomToPitPerch,
     zoomToToolChest,
+    zoomToSetupPlatform,
+    zoomToPowerUnitStation,
     zoomToDesk,
     get active() { return st.active; },
     select: (key) => {

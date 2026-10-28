@@ -506,6 +506,16 @@ export function initPauseMenu() {
               <b>Interactive Tool Chest</b>
               <span>5-drawer roll-cab with foam toolsets</span>
             </button>
+            <button type="button" class="pause-card-btn" id="pause-goto-setup">
+              <span class="card-icon">🔬</span>
+              <b>Setup Surface Plate</b>
+              <span>FIA laser ride-height & scales</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-goto-pu">
+              <span class="card-icon">⚡</span>
+              <b>Power Unit Station</b>
+              <span>V6 Hybrid & 800V diagnostics bench</span>
+            </button>
             <button type="button" class="pause-card-btn" id="pause-reset-view">
               <span class="card-icon">🔄</span>
               <b>Reset Camera</b>
@@ -809,6 +819,24 @@ export function initPauseMenu() {
       window.garageInspect.enterGarageInspect().then(() => window.garageInspect?.zoomToToolChest?.());
     } else {
       window.garageInspect?.zoomToToolChest?.();
+    }
+    closePauseMenu();
+  });
+
+  $('pause-goto-setup')?.addEventListener('click', () => {
+    if (!window.garageInspect?.active && window.garageInspect?.enterGarageInspect) {
+      window.garageInspect.enterGarageInspect().then(() => window.garageInspect?.zoomToSetupPlatform?.());
+    } else {
+      window.garageInspect?.zoomToSetupPlatform?.();
+    }
+    closePauseMenu();
+  });
+
+  $('pause-goto-pu')?.addEventListener('click', () => {
+    if (!window.garageInspect?.active && window.garageInspect?.enterGarageInspect) {
+      window.garageInspect.enterGarageInspect().then(() => window.garageInspect?.zoomToPowerUnitStation?.());
+    } else {
+      window.garageInspect?.zoomToPowerUnitStation?.();
     }
     closePauseMenu();
   });
