@@ -115,14 +115,28 @@ function initHudDropdown() {
     }
   }
 
+  // The Circuit HUD (Drive / Autopilot / cameras / tyre wear / mini-map) and the Session panel
+  // (session picker, tyre compound, new set, leave garage) are the game controls, so they start
+  // visible. The other overlays stay tucked away. Choices are remembered in localStorage.
+  const DEFAULT_ON = { 'chk-hud-track': true, 'chk-hud-session': true };
+  const STORE_KEY = 'nimble.hud.v1';
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; } catch { saved = {}; }
+  const save = () => {
+    const out = {};
+    [...Object.keys(OVERLAY_MAP), 'chk-hud-cockpit'].forEach(id => { const c = $(id); if (c) out[id] = c.checked; });
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(out)); } catch { /* storage unavailable */ }
+  };
+
   // Handle standard overlays
   Object.entries(OVERLAY_MAP).forEach(([chkId, targetId]) => {
     const chk = $(chkId);
     if (!chk) return;
-    chk.checked = false; // Tucked away by default
+    chk.checked = chkId in saved ? !!saved[chkId] : !!DEFAULT_ON[chkId];
 
     chk.addEventListener('change', () => {
       applyOverlay(chkId, targetId, chk.checked);
+      save();
     });
 
     // When the element is mounted in the DOM later, ensure it's tucked away or synced
@@ -135,9 +149,10 @@ function initHudDropdown() {
   const chkCockpit = $('chk-hud-cockpit');
   const workspace = document.querySelector('.workspace');
   if (workspace) {
-    // Start tucked away (clean car view)
-    workspace.classList.add('panels-hidden');
-    if (chkCockpit) chkCockpit.checked = false;
+    // Start tucked away (clean car view) unless the user turned it on last time
+    const cockpitOn = !!saved['chk-hud-cockpit'];
+    workspace.classList.toggle('panels-hidden', !cockpitOn);
+    if (chkCockpit) chkCockpit.checked = cockpitOn;
 
     chkCockpit?.addEventListener('change', () => {
       if (chkCockpit.checked) {
@@ -147,15 +162,17 @@ function initHudDropdown() {
       }
       const btnToggle = $('btn-toggle-panels');
       if (btnToggle) btnToggle.textContent = chkCockpit.checked ? 'Hide Panels' : 'Show Panels';
+      save();
     });
 
     // Also sync if the user clicks the existing "Hide Panels" button in view-toolbar
     const btnToggle = $('btn-toggle-panels');
     if (btnToggle) {
-      btnToggle.textContent = 'Show Panels';
+      btnToggle.textContent = cockpitOn ? 'Hide Panels' : 'Show Panels';
       btnToggle.addEventListener('click', () => {
         setTimeout(() => {
           if (chkCockpit) chkCockpit.checked = !workspace.classList.contains('panels-hidden');
+          save();
         }, 50);
       });
     }
@@ -176,6 +193,7 @@ function initHudDropdown() {
       const btnToggle = $('btn-toggle-panels');
       if (btnToggle) btnToggle.textContent = 'Show Panels';
     }
+    save();
   });
 
   // Show All button
@@ -192,6 +210,56 @@ function initHudDropdown() {
       workspace?.classList.remove('panels-hidden');
       const btnToggle = $('btn-toggle-panels');
       if (btnToggle) btnToggle.textContent = 'Hide Panels';
+    }
+    save();
+  });
+
+  // Shared API so the pause menu (cad/ui_pause_menu.js) can show/hide overlays and stay in sync
+  // with the checkboxes. key: 'track' | 'session' | 'timing' | 'telem' | 'weather'
+  window.hudOverlays = {
+    isOn: (key) => !!$(`chk-hud-${key}`)?.checked,
+    set: (key, on) => {
+      const chk = $(`chk-hud-${key}`);
+      if (!chk || chk.checked === !!on) return;
+      chk.checked = !!on;
+      chk.dispatchEvent(new Event('change'));
+    },
+  };
+
+  // Quick toolbar buttons on the 3D stage
+  const syncQuickButtons = () => {
+    $('btn-quick-hud')?.classList.toggle('active', !!$('chk-hud-track')?.checked);
+    $('btn-quick-session')?.classList.toggle('active', !!$('chk-hud-session')?.checked);
+  };
+  $('chk-hud-track')?.addEventListener('change', syncQuickButtons);
+  $('chk-hud-session')?.addEventListener('change', syncQuickButtons);
+  syncQuickButtons();
+
+  $('btn-quick-hud')?.addEventListener('click', () => {
+    window.hudOverlays?.set('track', !window.hudOverlays?.isOn('track'));
+    syncQuickButtons();
+  });
+  $('btn-quick-session')?.addEventListener('click', () => {
+    window.hudOverlays?.set('session', !window.hudOverlays?.isOn('session'));
+    syncQuickButtons();
+  });
+  $('btn-quick-pause')?.addEventListener('click', () => {
+    window.togglePauseMenu ? window.togglePauseMenu() : window.pauseMenu?.toggle();
+  });
+
+  // Global Keyboard Shortcuts: U = Circuit HUD & Mini-Map, I = Sessions & Tyres
+  window.addEventListener('keydown', (e) => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    const k = e.key.toLowerCase();
+    if (k === 'u') {
+      e.preventDefault();
+      window.hudOverlays?.set('track', !window.hudOverlays?.isOn('track'));
+      syncQuickButtons();
+    } else if (k === 'i') {
+      e.preventDefault();
+      window.hudOverlays?.set('session', !window.hudOverlays?.isOn('session'));
+      syncQuickButtons();
     }
   });
 }

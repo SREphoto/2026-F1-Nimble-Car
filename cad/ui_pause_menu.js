@@ -414,16 +414,140 @@ export function initPauseMenu() {
 
       <!-- Tabs -->
       <div class="pause-tabs">
-        <button type="button" class="pause-tab active" data-tab="pane-views">🎥 Camera & Views</button>
-        <button type="button" class="pause-tab" data-tab="pane-controls">🏎️ Car & Garage Controls</button>
-        <button type="button" class="pause-tab" data-tab="pane-screens">🖥️ Screens & Engineering Hub</button>
-        <button type="button" class="pause-tab" data-tab="pane-settings">🎨 Livery & Settings</button>
+        <button type="button" class="pause-tab active" data-tab="pane-race">🏁 Race, Autopilot &amp; Tyres</button>
+        <button type="button" class="pause-tab" data-tab="pane-views">🎥 Camera &amp; Views</button>
+        <button type="button" class="pause-tab" data-tab="pane-controls">🏎️ Car &amp; Garage Controls</button>
+        <button type="button" class="pause-tab" data-tab="pane-screens">🖥️ Screens &amp; Engineering Hub</button>
+        <button type="button" class="pause-tab" data-tab="pane-settings">🎨 Livery &amp; Settings</button>
       </div>
 
       <!-- Body -->
       <div class="pause-body">
+        <!-- Pane 0: Race, Autopilot & Tyres -->
+        <div id="pane-race" class="pause-pane active">
+          <!-- Session Modes -->
+          <div class="pause-section-title">
+            <span>F1 SESSIONS &amp; GAMEPLAY MODES</span>
+            <small>Select practice, qualifying or race</small>
+          </div>
+          <div class="pause-grid">
+            <button type="button" class="pause-card-btn" id="pause-mode-solo">
+              <span class="card-icon">🏎️</span>
+              <b>Solo Practice</b>
+              <span>Free drive with no traffic · test setup &amp; apex lines</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-mode-fp1">
+              <span class="card-icon">⏱️</span>
+              <b>Practice (FP1)</b>
+              <span>Free Practice 1 — 60-min simulated session &amp; tower</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-mode-fp2">
+              <span class="card-icon">⏱️</span>
+              <b>Practice (FP2)</b>
+              <span>Free Practice 2 — track evolution &amp; AI benchmark laps</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-mode-fp3">
+              <span class="card-icon">⏱️</span>
+              <b>Practice (FP3)</b>
+              <span>Free Practice 3 — final qualifying simulation run</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-mode-q">
+              <span class="card-icon">🎯</span>
+              <b>Qualifying (Quali)</b>
+              <span>Knockout Q1 · Q2 · Q3 sessions for pole position</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-mode-race">
+              <span class="card-icon">🚦</span>
+              <b>Formation Lap / Race Start</b>
+              <span>5 red lights sequence, launch revs &amp; 22-car standing start</span>
+            </button>
+          </div>
+
+          <!-- Autopilot & Vehicle Drive -->
+          <div class="pause-section-title" style="margin-top:10px">
+            <span>AUTOPILOT &amp; TRACK NAVIGATION</span>
+            <small>AI racing line pursuit &amp; pit stops</small>
+          </div>
+          <div class="pause-grid">
+            <button type="button" class="pause-card-btn" id="pause-btn-autopilot">
+              <span class="card-icon">🤖</span>
+              <b id="pause-auto-text">Autopilot Lap: OFF</b>
+              <span>Follows optimal TUM race line with AI steering/throttle</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-btn-autopit">
+              <span class="card-icon">🛠️</span>
+              <b id="pause-pit-text">Autopilot Pit Stop</b>
+              <span>80 km/h pit entry, box stop for fresh tyres &amp; rejoining track</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-btn-drive">
+              <span class="card-icon">🎮</span>
+              <b id="pause-drive-text">Drive Mode: ACTIVE</b>
+              <span>Drive manually with WASD or arrow keys</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-btn-reset-grid">
+              <span class="card-icon">🔄</span>
+              <b>Reset to Grid</b>
+              <span>Place car back at pole position starting box</span>
+            </button>
+          </div>
+
+          <!-- Tyre Selection & Wear -->
+          <div class="pause-section-title" style="margin-top:10px">
+            <span>PIRELLI TYRE COMPOUND</span>
+            <small>Instant compound switch (all four tyres)</small>
+          </div>
+          <div class="pause-team-grid">
+            <button type="button" class="pause-team-btn pause-compound-btn" data-compound="soft"><span class="pause-team-dot" style="background:#e3122b"></span>Soft (C4 · Red)</button>
+            <button type="button" class="pause-team-btn pause-compound-btn" data-compound="medium"><span class="pause-team-dot" style="background:#f5c400"></span>Medium (C3 · Yellow)</button>
+            <button type="button" class="pause-team-btn pause-compound-btn" data-compound="hard"><span class="pause-team-dot" style="background:#f2f2ee"></span>Hard (C2 · White)</button>
+            <button type="button" class="pause-team-btn pause-compound-btn" data-compound="inter"><span class="pause-team-dot" style="background:#25a84a"></span>Intermediate (Green)</button>
+            <button type="button" class="pause-team-btn pause-compound-btn" data-compound="wet"><span class="pause-team-dot" style="background:#1d6fe8"></span>Full Wet (Blue)</button>
+          </div>
+
+          <div class="pause-section-title" style="margin-top:10px">
+            <span>TYRE WEAR LEVEL &amp; DEGRADATION</span>
+            <small>Simulate tyre life &amp; grip degradation</small>
+          </div>
+          <div class="pause-team-grid">
+            <button type="button" class="pause-team-btn pause-wear-btn" data-wear="new"><span class="pause-team-dot" style="background:#22c55e"></span>Brand New (0% wear)</button>
+            <button type="button" class="pause-team-btn pause-wear-btn" data-wear="laps"><span class="pause-team-dot" style="background:#84cc16"></span>A Few Laps (25% wear)</button>
+            <button type="button" class="pause-team-btn pause-wear-btn" data-wear="medium"><span class="pause-team-dot" style="background:#eab308"></span>Medium Wear (50% wear)</button>
+            <button type="button" class="pause-team-btn pause-wear-btn" data-wear="heavy"><span class="pause-team-dot" style="background:#f97316"></span>Heavy Wear (80% wear)</button>
+            <button type="button" class="pause-team-btn pause-wear-btn" data-wear="blown"><span class="pause-team-dot" style="background:#ef4444"></span>Blown Tyre (Puncture)</button>
+            <button type="button" class="pause-team-btn" id="pause-btn-newset"><span class="pause-team-dot" style="background:#00d4e8"></span>🔄 Fit Fresh Tyre Set</button>
+          </div>
+
+          <!-- On-Screen HUD & Display Overlays -->
+          <div class="pause-section-title" style="margin-top:10px">
+            <span>ON-SCREEN HUD &amp; MINI-MAP DISPLAY</span>
+            <small>Toggle viewport overlay windows</small>
+          </div>
+          <div class="pause-grid">
+            <button type="button" class="pause-card-btn" id="pause-toggle-hud">
+              <span class="card-icon">🗺️</span>
+              <b id="pause-hud-status">Circuit HUD &amp; Mini-Map: VISIBLE</b>
+              <span>Mini-map, sector times, speed &amp; autopilot buttons</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-toggle-session">
+              <span class="card-icon">⏱️</span>
+              <b id="pause-sess-status">Session &amp; Standings: VISIBLE</b>
+              <span>Session clock, tyre box, lap times &amp; leaderboard</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-toggle-telem">
+              <span class="card-icon">🛞</span>
+              <b id="pause-telem-status">Vehicle Telemetry: HIDDEN</b>
+              <span>Live tyre temps, brake heat &amp; G-force meter</span>
+            </button>
+            <button type="button" class="pause-card-btn" id="pause-toggle-timing">
+              <span class="card-icon">🏁</span>
+              <b id="pause-timing-status">Timing Tower: HIDDEN</b>
+              <span>Grand Prix timing tower leaderboard</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Pane 1: Camera & Views -->
-        <div id="pane-views" class="pause-pane active">
+        <div id="pane-views" class="pause-pane">
           <div class="pause-section-title">
             <span>STANDARD VEHICLE VIEWPOINTS</span>
             <small>Click to frame camera instantly</small>
@@ -739,6 +863,73 @@ export function initPauseMenu() {
     const btnGarage = $('pause-toggle-garage');
     if (btnGarage) btnGarage.classList.toggle('active', isGarage);
 
+    // Autopilot & Drive status
+    const isAuto = !!window.trackMode?.mode?.autopilot;
+    const btnAuto = $('pause-btn-autopilot');
+    if (btnAuto) {
+      btnAuto.classList.toggle('active', isAuto);
+      const t = $('pause-auto-text');
+      if (t) t.textContent = isAuto ? 'Autopilot Lap: ACTIVE' : 'Autopilot Lap: OFF';
+    }
+
+    const isPit = !!window.trackMode?.mode?.pitReq;
+    const btnPit = $('pause-btn-autopit');
+    if (btnPit) {
+      btnPit.classList.toggle('active', isPit);
+      const t = $('pause-pit-text');
+      if (t) t.textContent = isPit ? 'Autopilot Pit: ACTIVE' : 'Autopilot Pit Stop';
+    }
+
+    const isDriving = !!window.trackMode?.mode?.driving;
+    const btnDrive = $('pause-btn-drive');
+    if (btnDrive) {
+      btnDrive.classList.toggle('active', isDriving);
+      const t = $('pause-drive-text');
+      if (t) t.textContent = isDriving ? 'Drive Mode: ACTIVE' : 'Drive: OFF';
+    }
+
+    // Session modes
+    const curSession = window.__sessionEngine__?.state?.key || '';
+    $('pause-mode-solo')?.classList.toggle('active', curSession === '');
+    $('pause-mode-fp1')?.classList.toggle('active', curSession === 'FP1');
+    $('pause-mode-fp2')?.classList.toggle('active', curSession === 'FP2');
+    $('pause-mode-fp3')?.classList.toggle('active', curSession === 'FP3');
+    $('pause-mode-q')?.classList.toggle('active', curSession === 'Q');
+    $('pause-mode-race')?.classList.toggle('active', curSession === 'RACE');
+
+    // Tyre compound
+    const curCompound = window.sessions?.player?.compound || window.tyreStates?.get?.().corners?.FL?.compound || 'soft';
+    modal.querySelectorAll('.pause-compound-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.compound === curCompound);
+    });
+
+    // Tyre wear state
+    const curWearState = window.tyreStates?.get?.().corners?.FL?.wear || 'new';
+    modal.querySelectorAll('.pause-wear-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.wear === curWearState);
+    });
+
+    // HUD overlays
+    const hudOn = !!window.hudOverlays?.isOn('track');
+    $('pause-toggle-hud')?.classList.toggle('active', hudOn);
+    const hudTxt = $('pause-hud-status');
+    if (hudTxt) hudTxt.textContent = `Circuit HUD & Mini-Map: ${hudOn ? 'VISIBLE' : 'HIDDEN'}`;
+
+    const sessOn = !!window.hudOverlays?.isOn('session');
+    $('pause-toggle-session')?.classList.toggle('active', sessOn);
+    const sessTxt = $('pause-sess-status');
+    if (sessTxt) sessTxt.textContent = `Session & Standings: ${sessOn ? 'VISIBLE' : 'HIDDEN'}`;
+
+    const telemOn = !!window.hudOverlays?.isOn('telem');
+    $('pause-toggle-telem')?.classList.toggle('active', telemOn);
+    const telemTxt = $('pause-telem-status');
+    if (telemTxt) telemTxt.textContent = `Vehicle Telemetry: ${telemOn ? 'VISIBLE' : 'HIDDEN'}`;
+
+    const timingOn = !!window.hudOverlays?.isOn('timing');
+    $('pause-toggle-timing')?.classList.toggle('active', timingOn);
+    const timingTxt = $('pause-timing-status');
+    if (timingTxt) timingTxt.textContent = `Timing Tower: ${timingOn ? 'VISIBLE' : 'HIDDEN'}`;
+
     // Audio status
     const soundStatus = $('pause-sound-status');
     const isMuted = document.getElementById('btn-audio')?.textContent.includes('Off') ?? true;
@@ -751,7 +942,7 @@ export function initPauseMenu() {
 
     // Active Team
     const curTeam = document.getElementById('team-select')?.value || 'red-bull';
-    modal.querySelectorAll('.pause-team-btn').forEach(btn => {
+    modal.querySelectorAll('.pause-team-btn[data-team]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.team === curTeam);
     });
   }
@@ -775,6 +966,112 @@ export function initPauseMenu() {
       const targetPane = $(tab.dataset.tab);
       if (targetPane) targetPane.classList.add('active');
     });
+  });
+
+  // ----------------------------------------------------------------
+  // Pane: Race, Autopilot & Tyres Actions
+  // ----------------------------------------------------------------
+  $('pause-mode-solo')?.addEventListener('click', () => {
+    window.sessions?.start?.('');
+    closePauseMenu();
+  });
+  $('pause-mode-fp1')?.addEventListener('click', () => {
+    window.sessions?.start?.('FP1');
+    closePauseMenu();
+  });
+  $('pause-mode-fp2')?.addEventListener('click', () => {
+    window.sessions?.start?.('FP2');
+    closePauseMenu();
+  });
+  $('pause-mode-fp3')?.addEventListener('click', () => {
+    window.sessions?.start?.('FP3');
+    closePauseMenu();
+  });
+  $('pause-mode-q')?.addEventListener('click', () => {
+    window.sessions?.start?.('Q');
+    closePauseMenu();
+  });
+  $('pause-mode-race')?.addEventListener('click', () => {
+    window.sessions?.start?.('RACE');
+    closePauseMenu();
+  });
+
+  // Autopilot & Vehicle Drive
+  $('pause-btn-autopilot')?.addEventListener('click', () => {
+    const isAuto = !window.trackMode?.mode?.autopilot;
+    window.trackMode?.setAutopilot?.(isAuto);
+    syncMenuState();
+  });
+  $('pause-btn-autopit')?.addEventListener('click', () => {
+    const isPit = !window.trackMode?.mode?.pitReq;
+    window.trackMode?.requestPitStop?.(isPit);
+    syncMenuState();
+  });
+  $('pause-btn-drive')?.addEventListener('click', () => {
+    const isDrv = !window.trackMode?.mode?.driving;
+    window.trackMode?.setDriving?.(isDrv);
+    syncMenuState();
+  });
+  $('pause-btn-reset-grid')?.addEventListener('click', () => {
+    window.trackMode?.setAutopilot?.(false);
+    window.trackMode?.parkOnGrid?.();
+    closePauseMenu();
+  });
+
+  // Tyre Compounds
+  modal.querySelectorAll('.pause-compound-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const compound = btn.dataset.compound;
+      if (window.sessions?.setCompound) {
+        window.sessions.setCompound(compound);
+      } else if (window.tyreStates?.setTyreCompound) {
+        window.tyreStates.setTyreCompound('all', compound);
+      }
+      syncMenuState();
+    });
+  });
+
+  // Tyre Wear
+  modal.querySelectorAll('.pause-wear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wear = btn.dataset.wear;
+      if (window.sessions?.setWear) {
+        window.sessions.setWear(wear);
+      } else if (window.tyreStates?.setTyreWear) {
+        window.tyreStates.setTyreWear('all', wear);
+      }
+      syncMenuState();
+    });
+  });
+  $('pause-btn-newset')?.addEventListener('click', () => {
+    if (window.sessions?.newSet) {
+      window.sessions.newSet();
+    } else if (window.tyreStates?.setTyreWear) {
+      window.tyreStates.setTyreWear('all', 'new');
+    }
+    syncMenuState();
+  });
+
+  // On-Screen HUD Toggles
+  $('pause-toggle-hud')?.addEventListener('click', () => {
+    const isNow = !window.hudOverlays?.isOn('track');
+    window.hudOverlays?.set('track', isNow);
+    syncMenuState();
+  });
+  $('pause-toggle-session')?.addEventListener('click', () => {
+    const isNow = !window.hudOverlays?.isOn('session');
+    window.hudOverlays?.set('session', isNow);
+    syncMenuState();
+  });
+  $('pause-toggle-telem')?.addEventListener('click', () => {
+    const isNow = !window.hudOverlays?.isOn('telem');
+    window.hudOverlays?.set('telem', isNow);
+    syncMenuState();
+  });
+  $('pause-toggle-timing')?.addEventListener('click', () => {
+    const isNow = !window.hudOverlays?.isOn('timing');
+    window.hudOverlays?.set('timing', isNow);
+    syncMenuState();
   });
 
   // Camera Presets

@@ -22,9 +22,13 @@ export async function initSessions({ trackMode, tyreStates }) {
   el.id = 'sess-panel';
   el.innerHTML = `
     <div class="sp-head">
-      <select id="sp-pick" aria-label="Session">
-        <option value="">Free drive (no session)</option>
-        ${Object.entries(config.sessions).map(([k, s]) => `<option value="${k}">${s.label}</option>`).join('')}
+      <select id="sp-pick" aria-label="Session Mode">
+        <option value="">Solo Practice (Free Drive)</option>
+        <option value="FP1">Free Practice 1 (FP1)</option>
+        <option value="FP2">Free Practice 2 (FP2)</option>
+        <option value="FP3">Free Practice 3 (FP3)</option>
+        <option value="Q">Qualifying (Quali · Q1-Q3)</option>
+        <option value="RACE">Formation Lap / Race Start</option>
       </select>
       <span id="sp-seg"></span><span id="sp-clock">--:--</span>
       <button type="button" id="sp-min" title="Collapse">▾</button>
@@ -37,8 +41,15 @@ export async function initSessions({ trackMode, tyreStates }) {
         <label id="sp-race-laps-lbl" style="display:none;">Laps <select id="sp-race-laps"><option value="5">5 Laps</option><option value="18">18 Laps (25%)</option><option value="36">36 Laps (50%)</option><option value="71">71 Laps (100%)</option></select></label>
       </div>
       <div class="sp-row">
-        <label>Tyre <select id="sp-tyre">${config.tyres.compounds.map(c => `<option value="${c}">${c}</option>`).join('')}</select></label>
-        <button type="button" id="sp-newset" class="sp-btn" title="Fit a new set (in the garage)">New set</button>
+        <label>Tyre <select id="sp-tyre">${config.tyres.compounds.map(c => `<option value="${c}">${c.toUpperCase()}</option>`).join('')}</select></label>
+        <label>Wear <select id="sp-wear-sel">
+          <option value="new">0% (New)</option>
+          <option value="laps">25% (Laps)</option>
+          <option value="medium">50% (Med)</option>
+          <option value="heavy">80% (High)</option>
+          <option value="blown">Blown</option>
+        </select></label>
+        <button type="button" id="sp-newset" class="sp-btn" title="Fit a new set of tyres">New set</button>
         <button type="button" id="sp-go" class="sp-btn">Leave garage</button>
         <button type="button" id="sp-box" class="sp-btn">Box this lap</button>
       </div>
@@ -155,14 +166,19 @@ export async function initSessions({ trackMode, tyreStates }) {
     $('sp-start').disabled = !$('sp-pick').value && !S;
     $('sp-pause').textContent = ui.paused ? 'Resume' : 'Pause';
     const knocked = S?.type === 'qualifying' && !S.ids.includes('player');
+    const inGarage = player.run === 'garage' || !S;
     $('sp-go').disabled = !S || player.run !== 'garage' || S.segOver || eng.remaining <= 0 || knocked;
     $('sp-box').disabled = !S || player.run === 'garage' || player.run === 'in';
-    $('sp-newset').disabled = player.run !== 'garage';
-    $('sp-tyre').disabled = player.run !== 'garage';
+    $('sp-newset').disabled = !inGarage;
+    $('sp-tyre').disabled = !inGarage;
     $('sp-tyre').value = player.compound;
+    if ($('sp-wear-sel')) {
+      $('sp-wear-sel').disabled = !inGarage;
+      $('sp-wear-sel').value = wearState(config, player.wear);
+    }
     const runTxt = { garage: 'In garage', out: 'Out-lap', flying: 'Flying lap', in: 'In-lap' }[player.run];
-    $('sp-run').textContent = !S ? 'Pick a session, then Start' : knocked ? 'You are knocked out' : runTxt + (player.box && player.run !== 'in' ? ' · boxing' : '');
-    $('sp-wear').innerHTML = S ? `${tyreDot(player.compound)} wear ${player.wear.toFixed(0)}% (${wearState(config, player.wear)})` : '';
+    $('sp-run').textContent = !S ? 'Solo Practice (Free Drive) · Active' : knocked ? 'You are knocked out' : runTxt + (player.box && player.run !== 'in' ? ' · boxing' : '');
+    $('sp-wear').innerHTML = `${tyreDot(player.compound)} wear ${player.wear.toFixed(0)}% (${wearState(config, player.wear)})`;
     if (!S) return;
     const rows = eng.leaderboard();
     const seg = S.type === 'qualifying' ? S.def.segments[S.segIdx] : null;
@@ -186,6 +202,12 @@ export async function initSessions({ trackMode, tyreStates }) {
   $('sp-pause').onclick = () => { ui.paused = !ui.paused; render(); };
   $('sp-speed').onchange = e => { ui.speed = +e.target.value; };
   $('sp-tyre').onchange = e => { player.compound = e.target.value; player.wear = 0; applyTyres(); render(); };
+  $('sp-wear-sel')?.addEventListener('change', e => {
+    const wearMap = { new: 0, laps: 20, medium: 45, heavy: 75, blown: 100 };
+    player.wear = wearMap[e.target.value] ?? 0;
+    applyTyres();
+    render();
+  });
   $('sp-newset').onclick = () => { player.wear = 0; applyTyres(); render(); };
   $('sp-go').onclick = leaveGarage;
   $('sp-box').onclick = () => { player.box = true; render(); };
@@ -228,7 +250,36 @@ export async function initSessions({ trackMode, tyreStates }) {
   })(last);
   render();
 
-  const api = { engine: eng, player, start: startSession, leaveGarage, render, step, setSpeed: s => { ui.speed = s; } };
+  const api = {
+    engine: eng,
+    player,
+    start: startSession,
+    leaveGarage,
+    render,
+    step,
+    setSpeed: s => { ui.speed = s; },
+    setCompound: (c) => {
+      player.compound = c;
+      player.wear = 0;
+      applyTyres();
+      render();
+    },
+    setWear: (w) => {
+      if (typeof w === 'number') {
+        player.wear = Math.max(0, Math.min(100, w));
+      } else {
+        const wearMap = { new: 0, laps: 20, medium: 45, heavy: 75, blown: 100 };
+        player.wear = wearMap[w] ?? 0;
+      }
+      applyTyres();
+      render();
+    },
+    newSet: () => {
+      player.wear = 0;
+      applyTyres();
+      render();
+    }
+  };
   window.sessions = api;
   return api;
 }
